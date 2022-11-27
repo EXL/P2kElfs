@@ -1,0 +1,8 @@
+# QtCreator IDE garbage.
+.qtc_clangd
+*.user*
+
+# Generated files.
+*.o
+*.obj
+*.elf
