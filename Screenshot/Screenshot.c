@@ -1,3 +1,22 @@
+/*
+ * Send log to MIDway application.
+ * USB Connection: USB Modem Mode, AT commands.
+ * On the phone: Settings => Java Settings => Java App Loader => Insert USB cable now => JAL Connection. //TODO:
+ * On the application:
+ *
+ * PFprintf("KeyPress = %d.\n", event->data.key_pressed);
+ *
+ * Send log to P2KDataLogger application.
+ * USB Connection: P2K Mode.
+ * On the phone: SEEM_IN_FACTORY (01C1_0001) must be in FF (IN_FACTORY), not 00 (NON_FACTORY).
+ * On the application:
+ *
+ * UtilLogStringData("KeyPress = %d.\n", event->data.key_pressed);
+ *
+ *
+ * display_source_buffer not worked properly
+ */
+
 #include <apps.h>
 #include <ati.h>
 
@@ -23,32 +42,46 @@ static UINT8 bmp_header[] = {
 	0x00, 0x00, 0x1F, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
 };
 
-static UINT32 copy_ati_display_vram_to_ram(void) {
+static UINT32 copy_ati_display_vram_to_ram(UINT32 *display_width, UINT32 *display_height, UINT32 *display_bpp) {
+	UINT32          ahi_display_width;
+	UINT32          ahi_display_height;
+	UINT32          ahi_display_bpp;
 	AHIBITMAP_T     ahi_bitmap;
 	AHIPOINT_T      ahi_point;
 	AHIRECT_T       ahi_rectangle;
-	AHIDEVCONTEXT_T ahi_device_context = DAL_GetDeviceContext(DISPLAY_MAIN);
-	AHISURFACE_T    ahi_surface        = DAL_GetDrawingSurface(DISPLAY_MAIN);
+	AHISURFINFO_T   ahi_surface_info;
+	AHIDEVCONTEXT_T ahi_device_context;
+	AHISURFACE_T    ahi_surface;
 
-	ahi_bitmap.width  = 128;
-	ahi_bitmap.height = 160;
-	ahi_bitmap.stride = 128 * 2;
+	ahi_device_context = DAL_GetDeviceContext(DISPLAY_MAIN);
+	ahi_surface = DAL_GetDrawingSurface(DISPLAY_MAIN);
+
+	AhiSurfInfo(ahi_device_context, ahi_surface, &ahi_surface_info);
+	*display_width = ahi_display_width = ahi_surface_info.width;
+	*display_height = ahi_display_height = ahi_surface_info.height;
+	*display_bpp = ahi_display_bpp = ahi_surface_info.byteSize / (ahi_display_width * ahi_display_height);
+
+	UtilLogStringData("%p %p %x %x\n", (void *) display_source_buffer, &display_source_buffer[0], &display_source_buffer, (void *) &display_source_buffer[0]);
+
+	ahi_bitmap.width  = ahi_display_width;
+	ahi_bitmap.height = ahi_display_height;
+	ahi_bitmap.stride = ahi_display_width * ahi_display_bpp;
 	ahi_bitmap.format = AHIFMT_16BPP_565;
 	ahi_bitmap.image  = (void *) 0x12200254;
 
 	ahi_rectangle.x1 = 0;
 	ahi_rectangle.y1 = 0;
-	ahi_rectangle.x2 = 0 + 128;
-	ahi_rectangle.y2 = 0 + 160;
+	ahi_rectangle.x2 = 0 + ahi_display_width;
+	ahi_rectangle.y2 = 0 + ahi_display_height;
 
 	ahi_point.x = 0;
 	ahi_point.y = 0;
 
-	return AhiSurfCopy(ahi_device_context, ahi_surface, &ahi_bitmap, &ahi_rectangle, &ahi_point, NULL, 1);
+	return AhiSurfCopy(ahi_device_context, ahi_surface, &ahi_bitmap, &ahi_rectangle, &ahi_point, 0, 1);
 }
 
 // TODO: Refactoring here.
-static UINT16 *create_converted_bitmap(void) {
+static UINT16 *create_converted_bitmap(UINT32 display_width, UINT32 display_height, UINT32 display_bpp) {
 	INT32 result;
 	UINT16 bitmap_pixel;
 	UINT16 *address;
@@ -59,21 +92,21 @@ static UINT16 *create_converted_bitmap(void) {
 	INT32 pixel;
 
 	// TODO: Check Alloca prototype and return value.
-	bitmap_buffer = (UINT16 *) suAllocMem(128*160*2, &result);
+	bitmap_buffer = (UINT16 *) suAllocMem(display_width * display_height * display_bpp, &result);
 	if (result != RESULT_OK)
 		return NULL;
 
-	line = 128;
+	line = display_width;
 	stroke = 0;
 	ppp = 0;
-	for (pixel = 128*160 - 1, address = ((void *) 0x12200254); pixel >= 0; --pixel, ++address) {
+	for (pixel = display_width * display_height - 1, address = ((void *) 0x12200254); pixel >= 0; --pixel, ++address) {
 		bitmap_pixel = ((*address) << 8) | ((*address) >> 8);
-		ppp = 128*160 - line - stroke * 128;
+		ppp = display_width * display_height - line - stroke * display_width;
 
 		bitmap_buffer[ppp] = bitmap_pixel;
 		line--;
 		if (line == 0) {
-			line = 128;
+			line = display_width;
 			stroke++;
 		}
 	}
@@ -125,6 +158,7 @@ static UINT32 save_screenshot_file(void *bitmap_converted_buffer, UINT32 bitmap_
 		return RESULT_FAIL;
 
 	// TODO: Check return also?
+	// TODO: PATCH BMP DATA!!!
 	DL_FsWriteFile(bmp_header, sizeof(bmp_header), 1, screenshot_file, &written_bytes);
 	if (written_bytes == 0)
 		return file_ops_close(screenshot_file, RESULT_FAIL, &written_bytes);
@@ -139,13 +173,16 @@ static UINT32 save_screenshot_file(void *bitmap_converted_buffer, UINT32 bitmap_
 
 static UINT32 make_screenshot(void) {
 	UINT32 status;
+	UINT32 display_width;
+	UINT32 display_height;
+	UINT32 display_bpp;
 	UINT16 *bitmap_buffer;
 
-	status = copy_ati_display_vram_to_ram();
+	status = copy_ati_display_vram_to_ram(&display_width, &display_height, &display_bpp);
 
-	bitmap_buffer = create_converted_bitmap();
+	bitmap_buffer = create_converted_bitmap(display_width, display_height, display_bpp);
 
-	status = save_screenshot_file(bitmap_buffer, 128*160*2);
+	status = save_screenshot_file(bitmap_buffer, display_width * display_height * display_bpp);
 
 	// TODO: Check Alloca prototype and return value.
 	suFreeMem(bitmap_buffer);
@@ -165,10 +202,8 @@ static UINT32 destroy_application(EVENT_STACK_T *event_stack, void *application)
 static UINT32 handle_key_press(EVENT_STACK_T *event_stack, void *application) {
 	EVENT_T *event = AFW_GetEv(event_stack);
 
-	PFprintf("KeyPress = %d.\n", event->data.key_pressed);
-
 	switch (event->data.key_pressed) {
-	case KEY_STAR:
+	case KEY_POUND:
 		return make_screenshot();
 	case KEY_0:
 		destroy_application_status = TRUE;
