@@ -14,7 +14,7 @@
  * UtilLogStringData("KeyPress = %d.\n", event->data.key_pressed);
  *
  *
- * display_source_buffer not worked properly
+ * display_source_buffer not worked properly?
  */
 
 #include <apps.h>
@@ -33,6 +33,7 @@ typedef enum {
 static const char application_name[APP_NAME_LEN] = "Screenshot";
 static BOOL destroy_application_status = FALSE;
 
+// TODO: 128x160 note.
 static UINT8 bmp_header[] = {
 	0x42, 0x4D, 0x46, 0xA0, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x46, 0x00,
 	0x00, 0x00, 0x38, 0x00, 0x00, 0x00, 0x80, 0x00, 0x00, 0x00, 0xA0, 0x00,
@@ -61,13 +62,11 @@ static UINT32 copy_ati_display_vram_to_ram(UINT32 *display_width, UINT32 *displa
 	*display_height = ahi_display_height = ahi_surface_info.height;
 	*display_bpp = ahi_display_bpp = ahi_surface_info.byteSize / (ahi_display_width * ahi_display_height);
 
-	UtilLogStringData("%p %p %x %x\n", (void *) display_source_buffer, &display_source_buffer[0], &display_source_buffer, (void *) &display_source_buffer[0]);
-
 	ahi_bitmap.width  = ahi_display_width;
 	ahi_bitmap.height = ahi_display_height;
 	ahi_bitmap.stride = ahi_display_width * ahi_display_bpp;
 	ahi_bitmap.format = AHIFMT_16BPP_565;
-	ahi_bitmap.image  = (void *) 0x12200254;
+	ahi_bitmap.image  = (void *) display_source_buffer;
 
 	ahi_rectangle.x1 = 0;
 	ahi_rectangle.y1 = 0;
@@ -99,7 +98,7 @@ static UINT16 *create_converted_bitmap(UINT32 display_width, UINT32 display_heig
 	line = display_width;
 	stroke = 0;
 	ppp = 0;
-	for (pixel = display_width * display_height - 1, address = ((void *) 0x12200254); pixel >= 0; --pixel, ++address) {
+	for (pixel = display_width * display_height - 1, address = (void *) display_source_buffer; pixel >= 0; --pixel, ++address) {
 		bitmap_pixel = ((*address) << 8) | ((*address) >> 8);
 		ppp = display_width * display_height - line - stroke * display_width;
 
@@ -146,10 +145,13 @@ static UINT32 file_ops_close(FILE file, UINT32 result, UINT32 *written_bytes) {
 	return result;
 }
 
-static UINT32 save_screenshot_file(void *bitmap_converted_buffer, UINT32 bitmap_size_bytes) {
+static UINT32 save_screenshot_file(void *bitmap_converted_buffer, UINT32 w, UINT32 h, UINT32 bitmap_size_bytes) {
 	UINT32 written_bytes = 0;
 	WCHAR screenshot_path_buffer[FILEURI_MAX_LEN + 1]; // TODO: Half-2?
 	FILE screenshot_file = NULL;
+
+	/* TODO: To Function! */
+	UINT32 bmp_size;
 
 	generate_screenshot_path(screenshot_path_buffer);
 
@@ -159,6 +161,13 @@ static UINT32 save_screenshot_file(void *bitmap_converted_buffer, UINT32 bitmap_
 
 	// TODO: Check return also?
 	// TODO: PATCH BMP DATA!!!
+/*
+	bmp_size = sizeof(bmp_header) + bitmap_size_bytes;
+	memcpy((void *) bmp_header[0x02], (void *) &bmp_size, sizeof(bmp_size));
+	memcpy((void *) bmp_header[0x12], (void *) &w, sizeof(w));
+	memcpy((void *) bmp_header[0x16], (void *) &h, sizeof(h));
+	memcpy((void *) bmp_header[0x22], (void *) &bitmap_size_bytes, sizeof(bitmap_size_bytes));
+*/
 	DL_FsWriteFile(bmp_header, sizeof(bmp_header), 1, screenshot_file, &written_bytes);
 	if (written_bytes == 0)
 		return file_ops_close(screenshot_file, RESULT_FAIL, &written_bytes);
@@ -182,7 +191,7 @@ static UINT32 make_screenshot(void) {
 
 	bitmap_buffer = create_converted_bitmap(display_width, display_height, display_bpp);
 
-	status = save_screenshot_file(bitmap_buffer, display_width * display_height * display_bpp);
+	status = save_screenshot_file(bitmap_buffer, display_width, display_height, display_width * display_height * display_bpp);
 
 	// TODO: Check Alloca prototype and return value.
 	suFreeMem(bitmap_buffer);
