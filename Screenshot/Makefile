@@ -1,8 +1,6 @@
 # This Makefile was edited by EXL, 27-Nov-2022.
-# Default platform is Motorola P2K, ElfPack v1.0, ADS1.2 [Build 848].
-
-# ELF name.
-ELF_NAME = Screenshot
+# Default platform is Motorola P2K, ElfPack v1.0, ADS1.2 [Build 848] on Linux.
+# Warning: `-nodebug` flag option for `armlink` is buggy.
 
 # Compiler path.
 ARM_PATH = /opt/arm
@@ -16,6 +14,9 @@ LIB_PATH = $(ARM_PATH)/lib
 # Main link library.
 # LIB_MAIN = Lib.o
 LIB_MAIN = Lib_L2_L6.o
+
+# ELF name.
+ELF_NAME = Screenshot
 
 all:
 	$(ARM_PATH)/bin/tcc -I$(SDK_PATH) -bigend -apcs /interwork -O2 -c $(ELF_NAME).c \
