@@ -14,21 +14,24 @@
  * UtilLogStringData("KeyPress = %d.\n", event->data.key_pressed);
  *
  *
- * What's wrong with display_source_buffer?!
+ * What's wrong with display_source_buffer address?!
  */
 
 #include <apps.h>
 #include <ati.h>
-
-// TODO: Inline it?
 
 #ifndef __P2K__
 #define __packed
 #define SWAP_UINT16(x) (x)
 #define SWAP_UINT32(x) (x)
 #else
-#define SWAP_UINT16(x) (((x) >>  8) |  ((x) << 8))
-#define SWAP_UINT32(x) (((x) >> 24) | (((x) & 0x00FF0000) >> 8) | (((x) & 0x0000FF00) << 8) | ((x) << 24))
+static __inline UINT16 SWAP_UINT16(UINT16 value) {
+	return ((value >>  8) |  (value << 8));
+}
+
+static __inline UINT32 SWAP_UINT32(UINT32 value) {
+	return ((value >> 24) | ((value & 0x00FF0000) >> 8) | ((value & 0x0000FF00) << 8) | (value << 24));
+}
 #endif
 
 typedef struct {
@@ -54,6 +57,17 @@ static UINT8 bmp_header[70] = {
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xF8, 0x00, 0x00, 0xE0, 0x07, 0x00, 0x00, 0x1F, 0x00,
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00
 };
+
+static void __inline fill_int_to_array(UINT8 *start_address, UINT32 start_offset, UINT32 value) {
+	*((__packed UINT32 *) &start_address[start_offset]) = SWAP_UINT32(value);
+
+	/* TODO: Alternative way.
+	start_address[start_offset + 0x00] = (value >>  0) & 0x000000FF;
+	start_address[start_offset + 0x01] = (value >>  8) & 0x000000FF;
+	start_address[start_offset + 0x02] = (value >> 16) & 0x000000FF;
+	start_address[start_offset + 0x03] = (value >> 24) & 0x000000FF;
+	*/
+}
 
 static UINT32 copy_ati_display_vram_to_ram(UINT32 *display_width, UINT32 *display_height, UINT32 *display_bpp) {
 	UINT32          ahi_display_width;
@@ -91,7 +105,7 @@ static UINT32 copy_ati_display_vram_to_ram(UINT32 *display_width, UINT32 *displa
 	return AhiSurfCopy(ahi_device_context, ahi_surface, &ahi_bitmap, &ahi_rectangle, &ahi_point, 0, 1);
 }
 
-// TODO: Refactoring here.
+// TODO: Refactor code here.
 static UINT16 *create_converted_bitmap(UINT32 display_width, UINT32 display_height, UINT32 display_bpp) {
 	INT32 result;
 	UINT16 bitmap_pixel;
@@ -102,7 +116,7 @@ static UINT16 *create_converted_bitmap(UINT32 display_width, UINT32 display_heig
 	INT32 ppp;
 	INT32 pixel;
 
-	// TODO: Check Alloca prototype and return value.
+	// TODO: Check alloca prototype and return value?
 	bitmap_buffer = (UINT16 *) suAllocMem(display_width * display_height * display_bpp, &result);
 	if (result != RESULT_OK)
 		return NULL;
@@ -158,23 +172,12 @@ static UINT32 file_ops_close(FILE file, UINT32 result, UINT32 *written_bytes) {
 	return result;
 }
 
-// TODO: Inline it?
-static void fill_int_to_array(UINT8 *start_address, UINT32 start_offset, UINT32 value) {
-	*((__packed UINT32 *) &start_address[start_offset]) = SWAP_UINT32(value);
-	/*
-	start_address[start_offset + 0x00] = (value >>  0) & 0x000000FF;
-	start_address[start_offset + 0x01] = (value >>  8) & 0x000000FF;
-	start_address[start_offset + 0x02] = (value >> 16) & 0x000000FF;
-	start_address[start_offset + 0x03] = (value >> 24) & 0x000000FF;
-	*/
-}
-
 static UINT32 save_screenshot_file(void *bitmap_converted_buffer, UINT32 w, UINT32 h, UINT32 bitmap_size_bytes) {
 	UINT32 written_bytes = 0;
-	WCHAR screenshot_path_buffer[FILEURI_MAX_LEN + 1]; // TODO: Half-2?
+	WCHAR screenshot_path_buffer[FILEURI_MAX_LEN + 1]; // TODO: x2 caz UINT16 alias?
 	FILE screenshot_file = NULL;
 
-	/* TODO: To Function! */
+	/* TODO: Move this to separate function! */
 	UINT32 bmp_size;
 
 	generate_screenshot_path(screenshot_path_buffer);
@@ -183,7 +186,7 @@ static UINT32 save_screenshot_file(void *bitmap_converted_buffer, UINT32 w, UINT
 	if (screenshot_file == NULL)
 		return RESULT_FAIL;
 
-	// TODO: PATCH BMP DATA to function!!!
+	// TODO: Move BMP Header patching to separate function!
 
 	bmp_size = sizeof(bmp_header) + bitmap_size_bytes;
 
@@ -193,7 +196,7 @@ static UINT32 save_screenshot_file(void *bitmap_converted_buffer, UINT32 w, UINT
 	fill_int_to_array(bmp_header, 0x22, bitmap_size_bytes);
 
 	/*
-	// TODO: Buggy on big-endian.
+	// TODO: Bugs on big-endian ARM. Why?
 	*((UINT32 *) &bmp_header[0x02]) = SWAP_UINT32(bmp_size);
 	*((UINT32 *) &bmp_header[0x12]) = SWAP_UINT32(w);
 	*((UINT32 *) &bmp_header[0x16]) = SWAP_UINT32(h);
@@ -205,12 +208,12 @@ static UINT32 save_screenshot_file(void *bitmap_converted_buffer, UINT32 w, UINT
 //	memcpy((void *) bmp_header[0x22], (void *) &bitmap_size_bytes, sizeof(bitmap_size_bytes));
 
 
-	// TODO: Check return also?
+	// TODO: Check return value?
 	DL_FsWriteFile(bmp_header, sizeof(bmp_header), 1, screenshot_file, &written_bytes);
 	if (written_bytes == 0)
 		return file_ops_close(screenshot_file, RESULT_FAIL, &written_bytes);
 
-	// TODO: Check return also?
+	// TODO: Check return value?
 	DL_FsWriteFile(bitmap_converted_buffer, bitmap_size_bytes, 1, screenshot_file, &written_bytes);
 	if (written_bytes == 0)
 		return file_ops_close(screenshot_file, RESULT_FAIL, NULL);
@@ -231,7 +234,7 @@ static UINT32 make_screenshot(void) {
 
 	status = save_screenshot_file(bitmap_buffer, display_width, display_height, display_width * display_height * display_bpp);
 
-	// TODO: Check Alloca prototype and return value.
+	// TODO: Check alloca prototype and return value?
 	suFreeMem(bitmap_buffer);
 
 	return status;
@@ -254,8 +257,8 @@ static UINT32 handle_key_press(EVENT_STACK_T *event_stack, void *application) {
 		return make_screenshot();
 	case KEY_5:
 		// TODO: Check address.
-		PFprintf("display_source_buffer addr = 0x%08X.\n", display_source_buffer);
-		UtilLogStringData("display_source_buffer addr = 0x%08X.\n", display_source_buffer);
+		PFprintf("display_source_buffer addr = 0x%08X.\n", display_source_buffer); // Send log to MIDway.
+		UtilLogStringData("display_source_buffer addr = 0x%08X.\n", display_source_buffer); // Send log to P2KDataLogger.
 		break;
 	case KEY_0:
 		destroy_application_status = TRUE;
