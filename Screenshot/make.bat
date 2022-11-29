@@ -18,11 +18,14 @@ set LIB_PATH=%ARM_PATH%\lib
 :: set LIB_MAIN=Lib.o
 set LIB_MAIN=Lib_L2_L6.o
 
+:: Defines.
+set DEFINES=-D__P2K__
+
 :: ELF name.
 set ELF_NAME=Screenshot
 
 :: Compiling step.
-%ARM_PATH%\tcc -I%SDK_PATH% -bigend -apcs /interwork -O2 -c %ELF_NAME%.c -o %ELF_NAME%.o
+%ARM_PATH%\tcc -I%SDK_PATH% %DEFINES% -bigend -apcs /interwork -O2 -c %ELF_NAME%.c -o %ELF_NAME%.o
 
 :: Linking step.
 %ARM_PATH%\armlink -nolocals -reloc -first %LIB_MAIN%(Lib) %ELF_NAME%.o %LIB_PATH%\%LIB_MAIN% -o %ELF_NAME%.elf

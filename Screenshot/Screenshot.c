@@ -1,24 +1,35 @@
 /*
  * Send log to MIDway application.
  * USB Connection: USB Modem Mode, AT commands.
- * On the phone: Settings => Java Settings => Java App Loader => Insert USB cable now => JAL Connection. //TODO:
- * On the application:
+ * Phone Actions: Settings => Java Settings => Java App Loader => Insert USB cable now => JAL Connection. //TODO:
+ * MIDway Actions:
  *
  * PFprintf("KeyPress = %d.\n", event->data.key_pressed);
  *
  * Send log to P2KDataLogger application.
  * USB Connection: P2K Mode.
- * On the phone: SEEM_IN_FACTORY (01C1_0001) must be in FF (IN_FACTORY), not 00 (NON_FACTORY).
- * On the application:
+ * Phone Actions: SEEM_IN_FACTORY (01C1_0001) must be in FF (IN_FACTORY), not 00 (NON_FACTORY).
+ * P2KDataLogger application:
  *
  * UtilLogStringData("KeyPress = %d.\n", event->data.key_pressed);
  *
  *
- * display_source_buffer not worked properly?
+ * What's wrong with display_source_buffer?!
  */
 
 #include <apps.h>
 #include <ati.h>
+
+// TODO: Inline it?
+
+#ifndef __P2K__
+#define __packed
+#define SWAP_UINT16(x) (x)
+#define SWAP_UINT32(x) (x)
+#else
+#define SWAP_UINT16(x) (((x) >>  8) |  ((x) << 8))
+#define SWAP_UINT32(x) (((x) >> 24) | (((x) & 0x00FF0000) >> 8) | (((x) & 0x0000FF00) << 8) | ((x) << 24))
+#endif
 
 typedef struct {
 	APPLICATION_T application;
@@ -33,14 +44,15 @@ typedef enum {
 static const char application_name[APP_NAME_LEN] = "Screenshot";
 static BOOL destroy_application_status = FALSE;
 
-// TODO: 128x160 note.
-static UINT8 bmp_header[] = {
-	0x42, 0x4D, 0x46, 0xA0, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x46, 0x00,
-	0x00, 0x00, 0x38, 0x00, 0x00, 0x00, 0x80, 0x00, 0x00, 0x00, 0xA0, 0x00,
-	0x00, 0x00, 0x01, 0x00, 0x10, 0x00, 0x03, 0x00, 0x00, 0x00, 0x00, 0xA0,
-	0x00, 0x00, 0x23, 0x2E, 0x00, 0x00, 0x23, 0x2E, 0x00, 0x00, 0x00, 0x00,
-	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xF8, 0x00, 0x00, 0xE0, 0x07,
-	0x00, 0x00, 0x1F, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
+// TODO: FF bytes for replace.
+// https://en.wikipedia.org/wiki/BMP_file_format
+// 14 bytes (Bitmap file header) + 56 bytes (DIB header (bitmap information header) / BITMAPV3INFOHEADER)
+static UINT8 bmp_header[70] = {
+	0x42, 0x4D, 0xFF, 0xFF, 0xFF, 0xFF, 0x00, 0x00, 0x00, 0x00, 0x46, 0x00, 0x00, 0x00, 0x38, 0x00,
+	0x00, 0x00, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0x01, 0x00, 0x10, 0x00, 0x03, 0x00,
+	0x00, 0x00, 0xFF, 0xFF, 0xFF, 0xFF, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xF8, 0x00, 0x00, 0xE0, 0x07, 0x00, 0x00, 0x1F, 0x00,
+	0x00, 0x00, 0x00, 0x00, 0x00, 0x00
 };
 
 static UINT32 copy_ati_display_vram_to_ram(UINT32 *display_width, UINT32 *display_height, UINT32 *display_bpp) {
@@ -99,7 +111,8 @@ static UINT16 *create_converted_bitmap(UINT32 display_width, UINT32 display_heig
 	stroke = 0;
 	ppp = 0;
 	for (pixel = display_width * display_height - 1, address = (void *) display_source_buffer; pixel >= 0; --pixel, ++address) {
-		bitmap_pixel = ((*address) << 8) | ((*address) >> 8);
+//		bitmap_pixel = ((*address) << 8) | ((*address) >> 8);
+		bitmap_pixel = SWAP_UINT16(*address);
 		ppp = display_width * display_height - line - stroke * display_width;
 
 		bitmap_buffer[ppp] = bitmap_pixel;
@@ -145,6 +158,17 @@ static UINT32 file_ops_close(FILE file, UINT32 result, UINT32 *written_bytes) {
 	return result;
 }
 
+// TODO: Inline it?
+static void fill_int_to_array(UINT8 *start_address, UINT32 start_offset, UINT32 value) {
+	*((__packed UINT32 *) &start_address[start_offset]) = SWAP_UINT32(value);
+	/*
+	start_address[start_offset + 0x00] = (value >>  0) & 0x000000FF;
+	start_address[start_offset + 0x01] = (value >>  8) & 0x000000FF;
+	start_address[start_offset + 0x02] = (value >> 16) & 0x000000FF;
+	start_address[start_offset + 0x03] = (value >> 24) & 0x000000FF;
+	*/
+}
+
 static UINT32 save_screenshot_file(void *bitmap_converted_buffer, UINT32 w, UINT32 h, UINT32 bitmap_size_bytes) {
 	UINT32 written_bytes = 0;
 	WCHAR screenshot_path_buffer[FILEURI_MAX_LEN + 1]; // TODO: Half-2?
@@ -159,15 +183,29 @@ static UINT32 save_screenshot_file(void *bitmap_converted_buffer, UINT32 w, UINT
 	if (screenshot_file == NULL)
 		return RESULT_FAIL;
 
-	// TODO: Check return also?
-	// TODO: PATCH BMP DATA!!!
-/*
+	// TODO: PATCH BMP DATA to function!!!
+
 	bmp_size = sizeof(bmp_header) + bitmap_size_bytes;
-	memcpy((void *) bmp_header[0x02], (void *) &bmp_size, sizeof(bmp_size));
-	memcpy((void *) bmp_header[0x12], (void *) &w, sizeof(w));
-	memcpy((void *) bmp_header[0x16], (void *) &h, sizeof(h));
-	memcpy((void *) bmp_header[0x22], (void *) &bitmap_size_bytes, sizeof(bitmap_size_bytes));
+
+	fill_int_to_array(bmp_header, 0x02, bmp_size);
+	fill_int_to_array(bmp_header, 0x12, w);
+	fill_int_to_array(bmp_header, 0x16, h);
+	fill_int_to_array(bmp_header, 0x22, bitmap_size_bytes);
+
+	/*
+	// TODO: Buggy on big-endian.
+	*((UINT32 *) &bmp_header[0x02]) = SWAP_UINT32(bmp_size);
+	*((UINT32 *) &bmp_header[0x12]) = SWAP_UINT32(w);
+	*((UINT32 *) &bmp_header[0x16]) = SWAP_UINT32(h);
+	*((UINT32 *) &bmp_header[0x22]) = SWAP_UINT32(bitmap_size_bytes);
 */
+//	memcpy((void *) bmp_header[0x02], (void *) &bmp_size, sizeof(bmp_size));
+//	memcpy((void *) bmp_header[0x12], (void *) &w, sizeof(w));
+//	memcpy((void *) bmp_header[0x16], (void *) &h, sizeof(h));
+//	memcpy((void *) bmp_header[0x22], (void *) &bitmap_size_bytes, sizeof(bitmap_size_bytes));
+
+
+	// TODO: Check return also?
 	DL_FsWriteFile(bmp_header, sizeof(bmp_header), 1, screenshot_file, &written_bytes);
 	if (written_bytes == 0)
 		return file_ops_close(screenshot_file, RESULT_FAIL, &written_bytes);
@@ -214,6 +252,11 @@ static UINT32 handle_key_press(EVENT_STACK_T *event_stack, void *application) {
 	switch (event->data.key_pressed) {
 	case KEY_POUND:
 		return make_screenshot();
+	case KEY_5:
+		// TODO: Check address.
+		PFprintf("display_source_buffer addr = 0x%08X.\n", display_source_buffer);
+		UtilLogStringData("display_source_buffer addr = 0x%08X.\n", display_source_buffer);
+		break;
 	case KEY_0:
 		destroy_application_status = TRUE;
 		return destroy_application(event_stack, application);
@@ -274,11 +317,12 @@ static UINT32 start_application(EVENT_STACK_T *event_stack, REG_ID_T reg_id, UIN
 }
 
 // TODO: Const chars ?
+// TODO: Static?
 UINT32 Register(char *executable_uri, char *arguments, UINT32 event) {
 	UINT32 status;
 	UINT32 event_code_base;
 
-	// TODO: ?
+	// TODO: WTF?
 	event_code_base = event;
 
 	status = APP_Register(
