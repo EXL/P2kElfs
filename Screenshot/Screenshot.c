@@ -22,17 +22,10 @@
 
 #ifndef __P2K__
 #define __packed
-#define SWAP_UINT16(x) (x)
-#define SWAP_UINT32(x) (x)
-#else
-static __inline UINT16 SWAP_UINT16(UINT16 value) {
-	return ((value >>  8) |  (value << 8));
-}
-
-static __inline UINT32 SWAP_UINT32(UINT32 value) {
-	return ((value >> 24) | ((value & 0x00FF0000) >> 8) | ((value & 0x0000FF00) << 8) | (value << 24));
-}
 #endif
+
+static const char application_name[APP_NAME_LEN] = "Screenshot";
+static BOOL destroy_application_status = FALSE;
 
 typedef struct {
 	APPLICATION_T application;
@@ -44,9 +37,6 @@ typedef enum {
 	APP_SCREENSHOT_STATE_MAX
 } APP_SCREENSHOT_STATES_T;
 
-static const char application_name[APP_NAME_LEN] = "Screenshot";
-static BOOL destroy_application_status = FALSE;
-
 // TODO: FF bytes for replace.
 // https://en.wikipedia.org/wiki/BMP_file_format
 // 14 bytes (Bitmap file header) + 56 bytes (DIB header (bitmap information header) / BITMAPV3INFOHEADER)
@@ -57,6 +47,14 @@ static UINT8 bmp_header[70] = {
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xF8, 0x00, 0x00, 0xE0, 0x07, 0x00, 0x00, 0x1F, 0x00,
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00
 };
+
+static __inline UINT16 SWAP_UINT16(UINT16 value) {
+	return ((value >>  8) |  (value << 8));
+}
+
+static __inline UINT32 SWAP_UINT32(UINT32 value) {
+	return ((value >> 24) | ((value & 0x00FF0000) >> 8) | ((value & 0x0000FF00) << 8) | (value << 24));
+}
 
 static void __inline fill_int_to_array(UINT8 *start_address, UINT32 start_offset, UINT32 value) {
 	*((__packed UINT32 *) &start_address[start_offset]) = SWAP_UINT32(value);
@@ -269,14 +267,8 @@ static UINT32 handle_key_press(EVENT_STACK_T *event_stack, void *application) {
 	return RESULT_OK;
 }
 
-// TODO: Can I skip this?
 static UINT32 state_main_enter(EVENT_STACK_T *event_stack, void *application, ENTER_STATE_TYPE_T state_type) {
 	return RESULT_OK;
-}
-
-// TODO: Can I skip this?
-static void handle_event(EVENT_STACK_T *event_stack, void *application, APP_ID_T app_id, REG_ID_T reg_id) {
-	APP_HandleEventPrepost(event_stack, application, app_id, reg_id);
 }
 
 static const EVENT_HANDLER_ENTRY_T state_handlers_any[] = {
@@ -296,7 +288,7 @@ static const STATE_HANDLERS_ENTRY_T state_handlers_table[] = {
 static UINT32 start_application(EVENT_STACK_T *event_stack, REG_ID_T reg_id, UINT32 parameter) {
 	if (AFW_InquireRoutingStackByRegId(reg_id) != RESULT_OK) {
 		APP_SCREENSHOT_T *application = (APP_SCREENSHOT_T *) APP_InitAppData(
-			(void *) handle_event,
+			(void *) APP_HandleEventPrepost,
 			sizeof(APP_SCREENSHOT_T),
 			reg_id,
 			0,
@@ -319,13 +311,10 @@ static UINT32 start_application(EVENT_STACK_T *event_stack, REG_ID_T reg_id, UIN
 	return RESULT_FAIL;
 }
 
-// TODO: Const chars ?
-// TODO: Static?
-UINT32 Register(char *executable_uri, char *arguments, UINT32 event) {
+UINT32 Register(const char *executable_uri, const char *arguments, UINT32 event) {
 	UINT32 status;
 	UINT32 event_code_base;
 
-	// TODO: WTF?
 	event_code_base = event;
 
 	status = APP_Register(
