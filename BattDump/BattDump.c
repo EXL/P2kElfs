@@ -36,6 +36,7 @@ static UINT32 DumpBatteryRom(void);
 static UINT32 ClearDataArrays(UINT8 *data_arr, UINT32 size);
 
 static const char g_app_name[APP_NAME_LEN] = "BattDump";
+
 static const WCHAR g_uri_battery_rom_dump[] = L"/a/battery.rom";
 static const WCHAR g_msg_state_main[] = L"Dump battery ROM to the \"/a/battery.rom\" file?";
 static const WCHAR g_msg_state_dump_ok[] =  L"The battery ROM has been dumped to the \"/a/battery.rom\" file!";
@@ -221,6 +222,8 @@ static UINT32 DumpBatteryRom(void) {
 	UINT8 battery_rom[HAPI_BATTERY_ROM_BYTE_SIZE];
 	HAPI_BATTERY_ROM_T battery_status;
 
+	status = RESULT_OK;
+
 	ClearDataArrays(battery_id, HAPI_BATTERY_ROM_UNIQUE_ID_SIZE);
 	ClearDataArrays(battery_rom, HAPI_BATTERY_ROM_BYTE_SIZE);
 
@@ -242,13 +245,9 @@ static UINT32 DumpBatteryRom(void) {
 	 *    6 bytes = Battery id.
 	 *  128 bytes = Battery ROM.
 	 */
-	status = DL_FsWriteFile((void *) &battery_status, sizeof(HAPI_BATTERY_ROM_T), 1, rom, &written);
-	if (status != RESULT_OK)
-		return RESULT_FAIL;
-	status = DL_FsWriteFile((void *) &battery_id, HAPI_BATTERY_ROM_UNIQUE_ID_SIZE, 1, rom, &written);
-	if (status != RESULT_OK)
-		return RESULT_FAIL;
-	status = DL_FsWriteFile((void *) &battery_rom, HAPI_BATTERY_ROM_BYTE_SIZE, 1, rom, &written);
+	status |= DL_FsWriteFile((void *) &battery_status, sizeof(HAPI_BATTERY_ROM_T), 1, rom, &written);
+	status |= DL_FsWriteFile((void *) &battery_id, HAPI_BATTERY_ROM_UNIQUE_ID_SIZE, 1, rom, &written);
+	status |= DL_FsWriteFile((void *) &battery_rom, HAPI_BATTERY_ROM_BYTE_SIZE, 1, rom, &written);
 
 	DL_FsCloseFile(rom);
 
