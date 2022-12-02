@@ -1,4 +1,5 @@
 #include <apps.h>
+#include <mme.h>
 #include <uis.h>
 
 typedef struct {
@@ -12,21 +13,27 @@ typedef enum {
 	APP_STATE_DUMP_OK,
 	APP_STATE_DUMP_FAIL,
 	APP_STATE_MAX
-} APP_STATES_T;
+} APP_STATE_T;
+
+typedef enum {
+	APP_TIMER_DUMP_OK,
+	APP_TIMER_DUMP_FAIL
+} APP_TIMER_T;
 
 UINT32 Register(const char *elf_path_uri, const char *args, UINT32 ev_code);
 static UINT32 ApplicationStart(EVENT_STACK_T *ev_st, REG_ID_T reg_id, void *reg_hdl);
 static UINT32 ApplicationStop(EVENT_STACK_T *ev_st, void *app);
 
 static UINT32 HandleStateEnterMain(EVENT_STACK_T *ev_st, void *app, ENTER_STATE_TYPE_T state);
-static UINT32 HandleStateExit(EVENT_STACK_T *ev_st, void *app, EXIT_STATE_TYPE_T state);
 static UINT32 HandleStateEnterDumpOk(EVENT_STACK_T *ev_st, void *app, ENTER_STATE_TYPE_T state);
 static UINT32 HandleStateEnterDumpFail(EVENT_STACK_T *ev_st, void *app, ENTER_STATE_TYPE_T state);
 
 static UINT32 HandleEventYes(EVENT_STACK_T *ev_st, void *app);
 static UINT32 HandleEventNo(EVENT_STACK_T *ev_st, void *app);
+static UINT32 HandleEventTimerExpired(EVENT_STACK_T *ev_st, void *app);
 
 static UINT32 DumpBatteryRom(void);
+static UINT32 ClearDataArrays(UINT8 *data_arr, UINT32 size);
 
 static const char g_app_name[APP_NAME_LEN] = "BattDump";
 static const WCHAR g_uri_battery_rom_dump[] = L"/a/battery.rom";
@@ -45,6 +52,7 @@ static const EVENT_HANDLER_ENTRY_T g_state_init_hdls[] = {
 };
 
 static const EVENT_HANDLER_ENTRY_T g_state_main_hdls[] = {
+	{ EV_DONE, ApplicationStop },
 	{ EV_DIALOG_DONE, ApplicationStop },
 	{ EV_NO, HandleEventNo },
 	{ EV_YES, HandleEventYes },
@@ -52,16 +60,18 @@ static const EVENT_HANDLER_ENTRY_T g_state_main_hdls[] = {
 };
 
 static const EVENT_HANDLER_ENTRY_T g_state_dump_hdls[] = {
+	{ EV_DONE, ApplicationStop },
 	{ EV_DIALOG_DONE, ApplicationStop },
+	{ EV_TIMER_EXPIRED, HandleEventTimerExpired },
 	{ STATE_HANDLERS_END, NULL }
 };
 
 static const STATE_HANDLERS_ENTRY_T g_state_table_hdls[] = {
 	{ APP_STATE_ANY, NULL, NULL, g_state_any_hdls },
 	{ APP_STATE_INIT, NULL, NULL, g_state_init_hdls },
-	{ APP_STATE_MAIN, HandleStateEnterMain, HandleStateExit, g_state_main_hdls },
-	{ APP_STATE_DUMP_OK, HandleStateEnterDumpOk, HandleStateExit, g_state_dump_hdls },
-	{ APP_STATE_DUMP_FAIL, HandleStateEnterDumpFail, HandleStateExit, g_state_dump_hdls }
+	{ APP_STATE_MAIN, HandleStateEnterMain, NULL, g_state_main_hdls },
+	{ APP_STATE_DUMP_OK, HandleStateEnterDumpOk, NULL, g_state_dump_hdls },
+	{ APP_STATE_DUMP_FAIL, HandleStateEnterDumpFail, NULL, g_state_dump_hdls }
 };
 
 UINT32 Register(const char *elf_path_uri, const char *args, UINT32 ev_code) {
@@ -93,6 +103,10 @@ static UINT32 ApplicationStart(EVENT_STACK_T *ev_st, REG_ID_T reg_id, void *reg_
 
 static UINT32 ApplicationStop(EVENT_STACK_T *ev_st, void *app) {
 	UINT32 status;
+	APPLICATION_T *application;
+
+	application = (APPLICATION_T *) app;
+	APP_UtilUISDialogDelete(&application->dialog);
 
 	status = APP_Exit(ev_st, app, 0);
 
@@ -138,7 +152,7 @@ static UINT32 HandleStateEnterDumpOk(EVENT_STACK_T *ev_st, void *app, ENTER_STAT
 
 	application = (APPLICATION_T *) app;
 	port = application->port;
-	UIS_MakeContentFromString("MCq0", &content, g_msg_state_dump_ok);
+	UIS_MakeContentFromString("RMq0", &content, g_msg_state_dump_ok);
 
 	dialog = UIS_CreateTransientNotice(&port, &content, NOTICE_TYPE_OK);
 
@@ -163,7 +177,7 @@ static UINT32 HandleStateEnterDumpFail(EVENT_STACK_T *ev_st, void *app, ENTER_ST
 
 	application = (APPLICATION_T *) app;
 	port = application->port;
-	UIS_MakeContentFromString("MCq0", &content, g_msg_state_dump_fail);
+	UIS_MakeContentFromString("RMq0", &content, g_msg_state_dump_fail);
 
 	dialog = UIS_CreateTransientNotice(&port, &content, NOTICE_TYPE_FAIL);
 
@@ -176,30 +190,37 @@ static UINT32 HandleStateEnterDumpFail(EVENT_STACK_T *ev_st, void *app, ENTER_ST
 	return RESULT_OK;
 }
 
-static UINT32 HandleStateExit(EVENT_STACK_T *ev_st, void *app, EXIT_STATE_TYPE_T state) {
-	APPLICATION_T *application;
-
-	application = (APPLICATION_T *) app;
-
-	if (state == EXIT_STATE_SUSPEND) {
-		return RESULT_OK;
-	}
-
-	APP_UtilUISDialogDelete(&application->dialog);
-	return RESULT_OK;
-}
-
 static UINT32 HandleEventYes(EVENT_STACK_T *ev_st, void *app) {
 	if (DumpBatteryRom() == RESULT_OK) {
 		APP_UtilChangeState(APP_STATE_DUMP_OK, ev_st, app);
+		APP_UtilStartTimer(100, APP_TIMER_DUMP_OK, app);
 	} else {
 		APP_UtilChangeState(APP_STATE_DUMP_FAIL, ev_st, app);
+		APP_UtilStartTimer(100, APP_TIMER_DUMP_FAIL, app);
 	}
 	return RESULT_OK;
 }
 
 static UINT32 HandleEventNo(EVENT_STACK_T *ev_st, void *app) {
 	ApplicationStop(ev_st, app);
+	return RESULT_OK;
+}
+
+static UINT32 HandleEventTimerExpired(EVENT_STACK_T *ev_st, void *app) {
+	EVENT_T *event;
+	APP_TIMER_T timer_id;
+
+	event = AFW_GetEv(ev_st);
+	timer_id = ((DL_TIMER_DATA_T *) event->attachment)->ID;
+
+	if (timer_id == APP_TIMER_DUMP_OK) {
+		/* Just play a normal camera shutter sound using loud speaker. */
+		MME_GC_playback_open_audio_play_forget(L"/a/mobile/system/shutter5.amr");
+	} else {
+		/* Just play an error sound using quiet speaker. */
+		DL_AudPlayTone(0x02,  0xFF);
+	}
+
 	return RESULT_OK;
 }
 
@@ -210,6 +231,9 @@ static UINT32 DumpBatteryRom(void) {
 	UINT8 battery_id[HAPI_BATTERY_ROM_UNIQUE_ID_SIZE];
 	UINT8 battery_rom[HAPI_BATTERY_ROM_BYTE_SIZE];
 	HAPI_BATTERY_ROM_T battery_status;
+
+	ClearDataArrays(battery_id, HAPI_BATTERY_ROM_UNIQUE_ID_SIZE);
+	ClearDataArrays(battery_rom, HAPI_BATTERY_ROM_BYTE_SIZE);
 
 	battery_status = HAPI_BATTERY_ROM_NONE;
 	HAPI_BATTERY_ROM_get_unique_id(battery_id);
@@ -240,4 +264,12 @@ static UINT32 DumpBatteryRom(void) {
 	DL_FsCloseFile(rom);
 
 	return status;
+}
+
+static UINT32 ClearDataArrays(UINT8 *data_arr, UINT32 size) {
+	UINT32 i;
+	for (i = 0; i < size; ++i) {
+		data_arr[i] = 0;
+	}
+	return RESULT_OK;
 }
