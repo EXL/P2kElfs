@@ -24,9 +24,9 @@ UINT32 Register(const char *elf_path_uri, const char *args, UINT32 ev_code);
 static UINT32 ApplicationStart(EVENT_STACK_T *ev_st, REG_ID_T reg_id, void *reg_hdl);
 static UINT32 ApplicationStop(EVENT_STACK_T *ev_st, void *app);
 
-static UINT32 HandleStateEnterMain(EVENT_STACK_T *ev_st, void *app, ENTER_STATE_TYPE_T state);
-static UINT32 HandleStateEnterDumpOk(EVENT_STACK_T *ev_st, void *app, ENTER_STATE_TYPE_T state);
-static UINT32 HandleStateEnterDumpFail(EVENT_STACK_T *ev_st, void *app, ENTER_STATE_TYPE_T state);
+static UINT32 HandleStateEnter(EVENT_STACK_T *ev_st, void *app, ENTER_STATE_TYPE_T state);
+static UINT32 HandleStateExit(EVENT_STACK_T *ev_st, void *app, EXIT_STATE_TYPE_T state);
+static UINT32 DeleteDialog(void *app);
 
 static UINT32 HandleEventYes(EVENT_STACK_T *ev_st, void *app);
 static UINT32 HandleEventNo(EVENT_STACK_T *ev_st, void *app);
@@ -38,8 +38,8 @@ static UINT32 ClearDataArrays(UINT8 *data_arr, UINT32 size);
 static const char g_app_name[APP_NAME_LEN] = "BattDump";
 static const WCHAR g_uri_battery_rom_dump[] = L"/a/battery.rom";
 static const WCHAR g_msg_state_main[] = L"Dump battery ROM to the \"/a/battery.rom\" file?";
-static const WCHAR g_msg_state_dump_ok[] =  L"The battery ROM has been dumped to \"/a/battery.rom\" file!";
-static const WCHAR g_msg_state_dump_fail[] = L"Error while dumping battery ROM to \"/a/battery.rom\" file!";
+static const WCHAR g_msg_state_dump_ok[] =  L"The battery ROM has been dumped to the \"/a/battery.rom\" file!";
+static const WCHAR g_msg_state_dump_fail[] = L"Error while dumping battery ROM to the \"/a/battery.rom\" file!";
 
 static const EVENT_HANDLER_ENTRY_T g_state_any_hdls[] = {
 	{ EV_REVOKE_TOKEN, APP_HandleUITokenRevoked },
@@ -69,9 +69,9 @@ static const EVENT_HANDLER_ENTRY_T g_state_dump_hdls[] = {
 static const STATE_HANDLERS_ENTRY_T g_state_table_hdls[] = {
 	{ APP_STATE_ANY, NULL, NULL, g_state_any_hdls },
 	{ APP_STATE_INIT, NULL, NULL, g_state_init_hdls },
-	{ APP_STATE_MAIN, HandleStateEnterMain, NULL, g_state_main_hdls },
-	{ APP_STATE_DUMP_OK, HandleStateEnterDumpOk, NULL, g_state_dump_hdls },
-	{ APP_STATE_DUMP_FAIL, HandleStateEnterDumpFail, NULL, g_state_dump_hdls }
+	{ APP_STATE_MAIN, HandleStateEnter, HandleStateExit, g_state_main_hdls },
+	{ APP_STATE_DUMP_OK, HandleStateEnter, HandleStateExit, g_state_dump_hdls },
+	{ APP_STATE_DUMP_FAIL, HandleStateEnter, HandleStateExit, g_state_dump_hdls }
 };
 
 UINT32 Register(const char *elf_path_uri, const char *args, UINT32 ev_code) {
@@ -103,10 +103,8 @@ static UINT32 ApplicationStart(EVENT_STACK_T *ev_st, REG_ID_T reg_id, void *reg_
 
 static UINT32 ApplicationStop(EVENT_STACK_T *ev_st, void *app) {
 	UINT32 status;
-	APPLICATION_T *application;
 
-	application = (APPLICATION_T *) app;
-	APP_UtilUISDialogDelete(&application->dialog);
+	DeleteDialog(app);
 
 	status = APP_Exit(ev_st, app, 0);
 
@@ -115,23 +113,42 @@ static UINT32 ApplicationStop(EVENT_STACK_T *ev_st, void *app) {
 	return status;
 }
 
-static UINT32 HandleStateEnterMain(EVENT_STACK_T *ev_st, void *app, ENTER_STATE_TYPE_T state) {
+static UINT32 HandleStateEnter(EVENT_STACK_T *ev_st, void *app, ENTER_STATE_TYPE_T state) {
 	APPLICATION_T *application;
 	SU_PORT_T port;
 	CONTENT_T content;
 	UIS_DIALOG_T dialog;
+	APP_STATE_T app_state;
 
 	if (state != ENTER_STATE_ENTER) {
 		return RESULT_OK;
 	}
 
+	DeleteDialog(app);
+
 	application = (APPLICATION_T *) app;
 	port = application->port;
-	UIS_MakeContentFromString("MCq0", &content, g_msg_state_main);
+	app_state = application->state;
 
-	dialog = UIS_CreateConfirmation(&port, &content);
+	switch (app_state) {
+	case APP_STATE_MAIN:
+		UIS_MakeContentFromString("MCq0", &content, g_msg_state_main);
+		dialog = UIS_CreateConfirmation(&port, &content);
+		break;
+	case APP_STATE_DUMP_OK:
+		UIS_MakeContentFromString("RMq0", &content, g_msg_state_dump_ok);
+		dialog = UIS_CreateTransientNotice(&port, &content, NOTICE_TYPE_OK);
+		break;
+	case APP_STATE_DUMP_FAIL:
+		UIS_MakeContentFromString("RMq0", &content, g_msg_state_dump_fail);
+		dialog = UIS_CreateTransientNotice(&port, &content, NOTICE_TYPE_FAIL);
+		break;
+	default:
+		dialog = DialogType_Null;
+		break;
+	}
 
-	if (dialog == 0) {
+	if (dialog == DialogType_Null) {
 		return RESULT_FAIL;
 	}
 
@@ -140,54 +157,26 @@ static UINT32 HandleStateEnterMain(EVENT_STACK_T *ev_st, void *app, ENTER_STATE_
 	return RESULT_OK;
 }
 
-static UINT32 HandleStateEnterDumpOk(EVENT_STACK_T *ev_st, void *app, ENTER_STATE_TYPE_T state) {
-	APPLICATION_T *application;
-	SU_PORT_T port;
-	CONTENT_T content;
-	UIS_DIALOG_T dialog;
-
-	if (state != ENTER_STATE_ENTER) {
+static UINT32 HandleStateExit(EVENT_STACK_T *ev_st, void *app, EXIT_STATE_TYPE_T state) {
+	if (state == EXIT_STATE_EXIT) {
+		DeleteDialog(app);
 		return RESULT_OK;
 	}
-
-	application = (APPLICATION_T *) app;
-	port = application->port;
-	UIS_MakeContentFromString("RMq0", &content, g_msg_state_dump_ok);
-
-	dialog = UIS_CreateTransientNotice(&port, &content, NOTICE_TYPE_OK);
-
-	if (dialog == 0) {
-		return RESULT_FAIL;
-	}
-
-	application->dialog = dialog;
-
-	return RESULT_OK;
+	return RESULT_FAIL;
 }
 
-static UINT32 HandleStateEnterDumpFail(EVENT_STACK_T *ev_st, void *app, ENTER_STATE_TYPE_T state) {
+static UINT32 DeleteDialog(void *app) {
 	APPLICATION_T *application;
-	SU_PORT_T port;
-	CONTENT_T content;
-	UIS_DIALOG_T dialog;
 
-	if (state != ENTER_STATE_ENTER) {
+	application = (APPLICATION_T *) app;
+
+	if (application->dialog != DialogType_Null) {
+		UIS_Delete(application->dialog);
+		application->dialog = DialogType_Null;
 		return RESULT_OK;
 	}
 
-	application = (APPLICATION_T *) app;
-	port = application->port;
-	UIS_MakeContentFromString("RMq0", &content, g_msg_state_dump_fail);
-
-	dialog = UIS_CreateTransientNotice(&port, &content, NOTICE_TYPE_FAIL);
-
-	if (dialog == 0) {
-		return RESULT_FAIL;
-	}
-
-	application->dialog = dialog;
-
-	return RESULT_OK;
+	return RESULT_FAIL;
 }
 
 static UINT32 HandleEventYes(EVENT_STACK_T *ev_st, void *app) {
