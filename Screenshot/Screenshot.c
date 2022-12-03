@@ -1,7 +1,15 @@
+/*
+ * Application mode: GUI + Deamon.
+ */
+
 #include <apps.h>
 #include <ati.h>
 #include <mme.h>
 #include <uis.h>
+
+#ifndef __P2K__
+#define __packed
+#endif
 
 typedef struct {
 	APPLICATION_T app;
@@ -29,6 +37,26 @@ typedef enum {
 	APP_RESOURCE_MAX
 } APP_RESOURCES_T;
 
+typedef struct {
+	UINT32 width;
+	UINT32 height;
+	UINT32 pixels;  /* Count of pixels */
+	UINT32 bpp;     /* Bytes per pixel. */
+	UINT32 size;    /* In bytes. */
+	UINT16 *buffer;
+} BITMAP_T;
+
+typedef enum {
+	BMP_OFFSET_SIZE_FILE   = 0x02,
+	BMP_OFFSET_WIDTH       = 0x12,
+	BMP_OFFSET_HEIGHT      = 0x16,
+	BMP_OFFSET_SIZE_BITMAP = 0x22
+} BMP_OFFSET_T;
+
+static __inline UINT16 SwapUINT16(UINT16 value);
+static __inline UINT32 SwapUINT32(UINT32 value);
+static __inline void InsertData(UINT8 *start_address, UINT32 start_offset, UINT32 value);
+
 UINT32 Register(const char *elf_path_uri, const char *args, UINT32 ev_code);
 static UINT32 ApplicationStart(EVENT_STACK_T *ev_st, REG_ID_T reg_id, void *reg_hdl);
 static UINT32 ApplicationStop(EVENT_STACK_T *ev_st, void *app);
@@ -47,6 +75,13 @@ static UINT32 HandleEventShow(EVENT_STACK_T *ev_st, void *app);
 static UINT32 HandleEventKeyPress(EVENT_STACK_T *ev_st, void *app);
 static UINT32 HandleEventKeyRelease(EVENT_STACK_T *ev_st, void *app);
 
+static UINT32 MakeScreenshot(void);
+static UINT32 CopyVramToRamAndInitBitmap(BITMAP_T *bitmap);
+static UINT32 CreateConvertedBitmap(BITMAP_T *bitmap);
+static UINT32 PatchBmpHeader(const BITMAP_T *bitmap);
+static UINT32 SaveScreenshotFile(const BITMAP_T *bitmap);
+static void GenerateScreenshotFilePath(WCHAR *output_path);
+
 static const char g_app_name[APP_NAME_LEN] = "Screenshot";
 
 static const WCHAR g_msg_state_main[] = L"Hold \"#\" to Screenshot!\nHold \"0\" to Help.\nHold \"*\" to Exit.";
@@ -55,6 +90,21 @@ static const WCHAR g_msg_softkey_got_it[] = L"Got it!";
 static APP_DISPLAY_T g_app_state = APP_DISPLAY_SHOW;
 static RESOURCE_ID g_app_resources[APP_RESOURCE_MAX];
 static UINT64 g_ms_key_press_start = 0LLU;
+
+/*
+ * The 0xFF bytes are for later replacement.
+ * Information: https://en.wikipedia.org/wiki/BMP_file_format
+ *    14 bytes: Bitmap file header.
+ *    56 bytes: Bitmap information header (DIB header).
+ *     Version: BITMAPV3INFOHEADER
+ */
+static UINT8 g_bmp_header[70] = {
+	0x42, 0x4D, 0xFF, 0xFF, 0xFF, 0xFF, 0x00, 0x00, 0x00, 0x00, 0x46, 0x00, 0x00, 0x00, 0x38, 0x00,
+	0x00, 0x00, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0x01, 0x00, 0x10, 0x00, 0x03, 0x00,
+	0x00, 0x00, 0xFF, 0xFF, 0xFF, 0xFF, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xF8, 0x00, 0x00, 0xE0, 0x07, 0x00, 0x00, 0x1F, 0x00,
+	0x00, 0x00, 0x00, 0x00, 0x00, 0x00
+};
 
 static const EVENT_HANDLER_ENTRY_T g_state_any_hdls[] = {
 	{ EV_REVOKE_TOKEN, APP_HandleUITokenRevoked },
@@ -85,6 +135,27 @@ static const STATE_HANDLERS_ENTRY_T g_state_table_hdls[] = {
 	{ APP_STATE_INIT, NULL, NULL, g_state_init_hdls },
 	{ APP_STATE_MAIN, HandleStateEnter, HandleStateExit, g_state_main_hdls }
 };
+
+static __inline UINT16 SwapUINT16(UINT16 value) {
+	return ((value >>  8) | (value << 8));
+}
+
+static __inline UINT32 SwapUINT32(UINT32 value) {
+	return ((value >> 24) | ((value & 0x00FF0000) >> 8) | ((value & 0x0000FF00) << 8) | (value << 24));
+}
+
+static __inline void InsertData(UINT8 *start_address, UINT32 start_offset, UINT32 value) {
+	*((__packed UINT32 *) &start_address[start_offset]) = SwapUINT32(value);
+
+	/*
+	 * Alternative way.
+	 *
+	start_address[start_offset + 0x00] = (value >>  0) & 0x000000FF;
+	start_address[start_offset + 0x01] = (value >>  8) & 0x000000FF;
+	start_address[start_offset + 0x02] = (value >> 16) & 0x000000FF;
+	start_address[start_offset + 0x03] = (value >> 24) & 0x000000FF;
+	*/
+}
 
 UINT32 Register(const char *elf_path_uri, const char *args, UINT32 ev_code) {
 	UINT32 status;
@@ -275,6 +346,8 @@ static UINT32 HandleEventKeyPress(EVENT_STACK_T *ev_st, void *app) {
 
 	if (key == KEY_STAR || key == KEY_0 || key == KEY_POUND) {
 		g_ms_key_press_start = suPalTicksToMsec(suPalReadTime());
+		PFprintf("display_source_buffer addr = 0x%08X.\n", display_source_buffer); /* Send to MIDway. */
+		UtilLogStringData("display_source_buffer addr = 0x%08X.\n", display_source_buffer); /* Send to P2KDataLogger. */
 	}
 
 	return RESULT_OK;
@@ -297,13 +370,20 @@ static UINT32 HandleEventKeyRelease(EVENT_STACK_T *ev_st, void *app) {
 			switch (key) {
 				case KEY_STAR:
 					/* Just play an exit sound using quiet speaker. */
-					DL_AudPlayTone(0x02,  0xFF);
+					DL_AudPlayTone(0x00,  0xFF);
 					return ApplicationStop(ev_st, app);
 					break;
 				case KEY_0:
 					return HandleEventShow(ev_st, app);
 					break;
 				case KEY_POUND:
+					if (MakeScreenshot() == RESULT_OK) {
+						/* Just play a normal camera shutter sound using loud speaker. */
+						MME_GC_playback_open_audio_play_forget(L"/a/mobile/system/shutter5.amr");
+					} else {
+						/* Just play an error sound using quiet speaker. */
+						DL_AudPlayTone(0x02,  0xFF);
+					}
 					break;
 				default:
 					break;
@@ -312,4 +392,138 @@ static UINT32 HandleEventKeyRelease(EVENT_STACK_T *ev_st, void *app) {
 	}
 
 	return RESULT_OK;
+}
+
+static UINT32 MakeScreenshot(void) {
+	UINT32 status;
+	BITMAP_T bitmap;
+
+	status = RESULT_OK;
+	status |= CopyVramToRamAndInitBitmap(&bitmap);
+	status |= CreateConvertedBitmap(&bitmap);
+	status |= PatchBmpHeader(&bitmap);
+	status |= SaveScreenshotFile(&bitmap);
+
+	suFreeMem(bitmap.buffer);
+
+	return status;
+}
+
+static UINT32 CopyVramToRamAndInitBitmap(BITMAP_T *bitmap) {
+	UINT32 status;
+	AHIDEVCONTEXT_T ahi_device_context;
+	AHISURFACE_T ahi_surface;
+	AHISURFINFO_T ahi_surface_info;
+	AHIBITMAP_T ahi_bitmap;
+	AHIRECT_T ahi_rect;
+	AHIPOINT_T ahi_point;
+
+	status = RESULT_OK;
+
+	ahi_device_context = DAL_GetDeviceContext(DISPLAY_MAIN);
+	ahi_surface = DAL_GetDrawingSurface(DISPLAY_MAIN);
+
+	status |= AhiSurfInfo(ahi_device_context, ahi_surface, &ahi_surface_info);
+	bitmap->width = ahi_surface_info.width;
+	bitmap->height = ahi_surface_info.height;
+	bitmap->pixels = bitmap->width * bitmap->height;
+	bitmap->bpp = ahi_surface_info.byteSize / bitmap->pixels;
+	bitmap->size = bitmap->pixels * bitmap->bpp;
+
+	ahi_bitmap.width = bitmap->width;
+	ahi_bitmap.height = bitmap->height;
+	ahi_bitmap.stride = bitmap->width * bitmap->bpp;
+	ahi_bitmap.format = AHIFMT_16BPP_565;
+	ahi_bitmap.image  = (void *) display_source_buffer;
+
+	ahi_rect.x1 = 0;
+	ahi_rect.y1 = 0;
+	ahi_rect.x2 = 0 + bitmap->width;
+	ahi_rect.y2 = 0 + bitmap->height;
+
+	ahi_point.x = 0;
+	ahi_point.y = 0;
+
+	status |= AhiSurfCopy(ahi_device_context, ahi_surface, &ahi_bitmap, &ahi_rect, &ahi_point, 0, 1);
+
+	return status;
+}
+
+static UINT32 CreateConvertedBitmap(BITMAP_T *bitmap) {
+	UINT32 status;
+	INT32 i;
+	INT32 x;
+	INT32 y;
+	UINT16 *address;
+	UINT16 bitmap_pixel;
+
+	bitmap->buffer = (UINT16 *) suAllocMem(bitmap->size, (INT32 *) &status);
+	if (status != RESULT_OK) {
+		return RESULT_FAIL;
+	}
+
+	x = bitmap->width;
+	y = 0;
+	for (i = bitmap->pixels - 1, address = (void *) display_source_buffer; i >= 0; --i, ++address) {
+		bitmap_pixel = SwapUINT16(*address);
+		bitmap->buffer[bitmap->pixels - x - (y * bitmap->width)] = bitmap_pixel;
+		--x;
+		if (x == 0) {
+			x = bitmap->width;
+			++y;
+		}
+	}
+
+	return status;
+}
+
+static UINT32 PatchBmpHeader(const BITMAP_T *bitmap) {
+	UINT32 bmp_file_size;
+
+	bmp_file_size = sizeof(g_bmp_header) + bitmap->size;
+
+	InsertData(g_bmp_header, BMP_OFFSET_SIZE_FILE, bmp_file_size);
+	InsertData(g_bmp_header, BMP_OFFSET_WIDTH, bitmap->width);
+	InsertData(g_bmp_header, BMP_OFFSET_HEIGHT, bitmap->height);
+	InsertData(g_bmp_header, BMP_OFFSET_SIZE_BITMAP, bitmap->size);
+
+	return RESULT_OK;
+}
+
+static UINT32 SaveScreenshotFile(const BITMAP_T *bitmap) {
+	UINT32 status;
+	FILE screenshot;
+	UINT32 written_bytes;
+
+	screenshot = NULL;
+	written_bytes = 0;
+
+
+	return status;
+}
+
+static void GenerateScreenshotFilePath(WCHAR *output_path) {
+
+}
+
+static void generate_screenshot_path(WCHAR *output_path) {
+	char path_buffer[FILEURI_MAX_LEN + 1];
+	CLK_DATE_T date;
+	CLK_TIME_T time;
+
+	DL_ClkGetTime(&time);
+	DL_ClkGetDate(&date);
+
+	sprintf(
+		path_buffer,
+		"/c/mobile/picture/SCR_%02d%02d%04d_%02d%02d%02d.bmp",
+		date.day,
+		date.month,
+		date.year,
+		time.hour,
+		time.minute,
+		time.second
+	);
+
+	u_atou(path_buffer, output_path);
 }
