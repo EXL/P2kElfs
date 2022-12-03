@@ -46,21 +46,20 @@ static UINT32 HandleEventHide(EVENT_STACK_T *ev_st, void *app);
 static UINT32 HandleEventShow(EVENT_STACK_T *ev_st, void *app);
 static UINT32 HandleEventKeyPress(EVENT_STACK_T *ev_st, void *app);
 static UINT32 HandleEventKeyRelease(EVENT_STACK_T *ev_st, void *app);
-static UINT32 HandleEventTimerExpired(EVENT_STACK_T *ev_st, void *app);
 
 static const char g_app_name[APP_NAME_LEN] = "Screenshot";
 
-static const WCHAR g_msg_state_main[] = L"Hold \"#\" to Screenshot!\nPush \"0\" to Help.\nPush \"*\" to Exit.";
+static const WCHAR g_msg_state_main[] = L"Hold \"#\" to Screenshot!\nHold \"0\" to Help.\nHold \"*\" to Exit.";
 static const WCHAR g_msg_softkey_got_it[] = L"Got it!";
 
 static APP_DISPLAY_T g_app_state = APP_DISPLAY_SHOW;
 static RESOURCE_ID g_app_resources[APP_RESOURCE_MAX];
+static UINT64 g_ms_key_press_start = 0LLU;
 
 static const EVENT_HANDLER_ENTRY_T g_state_any_hdls[] = {
 	{ EV_REVOKE_TOKEN, APP_HandleUITokenRevoked },
 	{ EV_KEY_PRESS, HandleEventKeyPress },
 	{ EV_KEY_RELEASE, HandleEventKeyRelease },
-	{ EV_TIMER_EXPIRED, HandleEventTimerExpired },
 	{ STATE_HANDLERS_END, NULL }
 };
 
@@ -107,12 +106,7 @@ static UINT32 ApplicationStart(EVENT_STACK_T *ev_st, REG_ID_T reg_id, void *reg_
 
 	status = RESULT_FAIL;
 
-	UtilLogStringData("1 %s", __func__);
-
-	// TODO: Why fails?!
 	if (AFW_InquireRoutingStackByRegId(reg_id) != RESULT_OK) {
-		UtilLogStringData("2 %s", __func__);
-
 		InitResourses(g_app_resources);
 
 		routing_stack = (g_app_state == APP_DISPLAY_SHOW);
@@ -212,7 +206,7 @@ static UINT32 HandleStateEnter(EVENT_STACK_T *ev_st, void *app, ENTER_STATE_TYPE
 
 	UIS_MakeContentFromString("RMq0", &content, g_msg_state_main);
 
-	dialog = UIS_CreateNotice(&port, &content, 0, NOTICE_TYPE_DEFAULT, TRUE, &actions);
+	dialog = UIS_CreateNotice(&port, &content, 0, NOTICE_TYPE_DEFAULT, FALSE, &actions);
 
 	if (dialog == DialogType_Null) {
 		return RESULT_FAIL;
@@ -274,20 +268,13 @@ static UINT32 HandleEventShow(EVENT_STACK_T *ev_st, void *app) {
 
 static UINT32 HandleEventKeyPress(EVENT_STACK_T *ev_st, void *app) {
 	EVENT_T *event;
+	UINT8 key;
 
 	event = AFW_GetEv(ev_st);
+	key = event->data.key_pressed;
 
-	switch (event->data.key_pressed) {
-		case KEY_STAR:
-			return ApplicationStop(ev_st, app);
-			break;
-		case KEY_0:
-			return HandleEventShow(ev_st, app);
-			break;
-		case KEY_POUND:
-			break;
-		default:
-			break;
+	if (key == KEY_STAR || key == KEY_0 || key == KEY_POUND) {
+		g_ms_key_press_start = suPalTicksToMsec(suPalReadTime());
 	}
 
 	return RESULT_OK;
@@ -295,17 +282,34 @@ static UINT32 HandleEventKeyPress(EVENT_STACK_T *ev_st, void *app) {
 
 static UINT32 HandleEventKeyRelease(EVENT_STACK_T *ev_st, void *app) {
 	EVENT_T *event;
+	UINT8 key;
+	UINT32 ms_key_release_stop;
 
 	event = AFW_GetEv(ev_st);
+	key = event->data.key_pressed;
 
-	switch (event->data.key_pressed) {
-		default:
-			break;
+	if (key == KEY_STAR || key == KEY_0 || key == KEY_POUND) {
+		/*
+		 * Detect long key press between 500 ms (0.5 s) and 1500 ms (1.5 s) and ignore rest.
+		 */
+		ms_key_release_stop = (UINT32) (suPalTicksToMsec(suPalReadTime()) - g_ms_key_press_start);
+		if ((ms_key_release_stop >= 500) && (ms_key_release_stop <= 1500)) {
+			switch (key) {
+				case KEY_STAR:
+					/* Just play an exit sound using quiet speaker. */
+					DL_AudPlayTone(0x02,  0xFF);
+					return ApplicationStop(ev_st, app);
+					break;
+				case KEY_0:
+					return HandleEventShow(ev_st, app);
+					break;
+				case KEY_POUND:
+					break;
+				default:
+					break;
+			}
+		}
 	}
 
-	return RESULT_OK;
-}
-
-static UINT32 HandleEventTimerExpired(EVENT_STACK_T *ev_st, void *app) {
 	return RESULT_OK;
 }
