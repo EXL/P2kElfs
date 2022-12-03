@@ -1,3 +1,7 @@
+/*
+ * Application type: GUI.
+ */
+
 #include <apps.h>
 #include <mme.h>
 #include <uis.h>
