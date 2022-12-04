@@ -28,7 +28,8 @@ typedef enum {
 } APP_DISPLAY_T;
 
 typedef enum {
-	APP_TIMER_LONG_PRESS
+	APP_TIMER_SCREEN_OK,
+	APP_TIMER_SCREEN_FAIL
 } APP_TIMER_T;
 
 typedef enum {
@@ -74,6 +75,7 @@ static UINT32 HandleEventHide(EVENT_STACK_T *ev_st, void *app);
 static UINT32 HandleEventShow(EVENT_STACK_T *ev_st, void *app);
 static UINT32 HandleEventKeyPress(EVENT_STACK_T *ev_st, void *app);
 static UINT32 HandleEventKeyRelease(EVENT_STACK_T *ev_st, void *app);
+static UINT32 HandleEventTimerExpired(EVENT_STACK_T *ev_st, void *app);
 
 static UINT32 MakeScreenshot(void);
 static UINT32 CopyVramToRamAndInitBitmap(BITMAP_T *bitmap);
@@ -112,6 +114,7 @@ static const EVENT_HANDLER_ENTRY_T g_state_any_hdls[] = {
 	{ EV_REVOKE_TOKEN, APP_HandleUITokenRevoked },
 	{ EV_KEY_PRESS, HandleEventKeyPress },
 	{ EV_KEY_RELEASE, HandleEventKeyRelease },
+	{ EV_TIMER_EXPIRED, HandleEventTimerExpired },
 	{ STATE_HANDLERS_END, NULL }
 };
 
@@ -371,7 +374,7 @@ static UINT32 HandleEventKeyRelease(EVENT_STACK_T *ev_st, void *app) {
 		if ((ms_key_release_stop >= 500) && (ms_key_release_stop <= 1500)) {
 			switch (key) {
 				case KEY_STAR:
-					/* Just play an exit sound using quiet speaker. */
+					/* Play an exit sound using quiet speaker. */
 					DL_AudPlayTone(0x00,  0xFF);
 					return ApplicationStop(ev_st, app);
 					break;
@@ -380,17 +383,33 @@ static UINT32 HandleEventKeyRelease(EVENT_STACK_T *ev_st, void *app) {
 					break;
 				case KEY_POUND:
 					if (MakeScreenshot() == RESULT_OK) {
-						/* Just play a normal camera shutter sound using loud speaker. */
-						MME_GC_playback_open_audio_play_forget(L"/a/mobile/system/shutter5.amr");
+						APP_UtilStartTimer(100, APP_TIMER_SCREEN_OK, app);
 					} else {
-						/* Just play an error sound using quiet speaker. */
-						DL_AudPlayTone(0x02,  0xFF);
+						APP_UtilStartTimer(100, APP_TIMER_SCREEN_FAIL, app);
 					}
 					break;
 				default:
 					break;
 			}
 		}
+	}
+
+	return RESULT_OK;
+}
+
+static UINT32 HandleEventTimerExpired(EVENT_STACK_T *ev_st, void *app) {
+	EVENT_T *event;
+	APP_TIMER_T timer_id;
+
+	event = AFW_GetEv(ev_st);
+	timer_id = ((DL_TIMER_DATA_T *) event->attachment)->ID;
+
+	if (timer_id == APP_TIMER_SCREEN_OK) {
+		/* Play a normal camera shutter sound using loud speaker. */
+		MME_GC_playback_open_audio_play_forget(L"/a/mobile/system/shutter5.amr");
+	} else if (timer_id == APP_TIMER_SCREEN_FAIL) {
+		/* Play an error sound using quiet speaker. */
+		DL_AudPlayTone(0x02,  0xFF);
 	}
 
 	return RESULT_OK;
@@ -531,8 +550,8 @@ static UINT32 GenerateScreenshotFilePath(WCHAR *output_path) {
 	char path[sizeof(g_scr_filename)];
 
 	status = RESULT_OK;
-	status |= DL_ClkGetDate(&date);
-	status |= DL_ClkGetTime(&time);
+	status |= (DL_ClkGetDate(&date) == NULL);
+	status |= (DL_ClkGetTime(&time) == NULL);
 	status |= (sprintf(path, g_scr_filename, date.day, date.month, date.year, time.hour, time.minute, time.second) < 0);
 	status |= (u_atou(path, output_path) == NULL);
 
