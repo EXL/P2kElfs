@@ -208,10 +208,10 @@ static UINT32 HandleEventTimerExpired(EVENT_STACK_T *ev_st, void *app) {
 	timer_id = ((DL_TIMER_DATA_T *) event->attachment)->ID;
 
 	if (timer_id == APP_TIMER_DUMP_OK) {
-		/* Just play a normal camera shutter sound using loud speaker. */
+		/* Play a normal camera shutter sound using loud speaker. */
 		MME_GC_playback_open_audio_play_forget(L"/a/mobile/system/shutter5.amr");
-	} else {
-		/* Just play an error sound using quiet speaker. */
+	} else if (timer_id == APP_TIMER_DUMP_FAIL) {
+		/* Play an error sound using quiet speaker. */
 		DL_AudPlayTone(0x02,  0xFF);
 	}
 
