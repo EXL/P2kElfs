@@ -90,6 +90,7 @@ static const char g_app_name[APP_NAME_LEN] = "Screenshot";
 static const UINT8 g_key_exit = KEY_STAR;
 static const UINT8 g_key_help = KEY_0;
 static const UINT8 g_key_screenshot = KEY_POUND;
+
 static const WCHAR g_msg_state_main[] = L"Hold \"#\" to Screenshot!\nHold \"0\" to Help.\nHold \"*\" to Exit.";
 static const WCHAR g_msg_softkey_got_it[] = L"Got it!";
 
@@ -373,29 +374,23 @@ static UINT32 HandleEventKeyRelease(EVENT_STACK_T *ev_st, void *app) {
 	event = AFW_GetEv(ev_st);
 	key = event->data.key_pressed;
 
-	if (key == KEY_STAR || key == KEY_0 || key == KEY_POUND) {
+	if (key == g_key_exit || key == g_key_help || key == g_key_screenshot) {
 		/*
 		 * Detect long key press between 500 ms (0.5 s) and 1500 ms (1.5 s) and ignore rest.
 		 */
 		ms_key_release_stop = (UINT32) (suPalTicksToMsec(suPalReadTime()) - g_ms_key_press_start);
 		if ((ms_key_release_stop >= 500) && (ms_key_release_stop <= 1500)) {
-			switch (key) {
-				case KEY_STAR:
-					APP_UtilStartTimer(100, APP_TIMER_EXIT, app);
-					break;
-				case KEY_0:
-					return HandleEventShow(ev_st, app);
-					break;
-				case KEY_POUND:
-					if (MakeScreenshot() == RESULT_OK) {
-						APP_UtilStartTimer(100, APP_TIMER_SCREEN_OK, app);
-					} else {
-						APP_UtilStartTimer(100, APP_TIMER_SCREEN_FAIL, app);
-					}
-					return APP_ConsumeEv(ev_st, app);
-					break;
-				default:
-					break;
+			if (key == g_key_exit) {
+				APP_UtilStartTimer(100, APP_TIMER_EXIT, app);
+			} else if (key == g_key_help) {
+				return HandleEventShow(ev_st, app);
+			} else if (g_key_screenshot) {
+				if (MakeScreenshot() == RESULT_OK) {
+					APP_UtilStartTimer(100, APP_TIMER_SCREEN_OK, app);
+				} else {
+					APP_UtilStartTimer(100, APP_TIMER_SCREEN_FAIL, app);
+				}
+				return APP_ConsumeEv(ev_st, app);
 			}
 		}
 	}
@@ -569,4 +564,3 @@ static UINT32 GenerateScreenshotFilePath(WCHAR *output_path) {
 
 	return status;
 }
-
