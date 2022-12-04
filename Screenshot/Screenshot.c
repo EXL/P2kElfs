@@ -87,6 +87,9 @@ static UINT32 GenerateScreenshotFilePath(WCHAR *output_path);
 
 static const char g_app_name[APP_NAME_LEN] = "Screenshot";
 
+static const UINT8 g_key_exit = KEY_STAR;
+static const UINT8 g_key_help = KEY_0;
+static const UINT8 g_key_screenshot = KEY_POUND;
 static const WCHAR g_msg_state_main[] = L"Hold \"#\" to Screenshot!\nHold \"0\" to Help.\nHold \"*\" to Exit.";
 static const WCHAR g_msg_softkey_got_it[] = L"Got it!";
 
@@ -350,10 +353,13 @@ static UINT32 HandleEventKeyPress(EVENT_STACK_T *ev_st, void *app) {
 	event = AFW_GetEv(ev_st);
 	key = event->data.key_pressed;
 
-	if (key == KEY_STAR || key == KEY_0 || key == KEY_POUND) {
+	if (key == g_key_exit || key == g_key_help || key == g_key_screenshot) {
 		g_ms_key_press_start = suPalTicksToMsec(suPalReadTime());
 		PFprintf("display_source_buffer addr = 0x%08X.\n", display_source_buffer); /* Send to MIDway. */
 		UtilLogStringData("display_source_buffer addr = 0x%08X.\n", display_source_buffer); /* Send to P2KDataLogger. */
+		if (key == g_key_screenshot) {
+			return APP_ConsumeEv(ev_st, app);
+		}
 	}
 
 	return RESULT_OK;
@@ -386,6 +392,7 @@ static UINT32 HandleEventKeyRelease(EVENT_STACK_T *ev_st, void *app) {
 					} else {
 						APP_UtilStartTimer(100, APP_TIMER_SCREEN_FAIL, app);
 					}
+					return APP_ConsumeEv(ev_st, app);
 					break;
 				default:
 					break;
