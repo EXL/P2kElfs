@@ -80,12 +80,14 @@ static UINT32 CopyVramToRamAndInitBitmap(BITMAP_T *bitmap);
 static UINT32 CreateConvertedBitmap(BITMAP_T *bitmap);
 static UINT32 PatchBmpHeader(const BITMAP_T *bitmap);
 static UINT32 SaveScreenshotFile(const BITMAP_T *bitmap);
-static void GenerateScreenshotFilePath(WCHAR *output_path);
+static UINT32 GenerateScreenshotFilePath(WCHAR *output_path);
 
 static const char g_app_name[APP_NAME_LEN] = "Screenshot";
 
 static const WCHAR g_msg_state_main[] = L"Hold \"#\" to Screenshot!\nHold \"0\" to Help.\nHold \"*\" to Exit.";
 static const WCHAR g_msg_softkey_got_it[] = L"Got it!";
+
+static const char g_scr_filename[] = "/c/mobile/picture/SCR_%02d%02d%04d_%02d%02d%02d.bmp";
 
 static APP_DISPLAY_T g_app_state = APP_DISPLAY_SHOW;
 static RESOURCE_ID g_app_resources[APP_RESOURCE_MAX];
@@ -492,38 +494,48 @@ static UINT32 PatchBmpHeader(const BITMAP_T *bitmap) {
 
 static UINT32 SaveScreenshotFile(const BITMAP_T *bitmap) {
 	UINT32 status;
-	FILE screenshot;
+	FILE screenshot_file;
 	UINT32 written_bytes;
+	WCHAR screenshot_path[sizeof(g_scr_filename) * sizeof(WCHAR)];
 
-	screenshot = NULL;
+	status = RESULT_OK;
 	written_bytes = 0;
 
+	status |= GenerateScreenshotFilePath(screenshot_path);
+
+	screenshot_file = DL_FsOpenFile(screenshot_path, FILE_WRITE_MODE, 0);
+	if (screenshot_file == NULL) {
+		return RESULT_FAIL;
+	}
+
+	status |= DL_FsWriteFile(g_bmp_header, sizeof(g_bmp_header), 1, screenshot_file, &written_bytes);
+	if (written_bytes == 0) {
+		status |= RESULT_FAIL;
+	}
+
+	written_bytes = 0;
+	status |= DL_FsWriteFile(bitmap->buffer, bitmap->size, 1, screenshot_file, &written_bytes);
+	if (written_bytes == 0) {
+		status |= RESULT_FAIL;
+	}
+
+	status |= DL_FsCloseFile(screenshot_file);
 
 	return status;
 }
 
-static void GenerateScreenshotFilePath(WCHAR *output_path) {
-
-}
-
-static void generate_screenshot_path(WCHAR *output_path) {
-	char path_buffer[FILEURI_MAX_LEN + 1];
+static UINT32 GenerateScreenshotFilePath(WCHAR *output_path) {
+	UINT32 status;
 	CLK_DATE_T date;
 	CLK_TIME_T time;
+	char path[sizeof(g_scr_filename)];
 
-	DL_ClkGetTime(&time);
-	DL_ClkGetDate(&date);
+	status = RESULT_OK;
+	status |= DL_ClkGetDate(&date);
+	status |= DL_ClkGetTime(&time);
+	status |= (sprintf(path, g_scr_filename, date.day, date.month, date.year, time.hour, time.minute, time.second) < 0);
+	status |= (u_atou(path, output_path) == NULL);
 
-	sprintf(
-		path_buffer,
-		"/c/mobile/picture/SCR_%02d%02d%04d_%02d%02d%02d.bmp",
-		date.day,
-		date.month,
-		date.year,
-		time.hour,
-		time.minute,
-		time.second
-	);
-
-	u_atou(path_buffer, output_path);
+	return status;
 }
+
