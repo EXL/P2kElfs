@@ -29,7 +29,8 @@ typedef enum {
 
 typedef enum {
 	APP_TIMER_SCREEN_OK,
-	APP_TIMER_SCREEN_FAIL
+	APP_TIMER_SCREEN_FAIL,
+	APP_TIMER_EXIT
 } APP_TIMER_T;
 
 typedef enum {
@@ -276,7 +277,7 @@ static UINT32 HandleStateEnter(EVENT_STACK_T *ev_st, void *app, ENTER_STATE_TYPE
 	port = application->port;
 
 	actions.action[0].operation = ACTION_OP_ADD;
-	actions.action[0].event = EV_DONE;
+	actions.action[0].event = EV_DIALOG_DONE;
 	actions.action[0].action_res = g_app_resources[APP_RESOURCE_ACTION_GOT_IT];
 	actions.count = 1;
 
@@ -374,9 +375,7 @@ static UINT32 HandleEventKeyRelease(EVENT_STACK_T *ev_st, void *app) {
 		if ((ms_key_release_stop >= 500) && (ms_key_release_stop <= 1500)) {
 			switch (key) {
 				case KEY_STAR:
-					/* Play an exit sound using quiet speaker. */
-					DL_AudPlayTone(0x00,  0xFF);
-					return ApplicationStop(ev_st, app);
+					APP_UtilStartTimer(100, APP_TIMER_EXIT, app);
 					break;
 				case KEY_0:
 					return HandleEventShow(ev_st, app);
@@ -410,6 +409,12 @@ static UINT32 HandleEventTimerExpired(EVENT_STACK_T *ev_st, void *app) {
 	} else if (timer_id == APP_TIMER_SCREEN_FAIL) {
 		/* Play an error sound using quiet speaker. */
 		DL_AudPlayTone(0x02,  0xFF);
+	} else if (timer_id == APP_TIMER_EXIT) {
+		/* Play an exit sound using quiet speaker. */
+		DL_AudPlayTone(0x00,  0xFF);
+
+		/* Exit App! */
+		return ApplicationStop(ev_st, app);
 	}
 
 	return RESULT_OK;
