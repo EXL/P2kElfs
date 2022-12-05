@@ -43,7 +43,6 @@ static UINT32 ApplicationStart(EVENT_STACK_T *ev_st, REG_ID_T reg_id, void *reg_
 static UINT32 ApplicationStop(EVENT_STACK_T *ev_st, void *app);
 
 static UINT32 HandleStateEnter(EVENT_STACK_T *ev_st, void *app, ENTER_STATE_TYPE_T state);
-static UINT32 HandleStateExit(EVENT_STACK_T *ev_st, void *app, EXIT_STATE_TYPE_T state);
 
 static UINT32 HandleEventDeviceAttach(EVENT_STACK_T *ev_st, void *app);
 static UINT32 HandleEventDeviceDetach(EVENT_STACK_T *ev_st, void *app);
@@ -131,7 +130,7 @@ static UINT32 HandleEventDeviceAttach(EVENT_STACK_T *ev_st, void *app) {
 	/* Not headset or earphones. */
 	if (!DL_AccIsHeadsetAvailable()) {
 		g_is_earphones = FALSE;
-		APP_UtilStartTimer(100, APP_TIMER_PLAY_ATTACH_SOUND, app);
+		APP_UtilStartTimer(100, APP_TIMER_ATTACH, app);
 	} else {
 		g_is_earphones = TRUE;
 	}
@@ -139,7 +138,7 @@ static UINT32 HandleEventDeviceAttach(EVENT_STACK_T *ev_st, void *app) {
 }
 static UINT32 HandleEventDeviceDetach(EVENT_STACK_T *ev_st, void *app) {
 	if (!g_is_earphones) {
-		APP_UtilStartTimer(100, APP_TIMER_PLAY_DETACH_SOUND, app);
+		APP_UtilStartTimer(100, APP_TIMER_DETACH, app);
 	}
 	return RESULT_OK;
 }
