@@ -16,6 +16,7 @@ typedef enum {
 } APP_STATE_T;
 
 typedef enum {
+	APP_TIMER_STOP_VIBRATION,
 	APP_TIMER_PLAY_ATTACH_SOUND,
 	APP_TIMER_PLAY_DETACH_SOUND,
 	APP_TIMER_EXIT
@@ -37,6 +38,7 @@ static UINT32 HandleEventTimerExpired(EVENT_STACK_T *ev_st, void *app);
 static const char g_app_name[APP_NAME_LEN] = "PowerAlert";
 
 static const UINT8 g_key_exit = KEY_0;
+static const UINT8 g_key_vibration = KEY_STAR;
 
 static UINT64 g_ms_key_press_start = 0LLU;
 static BOOL g_is_earphones = TRUE;
@@ -156,6 +158,10 @@ static UINT32 HandleEventKeyRelease(EVENT_STACK_T *ev_st, void *app) {
 				APP_UtilStartTimer(100, APP_TIMER_EXIT, app);
 			}
 		}
+	} else if (key == g_key_vibration) {
+		/* Start vibration on R3443H (L6i). */
+		hPortWrite(735, 1);
+		APP_UtilStartTimer(30, APP_TIMER_STOP_VIBRATION, app);
 	}
 
 	return RESULT_OK;
@@ -172,6 +178,9 @@ static UINT32 HandleEventTimerExpired(EVENT_STACK_T *ev_st, void *app) {
 		MME_GC_playback_open_audio_play_forget(L"/a/mobile/system/shutter1.amr");
 	} else if (timer_id == APP_TIMER_PLAY_DETACH_SOUND) {
 		MME_GC_playback_open_audio_play_forget(L"/a/mobile/system/shutter2.amr");
+	} else if (timer_id == APP_TIMER_STOP_VIBRATION) {
+		/* Stop vibration on R3443H (L6i). */
+		hPortWrite(735, 0);
 	} else if (timer_id == APP_TIMER_EXIT) {
 		/* Play an exit sound using quiet speaker. */
 		DL_AudPlayTone(0x00,  0xFF);
