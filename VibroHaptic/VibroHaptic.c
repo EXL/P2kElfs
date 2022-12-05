@@ -55,6 +55,11 @@ static const char g_app_name[APP_NAME_LEN] = "VibroHaptic";
 static const UINT8 g_key_app_menu = KEY_LSOFT;
 static const UINT8 g_key_app_exit = KEY_STAR;
 
+static UINT16 g_option_vibro_signal = 735; /* R3443H: 735, R3551: 721. */
+static UINT16 g_option_vibro_voltage_signal = 702; /* R3443H: 702, R3551: 688. */
+static UINT32 g_option_vibro_voltage_level = 0;
+static UINT32 g_option_vibro_delay = 30;
+
 static APP_DISPLAY_T g_app_state = APP_DISPLAY_HIDE;
 static RESOURCE_ID g_app_resources[APP_RESOURCE_MAX];
 static UINT64 g_ms_key_press_start = 0LLU;
@@ -273,12 +278,44 @@ static UINT32 HandleEventShow(EVENT_STACK_T *ev_st, void *app) {
 static UINT32 HandleEventKeyPress(EVENT_STACK_T *ev_st, void *app) {
 	EVENT_T *event;
 	UINT8 key;
+	UINT8 dialog;
 
 	event = AFW_GetEv(ev_st);
 	key = event->data.key_pressed;
+	dialog = DialogType_Null;
 
 	if (key == g_key_app_menu || key == g_key_app_exit) {
 		g_ms_key_press_start = suPalTicksToMsec(suPalReadTime());
+	}
+
+	switch (key) {
+		case KEY_UP:
+		case KEY_DOWN:
+		case KEY_LEFT:
+		case KEY_RIGHT:
+		case KEY_RSOFT:
+		/* case KEY_LSOFT: */ /* Disable "Back" softkey. */
+		case KEY_CENTER:
+			UIS_GetActiveDialogType(&dialog);
+			if (dialog == DialogType_Menu || dialog == DialogType_SecondLevelMenu) {
+				/* Set vibration motor voltage. */
+				hPortWrite(g_option_vibro_voltage_signal, g_option_vibro_voltage_level);
+
+				/* Start vibration motor. */
+				hPortWrite(g_option_vibro_signal, 1);
+
+				/* Delay using SUAPI because APP_UtilStartTimer() is slow. */
+				suSleep(g_option_vibro_delay, NULL);
+
+				/* Stop vibration motor. */
+				hPortWrite(g_option_vibro_signal, 0);
+
+				/* Reset vibration motor voltage. */
+				hPortWrite(g_option_vibro_voltage_signal, 0);
+			}
+			break;
+		default:
+			break;
 	}
 
 	return RESULT_OK;
