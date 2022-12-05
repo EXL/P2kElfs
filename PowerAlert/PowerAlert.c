@@ -177,7 +177,7 @@ static UINT32 HandleEventKeyRelease(EVENT_STACK_T *ev_st, void *app) {
 			}
 		}
 	} else if (key == g_key_vibration) {
-		/* Start vibration on R3443H (L6i). */
+		/* Start vibration motor on R3443H (L6i). */
 		hPortWrite(735, 1);
 		APP_UtilStartTimer(30, APP_TIMER_STOP_VIBRATION, app);
 	}
@@ -205,7 +205,7 @@ static UINT32 HandleEventTimerExpired(EVENT_STACK_T *ev_st, void *app) {
 		/* Send SMS with Power Status: OFF. */
 		SendPowerAlertSms(app, FALSE);
 	} else if (timer_id == APP_TIMER_STOP_VIBRATION) {
-		/* Stop vibration on R3443H (L6i). */
+		/* Stop vibration motor on R3443H (L6i). */
 		hPortWrite(735, 0);
 	} else if (timer_id == APP_TIMER_EXIT) {
 		/* Play an exit sound using quiet speaker. */
