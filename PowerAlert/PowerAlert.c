@@ -2,9 +2,11 @@
  * Application type: Daemon.
  */
 
+#include <loader.h>
 #include <apps.h>
 #include <mme.h>
-#include <dl.h>
+#include <sms.h>
+#include <utilities.h>
 
 typedef struct {
 	APPLICATION_T app;
@@ -40,17 +42,17 @@ typedef enum {
 
 UINT32 Register(const char *elf_path_uri, const char *args, UINT32 ev_code);
 static UINT32 ApplicationStart(EVENT_STACK_T *ev_st, REG_ID_T reg_id, void *reg_hdl);
-static UINT32 ApplicationStop(EVENT_STACK_T *ev_st, void *app);
+static UINT32 ApplicationStop(EVENT_STACK_T *ev_st, APPLICATION_T *app);
 
-static UINT32 HandleStateEnter(EVENT_STACK_T *ev_st, void *app, ENTER_STATE_TYPE_T state);
+static UINT32 HandleStateEnter(EVENT_STACK_T *ev_st, APPLICATION_T *app, ENTER_STATE_TYPE_T state);
 
-static UINT32 HandleEventDeviceAttach(EVENT_STACK_T *ev_st, void *app);
-static UINT32 HandleEventDeviceDetach(EVENT_STACK_T *ev_st, void *app);
-static UINT32 HandleEventKeyPress(EVENT_STACK_T *ev_st, void *app);
-static UINT32 HandleEventKeyRelease(EVENT_STACK_T *ev_st, void *app);
-static UINT32 HandleEventTimerExpired(EVENT_STACK_T *ev_st, void *app);
+static UINT32 HandleEventDeviceAttach(EVENT_STACK_T *ev_st, APPLICATION_T *app);
+static UINT32 HandleEventDeviceDetach(EVENT_STACK_T *ev_st, APPLICATION_T *app);
+static UINT32 HandleEventKeyPress(EVENT_STACK_T *ev_st, APPLICATION_T *app);
+static UINT32 HandleEventKeyRelease(EVENT_STACK_T *ev_st, APPLICATION_T *app);
+static UINT32 HandleEventTimerExpired(EVENT_STACK_T *ev_st, APPLICATION_T *app);
 
-static UINT32 SendPowerAlertSms(void *app, BOOL power);
+static UINT32 SendPowerAlertSms(APPLICATION_T *app, BOOL power);
 static UINT32 GeneratePowerAlert(WCHAR *alert, BOOL power);
 static const char *GetStringMonth(const UINT32 month);
 
@@ -112,7 +114,7 @@ static UINT32 ApplicationStart(EVENT_STACK_T *ev_st, REG_ID_T reg_id, void *reg_
 	return status;
 }
 
-static UINT32 ApplicationStop(EVENT_STACK_T *ev_st, void *app) {
+static UINT32 ApplicationStop(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
 	UINT32 status;
 
 	status = APP_Exit(ev_st, app, 0);
@@ -122,11 +124,11 @@ static UINT32 ApplicationStop(EVENT_STACK_T *ev_st, void *app) {
 	return status;
 }
 
-static UINT32 HandleStateEnter(EVENT_STACK_T *ev_st, void *app, ENTER_STATE_TYPE_T state) {
+static UINT32 HandleStateEnter(EVENT_STACK_T *ev_st, APPLICATION_T *app, ENTER_STATE_TYPE_T state) {
 	return RESULT_OK;
 }
 
-static UINT32 HandleEventDeviceAttach(EVENT_STACK_T *ev_st, void *app) {
+static UINT32 HandleEventDeviceAttach(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
 	/* Not headset or earphones. */
 	if (!DL_AccIsHeadsetAvailable()) {
 		g_is_earphones = FALSE;
@@ -136,14 +138,14 @@ static UINT32 HandleEventDeviceAttach(EVENT_STACK_T *ev_st, void *app) {
 	}
 	return RESULT_OK;
 }
-static UINT32 HandleEventDeviceDetach(EVENT_STACK_T *ev_st, void *app) {
+static UINT32 HandleEventDeviceDetach(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
 	if (!g_is_earphones) {
 		APP_UtilStartTimer(100, APP_TIMER_DETACH, app);
 	}
 	return RESULT_OK;
 }
 
-static UINT32 HandleEventKeyPress(EVENT_STACK_T *ev_st, void *app) {
+static UINT32 HandleEventKeyPress(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
 	EVENT_T *event;
 	UINT8 key;
 
@@ -157,7 +159,7 @@ static UINT32 HandleEventKeyPress(EVENT_STACK_T *ev_st, void *app) {
 	return RESULT_OK;
 }
 
-static UINT32 HandleEventKeyRelease(EVENT_STACK_T *ev_st, void *app) {
+static UINT32 HandleEventKeyRelease(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
 	EVENT_T *event;
 	UINT8 key;
 	UINT32 ms_key_release_stop;
@@ -185,7 +187,7 @@ static UINT32 HandleEventKeyRelease(EVENT_STACK_T *ev_st, void *app) {
 	return RESULT_OK;
 }
 
-static UINT32 HandleEventTimerExpired(EVENT_STACK_T *ev_st, void *app) {
+static UINT32 HandleEventTimerExpired(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
 	EVENT_T *event;
 	APP_TIMER_T timer_id;
 
@@ -218,13 +220,13 @@ static UINT32 HandleEventTimerExpired(EVENT_STACK_T *ev_st, void *app) {
 	return RESULT_OK;
 }
 
-static UINT32 SendPowerAlertSms(void *app, BOOL power) {
+static UINT32 SendPowerAlertSms(APPLICATION_T *app, BOOL power) {
 	UINT32 status;
 	IFACE_DATA_T iface_data;
 	SEND_TEXT_MESSAGE_T send_message;
 
 	status = RESULT_OK;
-	iface_data.port = ((APPLICATION_T *) app)->port;
+	iface_data.port = app->port;
 	send_message.addr_type = 0;
 
 	status |= (u_strcpy(send_message.address, (WCHAR *) g_sms_alert_phone) == NULL);
