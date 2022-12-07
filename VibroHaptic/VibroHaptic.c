@@ -31,6 +31,16 @@ typedef enum {
 	APP_RESOURCE_MAX
 } APP_RESOURCES_T;
 
+typedef enum {
+	APP_ITEM_VIBRATION_SIGNAL,
+	APP_ITEM_VIBRATION_DURATION,
+	APP_ITEM_VIBRATION_VOLTAGE_SIGNAL,
+	APP_ITEM_VIBRATION_VOLTAGE,
+	APP_ITEM_ABOUT,
+	APP_ITEM_EXIT,
+	APP_ITEM_MAX
+} APP_ITEM_MENU_T;
+
 UINT32 Register(const char *elf_path_uri, const char *args, UINT32 ev_code);
 static UINT32 ApplicationStart(EVENT_STACK_T *ev_st, REG_ID_T reg_id, void *reg_hdl);
 static UINT32 ApplicationStop(EVENT_STACK_T *ev_st, void *app);
@@ -62,6 +72,7 @@ static UINT32 g_option_vibro_delay = 30;
 
 static APP_DISPLAY_T g_app_state = APP_DISPLAY_HIDE;
 static RESOURCE_ID g_app_resources[APP_RESOURCE_MAX];
+static LIST_ENTRY_T *g_app_menu;
 static UINT64 g_ms_key_press_start = 0LLU;
 
 static const EVENT_HANDLER_ENTRY_T g_state_any_hdls[] = {
@@ -142,6 +153,7 @@ static UINT32 ApplicationStop(EVENT_STACK_T *ev_st, void *app) {
 
 static UINT32 InitResourses(RESOURCE_ID *resources) {
 	UINT32 status;
+	INT32 result, i, idx;
 	RES_ACTION_LIST_ITEM_T action;
 
 	status = RESULT_OK;
@@ -157,6 +169,21 @@ static UINT32 InitResourses(RESOURCE_ID *resources) {
 	action.sendDlgDone = FALSE;
 	status |= DRM_CreateResource(&resources[APP_RESOURCE_ACTION_GOT_IT], RES_TYPE_ACTION, &action, sizeof(action));
 
+	g_app_menu = suAllocMem(sizeof(LIST_ENTRY_T) * APP_ITEM_MAX, &result);
+	status |= (result != 0);
+
+	for ( i=0, idx=0; i<APP_ITEM_MAX; i++, idx++ ) {
+		memclr(&g_app_menu[i], sizeof(LIST_ENTRY_T));
+		switch (idx-1) {
+			case APP_ITEM_VIBRATION_SIGNAL:
+				g_app_menu[i].editable = TRUE;
+				g_app_menu[i].content.editable_entry.descr_res = RES_FIELD_NUMBER;
+				g_app_menu[i].content.editable_entry.data = g_option_vibro_signal;
+				//UIS_MakeContentFromString("s0", &g_app_menu[i].content.static_entry.text, LANG_BACK );
+				break;
+		}
+	}
+
 	return status;
 }
 
@@ -171,6 +198,8 @@ static UINT32 FreeResourses(RESOURCE_ID *resources) {
 			status |= DRM_ClearResource(resources[i]);
 		}
 	}
+
+	suFreeMem(g_app_menu);
 
 	return status;
 }
@@ -213,9 +242,11 @@ static UINT32 HandleStateEnter(EVENT_STACK_T *ev_st, void *app, ENTER_STATE_TYPE
 	actions.action[0].action_res = g_app_resources[APP_RESOURCE_ACTION_GOT_IT];
 	actions.count = 1;
 
-	UIS_MakeContentFromString("RMq0", &content, L"TEST");
+//	UIS_MakeContentFromString("RMq0", &content, L"TEST");
 
-	dialog = UIS_CreateNotice(&port, &content, 0, NOTICE_TYPE_DEFAULT, FALSE, &actions);
+	dialog = UIS_CreateStaticList(&port, 0, APP_ITEM_MAX, 0, g_app_menu, 0, 2, &actions, APP_RESOURCE_ACTION_GOT_IT);
+
+	// dialog = UIS_CreateNotice(&port, &content, 0, NOTICE_TYPE_DEFAULT, FALSE, &actions);
 
 	if (dialog == DialogType_Null) {
 		return RESULT_FAIL;
