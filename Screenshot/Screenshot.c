@@ -2,10 +2,14 @@
  * Application mode: GUI + Deamon.
  */
 
+#include <loader.h>
 #include <apps.h>
 #include <ati.h>
 #include <mme.h>
+#include <mem.h>
+#include <dal.h>
 #include <uis.h>
+#include <utilities.h>
 
 #ifndef __P2K__
 #define __packed
@@ -61,22 +65,22 @@ static __inline void InsertData(UINT8 *start_address, UINT32 start_offset, UINT3
 
 UINT32 Register(const char *elf_path_uri, const char *args, UINT32 ev_code);
 static UINT32 ApplicationStart(EVENT_STACK_T *ev_st, REG_ID_T reg_id, void *reg_hdl);
-static UINT32 ApplicationStop(EVENT_STACK_T *ev_st, void *app);
-static UINT32 ApplicationDisplay(EVENT_STACK_T *ev_st, void *app, APP_DISPLAY_T display);
+static UINT32 ApplicationStop(EVENT_STACK_T *ev_st, APPLICATION_T *app);
+static UINT32 ApplicationDisplay(EVENT_STACK_T *ev_st, APPLICATION_T *app, APP_DISPLAY_T display);
 
 static UINT32 InitResourses(RESOURCE_ID *resources);
 static UINT32 FreeResourses(RESOURCE_ID *resources);
 
-static UINT32 HandleStateEnter(EVENT_STACK_T *ev_st, void *app, ENTER_STATE_TYPE_T state);
-static UINT32 HandleStateExit(EVENT_STACK_T *ev_st, void *app, EXIT_STATE_TYPE_T state);
-static UINT32 DeleteDialog(void *app);
+static UINT32 HandleStateEnter(EVENT_STACK_T *ev_st, APPLICATION_T *app, ENTER_STATE_TYPE_T state);
+static UINT32 HandleStateExit(EVENT_STACK_T *ev_st, APPLICATION_T *app, EXIT_STATE_TYPE_T state);
+static UINT32 DeleteDialog(APPLICATION_T *app);
 
 static void HandleEventMain(EVENT_STACK_T *ev_st, APPLICATION_T *app, APP_ID_T app_id, REG_ID_T reg_id);
-static UINT32 HandleEventHide(EVENT_STACK_T *ev_st, void *app);
-static UINT32 HandleEventShow(EVENT_STACK_T *ev_st, void *app);
-static UINT32 HandleEventKeyPress(EVENT_STACK_T *ev_st, void *app);
-static UINT32 HandleEventKeyRelease(EVENT_STACK_T *ev_st, void *app);
-static UINT32 HandleEventTimerExpired(EVENT_STACK_T *ev_st, void *app);
+static UINT32 HandleEventHide(EVENT_STACK_T *ev_st, APPLICATION_T *app);
+static UINT32 HandleEventShow(EVENT_STACK_T *ev_st, APPLICATION_T *app);
+static UINT32 HandleEventKeyPress(EVENT_STACK_T *ev_st, APPLICATION_T *app);
+static UINT32 HandleEventKeyRelease(EVENT_STACK_T *ev_st, APPLICATION_T *app);
+static UINT32 HandleEventTimerExpired(EVENT_STACK_T *ev_st, APPLICATION_T *app);
 
 static UINT32 MakeScreenshot(void);
 static UINT32 CopyVramToRamAndInitBitmap(BITMAP_T *bitmap);
@@ -198,7 +202,7 @@ static UINT32 ApplicationStart(EVENT_STACK_T *ev_st, REG_ID_T reg_id, void *reg_
 	return status;
 }
 
-static UINT32 ApplicationStop(EVENT_STACK_T *ev_st, void *app) {
+static UINT32 ApplicationStop(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
 	UINT32 status;
 
 	DeleteDialog(app);
@@ -247,7 +251,7 @@ static UINT32 FreeResourses(RESOURCE_ID *resources) {
 	return status;
 }
 
-static UINT32 ApplicationDisplay(EVENT_STACK_T *ev_st, void *app, APP_DISPLAY_T display) {
+static UINT32 ApplicationDisplay(EVENT_STACK_T *ev_st, APPLICATION_T *app, APP_DISPLAY_T display) {
 	UINT32 status;
 	void *hdl;
 	UINT32 routing_stack;
@@ -264,8 +268,7 @@ static UINT32 ApplicationDisplay(EVENT_STACK_T *ev_st, void *app, APP_DISPLAY_T 
 	return status;
 }
 
-static UINT32 HandleStateEnter(EVENT_STACK_T *ev_st, void *app, ENTER_STATE_TYPE_T state) {
-	APPLICATION_T *application;
+static UINT32 HandleStateEnter(EVENT_STACK_T *ev_st, APPLICATION_T *app, ENTER_STATE_TYPE_T state) {
 	SU_PORT_T port;
 	CONTENT_T content;
 	UIS_DIALOG_T dialog;
@@ -277,8 +280,7 @@ static UINT32 HandleStateEnter(EVENT_STACK_T *ev_st, void *app, ENTER_STATE_TYPE
 
 	DeleteDialog(app);
 
-	application = (APPLICATION_T *) app;
-	port = application->port;
+	port = app->port;
 
 	actions.action[0].operation = ACTION_OP_ADD;
 	actions.action[0].event = EV_DIALOG_DONE;
@@ -289,16 +291,16 @@ static UINT32 HandleStateEnter(EVENT_STACK_T *ev_st, void *app, ENTER_STATE_TYPE
 
 	dialog = UIS_CreateNotice(&port, &content, 0, NOTICE_TYPE_DEFAULT, FALSE, &actions);
 
-	if (dialog == DialogType_Null) {
+	if (dialog == DialogType_None) {
 		return RESULT_FAIL;
 	}
 
-	application->dialog = dialog;
+	app->dialog = dialog;
 
 	return RESULT_OK;
 }
 
-static UINT32 HandleStateExit(EVENT_STACK_T *ev_st, void *app, EXIT_STATE_TYPE_T state) {
+static UINT32 HandleStateExit(EVENT_STACK_T *ev_st, APPLICATION_T *app, EXIT_STATE_TYPE_T state) {
 	if (state == EXIT_STATE_EXIT) {
 		DeleteDialog(app);
 		return RESULT_OK;
@@ -306,14 +308,10 @@ static UINT32 HandleStateExit(EVENT_STACK_T *ev_st, void *app, EXIT_STATE_TYPE_T
 	return RESULT_FAIL;
 }
 
-static UINT32 DeleteDialog(void *app) {
-	APPLICATION_T *application;
-
-	application = (APPLICATION_T *) app;
-
-	if (application->dialog != DialogType_Null) {
-		UIS_Delete(application->dialog);
-		application->dialog = DialogType_Null;
+static UINT32 DeleteDialog(APPLICATION_T *app) {
+	if (app->dialog != DialogType_None) {
+		UIS_Delete(app->dialog);
+		app->dialog = DialogType_None;
 		return RESULT_OK;
 	}
 
@@ -328,17 +326,13 @@ static void HandleEventMain(EVENT_STACK_T *ev_st, APPLICATION_T *app, APP_ID_T a
 	}
 }
 
-static UINT32 HandleEventHide(EVENT_STACK_T *ev_st, void *app) {
+static UINT32 HandleEventHide(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
 	ApplicationDisplay(ev_st, app, APP_DISPLAY_HIDE);
 	return RESULT_OK;
 }
 
-static UINT32 HandleEventShow(EVENT_STACK_T *ev_st, void *app) {
-	APPLICATION_T *application;
-
-	application = (APPLICATION_T *) app;
-
-	if (application->state != APP_STATE_MAIN) {
+static UINT32 HandleEventShow(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
+	if (app->state != APP_STATE_MAIN) {
 		APP_UtilChangeState(APP_STATE_MAIN, ev_st, app);
 	}
 
@@ -347,7 +341,7 @@ static UINT32 HandleEventShow(EVENT_STACK_T *ev_st, void *app) {
 	return RESULT_OK;
 }
 
-static UINT32 HandleEventKeyPress(EVENT_STACK_T *ev_st, void *app) {
+static UINT32 HandleEventKeyPress(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
 	EVENT_T *event;
 	UINT8 key;
 
@@ -366,7 +360,7 @@ static UINT32 HandleEventKeyPress(EVENT_STACK_T *ev_st, void *app) {
 	return RESULT_OK;
 }
 
-static UINT32 HandleEventKeyRelease(EVENT_STACK_T *ev_st, void *app) {
+static UINT32 HandleEventKeyRelease(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
 	EVENT_T *event;
 	UINT8 key;
 	UINT32 ms_key_release_stop;
@@ -398,7 +392,7 @@ static UINT32 HandleEventKeyRelease(EVENT_STACK_T *ev_st, void *app) {
 	return RESULT_OK;
 }
 
-static UINT32 HandleEventTimerExpired(EVENT_STACK_T *ev_st, void *app) {
+static UINT32 HandleEventTimerExpired(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
 	EVENT_T *event;
 	APP_TIMER_T timer_id;
 
