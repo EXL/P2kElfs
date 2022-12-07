@@ -2,6 +2,7 @@
  * Application type: GUI.
  */
 
+#include <loader.h>
 #include <apps.h>
 #include <mme.h>
 #include <uis.h>
@@ -26,15 +27,15 @@ typedef enum {
 
 UINT32 Register(const char *elf_path_uri, const char *args, UINT32 ev_code);
 static UINT32 ApplicationStart(EVENT_STACK_T *ev_st, REG_ID_T reg_id, void *reg_hdl);
-static UINT32 ApplicationStop(EVENT_STACK_T *ev_st, void *app);
+static UINT32 ApplicationStop(EVENT_STACK_T *ev_st, APPLICATION_T *app);
 
-static UINT32 HandleStateEnter(EVENT_STACK_T *ev_st, void *app, ENTER_STATE_TYPE_T state);
-static UINT32 HandleStateExit(EVENT_STACK_T *ev_st, void *app, EXIT_STATE_TYPE_T state);
-static UINT32 DeleteDialog(void *app);
+static UINT32 HandleStateEnter(EVENT_STACK_T *ev_st, APPLICATION_T *app, ENTER_STATE_TYPE_T state);
+static UINT32 HandleStateExit(EVENT_STACK_T *ev_st, APPLICATION_T *app, EXIT_STATE_TYPE_T state);
+static UINT32 DeleteDialog(APPLICATION_T *app);
 
-static UINT32 HandleEventYes(EVENT_STACK_T *ev_st, void *app);
-static UINT32 HandleEventNo(EVENT_STACK_T *ev_st, void *app);
-static UINT32 HandleEventTimerExpired(EVENT_STACK_T *ev_st, void *app);
+static UINT32 HandleEventYes(EVENT_STACK_T *ev_st, APPLICATION_T *app);
+static UINT32 HandleEventNo(EVENT_STACK_T *ev_st, APPLICATION_T *app);
+static UINT32 HandleEventTimerExpired(EVENT_STACK_T *ev_st, APPLICATION_T *app);
 
 static UINT32 DumpBatteryRom(void);
 static UINT32 ClearDataArrays(UINT8 *data_arr, UINT32 size);
@@ -106,7 +107,7 @@ static UINT32 ApplicationStart(EVENT_STACK_T *ev_st, REG_ID_T reg_id, void *reg_
 	return status;
 }
 
-static UINT32 ApplicationStop(EVENT_STACK_T *ev_st, void *app) {
+static UINT32 ApplicationStop(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
 	UINT32 status;
 
 	DeleteDialog(app);
@@ -118,8 +119,7 @@ static UINT32 ApplicationStop(EVENT_STACK_T *ev_st, void *app) {
 	return status;
 }
 
-static UINT32 HandleStateEnter(EVENT_STACK_T *ev_st, void *app, ENTER_STATE_TYPE_T state) {
-	APPLICATION_T *application;
+static UINT32 HandleStateEnter(EVENT_STACK_T *ev_st, APPLICATION_T *app, ENTER_STATE_TYPE_T state) {
 	SU_PORT_T port;
 	CONTENT_T content;
 	UIS_DIALOG_T dialog;
@@ -131,9 +131,8 @@ static UINT32 HandleStateEnter(EVENT_STACK_T *ev_st, void *app, ENTER_STATE_TYPE
 
 	DeleteDialog(app);
 
-	application = (APPLICATION_T *) app;
-	port = application->port;
-	app_state = application->state;
+	port = app->port;
+	app_state = app->state;
 
 	switch (app_state) {
 	case APP_STATE_MAIN:
@@ -149,20 +148,20 @@ static UINT32 HandleStateEnter(EVENT_STACK_T *ev_st, void *app, ENTER_STATE_TYPE
 		dialog = UIS_CreateTransientNotice(&port, &content, NOTICE_TYPE_FAIL);
 		break;
 	default:
-		dialog = DialogType_Null;
+		dialog = DialogType_None;
 		break;
 	}
 
-	if (dialog == DialogType_Null) {
+	if (dialog == DialogType_None) {
 		return RESULT_FAIL;
 	}
 
-	application->dialog = dialog;
+	app->dialog = dialog;
 
 	return RESULT_OK;
 }
 
-static UINT32 HandleStateExit(EVENT_STACK_T *ev_st, void *app, EXIT_STATE_TYPE_T state) {
+static UINT32 HandleStateExit(EVENT_STACK_T *ev_st, APPLICATION_T *app, EXIT_STATE_TYPE_T state) {
 	if (state == EXIT_STATE_EXIT) {
 		DeleteDialog(app);
 		return RESULT_OK;
@@ -170,21 +169,17 @@ static UINT32 HandleStateExit(EVENT_STACK_T *ev_st, void *app, EXIT_STATE_TYPE_T
 	return RESULT_FAIL;
 }
 
-static UINT32 DeleteDialog(void *app) {
-	APPLICATION_T *application;
-
-	application = (APPLICATION_T *) app;
-
-	if (application->dialog != DialogType_Null) {
-		UIS_Delete(application->dialog);
-		application->dialog = DialogType_Null;
+static UINT32 DeleteDialog(APPLICATION_T *app) {
+	if (app->dialog != DialogType_None) {
+		UIS_Delete(app->dialog);
+		app->dialog = DialogType_None;
 		return RESULT_OK;
 	}
 
 	return RESULT_FAIL;
 }
 
-static UINT32 HandleEventYes(EVENT_STACK_T *ev_st, void *app) {
+static UINT32 HandleEventYes(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
 	if (DumpBatteryRom() == RESULT_OK) {
 		APP_UtilChangeState(APP_STATE_DUMP_OK, ev_st, app);
 		APP_UtilStartTimer(100, APP_TIMER_DUMP_OK, app);
@@ -195,12 +190,12 @@ static UINT32 HandleEventYes(EVENT_STACK_T *ev_st, void *app) {
 	return RESULT_OK;
 }
 
-static UINT32 HandleEventNo(EVENT_STACK_T *ev_st, void *app) {
+static UINT32 HandleEventNo(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
 	ApplicationStop(ev_st, app);
 	return RESULT_OK;
 }
 
-static UINT32 HandleEventTimerExpired(EVENT_STACK_T *ev_st, void *app) {
+static UINT32 HandleEventTimerExpired(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
 	EVENT_T *event;
 	APP_TIMER_T timer_id;
 
