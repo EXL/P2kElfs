@@ -19,6 +19,8 @@ PFprintf("KeyPress = %d.\n", event->data.key_pressed);
 2. Phone USB Connection: Switch phone to P2K mode -- Motorola USB Device (Accessories Interface, Data Logging MCU Interface, Test Command Interface).
 3. P2KDataLogger Actions: Check "Display => Filters => All Primitives/Messages" then choose "Display => Start Display".
 
+Debug function sample:
+
 ```c
 UtilLogStringData("KeyPress = %d.\n", event->data.key_pressed);
 ```
