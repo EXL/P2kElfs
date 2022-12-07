@@ -2,8 +2,11 @@
  * Application mode: GUI + Deamon.
  */
 
+#include <loader.h>
 #include <apps.h>
+#include <mem.h>
 #include <uis.h>
+#include <res_def.h>
 
 typedef struct {
 	APPLICATION_T app;
@@ -43,26 +46,26 @@ typedef enum {
 
 UINT32 Register(const char *elf_path_uri, const char *args, UINT32 ev_code);
 static UINT32 ApplicationStart(EVENT_STACK_T *ev_st, REG_ID_T reg_id, void *reg_hdl);
-static UINT32 ApplicationStop(EVENT_STACK_T *ev_st, void *app);
-static UINT32 ApplicationDisplay(EVENT_STACK_T *ev_st, void *app, APP_DISPLAY_T display);
+static UINT32 ApplicationStop(EVENT_STACK_T *ev_st, APPLICATION_T *app);
+static UINT32 ApplicationDisplay(EVENT_STACK_T *ev_st, APPLICATION_T *app, APP_DISPLAY_T display);
 
 static UINT32 InitResourses(RESOURCE_ID *resources);
 static UINT32 FreeResourses(RESOURCE_ID *resources);
 
-static UINT32 HandleStateEnter(EVENT_STACK_T *ev_st, void *app, ENTER_STATE_TYPE_T state);
-static UINT32 HandleStateExit(EVENT_STACK_T *ev_st, void *app, EXIT_STATE_TYPE_T state);
-static UINT32 DeleteDialog(void *app);
+static UINT32 HandleStateEnter(EVENT_STACK_T *ev_st, APPLICATION_T *app, ENTER_STATE_TYPE_T state);
+static UINT32 HandleStateExit(EVENT_STACK_T *ev_st, APPLICATION_T *app, EXIT_STATE_TYPE_T state);
+static UINT32 DeleteDialog(APPLICATION_T *app);
 
 static void HandleEventMain(EVENT_STACK_T *ev_st, APPLICATION_T *app, APP_ID_T app_id, REG_ID_T reg_id);
-static UINT32 HandleEventHide(EVENT_STACK_T *ev_st, void *app);
-static UINT32 HandleEventShow(EVENT_STACK_T *ev_st, void *app);
-static UINT32 HandleEventKeyPress(EVENT_STACK_T *ev_st, void *app);
-static UINT32 HandleEventKeyRelease(EVENT_STACK_T *ev_st, void *app);
-static UINT32 HandleEventTimerExpired(EVENT_STACK_T *ev_st, void *app);
+static UINT32 HandleEventHide(EVENT_STACK_T *ev_st, APPLICATION_T *app);
+static UINT32 HandleEventShow(EVENT_STACK_T *ev_st, APPLICATION_T *app);
+static UINT32 HandleEventKeyPress(EVENT_STACK_T *ev_st, APPLICATION_T *app);
+static UINT32 HandleEventKeyRelease(EVENT_STACK_T *ev_st, APPLICATION_T *app);
+static UINT32 HandleEventTimerExpired(EVENT_STACK_T *ev_st, APPLICATION_T *app);
 
 static const char g_app_name[APP_NAME_LEN] = "VibroHaptic";
 
-static const UINT8 g_key_app_menu = KEY_LSOFT;
+static const UINT8 g_key_app_menu = KEY_SOFT_LEFT;
 static const UINT8 g_key_app_exit = KEY_STAR;
 
 static UINT16 g_option_vibro_signal = 735; /* R3443H: 735, R3551: 721. */
@@ -137,7 +140,7 @@ static UINT32 ApplicationStart(EVENT_STACK_T *ev_st, REG_ID_T reg_id, void *reg_
 	return status;
 }
 
-static UINT32 ApplicationStop(EVENT_STACK_T *ev_st, void *app) {
+static UINT32 ApplicationStop(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
 	UINT32 status;
 
 	DeleteDialog(app);
@@ -178,7 +181,7 @@ static UINT32 InitResourses(RESOURCE_ID *resources) {
 			case APP_ITEM_VIBRATION_SIGNAL:
 				g_app_menu[i].editable = TRUE;
 				g_app_menu[i].content.editable_entry.descr_res = RES_FIELD_NUMBER;
-				g_app_menu[i].content.editable_entry.data = g_option_vibro_signal;
+				g_app_menu[i].content.editable_entry.value.number = g_option_vibro_signal;
 				//UIS_MakeContentFromString("s0", &g_app_menu[i].content.static_entry.text, LANG_BACK );
 				break;
 		}
@@ -204,7 +207,7 @@ static UINT32 FreeResourses(RESOURCE_ID *resources) {
 	return status;
 }
 
-static UINT32 ApplicationDisplay(EVENT_STACK_T *ev_st, void *app, APP_DISPLAY_T display) {
+static UINT32 ApplicationDisplay(EVENT_STACK_T *ev_st, APPLICATION_T *app, APP_DISPLAY_T display) {
 	UINT32 status;
 	void *hdl;
 	UINT32 routing_stack;
@@ -221,8 +224,7 @@ static UINT32 ApplicationDisplay(EVENT_STACK_T *ev_st, void *app, APP_DISPLAY_T 
 	return status;
 }
 
-static UINT32 HandleStateEnter(EVENT_STACK_T *ev_st, void *app, ENTER_STATE_TYPE_T state) {
-	APPLICATION_T *application;
+static UINT32 HandleStateEnter(EVENT_STACK_T *ev_st, APPLICATION_T *app, ENTER_STATE_TYPE_T state) {
 	SU_PORT_T port;
 	CONTENT_T content;
 	UIS_DIALOG_T dialog;
@@ -234,8 +236,7 @@ static UINT32 HandleStateEnter(EVENT_STACK_T *ev_st, void *app, ENTER_STATE_TYPE
 
 	DeleteDialog(app);
 
-	application = (APPLICATION_T *) app;
-	port = application->port;
+	port = app->port;
 
 	actions.action[0].operation = ACTION_OP_ADD;
 	actions.action[0].event = EV_DIALOG_DONE;
@@ -248,16 +249,16 @@ static UINT32 HandleStateEnter(EVENT_STACK_T *ev_st, void *app, ENTER_STATE_TYPE
 
 	// dialog = UIS_CreateNotice(&port, &content, 0, NOTICE_TYPE_DEFAULT, FALSE, &actions);
 
-	if (dialog == DialogType_Null) {
+	if (dialog == DialogType_None) {
 		return RESULT_FAIL;
 	}
 
-	application->dialog = dialog;
+	app->dialog = dialog;
 
 	return RESULT_OK;
 }
 
-static UINT32 HandleStateExit(EVENT_STACK_T *ev_st, void *app, EXIT_STATE_TYPE_T state) {
+static UINT32 HandleStateExit(EVENT_STACK_T *ev_st, APPLICATION_T *app, EXIT_STATE_TYPE_T state) {
 	if (state == EXIT_STATE_EXIT) {
 		DeleteDialog(app);
 		return RESULT_OK;
@@ -265,14 +266,10 @@ static UINT32 HandleStateExit(EVENT_STACK_T *ev_st, void *app, EXIT_STATE_TYPE_T
 	return RESULT_FAIL;
 }
 
-static UINT32 DeleteDialog(void *app) {
-	APPLICATION_T *application;
-
-	application = (APPLICATION_T *) app;
-
-	if (application->dialog != DialogType_Null) {
-		UIS_Delete(application->dialog);
-		application->dialog = DialogType_Null;
+static UINT32 DeleteDialog(APPLICATION_T *app) {
+	if (app->dialog != DialogType_None) {
+		UIS_Delete(app->dialog);
+		app->dialog = DialogType_None;
 		return RESULT_OK;
 	}
 
@@ -287,17 +284,13 @@ static void HandleEventMain(EVENT_STACK_T *ev_st, APPLICATION_T *app, APP_ID_T a
 	}
 }
 
-static UINT32 HandleEventHide(EVENT_STACK_T *ev_st, void *app) {
+static UINT32 HandleEventHide(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
 	ApplicationDisplay(ev_st, app, APP_DISPLAY_HIDE);
 	return RESULT_OK;
 }
 
-static UINT32 HandleEventShow(EVENT_STACK_T *ev_st, void *app) {
-	APPLICATION_T *application;
-
-	application = (APPLICATION_T *) app;
-
-	if (application->state != APP_STATE_MAIN) {
+static UINT32 HandleEventShow(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
+	if (app->state != APP_STATE_MAIN) {
 		APP_UtilChangeState(APP_STATE_MAIN, ev_st, app);
 	}
 
@@ -306,14 +299,14 @@ static UINT32 HandleEventShow(EVENT_STACK_T *ev_st, void *app) {
 	return RESULT_OK;
 }
 
-static UINT32 HandleEventKeyPress(EVENT_STACK_T *ev_st, void *app) {
+static UINT32 HandleEventKeyPress(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
 	EVENT_T *event;
 	UINT8 key;
 	UINT8 dialog;
 
 	event = AFW_GetEv(ev_st);
 	key = event->data.key_pressed;
-	dialog = DialogType_Null;
+	dialog = DialogType_None;
 
 	if (key == g_key_app_menu || key == g_key_app_exit) {
 		g_ms_key_press_start = suPalTicksToMsec(suPalReadTime());
@@ -324,9 +317,9 @@ static UINT32 HandleEventKeyPress(EVENT_STACK_T *ev_st, void *app) {
 		case KEY_DOWN:
 		case KEY_LEFT:
 		case KEY_RIGHT:
-		case KEY_RSOFT:
-		/* case KEY_LSOFT: */ /* Disable "Back" softkey. */
-		case KEY_CENTER:
+		case KEY_SOFT_RIGHT:
+		/* case KEY_SOFT_LEFT: */ /* Disable "Back" softkey. */
+		case KEY_JOY_OK:
 			UIS_GetActiveDialogType(&dialog);
 			if (dialog == DialogType_Menu || dialog == DialogType_SecondLevelMenu) {
 				/* Set vibration motor voltage. */
@@ -352,7 +345,7 @@ static UINT32 HandleEventKeyPress(EVENT_STACK_T *ev_st, void *app) {
 	return RESULT_OK;
 }
 
-static UINT32 HandleEventKeyRelease(EVENT_STACK_T *ev_st, void *app) {
+static UINT32 HandleEventKeyRelease(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
 	EVENT_T *event;
 	UINT8 key;
 	UINT32 ms_key_release_stop;
@@ -378,7 +371,7 @@ static UINT32 HandleEventKeyRelease(EVENT_STACK_T *ev_st, void *app) {
 	return RESULT_OK;
 }
 
-static UINT32 HandleEventTimerExpired(EVENT_STACK_T *ev_st, void *app) {
+static UINT32 HandleEventTimerExpired(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
 	EVENT_T *event;
 	APP_TIMER_T timer_id;
 
