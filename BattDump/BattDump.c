@@ -6,6 +6,8 @@
 #include <apps.h>
 #include <mme.h>
 #include <uis.h>
+#include <mem.h>
+#include <res_def.h>
 
 typedef struct {
 	APPLICATION_T app;
@@ -124,6 +126,7 @@ static UINT32 HandleStateEnter(EVENT_STACK_T *ev_st, APPLICATION_T *app, ENTER_S
 	CONTENT_T content;
 	UIS_DIALOG_T dialog;
 	APP_STATE_T app_state;
+	NOTICE_PARAMETERS_T parameters;
 
 	if (state != ENTER_STATE_ENTER) {
 		return RESULT_OK;
@@ -141,7 +144,10 @@ static UINT32 HandleStateEnter(EVENT_STACK_T *ev_st, APPLICATION_T *app, ENTER_S
 		break;
 	case APP_STATE_DUMP_OK:
 		UIS_MakeContentFromString("RMq0", &content, g_msg_state_dump_ok);
-		dialog = UIS_CreateTransientNotice(&port, &content, NOTICE_TYPE_OK);
+		memclr(&parameters, sizeof(NOTICE_PARAMETERS_T));
+		parameters.title = LANG_DONE;
+		parameters.icon1 = RES_GIF_OK;
+		dialog = UIS_CreateExtendedNotice(&port, &content, 5000, EXTENDENT_NOTICE_TRANSIENT, NO_STATUS, parameters, NULL);
 		break;
 	case APP_STATE_DUMP_FAIL:
 		UIS_MakeContentFromString("RMq0", &content, g_msg_state_dump_fail);
