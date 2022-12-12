@@ -1,5 +1,5 @@
 /*
- * Application mode: GUI + Deamon.
+ * Application mode: Deamon + GUI.
  */
 
 #include <loader.h>
@@ -7,6 +7,8 @@
 #include <mem.h>
 #include <uis.h>
 #include <res_def.h>
+#include <tasks.h>
+#include <utilities.h>
 
 typedef struct {
 	APPLICATION_T app;
@@ -16,6 +18,7 @@ typedef enum {
 	APP_STATE_ANY,
 	APP_STATE_INIT,
 	APP_STATE_MAIN,
+	APP_STATE_EDIT,
 	APP_STATE_MAX
 } APP_STATE_T;
 
@@ -29,20 +32,20 @@ typedef enum {
 } APP_TIMER_T;
 
 typedef enum {
-	APP_RESOURCE_STRING_GOT_IT,
-	APP_RESOURCE_ACTION_GOT_IT,
+	APP_RESOURCE_STRING_NAME,
 	APP_RESOURCE_MAX
 } APP_RESOURCES_T;
 
 typedef enum {
-	APP_ITEM_VIBRATION_SIGNAL,
-	APP_ITEM_VIBRATION_DURATION,
-	APP_ITEM_VIBRATION_VOLTAGE_SIGNAL,
-	APP_ITEM_VIBRATION_VOLTAGE,
-	APP_ITEM_ABOUT,
-	APP_ITEM_EXIT,
-	APP_ITEM_MAX
-} APP_ITEM_MENU_T;
+	APP_MENU_ITEM_VIBRATION_SIGNAL,
+	APP_MENU_ITEM_VIBRATION_DURATION,
+	APP_MENU_ITEM_VIBRATION_VOLTAGE_SIGNAL,
+	APP_MENU_ITEM_VIBRATION_VOLTAGE,
+	APP_MENU_ITEM_HELP,
+	APP_MENU_ITEM_ABOUT,
+	APP_MENU_ITEM_EXIT,
+	APP_MENU_ITEM_MAX
+} APP_MENU_ITEM_T;
 
 UINT32 Register(const char *elf_path_uri, const char *args, UINT32 ev_code);
 static UINT32 ApplicationStart(EVENT_STACK_T *ev_st, REG_ID_T reg_id, void *reg_hdl);
@@ -59,23 +62,41 @@ static UINT32 DeleteDialog(APPLICATION_T *app);
 static void HandleEventMain(EVENT_STACK_T *ev_st, APPLICATION_T *app, APP_ID_T app_id, REG_ID_T reg_id);
 static UINT32 HandleEventHide(EVENT_STACK_T *ev_st, APPLICATION_T *app);
 static UINT32 HandleEventShow(EVENT_STACK_T *ev_st, APPLICATION_T *app);
+static UINT32 HandleEventSelect(EVENT_STACK_T *ev_st, APPLICATION_T *app);
+static UINT32 HandleEventRequestListItems(EVENT_STACK_T *ev_st, APPLICATION_T *app);
 static UINT32 HandleEventKeyPress(EVENT_STACK_T *ev_st, APPLICATION_T *app);
 static UINT32 HandleEventKeyRelease(EVENT_STACK_T *ev_st, APPLICATION_T *app);
 static UINT32 HandleEventTimerExpired(EVENT_STACK_T *ev_st, APPLICATION_T *app);
 
+static UINT32 HandleEventEditData(EVENT_STACK_T *ev_st, APPLICATION_T *app);
+static UINT32 HandleEventEditCancel(EVENT_STACK_T *ev_st, APPLICATION_T *app);
+
+static UINT32 SendMenuItemsToList(EVENT_STACK_T *ev_st, APPLICATION_T *app, UINT32 start, UINT32 count);
+
 static const char g_app_name[APP_NAME_LEN] = "VibroHaptic";
+
+static const WCHAR g_str_app_name[] = L"Vibro Haptic";
+static const WCHAR g_str_vibro_signal[] = L"Motor Signal:";
+static const WCHAR g_str_vibro_delay[] = L"Delay (in ms):";
+static const WCHAR g_str_vibro_voltage_signal[] = L"Voltage Signal:";
+static const WCHAR g_str_vibro_voltage_level[] = L"Voltage Level:";
+static const WCHAR g_str_help[] = L"Help...";
+static const WCHAR g_str_about[] = L"About...";
+static const WCHAR g_str_exit[] = L"Exit";
 
 static const UINT8 g_key_app_menu = KEY_SOFT_LEFT;
 static const UINT8 g_key_app_exit = KEY_STAR;
 
-static UINT16 g_option_vibro_signal = 735; /* R3443H: 735, R3551: 721. */
+static UINT16 g_option_vibro_motor_signal = 735; /* R3443H: 735, R3551: 721. */
+static UINT16 g_option_vibro_motor_send_on = 1;
+static UINT16 g_option_vibro_motor_send_off = 0;
 static UINT16 g_option_vibro_voltage_signal = 702; /* R3443H: 702, R3551: 688. */
-static UINT32 g_option_vibro_voltage_level = 0;
+static UINT32 g_option_vibro_voltage_level_on = 0;
+static UINT32 g_option_vibro_voltage_level_off = 0;
 static UINT32 g_option_vibro_delay = 30;
 
 static APP_DISPLAY_T g_app_state = APP_DISPLAY_HIDE;
 static RESOURCE_ID g_app_resources[APP_RESOURCE_MAX];
-static LIST_ENTRY_T *g_app_menu;
 static UINT64 g_ms_key_press_start = 0LLU;
 
 static const EVENT_HANDLER_ENTRY_T g_state_any_hdls[] = {
@@ -90,7 +111,7 @@ static const EVENT_HANDLER_ENTRY_T g_state_init_hdls[] = {
 	/*
 	 * EXL, 01-Dec-2022:
 	 *  Please comment out the `{ EV_GRANT_TOKEN, APP_HandleUITokenGranted }` construction
-	 *  and change `g_app_state` global variable to `APP_HIDE` value
+	 *  and change `g_app_state` global variable to `APP_DISPLAY_HIDE` value
 	 *  for pure daemon behavior with no GUI at run.
 	 */
 	/* { EV_GRANT_TOKEN, APP_HandleUITokenGranted }, */
@@ -98,15 +119,26 @@ static const EVENT_HANDLER_ENTRY_T g_state_init_hdls[] = {
 };
 
 static const EVENT_HANDLER_ENTRY_T g_state_main_hdls[] = {
+	{ EV_REQUEST_LIST_ITEMS, HandleEventRequestListItems },
 	{ EV_DONE, HandleEventHide },
 	{ EV_DIALOG_DONE, HandleEventHide },
+	{ EV_SELECT, HandleEventSelect },
+	{ STATE_HANDLERS_END, NULL }
+};
+
+static const EVENT_HANDLER_ENTRY_T g_state_edit_hdls[] = {
+	{ EV_DONE, HandleEventEditCancel },
+	{ EV_DIALOG_DONE, HandleEventEditCancel },
+	{ EV_DATA, HandleEventEditData },
+	{ EV_CANCEL, HandleEventEditCancel },
 	{ STATE_HANDLERS_END, NULL }
 };
 
 static const STATE_HANDLERS_ENTRY_T g_state_table_hdls[] = {
 	{ APP_STATE_ANY, NULL, NULL, g_state_any_hdls },
 	{ APP_STATE_INIT, NULL, NULL, g_state_init_hdls },
-	{ APP_STATE_MAIN, HandleStateEnter, HandleStateExit, g_state_main_hdls }
+	{ APP_STATE_MAIN, HandleStateEnter, HandleStateExit, g_state_main_hdls },
+	{ APP_STATE_EDIT, HandleStateEnter, HandleStateExit, g_state_edit_hdls }
 };
 
 UINT32 Register(const char *elf_path_uri, const char *args, UINT32 ev_code) {
@@ -134,7 +166,7 @@ static UINT32 ApplicationStart(EVENT_STACK_T *ev_st, REG_ID_T reg_id, void *reg_
 
 		routing_stack = (g_app_state == APP_DISPLAY_SHOW);
 		elf = (ELF_T *) APP_InitAppData((void *) HandleEventMain, sizeof(ELF_T), reg_id, 0, 1, 1, 1, routing_stack, 0);
-		status = APP_Start(ev_st, &elf->app, APP_STATE_MAIN, g_state_table_hdls, HandleEventHide, g_app_name, 0);
+		status = APP_Start(ev_st, &elf->app, APP_STATE_INIT, g_state_table_hdls, HandleEventHide, g_app_name, 0);
 	}
 
 	return status;
@@ -156,36 +188,11 @@ static UINT32 ApplicationStop(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
 
 static UINT32 InitResourses(RESOURCE_ID *resources) {
 	UINT32 status;
-	INT32 result, i, idx;
-	RES_ACTION_LIST_ITEM_T action;
 
 	status = RESULT_OK;
 
-	status |= DRM_CreateResource(&resources[APP_RESOURCE_STRING_GOT_IT], RES_TYPE_STRING,
-		L"DEBUG", 6 * sizeof(WCHAR));
-
-	action.softkey_label = resources[APP_RESOURCE_STRING_GOT_IT];
-	action.list_label = resources[APP_RESOURCE_STRING_GOT_IT];
-	action.softkey_priority = 1;
-	action.list_priority = 1;
-	action.isExit = FALSE;
-	action.sendDlgDone = FALSE;
-	status |= DRM_CreateResource(&resources[APP_RESOURCE_ACTION_GOT_IT], RES_TYPE_ACTION, &action, sizeof(action));
-
-	g_app_menu = suAllocMem(sizeof(LIST_ENTRY_T) * APP_ITEM_MAX, &result);
-	status |= (result != 0);
-
-	for ( i=0, idx=0; i<APP_ITEM_MAX; i++, idx++ ) {
-		memclr(&g_app_menu[i], sizeof(LIST_ENTRY_T));
-		switch (idx-1) {
-			case APP_ITEM_VIBRATION_SIGNAL:
-				g_app_menu[i].editable = TRUE;
-				g_app_menu[i].content.editable_entry.descr_res = RES_FIELD_NUMBER;
-				g_app_menu[i].content.editable_entry.value.number = g_option_vibro_signal;
-				//UIS_MakeContentFromString("s0", &g_app_menu[i].content.static_entry.text, LANG_BACK );
-				break;
-		}
-	}
+	status |= DRM_CreateResource(&resources[APP_RESOURCE_STRING_NAME], RES_TYPE_STRING,
+		(void *) g_str_app_name, (u_strlen(g_str_app_name) + 1) * sizeof(WCHAR));
 
 	return status;
 }
@@ -201,8 +208,6 @@ static UINT32 FreeResourses(RESOURCE_ID *resources) {
 			status |= DRM_ClearResource(resources[i]);
 		}
 	}
-
-	suFreeMem(g_app_menu);
 
 	return status;
 }
@@ -228,7 +233,8 @@ static UINT32 HandleStateEnter(EVENT_STACK_T *ev_st, APPLICATION_T *app, ENTER_S
 	SU_PORT_T port;
 	CONTENT_T content;
 	UIS_DIALOG_T dialog;
-	ACTIONS_T actions;
+	APP_STATE_T app_state;
+	UINT32 starting_list_items;
 
 	if (state != ENTER_STATE_ENTER) {
 		return RESULT_OK;
@@ -237,23 +243,28 @@ static UINT32 HandleStateEnter(EVENT_STACK_T *ev_st, APPLICATION_T *app, ENTER_S
 	DeleteDialog(app);
 
 	port = app->port;
+	app_state = app->state;
 
-	actions.action[0].operation = ACTION_OP_ADD;
-	actions.action[0].event = EV_DIALOG_DONE;
-	actions.action[0].action_res = g_app_resources[APP_RESOURCE_ACTION_GOT_IT];
-	actions.count = 1;
+	switch (app_state) {
+		case APP_STATE_MAIN:
+			starting_list_items = APP_MENU_ITEM_MAX;
+			dialog = UIS_CreateList(&port, 0, APP_MENU_ITEM_MAX, 0, &starting_list_items, 0, 2, NULL, g_app_resources[APP_RESOURCE_STRING_NAME]);
+			break;
+		case APP_STATE_EDIT:
 
-//	UIS_MakeContentFromString("RMq0", &content, L"TEST");
-
-	dialog = UIS_CreateStaticList(&port, 0, APP_ITEM_MAX, 0, g_app_menu, 0, 2, &actions, APP_RESOURCE_ACTION_GOT_IT);
-
-	// dialog = UIS_CreateNotice(&port, &content, 0, NOTICE_TYPE_DEFAULT, FALSE, &actions);
+			break;
+		default:
+			dialog = DialogType_None;
+			break;
+	}
 
 	if (dialog == DialogType_None) {
 		return RESULT_FAIL;
 	}
 
 	app->dialog = dialog;
+
+	SendMenuItemsToList(ev_st, app, 1, APP_MENU_ITEM_MAX);
 
 	return RESULT_OK;
 }
@@ -299,6 +310,39 @@ static UINT32 HandleEventShow(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
 	return RESULT_OK;
 }
 
+static UINT32 HandleEventSelect(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
+	EVENT_T *event;
+
+	event = AFW_GetEv(ev_st);
+
+	UtilLogStringData("SELECT");
+
+	APP_UtilStartTimer(100, APP_TIMER_EXIT, app);
+	return RESULT_OK;
+}
+
+static UINT32 HandleEventRequestListItems(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
+	UINT32 status;
+	EVENT_T *event;
+	UINT32 start;
+	UINT32 count;
+
+	status = RESULT_OK;
+
+	if (!app->focused) {
+		return status;
+	}
+
+	event = AFW_GetEv(ev_st);
+	start = event->data.list_items_req.begin_idx;
+	count = event->data.list_items_req.count;
+
+	status |= APP_ConsumeEv(ev_st, app);
+	status |= SendMenuItemsToList(ev_st, app, start, count);
+
+	return status;
+}
+
 static UINT32 HandleEventKeyPress(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
 	EVENT_T *event;
 	UINT8 key;
@@ -323,19 +367,19 @@ static UINT32 HandleEventKeyPress(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
 			UIS_GetActiveDialogType(&dialog);
 			if (dialog == DialogType_Menu || dialog == DialogType_SecondLevelMenu) {
 				/* Set vibration motor voltage. */
-				hPortWrite(g_option_vibro_voltage_signal, g_option_vibro_voltage_level);
+				hPortWrite(g_option_vibro_voltage_signal, g_option_vibro_voltage_level_on);
 
 				/* Start vibration motor. */
-				hPortWrite(g_option_vibro_signal, 1);
+				hPortWrite(g_option_vibro_motor_signal, g_option_vibro_motor_send_on);
 
 				/* Delay using SUAPI because APP_UtilStartTimer() is slow. */
 				suSleep(g_option_vibro_delay, NULL);
 
 				/* Stop vibration motor. */
-				hPortWrite(g_option_vibro_signal, 0);
+				hPortWrite(g_option_vibro_motor_signal, g_option_vibro_motor_send_off);
 
 				/* Reset vibration motor voltage. */
-				hPortWrite(g_option_vibro_voltage_signal, 0);
+				hPortWrite(g_option_vibro_voltage_signal, g_option_vibro_voltage_level_off);
 			}
 			break;
 		default:
@@ -387,4 +431,67 @@ static UINT32 HandleEventTimerExpired(EVENT_STACK_T *ev_st, APPLICATION_T *app) 
 	}
 
 	return RESULT_OK;
+}
+
+static UINT32 HandleEventEditData(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
+	return RESULT_OK;
+}
+
+static UINT32 HandleEventEditCancel(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
+	return RESULT_OK;
+}
+
+static UINT32 SendMenuItemsToList(EVENT_STACK_T *ev_st, APPLICATION_T *app, UINT32 start, UINT32 count) {
+	UINT32 status;
+	INT32 result;
+	UINT32 i;
+	LIST_ENTRY_T *list;
+
+	status = RESULT_OK;
+	result = RESULT_OK;
+
+	if (count == 0) {
+		return RESULT_FAIL;
+	}
+	list = (LIST_ENTRY_T *) suAllocMem(sizeof(LIST_ENTRY_T) * APP_MENU_ITEM_MAX, &result);
+	if (result != RESULT_OK) {
+		return RESULT_FAIL;
+	}
+
+	for (i = 0; i < APP_MENU_ITEM_MAX; ++i) {
+		list[i].editable = FALSE;
+		list[i].content.static_entry.formatting = TRUE;
+	}
+
+	status |= UIS_MakeContentFromString("Mq0Si1",
+		&list[APP_MENU_ITEM_VIBRATION_SIGNAL].content.static_entry.text,
+		g_str_vibro_signal, g_option_vibro_motor_signal);
+	status |= UIS_MakeContentFromString("Mq0Si1",
+		&list[APP_MENU_ITEM_VIBRATION_DURATION].content.static_entry.text,
+		g_str_vibro_delay, g_option_vibro_delay);
+	status |= UIS_MakeContentFromString("Mq0Si1",
+		&list[APP_MENU_ITEM_VIBRATION_VOLTAGE_SIGNAL].content.static_entry.text,
+		g_str_vibro_voltage_signal, g_option_vibro_voltage_signal);
+	status |= UIS_MakeContentFromString("Mq0Si1",
+		&list[APP_MENU_ITEM_VIBRATION_VOLTAGE].content.static_entry.text,
+		g_str_vibro_voltage_level, g_option_vibro_voltage_level_on);
+	status |= UIS_MakeContentFromString("Mq0",
+		&list[APP_MENU_ITEM_HELP].content.static_entry.text,
+		g_str_help);
+	status |= UIS_MakeContentFromString("Mq0",
+		&list[APP_MENU_ITEM_ABOUT].content.static_entry.text,
+		g_str_about);
+	status |= UIS_MakeContentFromString("Mq0",
+		&list[APP_MENU_ITEM_EXIT].content.static_entry.text,
+		g_str_exit);
+
+	status |= APP_UtilAddEvUISListData(ev_st, app, 0, start, APP_MENU_ITEM_MAX, FBF_LEAVE,
+		sizeof(LIST_ENTRY_T) * APP_MENU_ITEM_MAX, list);
+	if (status != RESULT_FAIL) {
+		UIS_HandleEvent(app->dialog, ev_st);
+	}
+
+	suFreeMem(list);
+
+	return status;
 }
