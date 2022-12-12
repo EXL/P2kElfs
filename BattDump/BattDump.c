@@ -138,24 +138,24 @@ static UINT32 HandleStateEnter(EVENT_STACK_T *ev_st, APPLICATION_T *app, ENTER_S
 	app_state = app->state;
 
 	switch (app_state) {
-	case APP_STATE_MAIN:
-		UIS_MakeContentFromString("MCq0", &content, g_msg_state_main);
-		dialog = UIS_CreateConfirmation(&port, &content);
-		break;
-	case APP_STATE_DUMP_OK:
-		UIS_MakeContentFromString("RMq0", &content, g_msg_state_dump_ok);
-		memclr(&parameters, sizeof(NOTICE_PARAMETERS_T));
-		parameters.title = LANG_DONE;
-		parameters.icon1 = RES_GIF_OK;
-		dialog = UIS_CreateExtendedNotice(&port, &content, 5000, EXTENDENT_NOTICE_TRANSIENT, NO_STATUS, parameters, NULL);
-		break;
-	case APP_STATE_DUMP_FAIL:
-		UIS_MakeContentFromString("RMq0", &content, g_msg_state_dump_fail);
-		dialog = UIS_CreateTransientNotice(&port, &content, NOTICE_TYPE_FAIL);
-		break;
-	default:
-		dialog = DialogType_None;
-		break;
+		case APP_STATE_MAIN:
+			UIS_MakeContentFromString("MCq0", &content, g_msg_state_main);
+			dialog = UIS_CreateConfirmation(&port, &content);
+			break;
+		case APP_STATE_DUMP_OK:
+			UIS_MakeContentFromString("RMq0", &content, g_msg_state_dump_ok);
+			memclr(&parameters, sizeof(NOTICE_PARAMETERS_T));
+			parameters.title = LANG_DONE;
+			parameters.icon1 = RES_GIF_OK;
+			dialog = UIS_CreateExtendedNotice(&port, &content, 5000, EXTENDENT_NOTICE_TRANSIENT, NO_STATUS, parameters, NULL);
+			break;
+		case APP_STATE_DUMP_FAIL:
+			UIS_MakeContentFromString("RMq0", &content, g_msg_state_dump_fail);
+			dialog = UIS_CreateTransientNotice(&port, &content, NOTICE_TYPE_FAIL);
+			break;
+		default:
+			dialog = DialogType_None;
+			break;
 	}
 
 	if (dialog == DialogType_None) {
