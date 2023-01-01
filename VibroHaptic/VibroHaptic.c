@@ -10,6 +10,8 @@
 #include <tasks.h>
 #include <utilities.h>
 
+#define NUMBER_MAX_LENGTH 6
+
 typedef struct {
 	APPLICATION_T app;
 } ELF_T;
@@ -37,7 +39,8 @@ typedef enum {
 } APP_RESOURCES_T;
 
 typedef enum {
-	APP_MENU_ITEM_VIBRATION_SIGNAL,
+	APP_MENU_ITEM_FIRST,
+	APP_MENU_ITEM_VIBRATION_SIGNAL = APP_MENU_ITEM_FIRST,
 	APP_MENU_ITEM_VIBRATION_DURATION,
 	APP_MENU_ITEM_VIBRATION_VOLTAGE_SIGNAL,
 	APP_MENU_ITEM_VIBRATION_VOLTAGE,
@@ -69,7 +72,7 @@ static UINT32 HandleEventKeyRelease(EVENT_STACK_T *ev_st, APPLICATION_T *app);
 static UINT32 HandleEventTimerExpired(EVENT_STACK_T *ev_st, APPLICATION_T *app);
 
 static UINT32 HandleEventEditData(EVENT_STACK_T *ev_st, APPLICATION_T *app);
-static UINT32 HandleEventEditCancel(EVENT_STACK_T *ev_st, APPLICATION_T *app);
+static UINT32 HandleEventEditDone(EVENT_STACK_T *ev_st, APPLICATION_T *app);
 
 static UINT32 SendMenuItemsToList(EVENT_STACK_T *ev_st, APPLICATION_T *app, UINT32 start, UINT32 count);
 
@@ -97,6 +100,7 @@ static UINT32 g_option_vibro_delay = 30;
 
 static APP_DISPLAY_T g_app_state = APP_DISPLAY_HIDE;
 static RESOURCE_ID g_app_resources[APP_RESOURCE_MAX];
+static APP_MENU_ITEM_T g_app_menu_current_item_index = 0;
 static UINT64 g_ms_key_press_start = 0LLU;
 
 static const EVENT_HANDLER_ENTRY_T g_state_any_hdls[] = {
@@ -127,10 +131,11 @@ static const EVENT_HANDLER_ENTRY_T g_state_main_hdls[] = {
 };
 
 static const EVENT_HANDLER_ENTRY_T g_state_edit_hdls[] = {
-	{ EV_DONE, HandleEventEditCancel },
-	{ EV_DIALOG_DONE, HandleEventEditCancel },
+	{ EV_GRANT_TOKEN,             	  APP_HandleUITokenGranted },
 	{ EV_DATA, HandleEventEditData },
-	{ EV_CANCEL, HandleEventEditCancel },
+	{ EV_DONE, HandleEventEditDone },
+	{ EV_DIALOG_DONE, HandleEventEditDone },
+	{ EV_CANCEL, HandleEventEditDone },
 	{ STATE_HANDLERS_END, NULL }
 };
 
@@ -235,6 +240,7 @@ static UINT32 HandleStateEnter(EVENT_STACK_T *ev_st, APPLICATION_T *app, ENTER_S
 	UIS_DIALOG_T dialog;
 	APP_STATE_T app_state;
 	UINT32 starting_list_items;
+	WCHAR edit_number[NUMBER_MAX_LENGTH + 1];
 
 	if (state != ENTER_STATE_ENTER) {
 		return RESULT_OK;
@@ -247,11 +253,39 @@ static UINT32 HandleStateEnter(EVENT_STACK_T *ev_st, APPLICATION_T *app, ENTER_S
 
 	switch (app_state) {
 		case APP_STATE_MAIN:
-			starting_list_items = APP_MENU_ITEM_MAX;
-			dialog = UIS_CreateList(&port, 0, APP_MENU_ITEM_MAX, 0, &starting_list_items, 0, 2, NULL, g_app_resources[APP_RESOURCE_STRING_NAME]);
+//			starting_list_items = APP_MENU_ITEM_MAX;
+			dialog = UIS_CreateList(&port, 0, APP_MENU_ITEM_MAX, 0, &starting_list_items, 0, 2, NULL,
+				g_app_resources[APP_RESOURCE_STRING_NAME]);
+
+			/* Insert menu items. */
+			SendMenuItemsToList(ev_st, app, 1, APP_MENU_ITEM_MAX);
+
+//			/* Insert cursor to proper position. */
+			if (g_app_menu_current_item_index != APP_MENU_ITEM_FIRST) {
+				APP_UtilAddEvUISListChange(ev_st, app, 0, g_app_menu_current_item_index + 1, APP_MENU_ITEM_MAX,
+					FALSE, 2, NULL, NULL, NULL);
+				UIS_HandleEvent(dialog, ev_st);
+			}
 			break;
 		case APP_STATE_EDIT:
-
+			switch (g_app_menu_current_item_index) {
+				case APP_MENU_ITEM_VIBRATION_SIGNAL:
+					u_ltou(g_option_vibro_motor_signal, edit_number);
+					break;
+				case APP_MENU_ITEM_VIBRATION_DURATION:
+					u_ltou(g_option_vibro_delay, edit_number);
+					break;
+				case APP_MENU_ITEM_VIBRATION_VOLTAGE_SIGNAL:
+					u_ltou(g_option_vibro_voltage_signal, edit_number);
+					break;
+				case APP_MENU_ITEM_VIBRATION_VOLTAGE:
+					u_ltou(g_option_vibro_voltage_level_on, edit_number);
+					break;
+				default:
+					break;
+			}
+			dialog = UIS_CreateCharacterEditor(&port, edit_number, 5 /* Only numbers. */, NUMBER_MAX_LENGTH,
+				FALSE, NULL, g_app_resources[APP_RESOURCE_STRING_NAME]);
 			break;
 		default:
 			dialog = DialogType_None;
@@ -263,8 +297,6 @@ static UINT32 HandleStateEnter(EVENT_STACK_T *ev_st, APPLICATION_T *app, ENTER_S
 	}
 
 	app->dialog = dialog;
-
-	SendMenuItemsToList(ev_st, app, 1, APP_MENU_ITEM_MAX);
 
 	return RESULT_OK;
 }
@@ -311,14 +343,34 @@ static UINT32 HandleEventShow(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
 }
 
 static UINT32 HandleEventSelect(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
+	UINT32 status;
 	EVENT_T *event;
 
+	status = RESULT_OK;
 	event = AFW_GetEv(ev_st);
 
-	UtilLogStringData("SELECT");
+	g_app_menu_current_item_index = event->data.index - 1;
 
-	APP_UtilStartTimer(100, APP_TIMER_EXIT, app);
-	return RESULT_OK;
+	switch (g_app_menu_current_item_index) {
+		case APP_MENU_ITEM_VIBRATION_SIGNAL:
+		case APP_MENU_ITEM_VIBRATION_DURATION:
+		case APP_MENU_ITEM_VIBRATION_VOLTAGE_SIGNAL:
+		case APP_MENU_ITEM_VIBRATION_VOLTAGE:
+			status |= APP_UtilChangeState(APP_STATE_EDIT, ev_st, app);
+			break;
+		case APP_MENU_ITEM_HELP:
+		case APP_MENU_ITEM_ABOUT:
+			break;
+		case APP_MENU_ITEM_EXIT:
+			status |= APP_UtilStartTimer(100, APP_TIMER_EXIT, app);
+			break;
+		default:
+			break;
+	}
+
+	status |= APP_ConsumeEv(ev_st, app);
+
+	return status;
 }
 
 static UINT32 HandleEventRequestListItems(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
@@ -434,11 +486,55 @@ static UINT32 HandleEventTimerExpired(EVENT_STACK_T *ev_st, APPLICATION_T *app) 
 }
 
 static UINT32 HandleEventEditData(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
-	return RESULT_OK;
+	UINT32 status;
+	EVENT_T *event;
+	UINT64 data;
+
+	status = RESULT_OK;
+	event = AFW_GetEv(ev_st);
+
+	UtilLogStringData("EditData: %p\n", event->attachment);
+
+	if (event->attachment != NULL) {
+		data = u_atol(event->attachment);
+		UtilLogStringData("EditData: %llu\n", data);
+		switch (g_app_menu_current_item_index) {
+			case APP_MENU_ITEM_VIBRATION_SIGNAL:
+				g_option_vibro_motor_signal = data;
+				break;
+			case APP_MENU_ITEM_VIBRATION_DURATION:
+				g_option_vibro_delay = data;
+				break;
+			case APP_MENU_ITEM_VIBRATION_VOLTAGE_SIGNAL:
+				g_option_vibro_voltage_signal = data;
+				break;
+			case APP_MENU_ITEM_VIBRATION_VOLTAGE:
+				g_option_vibro_voltage_level_on = data;
+				break;
+			default:
+				break;
+		}
+	}
+
+	status |= APP_UtilChangeState(APP_STATE_MAIN, ev_st, app);
+
+	return status;
 }
 
-static UINT32 HandleEventEditCancel(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
-	return RESULT_OK;
+static UINT32 HandleEventEditDone(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
+	UINT32 status;
+	ADD_EVENT_DATA_T event_data;
+
+	status = RESULT_OK;
+
+	UtilLogStringData("EditDone");
+
+	status |= AFW_AddEvEvD(ev_st, EV_REQUEST_DATA, &event_data);
+	status |= UIS_HandleEvent(app->dialog, ev_st);
+
+	status |= APP_UtilChangeState(APP_STATE_MAIN, ev_st, app);
+
+	return status;
 }
 
 static UINT32 SendMenuItemsToList(EVENT_STACK_T *ev_st, APPLICATION_T *app, UINT32 start, UINT32 count) {
