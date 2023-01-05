@@ -556,8 +556,6 @@ static UINT32 HandleEventEditDone(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
 	status |= AFW_AddEvEvD(ev_st, EV_REQUEST_DATA, &event_data);
 	status |= UIS_HandleEvent(app->dialog, ev_st);
 
-	status |= APP_UtilChangeState(APP_STATE_MAIN, ev_st, app);
-
 	return status;
 }
 
