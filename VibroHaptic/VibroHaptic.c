@@ -35,6 +35,10 @@ typedef enum {
 
 typedef enum {
 	APP_RESOURCE_STRING_NAME,
+	APP_RESOURCE_STRING_VIBRO_SIGNAL,
+	APP_RESOURCE_STRING_VIBRO_DELAY,
+	APP_RESOURCE_STRING_VIBRO_VOLTAGE_SIGNAL,
+	APP_RESOURCE_STRING_VIBRO_VOLTAGE_LEVEL,
 	APP_RESOURCE_MAX
 } APP_RESOURCES_T;
 
@@ -80,9 +84,13 @@ static const char g_app_name[APP_NAME_LEN] = "VibroHaptic";
 
 static const WCHAR g_str_app_name[] = L"Vibro Haptic";
 static const WCHAR g_str_vibro_signal[] = L"Motor Signal:";
+static const WCHAR g_str_e_vibro_signal[] = L"Motor Signal";
 static const WCHAR g_str_vibro_delay[] = L"Delay (in ms):";
+static const WCHAR g_str_e_vibro_delay[] = L"Delay (in ms)";
 static const WCHAR g_str_vibro_voltage_signal[] = L"Voltage Signal:";
+static const WCHAR g_str_e_vibro_voltage_signal[] = L"Voltage Signal";
 static const WCHAR g_str_vibro_voltage_level[] = L"Voltage Level:";
+static const WCHAR g_str_e_vibro_voltage_level[] = L"Voltage Level";
 static const WCHAR g_str_help[] = L"Help...";
 static const WCHAR g_str_about[] = L"About...";
 static const WCHAR g_str_exit[] = L"Exit";
@@ -197,6 +205,14 @@ static UINT32 InitResourses(RESOURCE_ID *resources) {
 
 	status |= DRM_CreateResource(&resources[APP_RESOURCE_STRING_NAME], RES_TYPE_STRING,
 		(void *) g_str_app_name, (u_strlen(g_str_app_name) + 1) * sizeof(WCHAR));
+	status |= DRM_CreateResource(&resources[APP_RESOURCE_STRING_VIBRO_SIGNAL], RES_TYPE_STRING,
+		(void *) g_str_e_vibro_signal, (u_strlen(g_str_e_vibro_signal) + 1) * sizeof(WCHAR));
+	status |= DRM_CreateResource(&resources[APP_RESOURCE_STRING_VIBRO_DELAY], RES_TYPE_STRING,
+		(void *) g_str_e_vibro_delay, (u_strlen(g_str_e_vibro_delay) + 1) * sizeof(WCHAR));
+	status |= DRM_CreateResource(&resources[APP_RESOURCE_STRING_VIBRO_VOLTAGE_SIGNAL], RES_TYPE_STRING,
+		(void *) g_str_e_vibro_voltage_signal, (u_strlen(g_str_e_vibro_voltage_signal) + 1) * sizeof(WCHAR));
+	status |= DRM_CreateResource(&resources[APP_RESOURCE_STRING_VIBRO_VOLTAGE_LEVEL], RES_TYPE_STRING,
+		(void *) g_str_e_vibro_voltage_level, (u_strlen(g_str_e_vibro_voltage_level) + 1) * sizeof(WCHAR));
 
 	return status;
 }
@@ -239,6 +255,7 @@ static UINT32 HandleStateEnter(EVENT_STACK_T *ev_st, APPLICATION_T *app, ENTER_S
 	UIS_DIALOG_T dialog;
 	APP_STATE_T app_state;
 	UINT32 starting_list_item;
+	RESOURCE_ID edit_title;
 	WCHAR edit_number[NUMBER_MAX_LENGTH + 1];
 
 	if (state != ENTER_STATE_ENTER) {
@@ -249,6 +266,7 @@ static UINT32 HandleStateEnter(EVENT_STACK_T *ev_st, APPLICATION_T *app, ENTER_S
 
 	port = app->port;
 	app_state = app->state;
+	edit_title = g_app_resources[APP_RESOURCE_STRING_NAME];
 
 	switch (app_state) {
 		case APP_STATE_MAIN:
@@ -270,22 +288,26 @@ static UINT32 HandleStateEnter(EVENT_STACK_T *ev_st, APPLICATION_T *app, ENTER_S
 		case APP_STATE_EDIT:
 			switch (g_app_menu_current_item_index) {
 				case APP_MENU_ITEM_VIBRATION_SIGNAL:
+					edit_title = g_app_resources[APP_RESOURCE_STRING_VIBRO_SIGNAL];
 					u_ltou(g_option_vibro_motor_signal, edit_number);
 					break;
 				case APP_MENU_ITEM_VIBRATION_DURATION:
+					edit_title = g_app_resources[APP_RESOURCE_STRING_VIBRO_DELAY];
 					u_ltou(g_option_vibro_delay, edit_number);
 					break;
 				case APP_MENU_ITEM_VIBRATION_VOLTAGE_SIGNAL:
+					edit_title = g_app_resources[APP_RESOURCE_STRING_VIBRO_VOLTAGE_SIGNAL];
 					u_ltou(g_option_vibro_voltage_signal, edit_number);
 					break;
 				case APP_MENU_ITEM_VIBRATION_VOLTAGE:
+					edit_title = g_app_resources[APP_RESOURCE_STRING_VIBRO_VOLTAGE_LEVEL];
 					u_ltou(g_option_vibro_voltage_level_on, edit_number);
 					break;
 				default:
 					break;
 			}
 			dialog = UIS_CreateCharacterEditor(&port, edit_number, 32 /* Only numbers. */, NUMBER_MAX_LENGTH,
-				FALSE, NULL, g_app_resources[APP_RESOURCE_STRING_NAME]);
+				FALSE, NULL, edit_title);
 			break;
 		default:
 			dialog = DialogType_None;
