@@ -515,13 +515,8 @@ static UINT32 HandleEventEditData(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
 	status = RESULT_OK;
 	event = AFW_GetEv(ev_st);
 
-	UtilLogStringData("EditData!!!");
-
-	UtilLogStringData("EditData: %p\n", event->attachment);
-
 	if (event->attachment != NULL) {
 		data = u_atol(event->attachment);
-		UtilLogStringData("EditData: %llu\n", data);
 		switch (g_app_menu_current_item_index) {
 			case APP_MENU_ITEM_VIBRATION_SIGNAL:
 				g_option_vibro_motor_signal = data;
@@ -547,13 +542,17 @@ static UINT32 HandleEventEditData(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
 
 static UINT32 HandleEventEditDone(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
 	UINT32 status;
-	ADD_EVENT_DATA_T event_data;
+	ADD_EVENT_DATA_T *event_data;
 
 	status = RESULT_OK;
 
-	UtilLogStringData("EditDone");
-
-	status |= AFW_AddEvEvD(ev_st, EV_REQUEST_DATA, &event_data);
+	/*
+	 * EXL, 05-Jan-2023:
+	 *  I don't know how, but this trick with uninitialised pointer just works.
+	 *  Structure `ADD_EVENT_DATA_T &event_data;` on stack leads to a strange problem
+	 *  when editing the list with deleting one symbol, only one character appears after editing.
+	 */
+	status |= AFW_AddEvEvD(ev_st, EV_REQUEST_DATA, event_data);
 	status |= UIS_HandleEvent(app->dialog, ev_st);
 
 	return status;
