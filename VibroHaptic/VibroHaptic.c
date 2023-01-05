@@ -131,7 +131,6 @@ static const EVENT_HANDLER_ENTRY_T g_state_main_hdls[] = {
 };
 
 static const EVENT_HANDLER_ENTRY_T g_state_edit_hdls[] = {
-	{ EV_GRANT_TOKEN,             	  APP_HandleUITokenGranted },
 	{ EV_DATA, HandleEventEditData },
 	{ EV_DONE, HandleEventEditDone },
 	{ EV_DIALOG_DONE, HandleEventEditDone },
@@ -239,7 +238,7 @@ static UINT32 HandleStateEnter(EVENT_STACK_T *ev_st, APPLICATION_T *app, ENTER_S
 	CONTENT_T content;
 	UIS_DIALOG_T dialog;
 	APP_STATE_T app_state;
-	UINT32 starting_list_items;
+	UINT32 starting_list_item;
 	WCHAR edit_number[NUMBER_MAX_LENGTH + 1];
 
 	if (state != ENTER_STATE_ENTER) {
@@ -253,19 +252,20 @@ static UINT32 HandleStateEnter(EVENT_STACK_T *ev_st, APPLICATION_T *app, ENTER_S
 
 	switch (app_state) {
 		case APP_STATE_MAIN:
-//			starting_list_items = APP_MENU_ITEM_MAX;
-			dialog = UIS_CreateList(&port, 0, APP_MENU_ITEM_MAX, 0, &starting_list_items, 0, 2, NULL,
+			starting_list_item = APP_MENU_ITEM_FIRST;
+			dialog = UIS_CreateList(&port, 0, APP_MENU_ITEM_MAX, 0, &starting_list_item, 0, 2, NULL,
 				g_app_resources[APP_RESOURCE_STRING_NAME]);
 
-			/* Insert menu items. */
-			SendMenuItemsToList(ev_st, app, 1, APP_MENU_ITEM_MAX);
-
-//			/* Insert cursor to proper position. */
+			/* Insert cursor to proper position. */
 			if (g_app_menu_current_item_index != APP_MENU_ITEM_FIRST) {
 				APP_UtilAddEvUISListChange(ev_st, app, 0, g_app_menu_current_item_index + 1, APP_MENU_ITEM_MAX,
 					FALSE, 2, NULL, NULL, NULL);
 				UIS_HandleEvent(dialog, ev_st);
 			}
+
+			/* Insert menu items. */
+			SendMenuItemsToList(ev_st, app, 1, APP_MENU_ITEM_MAX);
+
 			break;
 		case APP_STATE_EDIT:
 			switch (g_app_menu_current_item_index) {
@@ -284,7 +284,7 @@ static UINT32 HandleStateEnter(EVENT_STACK_T *ev_st, APPLICATION_T *app, ENTER_S
 				default:
 					break;
 			}
-			dialog = UIS_CreateCharacterEditor(&port, edit_number, 5 /* Only numbers. */, NUMBER_MAX_LENGTH,
+			dialog = UIS_CreateCharacterEditor(&port, edit_number, 32 /* Only numbers. */, NUMBER_MAX_LENGTH,
 				FALSE, NULL, g_app_resources[APP_RESOURCE_STRING_NAME]);
 			break;
 		default:
@@ -492,6 +492,8 @@ static UINT32 HandleEventEditData(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
 
 	status = RESULT_OK;
 	event = AFW_GetEv(ev_st);
+
+	UtilLogStringData("EditData!!!");
 
 	UtilLogStringData("EditData: %p\n", event->attachment);
 
