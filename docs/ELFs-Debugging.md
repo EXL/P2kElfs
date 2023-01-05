@@ -17,7 +17,10 @@ PFprintf("KeyPress = %d.\n", event->data.key_pressed);
 
 1. Phone Actions: PDS SEEM `SEEM_IN_FACTORY` (01C1_0001) must be in FF state (IN_FACTORY), not 00 (NON_FACTORY).
 2. Phone USB Connection: Switch phone to P2K mode -- Motorola USB Device (Accessories Interface, Data Logging MCU Interface, Test Command Interface).
-3. P2KDataLogger Actions: Check "Display => Filters => All Primitives/Messages" then choose "Display => Start Display".
+3. P2KDataLogger Actions:
+3.1. Check "Display => Filters => All Primitives/Messages".
+3.2. Choose "Config => Phone Logger Configuration => Common Config" then push "Enable Logging" button.
+3.3. Choose "Display => Start Display" item.
 
 Debug function sample:
 

@@ -17,7 +17,7 @@ Thanks to [@denis-shienkov](https://github.com/denis-shienkov) | [@kuzulis](http
    (or you can choose the bare metal device instead, it is irrelevant).
 
    * Compiler C: "Thumb C Compiler, ADS1.2 [Build 848]".
-   * Compiler C++: "None".
+   * Compiler C++: "<No compiler>".
    * Debugger: "None".
    * Qt: "None".
 
@@ -25,7 +25,7 @@ Thanks to [@denis-shienkov](https://github.com/denis-shienkov) | [@kuzulis](http
 
    * qbs.architecture: `arm`
    * qbs.toolchainType: `tcc`
-   * preferences.qbsSearchPaths: `C:\ARM\qbs`
+   * preferences.qbsSearchPaths: `C:\ARM\qbs` or `/opt/arm/qbs`
 
 8. Check that the Qbs propertires are set successfully, goto "Edit => Preferences => Qbs => Profiles", choose the "Motorola P2K ARM" profile and expand items. Check that there are the following:
 
@@ -42,11 +42,14 @@ Thanks to [@denis-shienkov](https://github.com/denis-shienkov) | [@kuzulis](http
 	   * targetPlatform: `""`
 	   * toolchainType: `"tcc"`
 
-9. Just open the "P2kElfs.qbs" project file from the Qt Creator IDE assign the "Motorola P2K ARM" kit, choose the shadow build directories, and then press the "Build" button.
+9. Just open the "P2kElfs.qbs" project file from the Qt Creator IDE assign the "Motorola P2K ARM" kit, choose the shadow build directories (Release only is OK), and then press the "Build" button.
 
 10. Right now an example of the command line flags are following:
 
 ```
-C:\ARM\tcc.exe -c C:/Users/exlmo/Desktop/P2kElfs/Screenshot/Screenshot.c -o C:/Users/exlmo/Desktop/build-P2kElfs-Motorola_P2K-Debug/Debug_Motorola_214d153b51eb1e3a/Screenshot.60c152d9/3a52ce780950d4d9/Screenshot.c.o -D__P2K__ -IC:/ARM/SDK -bigend -apcs /interwork
-C:\ARM\armlink.exe -nolocals -reloc C:/Users/exlmo/Desktop/build-P2kElfs-Motorola_P2K-Debug/Debug_Motorola_214d153b51eb1e3a/Screenshot.60c152d9/3a52ce780950d4d9/Screenshot.c.o -first "Lib_L2_L6.o(Lib)" C:/ARM/lib/Lib_L2_L6.o -o C:/Users/exlmo/Desktop/build-P2kElfs-Motorola_P2K-Debug/Debug_Motorola_214d153b51eb1e3a/Screenshot.60c152d9/Screenshot.elf
+C:\ARM\tcc.exe -c C:/Users/exlmo/Desktop/P2kElfs/Screenshot/Screenshot.c -o C:/Users/exlmo/Desktop/build-P2kElfs-Motorola_P2K-Release/Release_Motorola_20544e913c3f0fb1/Screenshot.60c152d9/3a52ce780950d4d9/Screenshot.c.o -D__P2K__ -IC:/ARM/SDK -I/opt/arm/SDK -bigend -apcs /interwork
+C:\ARM\armlink.exe -nolocals -reloc C:/Users/exlmo/Desktop/build-P2kElfs-Motorola_P2K-Release/Release_Motorola_20544e913c3f0fb1/Screenshot.60c152d9/3a52ce780950d4d9/Screenshot.c.o -first "Lib_L2_L6.o(Lib)" C:/ARM/lib/Lib_L2_L6.o -o C:/Users/exlmo/Desktop/build-P2kElfs-Motorola_P2K-Release/Release_Motorola_20544e913c3f0fb1/Screenshot.60c152d9/Screenshot.elf
+
+/opt/arm/bin/tcc -c /home/exl/Storage/Projects/Git/Public/P2kElfs/Screenshot/Screenshot.c -o /home/exl/Storage/Projects/Git/Public/build-P2kElfs-Motorola_P2K_ARM-Release/Release_Motorola_042846ed32005607/Screenshot.60c152d9/3a52ce780950d4d9/Screenshot.c.o -D__P2K__ -I/opt/arm/bin/SDK '-I/home/exl/Storage/Projects/Git/Public/P2kElfs/Screenshot/C:\ARM\SDK' -I/opt/arm/SDK -bigend -apcs /interwork
+/opt/arm/bin/armlink -nolocals -reloc /home/exl/Storage/Projects/Git/Public/build-P2kElfs-Motorola_P2K_ARM-Release/Release_Motorola_042846ed32005607/Screenshot.60c152d9/3a52ce780950d4d9/Screenshot.c.o -first 'Lib_L2_L6.o(Lib)' /opt/arm/lib/Lib_L2_L6.o -o /home/exl/Storage/Projects/Git/Public/build-P2kElfs-Motorola_P2K_ARM-Release/Release_Motorola_042846ed32005607/Screenshot.60c152d9/Screenshot.elf
 ```
