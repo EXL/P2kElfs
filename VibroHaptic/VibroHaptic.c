@@ -44,10 +44,12 @@ typedef enum {
 
 typedef enum {
 	APP_MENU_ITEM_FIRST,
-	APP_MENU_ITEM_VIBRATION_SIGNAL = APP_MENU_ITEM_FIRST,
+	APP_MENU_ITEM_TRIGGER = APP_MENU_ITEM_FIRST,
+	APP_MENU_ITEM_VIBRATION_SIGNAL,
 	APP_MENU_ITEM_VIBRATION_DURATION,
 	APP_MENU_ITEM_VIBRATION_VOLTAGE_SIGNAL,
 	APP_MENU_ITEM_VIBRATION_VOLTAGE,
+	APP_MENU_ITEM_RESET,
 	APP_MENU_ITEM_HELP,
 	APP_MENU_ITEM_ABOUT,
 	APP_MENU_ITEM_EXIT,
@@ -84,6 +86,10 @@ static UINT32 SendMenuItemsToList(EVENT_STACK_T *ev_st, APPLICATION_T *app, UINT
 static const char g_app_name[APP_NAME_LEN] = "VibroHaptic";
 
 static const WCHAR g_str_app_name[] = L"Vibro Haptic";
+static const WCHAR g_str_trigger[] = L"Trigger:";
+static const WCHAR g_str_trigger_menus[] = L"Menus";
+static const WCHAR g_str_trigger_lists[] = L"Lists";
+static const WCHAR g_str_trigger_all[] = L"Menus & Lists";
 static const WCHAR g_str_vibro_signal[] = L"Motor Signal:";
 static const WCHAR g_str_e_vibro_signal[] = L"Motor Signal";
 static const WCHAR g_str_vibro_delay[] = L"Delay (in ms):";
@@ -92,6 +98,7 @@ static const WCHAR g_str_vibro_voltage_signal[] = L"Voltage Signal:";
 static const WCHAR g_str_e_vibro_voltage_signal[] = L"Voltage Signal";
 static const WCHAR g_str_vibro_voltage_level[] = L"Voltage Level:";
 static const WCHAR g_str_e_vibro_voltage_level[] = L"Voltage Level";
+static const WCHAR g_str_reset[] = L"Reset to defaults";
 static const WCHAR g_str_help[] = L"Help...";
 static const WCHAR g_str_about[] = L"About...";
 static const WCHAR g_str_exit[] = L"Exit";
@@ -99,6 +106,8 @@ static const WCHAR g_str_exit[] = L"Exit";
 static const UINT8 g_key_app_menu = KEY_SOFT_LEFT;
 static const UINT8 g_key_app_exit = KEY_STAR;
 
+static WCHAR *g_option_trigger = (WCHAR *) &g_str_trigger_menus;
+static UINT16 g_option_trigger_config = 0; /* 0: Menus, 1: Lists, 2: Menus and Lists. */
 static UINT16 g_option_vibro_motor_signal = 735; /* R3443H: 735, R3551: 721. */
 static UINT16 g_option_vibro_motor_send_on = 1;
 static UINT16 g_option_vibro_motor_send_off = 0;
@@ -592,6 +601,9 @@ static UINT32 SendMenuItemsToList(EVENT_STACK_T *ev_st, APPLICATION_T *app, UINT
 		list[i].content.static_entry.formatting = TRUE;
 	}
 
+	status |= UIS_MakeContentFromString("Mq0Sq1",
+		&list[APP_MENU_ITEM_TRIGGER].content.static_entry.text,
+		g_str_trigger, g_option_trigger);
 	status |= UIS_MakeContentFromString("Mq0Si1",
 		&list[APP_MENU_ITEM_VIBRATION_SIGNAL].content.static_entry.text,
 		g_str_vibro_signal, g_option_vibro_motor_signal);
@@ -604,6 +616,9 @@ static UINT32 SendMenuItemsToList(EVENT_STACK_T *ev_st, APPLICATION_T *app, UINT
 	status |= UIS_MakeContentFromString("Mq0Si1",
 		&list[APP_MENU_ITEM_VIBRATION_VOLTAGE].content.static_entry.text,
 		g_str_vibro_voltage_level, g_option_vibro_voltage_level_on);
+	status |= UIS_MakeContentFromString("Mq0",
+		&list[APP_MENU_ITEM_RESET].content.static_entry.text,
+		g_str_reset);
 	status |= UIS_MakeContentFromString("Mq0",
 		&list[APP_MENU_ITEM_HELP].content.static_entry.text,
 		g_str_help);
