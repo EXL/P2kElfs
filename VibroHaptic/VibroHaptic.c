@@ -77,6 +77,7 @@ static UINT32 HandleEventTimerExpired(EVENT_STACK_T *ev_st, APPLICATION_T *app);
 
 static UINT32 HandleEventEditData(EVENT_STACK_T *ev_st, APPLICATION_T *app);
 static UINT32 HandleEventEditDone(EVENT_STACK_T *ev_st, APPLICATION_T *app);
+static UINT32 HandleEventEditCancel(EVENT_STACK_T *ev_st, APPLICATION_T *app);
 
 static UINT32 SendMenuItemsToList(EVENT_STACK_T *ev_st, APPLICATION_T *app, UINT32 start, UINT32 count);
 
@@ -142,7 +143,7 @@ static const EVENT_HANDLER_ENTRY_T g_state_edit_hdls[] = {
 	{ EV_DATA, HandleEventEditData },
 	{ EV_DONE, HandleEventEditDone },
 	{ EV_DIALOG_DONE, HandleEventEditDone },
-	{ EV_CANCEL, HandleEventEditDone },
+	{ EV_CANCEL, HandleEventEditCancel },
 	{ STATE_HANDLERS_END, NULL }
 };
 
@@ -554,6 +555,17 @@ static UINT32 HandleEventEditDone(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
 	 */
 	status |= AFW_AddEvEvD(ev_st, EV_REQUEST_DATA, event_data);
 	status |= UIS_HandleEvent(app->dialog, ev_st);
+
+	return status;
+}
+
+static UINT32 HandleEventEditCancel(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
+	UINT32 status;
+
+	status = RESULT_OK;
+
+	status |= DeleteDialog(app);
+	status |= APP_UtilChangeState(APP_STATE_MAIN, ev_st, app);
 
 	return status;
 }
