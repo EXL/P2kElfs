@@ -25,6 +25,7 @@ typedef enum {
 	APP_STATE_SELECT,
 	APP_STATE_POPUP,
 	APP_STATE_RESET,
+	APP_STATE_VIEW,
 	APP_STATE_MAX
 } APP_STATE_T;
 
@@ -73,6 +74,11 @@ typedef enum {
 	APP_POPUP_CHANGED,
 	APP_POPUP_RESETED
 } APP_POPUP_T;
+
+typedef enum {
+	APP_VIEW_HELP,
+	APP_VIEW_ABOUT
+} APP_VIEW_T;
 
 UINT32 Register(const char *elf_path_uri, const char *args, UINT32 ev_code);
 static UINT32 ApplicationStart(EVENT_STACK_T *ev_st, REG_ID_T reg_id, void *reg_hdl);
@@ -129,11 +135,17 @@ static const WCHAR g_str_vibro_voltage_level[] = L"Voltage Level:";
 static const WCHAR g_str_e_vibro_voltage_level[] = L"Voltage Level";
 static const WCHAR g_str_reset[] = L"Reset to default";
 static const WCHAR g_str_help[] = L"Help...";
+static const WCHAR g_str_e_help[] = L"Help";
 static const WCHAR g_str_about[] = L"About...";
+static const WCHAR g_str_e_about[] = L"About";
 static const WCHAR g_str_exit[] = L"Exit";
 static const WCHAR g_str_changed[] = L"Changed:";
 static const WCHAR g_str_reseted[] = L"All settings have been reset to default values!";
 static const WCHAR g_str_reset_question[] = L"Do you want to reset settings to default?";
+static const WCHAR g_str_help_content[] = L"Under construction.";
+static const WCHAR g_str_about_content[] = L"Created by EXL, Under construction. "
+	L"Source code: https://github.com/EXL/P2kElfs/tree/master/VibroHaptic "
+	L"(c) 2023";
 
 static const UINT8 g_key_app_menu = KEY_SOFT_LEFT;
 static const UINT8 g_key_app_exit = KEY_STAR;
@@ -149,6 +161,7 @@ static UINT32 g_option_vibro_delay = 30;
 
 static APP_DISPLAY_T g_app_state = APP_DISPLAY_HIDE;
 static APP_POPUP_T g_app_popup = APP_POPUP_CHANGED;
+static APP_VIEW_T g_app_view = APP_VIEW_HELP;
 static RESOURCE_ID g_app_resources[APP_RESOURCE_MAX];
 static APP_MENU_ITEM_T g_app_menu_current_item_index = 0;
 static UINT64 g_ms_key_press_start = 0LLU;
@@ -217,7 +230,8 @@ static const STATE_HANDLERS_ENTRY_T g_state_table_hdls[] = {
 	{ APP_STATE_EDIT, HandleStateEnter, HandleStateExit, g_state_edit_hdls },
 	{ APP_STATE_SELECT, HandleStateEnter, HandleStateExit, g_state_select_hdls },
 	{ APP_STATE_POPUP, HandleStateEnter, HandleStateExit, g_state_popup_hdls },
-	{ APP_STATE_RESET, HandleStateEnter, HandleStateExit, g_state_reset_hdls }
+	{ APP_STATE_RESET, HandleStateEnter, HandleStateExit, g_state_reset_hdls },
+	{ APP_STATE_VIEW, HandleStateEnter, HandleStateExit, g_state_popup_hdls } /* Same as popups. */
 };
 
 UINT32 Register(const char *elf_path_uri, const char *args, UINT32 ev_code) {
@@ -385,17 +399,28 @@ static UINT32 HandleStateEnter(EVENT_STACK_T *ev_st, APPLICATION_T *app, ENTER_S
 				case APP_POPUP_CHANGED:
 					UIS_MakeContentFromString("MCq0NMCq1NMCq2", &content,
 						g_str_changed, g_str_e_trigger, GetTriggerOptionString(g_option_trigger));
-					dialog = UIS_CreateTransientNotice(&port, &content, NOTICE_TYPE_OK);
 					break;
 				case APP_POPUP_RESETED:
 					UIS_MakeContentFromString("MCq0", &content, g_str_reseted);
-					dialog = UIS_CreateTransientNotice(&port, &content, NOTICE_TYPE_OK);
 					break;
 			}
+			dialog = UIS_CreateTransientNotice(&port, &content, NOTICE_TYPE_OK);
 			break;
 		case APP_STATE_RESET:
 			UIS_MakeContentFromString("MCq0", &content, g_str_reset_question);
 			dialog = UIS_CreateConfirmation(&port, &content);
+			break;
+		case APP_STATE_VIEW:
+			switch (g_app_view) {
+				default:
+				case APP_VIEW_HELP:
+					UIS_MakeContentFromString("q0Nq1", &content, g_str_e_help, g_str_help_content);
+					break;
+				case APP_VIEW_ABOUT:
+					UIS_MakeContentFromString("q0Nq1", &content, g_str_e_about, g_str_about_content);
+					break;
+			}
+			dialog = UIS_CreateViewer(&port, &content, NULL);
 			break;
 		default:
 			dialog = DialogType_None;
@@ -486,7 +511,12 @@ static UINT32 HandleEventSelect(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
 			status |= APP_UtilChangeState(APP_STATE_RESET, ev_st, app);
 			break;
 		case APP_MENU_ITEM_HELP:
+			g_app_view = APP_VIEW_HELP;
+			status |= APP_UtilChangeState(APP_STATE_VIEW, ev_st, app);
+			break;
 		case APP_MENU_ITEM_ABOUT:
+			g_app_view = APP_VIEW_ABOUT;
+			status |= APP_UtilChangeState(APP_STATE_VIEW, ev_st, app);
 			break;
 		case APP_MENU_ITEM_EXIT:
 			status |= APP_UtilStartTimer(100, APP_TIMER_EXIT, app);
