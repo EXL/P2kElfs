@@ -10,7 +10,8 @@
 #include <tasks.h>
 #include <utilities.h>
 
-#define NUMBER_MAX_LENGTH 6
+#define MAX_NUMBER_LENGTH 6
+#define MAX_NUMBER_VALUE 999999
 
 typedef struct {
 	APPLICATION_T app;
@@ -131,11 +132,11 @@ static const WCHAR g_str_changed[] = L"Changed:";
 static const UINT8 g_key_app_menu = KEY_SOFT_LEFT;
 static const UINT8 g_key_app_exit = KEY_STAR;
 
-static UINT16 g_option_trigger = 0; /* 0: Menus, 1: Lists, 2: Menus and Lists. */
-static UINT16 g_option_vibro_motor_signal = 735; /* R3443H: 735, R3551: 721. */
-static UINT16 g_option_vibro_motor_send_on = 1;
-static UINT16 g_option_vibro_motor_send_off = 0;
-static UINT16 g_option_vibro_voltage_signal = 702; /* R3443H: 702, R3551: 688. */
+static UINT32 g_option_trigger = 0; /* 0: Menus, 1: Lists, 2: Menus and Lists. */
+static UINT32 g_option_vibro_motor_signal = 735; /* R3443H: 735, R3551: 721. */
+static UINT32 g_option_vibro_motor_send_on = 1;
+static UINT32 g_option_vibro_motor_send_off = 0;
+static UINT32 g_option_vibro_voltage_signal = 702; /* R3443H: 702, R3551: 688. */
 static UINT32 g_option_vibro_voltage_level_on = 0;
 static UINT32 g_option_vibro_voltage_level_off = 0;
 static UINT32 g_option_vibro_delay = 30;
@@ -309,7 +310,7 @@ static UINT32 HandleStateEnter(EVENT_STACK_T *ev_st, APPLICATION_T *app, ENTER_S
 	APP_STATE_T app_state;
 	UINT32 starting_list_item;
 	RESOURCE_ID edit_title;
-	WCHAR edit_number[NUMBER_MAX_LENGTH + 1];
+	WCHAR edit_number[MAX_NUMBER_LENGTH + 1];
 
 	if (state != ENTER_STATE_ENTER) {
 		return RESULT_OK;
@@ -355,7 +356,7 @@ static UINT32 HandleStateEnter(EVENT_STACK_T *ev_st, APPLICATION_T *app, ENTER_S
 				default:
 					break;
 			}
-			dialog = UIS_CreateCharacterEditor(&port, edit_number, 32 /* Only numbers. */, NUMBER_MAX_LENGTH,
+			dialog = UIS_CreateCharacterEditor(&port, edit_number, 32 /* Only numbers. */, MAX_NUMBER_LENGTH,
 				FALSE, NULL, edit_title);
 			break;
 		case APP_STATE_SELECT:
@@ -593,13 +594,16 @@ static UINT32 HandleEventTimerExpired(EVENT_STACK_T *ev_st, APPLICATION_T *app) 
 static UINT32 HandleEventEditData(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
 	UINT32 status;
 	EVENT_T *event;
-	UINT64 data;
+	UINT32 data;
 
 	status = RESULT_OK;
 	event = AFW_GetEv(ev_st);
 
 	if (event->attachment != NULL) {
 		data = u_atol(event->attachment);
+		if (data > MAX_NUMBER_VALUE) {
+			data = MAX_NUMBER_VALUE;
+		}
 		switch (g_app_menu_current_item_index) {
 			case APP_MENU_ITEM_VIBRATION_SIGNAL:
 				g_option_vibro_motor_signal = data;
