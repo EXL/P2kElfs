@@ -24,6 +24,7 @@ typedef enum {
 	APP_STATE_EDIT,
 	APP_STATE_SELECT,
 	APP_STATE_POPUP,
+	APP_STATE_RESET,
 	APP_STATE_MAX
 } APP_STATE_T;
 
@@ -100,12 +101,15 @@ static UINT32 HandleEventEditDone(EVENT_STACK_T *ev_st, APPLICATION_T *app);
 static UINT32 HandleEventSelectDone(EVENT_STACK_T *ev_st, APPLICATION_T *app);
 static UINT32 HandleEventSelectRequestListItems(EVENT_STACK_T *ev_st, APPLICATION_T *app);
 
+static UINT32 HandleEventYes(EVENT_STACK_T *ev_st, APPLICATION_T *app);
+
 static UINT32 HandleEventRequestListItems(EVENT_STACK_T *ev_st, APPLICATION_T *app, APP_STATE_T app_state);
 static UINT32 HandleEventCancel(EVENT_STACK_T *ev_st, APPLICATION_T *app);
 
 static UINT32 SendMenuItemsToList(EVENT_STACK_T *ev_st, APPLICATION_T *app, UINT32 start, UINT32 count);
 static UINT32 SendSelectItemsToList(EVENT_STACK_T *ev_st, APPLICATION_T *app, UINT32 start, UINT32 count);
 static const WCHAR *GetTriggerOptionString(APP_SELECT_ITEM_T item);
+static void ResetSettingsToDefaultValues(void);
 
 static const char g_app_name[APP_NAME_LEN] = "VibroHaptic";
 
@@ -123,11 +127,13 @@ static const WCHAR g_str_vibro_voltage_signal[] = L"Voltage Signal:";
 static const WCHAR g_str_e_vibro_voltage_signal[] = L"Voltage Signal";
 static const WCHAR g_str_vibro_voltage_level[] = L"Voltage Level:";
 static const WCHAR g_str_e_vibro_voltage_level[] = L"Voltage Level";
-static const WCHAR g_str_reset[] = L"Reset to defaults";
+static const WCHAR g_str_reset[] = L"Reset to default";
 static const WCHAR g_str_help[] = L"Help...";
 static const WCHAR g_str_about[] = L"About...";
 static const WCHAR g_str_exit[] = L"Exit";
 static const WCHAR g_str_changed[] = L"Changed:";
+static const WCHAR g_str_reseted[] = L"All settings have been reset to default values!";
+static const WCHAR g_str_reset_question[] = L"Do you want to reset settings to default?";
 
 static const UINT8 g_key_app_menu = KEY_SOFT_LEFT;
 static const UINT8 g_key_app_exit = KEY_STAR;
@@ -196,13 +202,22 @@ static const EVENT_HANDLER_ENTRY_T g_state_popup_hdls[] = {
 	{ STATE_HANDLERS_END, NULL }
 };
 
+static const EVENT_HANDLER_ENTRY_T g_state_reset_hdls[] = {
+	{ EV_DONE, HandleEventCancel },
+	{ EV_DIALOG_DONE, HandleEventCancel },
+	{ EV_NO, HandleEventCancel },
+	{ EV_YES, HandleEventYes },
+	{ STATE_HANDLERS_END, NULL }
+};
+
 static const STATE_HANDLERS_ENTRY_T g_state_table_hdls[] = {
 	{ APP_STATE_ANY, NULL, NULL, g_state_any_hdls },
 	{ APP_STATE_INIT, NULL, NULL, g_state_init_hdls },
 	{ APP_STATE_MAIN, HandleStateEnter, HandleStateExit, g_state_main_hdls },
 	{ APP_STATE_EDIT, HandleStateEnter, HandleStateExit, g_state_edit_hdls },
 	{ APP_STATE_SELECT, HandleStateEnter, HandleStateExit, g_state_select_hdls },
-	{ APP_STATE_POPUP, HandleStateEnter, HandleStateExit, g_state_popup_hdls }
+	{ APP_STATE_POPUP, HandleStateEnter, HandleStateExit, g_state_popup_hdls },
+	{ APP_STATE_RESET, HandleStateEnter, HandleStateExit, g_state_reset_hdls }
 };
 
 UINT32 Register(const char *elf_path_uri, const char *args, UINT32 ev_code) {
@@ -368,16 +383,19 @@ static UINT32 HandleStateEnter(EVENT_STACK_T *ev_st, APPLICATION_T *app, ENTER_S
 			switch (g_app_popup) {
 				default:
 				case APP_POPUP_CHANGED:
-					UIS_MakeContentFromString("Mq0NMq1NMq2", &content,
+					UIS_MakeContentFromString("MCq0NMCq1NMCq2", &content,
 						g_str_changed, g_str_e_trigger, GetTriggerOptionString(g_option_trigger));
 					dialog = UIS_CreateTransientNotice(&port, &content, NOTICE_TYPE_OK);
 					break;
 				case APP_POPUP_RESETED:
-					UIS_MakeContentFromString("Mq0NMq1NMq2", &content,
-						g_str_changed, g_str_e_trigger, GetTriggerOptionString(g_option_trigger));
+					UIS_MakeContentFromString("MCq0", &content, g_str_reseted);
 					dialog = UIS_CreateTransientNotice(&port, &content, NOTICE_TYPE_OK);
 					break;
 			}
+			break;
+		case APP_STATE_RESET:
+			UIS_MakeContentFromString("MCq0", &content, g_str_reset_question);
+			dialog = UIS_CreateConfirmation(&port, &content);
 			break;
 		default:
 			dialog = DialogType_None;
@@ -463,6 +481,9 @@ static UINT32 HandleEventSelect(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
 		case APP_MENU_ITEM_VIBRATION_VOLTAGE_SIGNAL:
 		case APP_MENU_ITEM_VIBRATION_VOLTAGE:
 			status |= APP_UtilChangeState(APP_STATE_EDIT, ev_st, app);
+			break;
+		case APP_MENU_ITEM_RESET:
+			status |= APP_UtilChangeState(APP_STATE_RESET, ev_st, app);
 			break;
 		case APP_MENU_ITEM_HELP:
 		case APP_MENU_ITEM_ABOUT:
@@ -652,8 +673,6 @@ static UINT32 HandleEventSelectDone(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
 	status = RESULT_OK;
 	event = AFW_GetEv(ev_st);
 
-	UtilLogStringData("HandleDone: index = %d", event->data.index);
-
 	g_option_trigger = event->data.index - 1;
 	g_app_popup = APP_POPUP_CHANGED;
 
@@ -664,6 +683,19 @@ static UINT32 HandleEventSelectDone(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
 
 static UINT32 HandleEventSelectRequestListItems(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
 	return HandleEventRequestListItems(ev_st, app, APP_STATE_SELECT);
+}
+
+static UINT32 HandleEventYes(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
+	UINT32 status;
+
+	status = RESULT_OK;
+	g_app_popup = APP_POPUP_RESETED;
+
+	ResetSettingsToDefaultValues();
+
+	status |= APP_UtilChangeState(APP_STATE_POPUP, ev_st, app);
+
+	return status;
 }
 
 static UINT32 HandleEventRequestListItems(EVENT_STACK_T *ev_st, APPLICATION_T *app, APP_STATE_T app_state) {
@@ -823,4 +855,8 @@ static const WCHAR *GetTriggerOptionString(APP_SELECT_ITEM_T item) {
 		case APP_SELECT_ITEM_ALL:
 			return g_str_trigger_all;
 	}
+}
+
+static void ResetSettingsToDefaultValues(void) {
+
 }
