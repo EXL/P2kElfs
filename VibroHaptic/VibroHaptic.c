@@ -385,7 +385,7 @@ static UINT32 HandleStateEnter(EVENT_STACK_T *ev_st, APPLICATION_T *app, ENTER_S
 				default:
 					break;
 			}
-			dialog = UIS_CreateCharacterEditor(&port, edit_number, 32 /* Only numbers. */, MAX_NUMBER_LENGTH,
+			dialog = UIS_CreateCharacterEditor(&port, edit_number, 6 /* Numbers only. */, MAX_NUMBER_LENGTH,
 				FALSE, NULL, edit_title);
 			break;
 		case APP_STATE_SELECT:
