@@ -22,6 +22,7 @@ typedef enum {
 	APP_STATE_MAIN,
 	APP_STATE_EDIT,
 	APP_STATE_SELECT,
+	APP_STATE_POPUP,
 	APP_STATE_MAX
 } APP_STATE_T;
 
@@ -66,6 +67,11 @@ typedef enum {
 	APP_SELECT_ITEM_MAX
 } APP_SELECT_ITEM_T;
 
+typedef enum {
+	APP_POPUP_CHANGED,
+	APP_POPUP_RESETED
+} APP_POPUP_T;
+
 UINT32 Register(const char *elf_path_uri, const char *args, UINT32 ev_code);
 static UINT32 ApplicationStart(EVENT_STACK_T *ev_st, REG_ID_T reg_id, void *reg_hdl);
 static UINT32 ApplicationStop(EVENT_STACK_T *ev_st, APPLICATION_T *app);
@@ -107,7 +113,7 @@ static const WCHAR g_str_trigger[] = L"Trigger:";
 static const WCHAR g_str_e_trigger[] = L"Trigger";
 static const WCHAR g_str_trigger_menus[] = L"Menus";
 static const WCHAR g_str_trigger_lists[] = L"Lists";
-static const WCHAR g_str_trigger_all[] = L"Menus & Lists";
+static const WCHAR g_str_trigger_all[] = L"All";
 static const WCHAR g_str_vibro_signal[] = L"Motor Signal:";
 static const WCHAR g_str_e_vibro_signal[] = L"Motor Signal";
 static const WCHAR g_str_vibro_delay[] = L"Delay (in ms):";
@@ -120,6 +126,7 @@ static const WCHAR g_str_reset[] = L"Reset to defaults";
 static const WCHAR g_str_help[] = L"Help...";
 static const WCHAR g_str_about[] = L"About...";
 static const WCHAR g_str_exit[] = L"Exit";
+static const WCHAR g_str_changed[] = L"Changed:";
 
 static const UINT8 g_key_app_menu = KEY_SOFT_LEFT;
 static const UINT8 g_key_app_exit = KEY_STAR;
@@ -134,6 +141,7 @@ static UINT32 g_option_vibro_voltage_level_off = 0;
 static UINT32 g_option_vibro_delay = 30;
 
 static APP_DISPLAY_T g_app_state = APP_DISPLAY_HIDE;
+static APP_POPUP_T g_app_popup = APP_POPUP_CHANGED;
 static RESOURCE_ID g_app_resources[APP_RESOURCE_MAX];
 static APP_MENU_ITEM_T g_app_menu_current_item_index = 0;
 static UINT64 g_ms_key_press_start = 0LLU;
@@ -181,12 +189,19 @@ static const EVENT_HANDLER_ENTRY_T g_state_select_hdls[] = {
 	{ STATE_HANDLERS_END, NULL }
 };
 
+static const EVENT_HANDLER_ENTRY_T g_state_popup_hdls[] = {
+	{ EV_DONE, HandleEventCancel },
+	{ EV_DIALOG_DONE, HandleEventCancel },
+	{ STATE_HANDLERS_END, NULL }
+};
+
 static const STATE_HANDLERS_ENTRY_T g_state_table_hdls[] = {
 	{ APP_STATE_ANY, NULL, NULL, g_state_any_hdls },
 	{ APP_STATE_INIT, NULL, NULL, g_state_init_hdls },
 	{ APP_STATE_MAIN, HandleStateEnter, HandleStateExit, g_state_main_hdls },
 	{ APP_STATE_EDIT, HandleStateEnter, HandleStateExit, g_state_edit_hdls },
-	{ APP_STATE_SELECT, HandleStateEnter, HandleStateExit, g_state_select_hdls }
+	{ APP_STATE_SELECT, HandleStateEnter, HandleStateExit, g_state_select_hdls },
+	{ APP_STATE_POPUP, HandleStateEnter, HandleStateExit, g_state_popup_hdls }
 };
 
 UINT32 Register(const char *elf_path_uri, const char *args, UINT32 ev_code) {
@@ -347,6 +362,21 @@ static UINT32 HandleStateEnter(EVENT_STACK_T *ev_st, APPLICATION_T *app, ENTER_S
 			starting_list_item = APP_MENU_ITEM_FIRST;
 			dialog = UIS_CreateSelectionEditor(&port, 0, APP_SELECT_ITEM_MAX, g_option_trigger + 1,
 				&starting_list_item, 0, NULL, g_app_resources[APP_RESOURCE_STRING_TRIGGER]);
+			break;
+		case APP_STATE_POPUP:
+			switch (g_app_popup) {
+				default:
+				case APP_POPUP_CHANGED:
+					UIS_MakeContentFromString("Mq0NMq1NMq2", &content,
+						g_str_changed, g_str_e_trigger, GetTriggerOptionString(g_option_trigger));
+					dialog = UIS_CreateTransientNotice(&port, &content, NOTICE_TYPE_OK);
+					break;
+				case APP_POPUP_RESETED:
+					UIS_MakeContentFromString("Mq0NMq1NMq2", &content,
+						g_str_changed, g_str_e_trigger, GetTriggerOptionString(g_option_trigger));
+					dialog = UIS_CreateTransientNotice(&port, &content, NOTICE_TYPE_OK);
+					break;
+			}
 			break;
 		default:
 			dialog = DialogType_None;
@@ -621,8 +651,9 @@ static UINT32 HandleEventSelectDone(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
 	UtilLogStringData("HandleDone: index = %d", event->data.index);
 
 	g_option_trigger = event->data.index - 1;
+	g_app_popup = APP_POPUP_CHANGED;
 
-	status |= APP_UtilChangeState(APP_STATE_MAIN, ev_st, app);
+	status |= APP_UtilChangeState(APP_STATE_POPUP, ev_st, app);
 
 	return status;
 }
