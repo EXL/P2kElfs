@@ -858,5 +858,30 @@ static const WCHAR *GetTriggerOptionString(APP_SELECT_ITEM_T item) {
 }
 
 static void ResetSettingsToDefaultValues(void) {
+	const char platform_R3511[] = "R3511";
+	/* const char platform_R3443H1[] = "R3443H1"; */ /* Default platform. */
 
+	const char *firmware_platform;
+
+	firmware_platform = LdrGetFirmwareMajorVersion();
+
+	if (strncmp(platform_R3511, firmware_platform, sizeof(platform_R3511)) == 0) {
+		g_option_trigger = 0;
+		g_option_vibro_motor_signal = 721;
+		g_option_vibro_motor_send_on = 1;
+		g_option_vibro_motor_send_off = 0;
+		g_option_vibro_voltage_signal = 688;
+		g_option_vibro_voltage_level_on = 0;
+		g_option_vibro_voltage_level_off = 0;
+		g_option_vibro_delay = 30;
+	} else {
+		g_option_trigger = 0;
+		g_option_vibro_motor_signal = 735;
+		g_option_vibro_motor_send_on = 1;
+		g_option_vibro_motor_send_off = 0;
+		g_option_vibro_voltage_signal = 702;
+		g_option_vibro_voltage_level_on = 0;
+		g_option_vibro_voltage_level_off = 0;
+		g_option_vibro_delay = 30;
+	}
 }
