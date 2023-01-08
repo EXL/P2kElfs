@@ -80,6 +80,17 @@ typedef enum {
 	APP_VIEW_ABOUT
 } APP_VIEW_T;
 
+typedef struct {
+	UINT32 trigger;
+	UINT32 vibro_motor_signal;
+	UINT32 vibro_motor_send_on;
+	UINT32 vibro_motor_send_off;
+	UINT32 vibro_voltage_signal;
+	UINT32 vibro_voltage_level_on;
+	UINT32 vibro_voltage_level_off;
+	UINT32 vibro_delay;
+} APP_OPTIONS_T;
+
 UINT32 Register(const char *elf_path_uri, const char *args, UINT32 ev_code);
 static UINT32 ApplicationStart(EVENT_STACK_T *ev_st, REG_ID_T reg_id, void *reg_hdl);
 static UINT32 ApplicationStop(EVENT_STACK_T *ev_st, APPLICATION_T *app);
@@ -150,15 +161,16 @@ static const WCHAR g_str_about_content[] = L"Created by EXL, Under construction.
 static const UINT8 g_key_app_menu = KEY_SOFT_LEFT;
 static const UINT8 g_key_app_exit = KEY_STAR;
 
-static UINT32 g_option_trigger = 0; /* 0: Menus, 1: Lists, 2: Menus and Lists. */
-static UINT32 g_option_vibro_motor_signal = 735; /* R3443H: 735, R3551: 721. */
-static UINT32 g_option_vibro_motor_send_on = 1;
-static UINT32 g_option_vibro_motor_send_off = 0;
-static UINT32 g_option_vibro_voltage_signal = 702; /* R3443H: 702, R3551: 688. */
-static UINT32 g_option_vibro_voltage_level_on = 0;
-static UINT32 g_option_vibro_voltage_level_off = 0;
-static UINT32 g_option_vibro_delay = 30;
-
+static APP_OPTIONS_T g_app_options = {
+	0,   /* 0: Menus, 1: Lists, 2: Menus and Lists. */
+	735, /* R3443H: 735, R3551: 721. */
+	1,
+	0,
+	702, /* R3443H: 702, R3551: 688. */
+	0,
+	0,
+	30
+};
 static APP_DISPLAY_T g_app_state = APP_DISPLAY_HIDE;
 static APP_POPUP_T g_app_popup = APP_POPUP_CHANGED;
 static APP_VIEW_T g_app_view = APP_VIEW_HELP;
@@ -368,19 +380,19 @@ static UINT32 HandleStateEnter(EVENT_STACK_T *ev_st, APPLICATION_T *app, ENTER_S
 			switch (g_app_menu_current_item_index) {
 				case APP_MENU_ITEM_VIBRATION_SIGNAL:
 					edit_title = g_app_resources[APP_RESOURCE_STRING_VIBRO_SIGNAL];
-					u_ltou(g_option_vibro_motor_signal, edit_number);
+					u_ltou(g_app_options.vibro_motor_signal, edit_number);
 					break;
 				case APP_MENU_ITEM_VIBRATION_DURATION:
 					edit_title = g_app_resources[APP_RESOURCE_STRING_VIBRO_DELAY];
-					u_ltou(g_option_vibro_delay, edit_number);
+					u_ltou(g_app_options.vibro_delay, edit_number);
 					break;
 				case APP_MENU_ITEM_VIBRATION_VOLTAGE_SIGNAL:
 					edit_title = g_app_resources[APP_RESOURCE_STRING_VIBRO_VOLTAGE_SIGNAL];
-					u_ltou(g_option_vibro_voltage_signal, edit_number);
+					u_ltou(g_app_options.vibro_voltage_signal, edit_number);
 					break;
 				case APP_MENU_ITEM_VIBRATION_VOLTAGE:
 					edit_title = g_app_resources[APP_RESOURCE_STRING_VIBRO_VOLTAGE_LEVEL];
-					u_ltou(g_option_vibro_voltage_level_on, edit_number);
+					u_ltou(g_app_options.vibro_voltage_level_on, edit_number);
 					break;
 				default:
 					break;
@@ -390,7 +402,7 @@ static UINT32 HandleStateEnter(EVENT_STACK_T *ev_st, APPLICATION_T *app, ENTER_S
 			break;
 		case APP_STATE_SELECT:
 			starting_list_item = APP_MENU_ITEM_FIRST;
-			dialog = UIS_CreateSelectionEditor(&port, 0, APP_SELECT_ITEM_MAX, g_option_trigger + 1,
+			dialog = UIS_CreateSelectionEditor(&port, 0, APP_SELECT_ITEM_MAX, g_app_options.trigger + 1,
 				&starting_list_item, 0, NULL, g_app_resources[APP_RESOURCE_STRING_TRIGGER]);
 			break;
 		case APP_STATE_POPUP:
@@ -398,7 +410,7 @@ static UINT32 HandleStateEnter(EVENT_STACK_T *ev_st, APPLICATION_T *app, ENTER_S
 				default:
 				case APP_POPUP_CHANGED:
 					UIS_MakeContentFromString("MCq0NMCq1NMCq2", &content,
-						g_str_changed, g_str_e_trigger, GetTriggerOptionString(g_option_trigger));
+						g_str_changed, g_str_e_trigger, GetTriggerOptionString(g_app_options.trigger));
 					break;
 				case APP_POPUP_RESETED:
 					UIS_MakeContentFromString("MCq0", &content, g_str_reseted);
@@ -557,7 +569,7 @@ static UINT32 HandleEventKeyPress(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
 		/* case KEY_SOFT_LEFT: */ /* Disable "Back" softkey. */
 		case KEY_JOY_OK:
 			UIS_GetActiveDialogType(&dialog);
-			switch (g_option_trigger) {
+			switch (g_app_options.trigger) {
 				default:
 				case APP_SELECT_ITEM_MENUS:
 					trigger = (dialog == DialogType_Menu || dialog == DialogType_SecondLevelMenu);
@@ -576,19 +588,19 @@ static UINT32 HandleEventKeyPress(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
 			}
 			if (trigger) {
 				/* Set vibration motor voltage. */
-				hPortWrite(g_option_vibro_voltage_signal, g_option_vibro_voltage_level_on);
+				hPortWrite(g_app_options.vibro_voltage_signal, g_app_options.vibro_voltage_level_on);
 
 				/* Start vibration motor. */
-				hPortWrite(g_option_vibro_motor_signal, g_option_vibro_motor_send_on);
+				hPortWrite(g_app_options.vibro_motor_signal, g_app_options.vibro_motor_send_on);
 
 				/* Delay using SUAPI because APP_UtilStartTimer() is slow. */
-				suSleep(g_option_vibro_delay, NULL);
+				suSleep(g_app_options.vibro_delay, NULL);
 
 				/* Stop vibration motor. */
-				hPortWrite(g_option_vibro_motor_signal, g_option_vibro_motor_send_off);
+				hPortWrite(g_app_options.vibro_motor_signal, g_app_options.vibro_motor_send_off);
 
 				/* Reset vibration motor voltage. */
-				hPortWrite(g_option_vibro_voltage_signal, g_option_vibro_voltage_level_off);
+				hPortWrite(g_app_options.vibro_voltage_signal, g_app_options.vibro_voltage_level_off);
 			}
 			break;
 		default:
@@ -657,16 +669,16 @@ static UINT32 HandleEventEditData(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
 		}
 		switch (g_app_menu_current_item_index) {
 			case APP_MENU_ITEM_VIBRATION_SIGNAL:
-				g_option_vibro_motor_signal = data;
+				g_app_options.vibro_motor_signal = data;
 				break;
 			case APP_MENU_ITEM_VIBRATION_DURATION:
-				g_option_vibro_delay = data;
+				g_app_options.vibro_delay = data;
 				break;
 			case APP_MENU_ITEM_VIBRATION_VOLTAGE_SIGNAL:
-				g_option_vibro_voltage_signal = data;
+				g_app_options.vibro_voltage_signal = data;
 				break;
 			case APP_MENU_ITEM_VIBRATION_VOLTAGE:
-				g_option_vibro_voltage_level_on = data;
+				g_app_options.vibro_voltage_level_on = data;
 				break;
 			default:
 				break;
@@ -703,7 +715,7 @@ static UINT32 HandleEventSelectDone(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
 	status = RESULT_OK;
 	event = AFW_GetEv(ev_st);
 
-	g_option_trigger = event->data.index - 1;
+	g_app_options.trigger = event->data.index - 1;
 	g_app_popup = APP_POPUP_CHANGED;
 
 	status |= APP_UtilChangeState(APP_STATE_POPUP, ev_st, app);
@@ -794,19 +806,19 @@ static UINT32 SendMenuItemsToList(EVENT_STACK_T *ev_st, APPLICATION_T *app, UINT
 
 	status |= UIS_MakeContentFromString("Mq0Sq1",
 		&list[APP_MENU_ITEM_TRIGGER].content.static_entry.text,
-		g_str_trigger, GetTriggerOptionString(g_option_trigger));
+		g_str_trigger, GetTriggerOptionString(g_app_options.trigger));
 	status |= UIS_MakeContentFromString("Mq0Si1",
 		&list[APP_MENU_ITEM_VIBRATION_SIGNAL].content.static_entry.text,
-		g_str_vibro_signal, g_option_vibro_motor_signal);
+		g_str_vibro_signal, g_app_options.vibro_motor_signal);
 	status |= UIS_MakeContentFromString("Mq0Si1",
 		&list[APP_MENU_ITEM_VIBRATION_DURATION].content.static_entry.text,
-		g_str_vibro_delay, g_option_vibro_delay);
+		g_str_vibro_delay, g_app_options.vibro_delay);
 	status |= UIS_MakeContentFromString("Mq0Si1",
 		&list[APP_MENU_ITEM_VIBRATION_VOLTAGE_SIGNAL].content.static_entry.text,
-		g_str_vibro_voltage_signal, g_option_vibro_voltage_signal);
+		g_str_vibro_voltage_signal, g_app_options.vibro_voltage_signal);
 	status |= UIS_MakeContentFromString("Mq0Si1",
 		&list[APP_MENU_ITEM_VIBRATION_VOLTAGE].content.static_entry.text,
-		g_str_vibro_voltage_level, g_option_vibro_voltage_level_on);
+		g_str_vibro_voltage_level, g_app_options.vibro_voltage_level_on);
 	status |= UIS_MakeContentFromString("Mq0",
 		&list[APP_MENU_ITEM_RESET].content.static_entry.text,
 		g_str_reset);
@@ -896,22 +908,22 @@ static void ResetSettingsToDefaultValues(void) {
 	firmware_platform = LdrGetFirmwareMajorVersion();
 
 	if (strncmp(platform_R3511, firmware_platform, sizeof(platform_R3511)) == 0) {
-		g_option_trigger = 0;
-		g_option_vibro_motor_signal = 721;
-		g_option_vibro_motor_send_on = 1;
-		g_option_vibro_motor_send_off = 0;
-		g_option_vibro_voltage_signal = 688;
-		g_option_vibro_voltage_level_on = 0;
-		g_option_vibro_voltage_level_off = 0;
-		g_option_vibro_delay = 30;
+		g_app_options.trigger = 0;
+		g_app_options.vibro_motor_signal = 721;
+		g_app_options.vibro_motor_send_on = 1;
+		g_app_options.vibro_motor_send_off = 0;
+		g_app_options.vibro_voltage_signal = 688;
+		g_app_options.vibro_voltage_level_on = 0;
+		g_app_options.vibro_voltage_level_off = 0;
+		g_app_options.vibro_delay = 30;
 	} else {
-		g_option_trigger = 0;
-		g_option_vibro_motor_signal = 735;
-		g_option_vibro_motor_send_on = 1;
-		g_option_vibro_motor_send_off = 0;
-		g_option_vibro_voltage_signal = 702;
-		g_option_vibro_voltage_level_on = 0;
-		g_option_vibro_voltage_level_off = 0;
-		g_option_vibro_delay = 30;
+		g_app_options.trigger = 0;
+		g_app_options.vibro_motor_signal = 735;
+		g_app_options.vibro_motor_send_on = 1;
+		g_app_options.vibro_motor_send_off = 0;
+		g_app_options.vibro_voltage_signal = 702;
+		g_app_options.vibro_voltage_level_on = 0;
+		g_app_options.vibro_voltage_level_off = 0;
+		g_app_options.vibro_delay = 30;
 	}
 }
