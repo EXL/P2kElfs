@@ -15,8 +15,8 @@
 #define __packed
 #endif
 
-#define KEY_LONG_PRESS_START_MS 500
-#define KEY_LONG_PRESS_STOP_MS 1500
+#define KEY_LONG_PRESS_START_MS    (500)
+#define KEY_LONG_PRESS_STOP_MS     (1500)
 
 typedef enum {
 	APP_STATE_ANY,
