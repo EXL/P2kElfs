@@ -1,5 +1,15 @@
 /*
- * Application mode: Deamon + GUI.
+ * About:
+ *   The "Vibro Haptic" ELF daemon utility with GUI settings for vibration feedback like in Sony Ericsson phones.
+ *
+ * Author:
+ *   EXL
+ *
+ * License:
+ *   MIT
+ *
+ * Application type:
+ *   Deamon + GUI
  */
 
 #include <loader.h>

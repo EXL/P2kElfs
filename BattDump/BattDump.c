@@ -1,5 +1,15 @@
 /*
- * Application type: GUI.
+ * About:
+ *   The "Batt Dump" ELF utility for dumping battery ROM by 1-Wire interface.
+ *
+ * Author:
+ *   EXL
+ *
+ * License:
+ *   MIT
+ *
+ * Application type:
+ *   GUI
  */
 
 #include <loader.h>

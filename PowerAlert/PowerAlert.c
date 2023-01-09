@@ -1,5 +1,15 @@
 /*
- * Application type: Daemon.
+ * About:
+ *   The "Power Alert" ELF example of sending SMS on power loss.
+ *
+ * Author:
+ *   EXL
+ *
+ * License:
+ *   MIT
+ *
+ * Application type:
+ *   Daemon
  */
 
 #include <loader.h>

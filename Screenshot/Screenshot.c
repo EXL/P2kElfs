@@ -1,5 +1,15 @@
 /*
- * Application mode: GUI + Deamon.
+ * About:
+ *   The "Screenshot" ELF daemon utility with GUI to fast take screenshots.
+ *
+ * Author:
+ *   EXL
+ *
+ * License:
+ *   MIT
+ *
+ * Application type:
+ *   GUI + Deamon
  */
 
 #include <loader.h>
