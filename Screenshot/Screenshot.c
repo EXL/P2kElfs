@@ -15,10 +15,6 @@
 #define __packed
 #endif
 
-typedef struct {
-	APPLICATION_T app;
-} ELF_T;
-
 typedef enum {
 	APP_STATE_ANY,
 	APP_STATE_INIT,
@@ -42,6 +38,14 @@ typedef enum {
 	APP_RESOURCE_ACTION_GOT_IT,
 	APP_RESOURCE_MAX
 } APP_RESOURCES_T;
+
+typedef struct {
+	APPLICATION_T app;
+
+	APP_DISPLAY_T state;
+	RESOURCE_ID resources[APP_RESOURCE_MAX];
+	UINT64 ms_key_press_start;
+} APP_INSTANCE_T;
 
 typedef struct {
 	UINT32 width;
@@ -99,10 +103,6 @@ static const WCHAR g_msg_state_main[] = L"Hold \"#\" to Screenshot!\nHold \"0\" 
 static const WCHAR g_msg_softkey_got_it[] = L"Got it!";
 
 static const char g_scr_filename_template[] = "/c/mobile/picture/SCR_%02d%02d%04d_%02d%02d%02d.bmp";
-
-static APP_DISPLAY_T g_app_state = APP_DISPLAY_SHOW;
-static RESOURCE_ID g_app_resources[APP_RESOURCE_MAX];
-static UINT64 g_ms_key_press_start = 0LLU;
 
 /*
  * The 0xFF bytes are for later replacement.
@@ -186,17 +186,20 @@ UINT32 Register(const char *elf_path_uri, const char *args, UINT32 ev_code) {
 
 static UINT32 ApplicationStart(EVENT_STACK_T *ev_st, REG_ID_T reg_id, void *reg_hdl) {
 	UINT32 status;
-	UINT32 routing_stack;
-	ELF_T *elf;
+	APP_INSTANCE_T *app_instance;
 
 	status = RESULT_FAIL;
 
 	if (AFW_InquireRoutingStackByRegId(reg_id) != RESULT_OK) {
-		InitResourses(g_app_resources);
+		app_instance = (APP_INSTANCE_T *) APP_InitAppData((void *) HandleEventMain, sizeof(APP_INSTANCE_T),
+			reg_id, 0, 1, 1, 1, APP_DISPLAY_SHOW, 0);
 
-		routing_stack = (g_app_state == APP_DISPLAY_SHOW);
-		elf = (ELF_T *) APP_InitAppData((void *) HandleEventMain, sizeof(ELF_T), reg_id, 0, 1, 1, 1, routing_stack, 0);
-		status = APP_Start(ev_st, &elf->app, APP_STATE_MAIN, g_state_table_hdls, HandleEventHide, g_app_name, 0);
+		InitResourses(app_instance->resources);
+		app_instance->state = APP_DISPLAY_SHOW;
+		app_instance->ms_key_press_start = 0LLU;
+
+		status = APP_Start(ev_st, &app_instance->app, APP_STATE_MAIN,
+			g_state_table_hdls, HandleEventHide, g_app_name, 0);
 	}
 
 	return status;
@@ -204,12 +207,16 @@ static UINT32 ApplicationStart(EVENT_STACK_T *ev_st, REG_ID_T reg_id, void *reg_
 
 static UINT32 ApplicationStop(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
 	UINT32 status;
+	APP_INSTANCE_T *app_instance;
+
+	status = RESULT_OK;
+	app_instance = (APP_INSTANCE_T *) app;
 
 	DeleteDialog(app);
 
-	FreeResourses(g_app_resources);
+	FreeResourses(app_instance->resources);
 
-	status = APP_Exit(ev_st, app, 0);
+	status |= APP_Exit(ev_st, app, 0);
 
 	LdrUnloadELF(&Lib);
 
@@ -253,15 +260,17 @@ static UINT32 FreeResourses(RESOURCE_ID *resources) {
 
 static UINT32 ApplicationDisplay(EVENT_STACK_T *ev_st, APPLICATION_T *app, APP_DISPLAY_T display) {
 	UINT32 status;
+	APP_INSTANCE_T *app_instance;
 	void *hdl;
 	UINT32 routing_stack;
 
 	status = RESULT_OK;
+	app_instance = (APP_INSTANCE_T *) app;
 
-	if (g_app_state != display) {
-		g_app_state = display;
-		hdl = (void *) ((g_app_state == APP_DISPLAY_SHOW) ? APP_HandleEvent : APP_HandleEventPrepost);
-		routing_stack = (g_app_state == APP_DISPLAY_SHOW);
+	if (app_instance->state != display) {
+		app_instance->state = display;
+		hdl = (void *) ((app_instance->state == APP_DISPLAY_SHOW) ? APP_HandleEvent : APP_HandleEventPrepost);
+		routing_stack = (app_instance->state == APP_DISPLAY_SHOW);
 		status = APP_ChangeRoutingStack(app, ev_st, hdl, routing_stack, 0, 1, 1);
 	}
 
@@ -269,6 +278,7 @@ static UINT32 ApplicationDisplay(EVENT_STACK_T *ev_st, APPLICATION_T *app, APP_D
 }
 
 static UINT32 HandleStateEnter(EVENT_STACK_T *ev_st, APPLICATION_T *app, ENTER_STATE_TYPE_T state) {
+	APP_INSTANCE_T *app_instance;
 	SU_PORT_T port;
 	CONTENT_T content;
 	UIS_DIALOG_T dialog;
@@ -278,13 +288,15 @@ static UINT32 HandleStateEnter(EVENT_STACK_T *ev_st, APPLICATION_T *app, ENTER_S
 		return RESULT_OK;
 	}
 
+	app_instance = (APP_INSTANCE_T *) app;
+
 	DeleteDialog(app);
 
 	port = app->port;
 
 	actions.action[0].operation = ACTION_OP_ADD;
 	actions.action[0].event = EV_DIALOG_DONE;
-	actions.action[0].action_res = g_app_resources[APP_RESOURCE_ACTION_GOT_IT];
+	actions.action[0].action_res = app_instance->resources[APP_RESOURCE_ACTION_GOT_IT];
 	actions.count = 1;
 
 	UIS_MakeContentFromString("RMq0", &content, g_msg_state_main);
@@ -319,7 +331,11 @@ static UINT32 DeleteDialog(APPLICATION_T *app) {
 }
 
 static void HandleEventMain(EVENT_STACK_T *ev_st, APPLICATION_T *app, APP_ID_T app_id, REG_ID_T reg_id) {
-	if (g_app_state == APP_DISPLAY_SHOW) {
+	APP_INSTANCE_T *app_instance;
+
+	app_instance = (APP_INSTANCE_T *) app;
+
+	if (app_instance->state == APP_DISPLAY_SHOW) {
 		APP_HandleEvent(ev_st, app, app_id, reg_id);
 	} else {
 		APP_HandleEventPrepost(ev_st, app, app_id, reg_id);
@@ -342,14 +358,16 @@ static UINT32 HandleEventShow(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
 }
 
 static UINT32 HandleEventKeyPress(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
+	APP_INSTANCE_T *app_instance;
 	EVENT_T *event;
 	UINT8 key;
 
+	app_instance = (APP_INSTANCE_T *) app;
 	event = AFW_GetEv(ev_st);
 	key = event->data.key_pressed;
 
 	if (key == g_key_exit || key == g_key_help || key == g_key_screenshot) {
-		g_ms_key_press_start = suPalTicksToMsec(suPalReadTime());
+		app_instance->ms_key_press_start = suPalTicksToMsec(suPalReadTime());
 		PFprintf("display_source_buffer addr = 0x%08X.\n", display_source_buffer); /* Send to MIDway. */
 		UtilLogStringData("display_source_buffer addr = 0x%08X.\n", display_source_buffer); /* Send to P2KDataLogger. */
 		if (key == g_key_screenshot) {
@@ -361,10 +379,12 @@ static UINT32 HandleEventKeyPress(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
 }
 
 static UINT32 HandleEventKeyRelease(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
+	APP_INSTANCE_T *app_instance;
 	EVENT_T *event;
 	UINT8 key;
 	UINT32 ms_key_release_stop;
 
+	app_instance = (APP_INSTANCE_T *) app;
 	event = AFW_GetEv(ev_st);
 	key = event->data.key_pressed;
 
@@ -372,7 +392,7 @@ static UINT32 HandleEventKeyRelease(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
 		/*
 		 * Detect long key press between 500 ms (0.5 s) and 1500 ms (1.5 s) and ignore rest.
 		 */
-		ms_key_release_stop = (UINT32) (suPalTicksToMsec(suPalReadTime()) - g_ms_key_press_start);
+		ms_key_release_stop = (UINT32) (suPalTicksToMsec(suPalReadTime()) - app_instance->ms_key_press_start);
 		if ((ms_key_release_stop >= 500) && (ms_key_release_stop <= 1500)) {
 			if (key == g_key_exit) {
 				APP_UtilStartTimer(100, APP_TIMER_EXIT, app);
