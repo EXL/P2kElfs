@@ -131,7 +131,8 @@ static const EVENT_HANDLER_ENTRY_T g_state_init_hdls[] = {
 	/*
 	 * EXL, 01-Dec-2022:
 	 *  Please comment out the `{ EV_GRANT_TOKEN, APP_HandleUITokenGranted }` construction
-	 *  and change `g_app_state` global variable to `APP_DISPLAY_HIDE` value
+	 *  then change `app_instance->state` variable to `APP_DISPLAY_HIDE` value
+	 *  then change `routing_stack` argument in `APP_InitAppData()` function to `APP_DISPLAY_HIDE` value
 	 *  for pure daemon behavior with no GUI at start.
 	 */
 	{ EV_GRANT_TOKEN, APP_HandleUITokenGranted },
