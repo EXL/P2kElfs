@@ -9,11 +9,12 @@
 #include <res_def.h>
 #include <tasks.h>
 #include <utilities.h>
+#include <filesystem.h>
 
-#define MAX_NUMBER_LENGTH 6
-#define MAX_NUMBER_VALUE 999999
-#define KEY_LONG_PRESS_START_MS 500
-#define KEY_LONG_PRESS_STOP_MS 1500
+#define MAX_NUMBER_LENGTH           (6)
+#define MAX_NUMBER_VALUE            (999999)
+#define KEY_LONG_PRESS_START_MS     (500)
+#define KEY_LONG_PRESS_STOP_MS      (1500)
 
 typedef enum {
 	APP_STATE_ANY,
@@ -137,6 +138,8 @@ static UINT32 SendMenuItemsToList(EVENT_STACK_T *ev_st, APPLICATION_T *app, UINT
 static UINT32 SendSelectItemsToList(EVENT_STACK_T *ev_st, APPLICATION_T *app, UINT32 start, UINT32 count);
 static const WCHAR *GetTriggerOptionString(APP_SELECT_ITEM_T item);
 static void ResetSettingsToDefaultValues(APPLICATION_T *app);
+static UINT32 ReadFileConfig(APPLICATION_T *app, WCHAR *file_config_path);
+static UINT32 SaveFileConfig(APPLICATION_T *app, WCHAR *file_config_path);
 
 static const char g_app_name[APP_NAME_LEN] = "VibroHaptic";
 
@@ -170,6 +173,8 @@ static const WCHAR g_str_about_content[] = L"Created by EXL, Under construction.
 
 static const UINT8 g_key_app_menu = KEY_SOFT_LEFT;
 static const UINT8 g_key_app_exit = KEY_STAR;
+
+static WCHAR g_config_file_path[FS_MAX_URI_NAME_LENGTH]; /* TODO: Can it be non-global? */
 
 static const EVENT_HANDLER_ENTRY_T g_state_any_hdls[] = {
 	{ EV_REVOKE_TOKEN, APP_HandleUITokenRevoked },
@@ -248,6 +253,10 @@ UINT32 Register(const char *elf_path_uri, const char *args, UINT32 ev_code) {
 
 	status = APP_Register(&ev_code_base, 1, g_state_table_hdls, APP_STATE_MAX, (void *) ApplicationStart);
 
+	u_atou(elf_path_uri, g_config_file_path);
+	g_config_file_path[u_strlen(g_config_file_path) - 3] = '\0';
+	u_strcat(g_config_file_path, L"cfg");
+
 	LdrStartApp(ev_code_base);
 
 	return status;
@@ -277,6 +286,12 @@ static UINT32 ApplicationStart(EVENT_STACK_T *ev_st, REG_ID_T reg_id, void *reg_
 		app_instance->options.vibro_voltage_level_on = 0;
 		app_instance->options.vibro_voltage_level_off = 0;
 		app_instance->options.vibro_delay = 30;
+
+		if (DL_FsFFileExist(g_config_file_path)) {
+			ReadFileConfig((APPLICATION_T *) app_instance, g_config_file_path);
+		} else {
+			SaveFileConfig((APPLICATION_T *) app_instance, g_config_file_path);
+		}
 
 		status = APP_Start(ev_st, &app_instance->app, APP_STATE_INIT,
 			g_state_table_hdls, HandleEventHide, g_app_name, 0);
@@ -714,6 +729,7 @@ static UINT32 HandleEventEditData(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
 		}
 	}
 
+	status |= SaveFileConfig(app, g_config_file_path);
 	status |= APP_UtilChangeState(APP_STATE_MAIN, ev_st, app);
 
 	return status;
@@ -749,6 +765,7 @@ static UINT32 HandleEventSelectDone(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
 	app_instance->options.trigger = event->data.index - 1;
 	app_instance->popup = APP_POPUP_CHANGED;
 
+	status |= SaveFileConfig(app, g_config_file_path);
 	status |= APP_UtilChangeState(APP_STATE_POPUP, ev_st, app);
 
 	return status;
@@ -768,6 +785,7 @@ static UINT32 HandleEventYes(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
 
 	ResetSettingsToDefaultValues(app);
 
+	status |= SaveFileConfig(app, g_config_file_path);
 	status |= APP_UtilChangeState(APP_STATE_POPUP, ev_st, app);
 
 	return status;
@@ -964,4 +982,34 @@ static void ResetSettingsToDefaultValues(APPLICATION_T *app) {
 		app_instance->options.vibro_voltage_level_off = 0;
 		app_instance->options.vibro_delay = 30;
 	}
+}
+
+static UINT32 ReadFileConfig(APPLICATION_T *app, WCHAR *file_config_path) {
+	UINT32 readen;
+	APP_INSTANCE_T *app_instance;
+	FILE_HANDLE_T file_config;
+
+	readen = 0;
+	app_instance = (APP_INSTANCE_T *) app;
+
+	file_config = DL_FsOpenFile(file_config_path, FILE_READ_MODE, 0);
+	DL_FsReadFile(&app_instance->options, sizeof(APP_OPTIONS_T), 1, file_config, &readen);
+	DL_FsCloseFile(file_config);
+
+	return (readen == 0);
+}
+
+static UINT32 SaveFileConfig(APPLICATION_T *app, WCHAR *file_config_path) {
+	UINT32 written;
+	APP_INSTANCE_T *app_instance;
+	FILE_HANDLE_T file_config;
+
+	written = 0;
+	app_instance = (APP_INSTANCE_T *) app;
+
+	file_config = DL_FsOpenFile(file_config_path, FILE_WRITE_MODE, 0);
+	DL_FsWriteFile(&app_instance->options, sizeof(APP_OPTIONS_T), 1, file_config, &written);
+	DL_FsCloseFile(file_config);
+
+	return (written == 0);
 }
