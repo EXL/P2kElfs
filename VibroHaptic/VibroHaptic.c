@@ -13,10 +13,6 @@
 #define MAX_NUMBER_LENGTH 6
 #define MAX_NUMBER_VALUE 999999
 
-typedef struct {
-	APPLICATION_T app;
-} ELF_T;
-
 typedef enum {
 	APP_STATE_ANY,
 	APP_STATE_INIT,
@@ -91,6 +87,18 @@ typedef struct {
 	UINT32 vibro_delay;
 } APP_OPTIONS_T;
 
+typedef struct {
+	APPLICATION_T app;
+
+	APP_DISPLAY_T state;
+	RESOURCE_ID resources[APP_RESOURCE_MAX];
+	APP_POPUP_T popup;
+	APP_VIEW_T view;
+	APP_MENU_ITEM_T menu_current_item_index;
+	UINT64 ms_key_press_start;
+	APP_OPTIONS_T options;
+} APP_INSTANCE_T;
+
 UINT32 Register(const char *elf_path_uri, const char *args, UINT32 ev_code);
 static UINT32 ApplicationStart(EVENT_STACK_T *ev_st, REG_ID_T reg_id, void *reg_hdl);
 static UINT32 ApplicationStop(EVENT_STACK_T *ev_st, APPLICATION_T *app);
@@ -126,7 +134,7 @@ static UINT32 HandleEventCancel(EVENT_STACK_T *ev_st, APPLICATION_T *app);
 static UINT32 SendMenuItemsToList(EVENT_STACK_T *ev_st, APPLICATION_T *app, UINT32 start, UINT32 count);
 static UINT32 SendSelectItemsToList(EVENT_STACK_T *ev_st, APPLICATION_T *app, UINT32 start, UINT32 count);
 static const WCHAR *GetTriggerOptionString(APP_SELECT_ITEM_T item);
-static void ResetSettingsToDefaultValues(void);
+static void ResetSettingsToDefaultValues(APPLICATION_T *app);
 
 static const char g_app_name[APP_NAME_LEN] = "VibroHaptic";
 
@@ -160,23 +168,6 @@ static const WCHAR g_str_about_content[] = L"Created by EXL, Under construction.
 
 static const UINT8 g_key_app_menu = KEY_SOFT_LEFT;
 static const UINT8 g_key_app_exit = KEY_STAR;
-
-static APP_OPTIONS_T g_app_options = {
-	0,   /* 0: Menus, 1: Lists, 2: Menus and Lists. */
-	735, /* R3443H: 735, R3551: 721. */
-	1,
-	0,
-	702, /* R3443H: 702, R3551: 688. */
-	0,
-	0,
-	30
-};
-static APP_DISPLAY_T g_app_state = APP_DISPLAY_HIDE;
-static APP_POPUP_T g_app_popup = APP_POPUP_CHANGED;
-static APP_VIEW_T g_app_view = APP_VIEW_HELP;
-static RESOURCE_ID g_app_resources[APP_RESOURCE_MAX];
-static APP_MENU_ITEM_T g_app_menu_current_item_index = 0;
-static UINT64 g_ms_key_press_start = 0LLU;
 
 static const EVENT_HANDLER_ENTRY_T g_state_any_hdls[] = {
 	{ EV_REVOKE_TOKEN, APP_HandleUITokenRevoked },
@@ -261,17 +252,31 @@ UINT32 Register(const char *elf_path_uri, const char *args, UINT32 ev_code) {
 
 static UINT32 ApplicationStart(EVENT_STACK_T *ev_st, REG_ID_T reg_id, void *reg_hdl) {
 	UINT32 status;
-	UINT32 routing_stack;
-	ELF_T *elf;
+	APP_INSTANCE_T *app_instance;
 
 	status = RESULT_FAIL;
 
 	if (AFW_InquireRoutingStackByRegId(reg_id) != RESULT_OK) {
-		InitResourses(g_app_resources);
+		app_instance = (APP_INSTANCE_T *) APP_InitAppData((void *) HandleEventMain, sizeof(APP_INSTANCE_T),
+			reg_id, 0, 1, 1, 1, APP_DISPLAY_HIDE, 0);
 
-		routing_stack = (g_app_state == APP_DISPLAY_SHOW);
-		elf = (ELF_T *) APP_InitAppData((void *) HandleEventMain, sizeof(ELF_T), reg_id, 0, 1, 1, 1, routing_stack, 0);
-		status = APP_Start(ev_st, &elf->app, APP_STATE_INIT, g_state_table_hdls, HandleEventHide, g_app_name, 0);
+		InitResourses(app_instance->resources);
+		app_instance->state = APP_DISPLAY_HIDE;
+		app_instance->popup = APP_POPUP_CHANGED;
+		app_instance->view = APP_VIEW_HELP;
+		app_instance->menu_current_item_index = 0;
+		app_instance->ms_key_press_start = 0LLU;
+		app_instance->options.trigger = 0; /* 0: Menus, 1: Lists, 2: Menus and Lists. */
+		app_instance->options.vibro_motor_signal = 735; /* R3443H: 735, R3551: 721. */
+		app_instance->options.vibro_motor_send_on = 1;
+		app_instance->options.vibro_motor_send_off = 0;
+		app_instance->options.vibro_voltage_signal = 702; /* R3443H: 702, R3551: 688. */
+		app_instance->options.vibro_voltage_level_on = 0;
+		app_instance->options.vibro_voltage_level_off = 0;
+		app_instance->options.vibro_delay = 30;
+
+		status = APP_Start(ev_st, &app_instance->app, APP_STATE_INIT,
+			g_state_table_hdls, HandleEventHide, g_app_name, 0);
 	}
 
 	return status;
@@ -279,12 +284,16 @@ static UINT32 ApplicationStart(EVENT_STACK_T *ev_st, REG_ID_T reg_id, void *reg_
 
 static UINT32 ApplicationStop(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
 	UINT32 status;
+	APP_INSTANCE_T *app_instance;
+
+	status = RESULT_OK;
+	app_instance = (APP_INSTANCE_T *) app;
 
 	DeleteDialog(app);
 
-	FreeResourses(g_app_resources);
+	FreeResourses(app_instance->resources);
 
-	status = APP_Exit(ev_st, app, 0);
+	status |= APP_Exit(ev_st, app, 0);
 
 	LdrUnloadELF(&Lib);
 
@@ -329,15 +338,17 @@ static UINT32 FreeResourses(RESOURCE_ID *resources) {
 
 static UINT32 ApplicationDisplay(EVENT_STACK_T *ev_st, APPLICATION_T *app, APP_DISPLAY_T display) {
 	UINT32 status;
+	APP_INSTANCE_T *app_instance;
 	void *hdl;
 	UINT32 routing_stack;
 
 	status = RESULT_OK;
+	app_instance = (APP_INSTANCE_T *) app;
 
-	if (g_app_state != display) {
-		g_app_state = display;
-		hdl = (void *) ((g_app_state == APP_DISPLAY_SHOW) ? APP_HandleEvent : APP_HandleEventPrepost);
-		routing_stack = (g_app_state == APP_DISPLAY_SHOW);
+	if (app_instance->state != display) {
+		app_instance->state = display;
+		hdl = (void *) ((app_instance->state == APP_DISPLAY_SHOW) ? APP_HandleEvent : APP_HandleEventPrepost);
+		routing_stack = (app_instance->state == APP_DISPLAY_SHOW);
 		status = APP_ChangeRoutingStack(app, ev_st, hdl, routing_stack, 0, 1, 1);
 	}
 
@@ -345,6 +356,7 @@ static UINT32 ApplicationDisplay(EVENT_STACK_T *ev_st, APPLICATION_T *app, APP_D
 }
 
 static UINT32 HandleStateEnter(EVENT_STACK_T *ev_st, APPLICATION_T *app, ENTER_STATE_TYPE_T state) {
+	APP_INSTANCE_T *app_instance;
 	SU_PORT_T port;
 	CONTENT_T content;
 	UIS_DIALOG_T dialog;
@@ -357,42 +369,44 @@ static UINT32 HandleStateEnter(EVENT_STACK_T *ev_st, APPLICATION_T *app, ENTER_S
 		return RESULT_OK;
 	}
 
+	app_instance = (APP_INSTANCE_T *) app;
+
 	DeleteDialog(app);
 
 	port = app->port;
 	app_state = app->state;
-	edit_title = g_app_resources[APP_RESOURCE_STRING_NAME];
+	edit_title = app_instance->resources[APP_RESOURCE_STRING_NAME];
 
 	switch (app_state) {
 		case APP_STATE_MAIN:
 			starting_list_item = APP_MENU_ITEM_FIRST;
 			dialog = UIS_CreateList(&port, 0, APP_MENU_ITEM_MAX, 0, &starting_list_item, 0, 2, NULL,
-				g_app_resources[APP_RESOURCE_STRING_NAME]);
+				app_instance->resources[APP_RESOURCE_STRING_NAME]);
 
 			/* Insert cursor to proper position. */
-			if (g_app_menu_current_item_index != APP_MENU_ITEM_FIRST) {
-				APP_UtilAddEvUISListChange(ev_st, app, 0, g_app_menu_current_item_index + 1, APP_MENU_ITEM_MAX,
+			if (app_instance->menu_current_item_index != APP_MENU_ITEM_FIRST) {
+				APP_UtilAddEvUISListChange(ev_st, app, 0, app_instance->menu_current_item_index + 1, APP_MENU_ITEM_MAX,
 					FALSE, 2, NULL, NULL, NULL);
 				UIS_HandleEvent(dialog, ev_st);
 			}
 			break;
 		case APP_STATE_EDIT:
-			switch (g_app_menu_current_item_index) {
+			switch (app_instance->menu_current_item_index) {
 				case APP_MENU_ITEM_VIBRATION_SIGNAL:
-					edit_title = g_app_resources[APP_RESOURCE_STRING_VIBRO_SIGNAL];
-					u_ltou(g_app_options.vibro_motor_signal, edit_number);
+					edit_title = app_instance->resources[APP_RESOURCE_STRING_VIBRO_SIGNAL];
+					u_ltou(app_instance->options.vibro_motor_signal, edit_number);
 					break;
 				case APP_MENU_ITEM_VIBRATION_DURATION:
-					edit_title = g_app_resources[APP_RESOURCE_STRING_VIBRO_DELAY];
-					u_ltou(g_app_options.vibro_delay, edit_number);
+					edit_title = app_instance->resources[APP_RESOURCE_STRING_VIBRO_DELAY];
+					u_ltou(app_instance->options.vibro_delay, edit_number);
 					break;
 				case APP_MENU_ITEM_VIBRATION_VOLTAGE_SIGNAL:
-					edit_title = g_app_resources[APP_RESOURCE_STRING_VIBRO_VOLTAGE_SIGNAL];
-					u_ltou(g_app_options.vibro_voltage_signal, edit_number);
+					edit_title = app_instance->resources[APP_RESOURCE_STRING_VIBRO_VOLTAGE_SIGNAL];
+					u_ltou(app_instance->options.vibro_voltage_signal, edit_number);
 					break;
 				case APP_MENU_ITEM_VIBRATION_VOLTAGE:
-					edit_title = g_app_resources[APP_RESOURCE_STRING_VIBRO_VOLTAGE_LEVEL];
-					u_ltou(g_app_options.vibro_voltage_level_on, edit_number);
+					edit_title = app_instance->resources[APP_RESOURCE_STRING_VIBRO_VOLTAGE_LEVEL];
+					u_ltou(app_instance->options.vibro_voltage_level_on, edit_number);
 					break;
 				default:
 					break;
@@ -402,15 +416,15 @@ static UINT32 HandleStateEnter(EVENT_STACK_T *ev_st, APPLICATION_T *app, ENTER_S
 			break;
 		case APP_STATE_SELECT:
 			starting_list_item = APP_MENU_ITEM_FIRST;
-			dialog = UIS_CreateSelectionEditor(&port, 0, APP_SELECT_ITEM_MAX, g_app_options.trigger + 1,
-				&starting_list_item, 0, NULL, g_app_resources[APP_RESOURCE_STRING_TRIGGER]);
+			dialog = UIS_CreateSelectionEditor(&port, 0, APP_SELECT_ITEM_MAX, app_instance->options.trigger + 1,
+				&starting_list_item, 0, NULL, app_instance->resources[APP_RESOURCE_STRING_TRIGGER]);
 			break;
 		case APP_STATE_POPUP:
-			switch (g_app_popup) {
+			switch (app_instance->popup) {
 				default:
 				case APP_POPUP_CHANGED:
 					UIS_MakeContentFromString("MCq0NMCq1NMCq2", &content,
-						g_str_changed, g_str_e_trigger, GetTriggerOptionString(g_app_options.trigger));
+						g_str_changed, g_str_e_trigger, GetTriggerOptionString(app_instance->options.trigger));
 					break;
 				case APP_POPUP_RESETED:
 					UIS_MakeContentFromString("MCq0", &content, g_str_reseted);
@@ -423,7 +437,7 @@ static UINT32 HandleStateEnter(EVENT_STACK_T *ev_st, APPLICATION_T *app, ENTER_S
 			dialog = UIS_CreateConfirmation(&port, &content);
 			break;
 		case APP_STATE_VIEW:
-			switch (g_app_view) {
+			switch (app_instance->view) {
 				default:
 				case APP_VIEW_HELP:
 					UIS_MakeContentFromString("q0Nq1", &content, g_str_e_help, g_str_help_content);
@@ -478,7 +492,11 @@ static UINT32 DeleteDialog(APPLICATION_T *app) {
 }
 
 static void HandleEventMain(EVENT_STACK_T *ev_st, APPLICATION_T *app, APP_ID_T app_id, REG_ID_T reg_id) {
-	if (g_app_state == APP_DISPLAY_SHOW) {
+	APP_INSTANCE_T *app_instance;
+
+	app_instance = (APP_INSTANCE_T *) app;
+
+	if (app_instance->state == APP_DISPLAY_SHOW) {
 		APP_HandleEvent(ev_st, app, app_id, reg_id);
 	} else {
 		APP_HandleEventPrepost(ev_st, app, app_id, reg_id);
@@ -502,14 +520,16 @@ static UINT32 HandleEventShow(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
 
 static UINT32 HandleEventSelect(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
 	UINT32 status;
+	APP_INSTANCE_T *app_instance;
 	EVENT_T *event;
 
 	status = RESULT_OK;
+	app_instance = (APP_INSTANCE_T *) app;
 	event = AFW_GetEv(ev_st);
 
-	g_app_menu_current_item_index = event->data.index - 1;
+	app_instance->menu_current_item_index = event->data.index - 1;
 
-	switch (g_app_menu_current_item_index) {
+	switch (app_instance->menu_current_item_index) {
 		case APP_MENU_ITEM_TRIGGER:
 			status |= APP_UtilChangeState(APP_STATE_SELECT, ev_st, app);
 			break;
@@ -523,11 +543,11 @@ static UINT32 HandleEventSelect(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
 			status |= APP_UtilChangeState(APP_STATE_RESET, ev_st, app);
 			break;
 		case APP_MENU_ITEM_HELP:
-			g_app_view = APP_VIEW_HELP;
+			app_instance->view = APP_VIEW_HELP;
 			status |= APP_UtilChangeState(APP_STATE_VIEW, ev_st, app);
 			break;
 		case APP_MENU_ITEM_ABOUT:
-			g_app_view = APP_VIEW_ABOUT;
+			app_instance->view = APP_VIEW_ABOUT;
 			status |= APP_UtilChangeState(APP_STATE_VIEW, ev_st, app);
 			break;
 		case APP_MENU_ITEM_EXIT:
@@ -547,17 +567,19 @@ static UINT32 HandleEventMenuRequestListItems(EVENT_STACK_T *ev_st, APPLICATION_
 }
 
 static UINT32 HandleEventKeyPress(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
+	APP_INSTANCE_T *app_instance;
 	EVENT_T *event;
 	UINT8 key;
 	UINT8 dialog;
 	BOOL trigger;
 
+	app_instance = (APP_INSTANCE_T *) app;
 	event = AFW_GetEv(ev_st);
 	key = event->data.key_pressed;
 	dialog = DialogType_None;
 
 	if (key == g_key_app_menu || key == g_key_app_exit) {
-		g_ms_key_press_start = suPalTicksToMsec(suPalReadTime());
+		app_instance->ms_key_press_start = suPalTicksToMsec(suPalReadTime());
 	}
 
 	switch (key) {
@@ -569,7 +591,7 @@ static UINT32 HandleEventKeyPress(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
 		/* case KEY_SOFT_LEFT: */ /* Disable "Back" softkey. */
 		case KEY_JOY_OK:
 			UIS_GetActiveDialogType(&dialog);
-			switch (g_app_options.trigger) {
+			switch (app_instance->options.trigger) {
 				default:
 				case APP_SELECT_ITEM_MENUS:
 					trigger = (dialog == DialogType_Menu || dialog == DialogType_SecondLevelMenu);
@@ -588,19 +610,19 @@ static UINT32 HandleEventKeyPress(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
 			}
 			if (trigger) {
 				/* Set vibration motor voltage. */
-				hPortWrite(g_app_options.vibro_voltage_signal, g_app_options.vibro_voltage_level_on);
+				hPortWrite(app_instance->options.vibro_voltage_signal, app_instance->options.vibro_voltage_level_on);
 
 				/* Start vibration motor. */
-				hPortWrite(g_app_options.vibro_motor_signal, g_app_options.vibro_motor_send_on);
+				hPortWrite(app_instance->options.vibro_motor_signal, app_instance->options.vibro_motor_send_on);
 
 				/* Delay using SUAPI because APP_UtilStartTimer() is slow. */
-				suSleep(g_app_options.vibro_delay, NULL);
+				suSleep(app_instance->options.vibro_delay, NULL);
 
 				/* Stop vibration motor. */
-				hPortWrite(g_app_options.vibro_motor_signal, g_app_options.vibro_motor_send_off);
+				hPortWrite(app_instance->options.vibro_motor_signal, app_instance->options.vibro_motor_send_off);
 
 				/* Reset vibration motor voltage. */
-				hPortWrite(g_app_options.vibro_voltage_signal, g_app_options.vibro_voltage_level_off);
+				hPortWrite(app_instance->options.vibro_voltage_signal, app_instance->options.vibro_voltage_level_off);
 			}
 			break;
 		default:
@@ -611,10 +633,12 @@ static UINT32 HandleEventKeyPress(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
 }
 
 static UINT32 HandleEventKeyRelease(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
+	APP_INSTANCE_T *app_instance;
 	EVENT_T *event;
 	UINT8 key;
 	UINT32 ms_key_release_stop;
 
+	app_instance = (APP_INSTANCE_T *) app;
 	event = AFW_GetEv(ev_st);
 	key = event->data.key_pressed;
 
@@ -622,7 +646,7 @@ static UINT32 HandleEventKeyRelease(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
 		/*
 		 * Detect long key press between 500 ms (0.5 s) and 1500 ms (1.5 s) and ignore rest.
 		 */
-		ms_key_release_stop = (UINT32) (suPalTicksToMsec(suPalReadTime()) - g_ms_key_press_start);
+		ms_key_release_stop = (UINT32) (suPalTicksToMsec(suPalReadTime()) - app_instance->ms_key_press_start);
 		if ((ms_key_release_stop >= 500) && (ms_key_release_stop <= 1500)) {
 			if (key == g_key_app_menu) {
 				APP_ConsumeEv(ev_st, app);
@@ -656,10 +680,12 @@ static UINT32 HandleEventTimerExpired(EVENT_STACK_T *ev_st, APPLICATION_T *app) 
 
 static UINT32 HandleEventEditData(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
 	UINT32 status;
+	APP_INSTANCE_T *app_instance;
 	EVENT_T *event;
 	UINT32 data;
 
 	status = RESULT_OK;
+	app_instance = (APP_INSTANCE_T *) app;
 	event = AFW_GetEv(ev_st);
 
 	if (event->attachment != NULL) {
@@ -667,18 +693,18 @@ static UINT32 HandleEventEditData(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
 		if (data > MAX_NUMBER_VALUE) {
 			data = MAX_NUMBER_VALUE;
 		}
-		switch (g_app_menu_current_item_index) {
+		switch (app_instance->menu_current_item_index) {
 			case APP_MENU_ITEM_VIBRATION_SIGNAL:
-				g_app_options.vibro_motor_signal = data;
+				app_instance->options.vibro_motor_signal = data;
 				break;
 			case APP_MENU_ITEM_VIBRATION_DURATION:
-				g_app_options.vibro_delay = data;
+				app_instance->options.vibro_delay = data;
 				break;
 			case APP_MENU_ITEM_VIBRATION_VOLTAGE_SIGNAL:
-				g_app_options.vibro_voltage_signal = data;
+				app_instance->options.vibro_voltage_signal = data;
 				break;
 			case APP_MENU_ITEM_VIBRATION_VOLTAGE:
-				g_app_options.vibro_voltage_level_on = data;
+				app_instance->options.vibro_voltage_level_on = data;
 				break;
 			default:
 				break;
@@ -710,13 +736,15 @@ static UINT32 HandleEventEditDone(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
 
 static UINT32 HandleEventSelectDone(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
 	UINT32 status;
+	APP_INSTANCE_T *app_instance;
 	EVENT_T *event;
 
 	status = RESULT_OK;
+	app_instance = (APP_INSTANCE_T *) app;
 	event = AFW_GetEv(ev_st);
 
-	g_app_options.trigger = event->data.index - 1;
-	g_app_popup = APP_POPUP_CHANGED;
+	app_instance->options.trigger = event->data.index - 1;
+	app_instance->popup = APP_POPUP_CHANGED;
 
 	status |= APP_UtilChangeState(APP_STATE_POPUP, ev_st, app);
 
@@ -729,11 +757,13 @@ static UINT32 HandleEventSelectRequestListItems(EVENT_STACK_T *ev_st, APPLICATIO
 
 static UINT32 HandleEventYes(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
 	UINT32 status;
+	APP_INSTANCE_T *app_instance;
 
 	status = RESULT_OK;
-	g_app_popup = APP_POPUP_RESETED;
+	app_instance = (APP_INSTANCE_T *) app;
+	app_instance->popup = APP_POPUP_RESETED;
 
-	ResetSettingsToDefaultValues();
+	ResetSettingsToDefaultValues(app);
 
 	status |= APP_UtilChangeState(APP_STATE_POPUP, ev_st, app);
 
@@ -784,11 +814,13 @@ static UINT32 HandleEventCancel(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
 static UINT32 SendMenuItemsToList(EVENT_STACK_T *ev_st, APPLICATION_T *app, UINT32 start, UINT32 count) {
 	UINT32 status;
 	INT32 result;
+	APP_INSTANCE_T *app_instance;
 	UINT32 i;
 	LIST_ENTRY_T *list;
 
 	status = RESULT_OK;
 	result = RESULT_OK;
+	app_instance = (APP_INSTANCE_T *) app;
 
 	if (count == 0) {
 		return RESULT_FAIL;
@@ -806,19 +838,19 @@ static UINT32 SendMenuItemsToList(EVENT_STACK_T *ev_st, APPLICATION_T *app, UINT
 
 	status |= UIS_MakeContentFromString("Mq0Sq1",
 		&list[APP_MENU_ITEM_TRIGGER].content.static_entry.text,
-		g_str_trigger, GetTriggerOptionString(g_app_options.trigger));
+		g_str_trigger, GetTriggerOptionString(app_instance->options.trigger));
 	status |= UIS_MakeContentFromString("Mq0Si1",
 		&list[APP_MENU_ITEM_VIBRATION_SIGNAL].content.static_entry.text,
-		g_str_vibro_signal, g_app_options.vibro_motor_signal);
+		g_str_vibro_signal, app_instance->options.vibro_motor_signal);
 	status |= UIS_MakeContentFromString("Mq0Si1",
 		&list[APP_MENU_ITEM_VIBRATION_DURATION].content.static_entry.text,
-		g_str_vibro_delay, g_app_options.vibro_delay);
+		g_str_vibro_delay, app_instance->options.vibro_delay);
 	status |= UIS_MakeContentFromString("Mq0Si1",
 		&list[APP_MENU_ITEM_VIBRATION_VOLTAGE_SIGNAL].content.static_entry.text,
-		g_str_vibro_voltage_signal, g_app_options.vibro_voltage_signal);
+		g_str_vibro_voltage_signal, app_instance->options.vibro_voltage_signal);
 	status |= UIS_MakeContentFromString("Mq0Si1",
 		&list[APP_MENU_ITEM_VIBRATION_VOLTAGE].content.static_entry.text,
-		g_str_vibro_voltage_level, g_app_options.vibro_voltage_level_on);
+		g_str_vibro_voltage_level, app_instance->options.vibro_voltage_level_on);
 	status |= UIS_MakeContentFromString("Mq0",
 		&list[APP_MENU_ITEM_RESET].content.static_entry.text,
 		g_str_reset);
@@ -899,31 +931,34 @@ static const WCHAR *GetTriggerOptionString(APP_SELECT_ITEM_T item) {
 	}
 }
 
-static void ResetSettingsToDefaultValues(void) {
+static void ResetSettingsToDefaultValues(APPLICATION_T *app) {
+	APP_INSTANCE_T *app_instance;
+	const char *firmware_platform;
+
 	const char platform_R3511[] = "R3511";
 	/* const char platform_R3443H1[] = "R3443H1"; */ /* Default platform. */
 
-	const char *firmware_platform;
+	app_instance = (APP_INSTANCE_T *) app;
 
 	firmware_platform = LdrGetFirmwareMajorVersion();
 
 	if (strncmp(platform_R3511, firmware_platform, sizeof(platform_R3511)) == 0) {
-		g_app_options.trigger = 0;
-		g_app_options.vibro_motor_signal = 721;
-		g_app_options.vibro_motor_send_on = 1;
-		g_app_options.vibro_motor_send_off = 0;
-		g_app_options.vibro_voltage_signal = 688;
-		g_app_options.vibro_voltage_level_on = 0;
-		g_app_options.vibro_voltage_level_off = 0;
-		g_app_options.vibro_delay = 30;
+		app_instance->options.trigger = 0;
+		app_instance->options.vibro_motor_signal = 721;
+		app_instance->options.vibro_motor_send_on = 1;
+		app_instance->options.vibro_motor_send_off = 0;
+		app_instance->options.vibro_voltage_signal = 688;
+		app_instance->options.vibro_voltage_level_on = 0;
+		app_instance->options.vibro_voltage_level_off = 0;
+		app_instance->options.vibro_delay = 30;
 	} else {
-		g_app_options.trigger = 0;
-		g_app_options.vibro_motor_signal = 735;
-		g_app_options.vibro_motor_send_on = 1;
-		g_app_options.vibro_motor_send_off = 0;
-		g_app_options.vibro_voltage_signal = 702;
-		g_app_options.vibro_voltage_level_on = 0;
-		g_app_options.vibro_voltage_level_off = 0;
-		g_app_options.vibro_delay = 30;
+		app_instance->options.trigger = 0;
+		app_instance->options.vibro_motor_signal = 735;
+		app_instance->options.vibro_motor_send_on = 1;
+		app_instance->options.vibro_motor_send_off = 0;
+		app_instance->options.vibro_voltage_signal = 702;
+		app_instance->options.vibro_voltage_level_on = 0;
+		app_instance->options.vibro_voltage_level_off = 0;
+		app_instance->options.vibro_delay = 30;
 	}
 }
