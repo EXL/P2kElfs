@@ -7,10 +7,6 @@
 #include <mme.h>
 #include <uis.h>
 
-typedef struct {
-	APPLICATION_T app;
-} ELF_T;
-
 typedef enum {
 	APP_STATE_ANY,
 	APP_STATE_INIT,
@@ -24,6 +20,10 @@ typedef enum {
 	APP_TIMER_DUMP_OK,
 	APP_TIMER_DUMP_FAIL
 } APP_TIMER_T;
+
+typedef struct {
+	APPLICATION_T app;
+} APP_INSTANCE_T;
 
 UINT32 Register(const char *elf_path_uri, const char *args, UINT32 ev_code);
 static UINT32 ApplicationStart(EVENT_STACK_T *ev_st, REG_ID_T reg_id, void *reg_hdl);
@@ -95,13 +95,16 @@ UINT32 Register(const char *elf_path_uri, const char *args, UINT32 ev_code) {
 
 static UINT32 ApplicationStart(EVENT_STACK_T *ev_st, REG_ID_T reg_id, void *reg_hdl) {
 	UINT32 status;
-	ELF_T *elf;
+	APP_INSTANCE_T *app_instance;
 
 	status = RESULT_FAIL;
 
 	if (AFW_InquireRoutingStackByRegId(reg_id) != RESULT_OK) {
-		elf = (ELF_T *) APP_InitAppData((void *) APP_HandleEvent, sizeof(ELF_T), reg_id, 0, 1, 1, 1, 1, 0);
-		status = APP_Start(ev_st, &elf->app, APP_STATE_MAIN, g_state_table_hdls, ApplicationStop, g_app_name, 0);
+		app_instance = (APP_INSTANCE_T *) APP_InitAppData((void *) APP_HandleEvent, sizeof(APP_INSTANCE_T),
+			reg_id, 0, 1, 1, 1, 1, 0);
+
+		status = APP_Start(ev_st, &app_instance->app, APP_STATE_MAIN,
+			g_state_table_hdls, ApplicationStop, g_app_name, 0);
 	}
 
 	return status;
