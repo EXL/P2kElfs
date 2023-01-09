@@ -166,10 +166,18 @@ static const WCHAR g_str_exit[] = L"Exit";
 static const WCHAR g_str_changed[] = L"Changed:";
 static const WCHAR g_str_reseted[] = L"All settings have been reset to default values!";
 static const WCHAR g_str_reset_question[] = L"Do you want to reset settings to default?";
-static const WCHAR g_str_help_content[] = L"Under construction.";
-static const WCHAR g_str_about_content[] = L"Created by EXL, Under construction. "
-	L"Source code: https://github.com/EXL/P2kElfs/tree/master/VibroHaptic "
-	L"(c) 2023";
+static const WCHAR g_str_help_content_p1[] = L"Resident program for vibration feedback in various phone menus.";
+static const WCHAR g_str_help_content_p2[] = L"Thanks to HAPI, you can use a wide variety of signals and their levels.";
+static const WCHAR g_str_help_content_p3[] = L"R3511/R3443H1 platform:";
+static const WCHAR g_str_help_content_p4[] = L"330/331 - Keyboard backlight.";
+static const WCHAR g_str_help_content_p5[] = L"343/343 - Display backlight.";
+static const WCHAR g_str_help_content_p6[] = L"721/735 - Vibration motor.";
+static const WCHAR g_str_help_content_p7[] = L"736/750 - Sounds to speaker.";
+static const WCHAR g_str_help_content_p8[] = L"688/702 - Vibrator voltage level.";
+static const WCHAR g_str_about_content_p1[] = L"Vibration haptic daemon program for Motorola phones.";
+static const WCHAR g_str_about_content_p2[] = L"Source code:";
+static const WCHAR g_str_about_content_p3[] = L"https://github.com/EXL/P2kElfs/tree/master/VibroHaptic";
+static const WCHAR g_str_about_content_p4[] = L"\x00A9 EXL, 09-Jan-2023.";
 
 static const UINT8 g_key_app_menu = KEY_SOFT_LEFT;
 static const UINT8 g_key_app_exit = KEY_STAR;
@@ -458,10 +466,13 @@ static UINT32 HandleStateEnter(EVENT_STACK_T *ev_st, APPLICATION_T *app, ENTER_S
 			switch (app_instance->view) {
 				default:
 				case APP_VIEW_HELP:
-					UIS_MakeContentFromString("q0Nq1", &content, g_str_e_help, g_str_help_content);
+					UIS_MakeContentFromString("q0Nq1N Nq2N Nq3N Nq4Nq5Nq6Nq7Nq8Nq9", &content, g_str_e_help,
+						g_str_help_content_p1, g_str_help_content_p2, g_str_help_content_p3, g_str_help_content_p4,
+						g_str_help_content_p5, g_str_help_content_p6, g_str_help_content_p7, g_str_help_content_p8);
 					break;
 				case APP_VIEW_ABOUT:
-					UIS_MakeContentFromString("q0Nq1", &content, g_str_e_about, g_str_about_content);
+					UIS_MakeContentFromString("q0Nq1N Nq2Nq3N Nq4", &content, g_str_e_about,
+						g_str_about_content_p1, g_str_about_content_p2, g_str_about_content_p3, g_str_about_content_p4);
 					break;
 			}
 			dialog = UIS_CreateViewer(&port, &content, NULL);
