@@ -12,6 +12,8 @@
 
 #define MAX_NUMBER_LENGTH 6
 #define MAX_NUMBER_VALUE 999999
+#define KEY_LONG_PRESS_START_MS 500
+#define KEY_LONG_PRESS_STOP_MS 1500
 
 typedef enum {
 	APP_STATE_ANY,
@@ -648,7 +650,7 @@ static UINT32 HandleEventKeyRelease(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
 		 * Detect long key press between 500 ms (0.5 s) and 1500 ms (1.5 s) and ignore rest.
 		 */
 		ms_key_release_stop = (UINT32) (suPalTicksToMsec(suPalReadTime()) - app_instance->ms_key_press_start);
-		if ((ms_key_release_stop >= 500) && (ms_key_release_stop <= 1500)) {
+		if ((ms_key_release_stop >= KEY_LONG_PRESS_START_MS) && (ms_key_release_stop <= KEY_LONG_PRESS_STOP_MS)) {
 			if (key == g_key_app_menu) {
 				APP_ConsumeEv(ev_st, app);
 				return HandleEventShow(ev_st, app);
