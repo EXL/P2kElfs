@@ -8,10 +8,6 @@
 #include <sms.h>
 #include <utilities.h>
 
-typedef struct {
-	APPLICATION_T app;
-} ELF_T;
-
 typedef enum {
 	APP_STATE_ANY,
 	APP_STATE_MAIN,
@@ -24,6 +20,13 @@ typedef enum {
 	APP_TIMER_DETACH,
 	APP_TIMER_EXIT
 } APP_TIMER_T;
+
+typedef struct {
+	APPLICATION_T app;
+
+	BOOL is_earphones;
+	UINT64 ms_key_press_start;
+} APP_INSTANCE_T;
 
 typedef enum {
 	JANUARY = 1,
@@ -66,9 +69,6 @@ static const char *g_pwr_off = "OFF";
 static const UINT8 g_key_exit = KEY_0;
 static const UINT8 g_key_vibration = KEY_STAR;
 
-static UINT64 g_ms_key_press_start = 0LLU;
-static BOOL g_is_earphones = TRUE;
-
 static const EVENT_HANDLER_ENTRY_T g_state_any_hdls[] = {
 	{ EV_DEVICE_ATTACH, HandleEventDeviceAttach },
 	{ EV_DEVICE_DETACH, HandleEventDeviceDetach },
@@ -102,13 +102,19 @@ UINT32 Register(const char *elf_path_uri, const char *args, UINT32 ev_code) {
 
 static UINT32 ApplicationStart(EVENT_STACK_T *ev_st, REG_ID_T reg_id, void *reg_hdl) {
 	UINT32 status;
-	ELF_T *elf;
+	APP_INSTANCE_T *app_instance;
 
 	status = RESULT_FAIL;
 
 	if (AFW_InquireRoutingStackByRegId(reg_id) != RESULT_OK) {
-		elf = (ELF_T *) APP_InitAppData((void *) APP_HandleEventPrepost, sizeof(ELF_T), reg_id, 0, 1, 1, 2, 0, 0);
-		status = APP_Start(ev_st, &elf->app, APP_STATE_MAIN, g_state_table_hdls, ApplicationStop, g_app_name, 0);
+		app_instance = (APP_INSTANCE_T *) APP_InitAppData((void *) APP_HandleEventPrepost, sizeof(APP_INSTANCE_T),
+			reg_id, 0, 1, 1, 2, 0, 0);
+
+		app_instance->is_earphones = TRUE;
+		app_instance->ms_key_press_start = 0ULL;
+
+		status = APP_Start(ev_st, &app_instance->app, APP_STATE_MAIN,
+			g_state_table_hdls, ApplicationStop, g_app_name, 0);
 	}
 
 	return status;
@@ -129,41 +135,53 @@ static UINT32 HandleStateEnter(EVENT_STACK_T *ev_st, APPLICATION_T *app, ENTER_S
 }
 
 static UINT32 HandleEventDeviceAttach(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
+	APP_INSTANCE_T *app_instance;
+
+	app_instance = (APP_INSTANCE_T *) app;
+
 	/* Not headset or earphones. */
 	if (!DL_AccIsHeadsetAvailable()) {
-		g_is_earphones = FALSE;
+		app_instance->is_earphones = FALSE;
 		APP_UtilStartTimer(100, APP_TIMER_ATTACH, app);
 	} else {
-		g_is_earphones = TRUE;
+		app_instance->is_earphones = TRUE;
 	}
 	return RESULT_OK;
 }
 static UINT32 HandleEventDeviceDetach(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
-	if (!g_is_earphones) {
+	APP_INSTANCE_T *app_instance;
+
+	app_instance = (APP_INSTANCE_T *) app;
+
+	if (!app_instance->is_earphones) {
 		APP_UtilStartTimer(100, APP_TIMER_DETACH, app);
 	}
 	return RESULT_OK;
 }
 
 static UINT32 HandleEventKeyPress(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
+	APP_INSTANCE_T *app_instance;
 	EVENT_T *event;
 	UINT8 key;
 
+	app_instance = (APP_INSTANCE_T *) app;
 	event = AFW_GetEv(ev_st);
 	key = event->data.key_pressed;
 
 	if (key == g_key_exit) {
-		g_ms_key_press_start = suPalTicksToMsec(suPalReadTime());
+		app_instance->ms_key_press_start = suPalTicksToMsec(suPalReadTime());
 	}
 
 	return RESULT_OK;
 }
 
 static UINT32 HandleEventKeyRelease(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
+	APP_INSTANCE_T *app_instance;
 	EVENT_T *event;
 	UINT8 key;
 	UINT32 ms_key_release_stop;
 
+	app_instance = (APP_INSTANCE_T *) app;
 	event = AFW_GetEv(ev_st);
 	key = event->data.key_pressed;
 
@@ -171,7 +189,7 @@ static UINT32 HandleEventKeyRelease(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
 		/*
 		 * Detect long key press between 500 ms (0.5 s) and 1500 ms (1.5 s) and ignore rest.
 		 */
-		ms_key_release_stop = (UINT32) (suPalTicksToMsec(suPalReadTime()) - g_ms_key_press_start);
+		ms_key_release_stop = (UINT32) (suPalTicksToMsec(suPalReadTime()) - app_instance->ms_key_press_start);
 
 		if ((ms_key_release_stop >= 500) && (ms_key_release_stop <= 1500)) {
 			if (key == g_key_exit) {
