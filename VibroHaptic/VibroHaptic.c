@@ -294,7 +294,7 @@ static UINT32 ApplicationStart(EVENT_STACK_T *ev_st, REG_ID_T reg_id, void *reg_
 		app_instance->state = APP_DISPLAY_HIDE;
 		app_instance->popup = APP_POPUP_CHANGED;
 		app_instance->view = APP_VIEW_HELP;
-		app_instance->menu_current_item_index = 0;
+		app_instance->menu_current_item_index = APP_MENU_ITEM_FIRST;
 		app_instance->ms_key_press_start = 0LLU;
 		app_instance->options.trigger = 0; /* 0: Menus, 1: Lists, 2: Menus and Lists. */
 		app_instance->options.vibro_motor_signal = 735; /* R3443H: 735, R3551: 721. */
