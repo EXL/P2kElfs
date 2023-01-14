@@ -148,8 +148,8 @@ static UINT32 SendMenuItemsToList(EVENT_STACK_T *ev_st, APPLICATION_T *app, UINT
 static UINT32 SendSelectItemsToList(EVENT_STACK_T *ev_st, APPLICATION_T *app, UINT32 start, UINT32 count);
 static const WCHAR *GetTriggerOptionString(APP_SELECT_ITEM_T item);
 static void ResetSettingsToDefaultValues(APPLICATION_T *app);
-static UINT32 ReadFileConfig(APPLICATION_T *app, WCHAR *file_config_path);
-static UINT32 SaveFileConfig(APPLICATION_T *app, WCHAR *file_config_path);
+static UINT32 ReadFileConfig(APPLICATION_T *app, const WCHAR *file_config_path);
+static UINT32 SaveFileConfig(APPLICATION_T *app, const WCHAR *file_config_path);
 
 static const char g_app_name[APP_NAME_LEN] = "VibroHaptic";
 
@@ -691,7 +691,9 @@ static UINT32 HandleEventKeyRelease(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
 				APP_ConsumeEv(ev_st, app);
 				return HandleEventShow(ev_st, app);
 			} else if (key == g_key_app_exit) {
+#ifdef EXIT_BY_KEY
 				APP_UtilStartTimer(100, APP_TIMER_EXIT, app);
+#endif
 			}
 		}
 	}
@@ -1005,7 +1007,7 @@ static void ResetSettingsToDefaultValues(APPLICATION_T *app) {
 	}
 }
 
-static UINT32 ReadFileConfig(APPLICATION_T *app, WCHAR *file_config_path) {
+static UINT32 ReadFileConfig(APPLICATION_T *app, const WCHAR *file_config_path) {
 	UINT32 readen;
 	APP_INSTANCE_T *app_instance;
 	FILE_HANDLE_T file_config;
@@ -1020,7 +1022,7 @@ static UINT32 ReadFileConfig(APPLICATION_T *app, WCHAR *file_config_path) {
 	return (readen == 0);
 }
 
-static UINT32 SaveFileConfig(APPLICATION_T *app, WCHAR *file_config_path) {
+static UINT32 SaveFileConfig(APPLICATION_T *app, const WCHAR *file_config_path) {
 	UINT32 written;
 	APP_INSTANCE_T *app_instance;
 	FILE_HANDLE_T file_config;
