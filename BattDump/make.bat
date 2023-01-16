@@ -1,5 +1,5 @@
 :: This make.bat script was edited by EXL, 01-Dec-2022.
-:: Default platform is Motorola P2K, ElfPack v1.0, ADS1.2 [Build 848] on Windows.
+:: Default platform is Motorola P2K, ElfPack v1.x, ADS1.2 [Build 848] on Windows.
 :: Warning: `-nodebug` flag option for `armlink` is buggy.
 
 :: Uncomment it for verbose output.
@@ -15,11 +15,10 @@ set SDK_PATH=%ARM_PATH%\SDK
 set LIB_PATH=%ARM_PATH%\lib
 
 :: Main link library.
-:: set LIB_MAIN=Lib.o
-set LIB_MAIN=Lib_L2_L6.o
+set LIB_MAIN=Lib.o
 
 :: Defines.
-set DEFINES=-D__P2K__
+set DEFINES=-D__P2K__ -DEP1
 
 :: ELF name.
 set ELF_NAME=BattDump

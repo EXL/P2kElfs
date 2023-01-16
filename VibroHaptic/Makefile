@@ -1,5 +1,5 @@
 # This Makefile was edited by EXL, 05-Dec-2022.
-# Default platform is Motorola P2K, ElfPack v1.0, ADS1.2 [Build 848] on Linux.
+# Default platform is Motorola P2K, ElfPack v1.x, ADS1.2 [Build 848] on Linux.
 # Warning: `-nodebug` flag option for `armlink` is buggy.
 
 # Compiler path.
@@ -12,11 +12,10 @@ SDK_PATH = $(ARM_PATH)/SDK
 LIB_PATH = $(ARM_PATH)/lib
 
 # Main link library.
-# LIB_MAIN = Lib.o
-LIB_MAIN = Lib_L2_L6.o
+LIB_MAIN = Lib.o
 
 # Defines.
-DEFINES = -D__P2K__
+DEFINES = -D__P2K__ -DEP1
 
 # ELF name.
 ELF_NAME = VibroHaptic

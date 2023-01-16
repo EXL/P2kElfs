@@ -3,7 +3,7 @@ Vibro Haptic
 
 The "Vibro Haptic" ELF daemon utility with GUI settings for vibration feedback like in Sony Ericsson phones.
 
-## Screenshots from Motorola L6
+## Screenshots from Motorola SLVR L6
 
 ![Screenshot 1 of Vibro Haptic from Motorola L6](../images/Screenshot_VibroHaptic_L6_1.png) ![Screenshot 2 of Vibro Haptic from Motorola L6](../images/Screenshot_VibroHaptic_L6_2.png) ![Screenshot 3 of Vibro Haptic from Motorola L6](../images/Screenshot_VibroHaptic_L6_3.png) ![Screenshot 4 of Vibro Haptic from Motorola L6](../images/Screenshot_VibroHaptic_L6_4.png)
 

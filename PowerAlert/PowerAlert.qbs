@@ -1,5 +1,8 @@
-CppApplication {
+Application {
 	Depends { name: "sdk" }
 	files: [ "PowerAlert.c" ]
-	cpp.staticLibraries: ["Lib_L2_L6"]
+
+	cpp.defines: [ "EP1" ]
+	cpp.optimization: "O2"
+	cpp.staticLibraries: ["Lib"]
 }
