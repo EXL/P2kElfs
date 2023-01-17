@@ -467,6 +467,9 @@ static UINT32 MakeScreenshot(void) {
 
 static UINT32 CopyVramToRamAndInitBitmap(BITMAP_T *bitmap) {
 	UINT32 status;
+	INT32 result;
+	AHIDRVINFO_T *ahi_driver_info;
+	AHIDEVICE_T ahi_device;
 	AHIDEVCONTEXT_T ahi_device_context;
 	AHISURFACE_T ahi_surface;
 	AHISURFINFO_T ahi_surface_info;
@@ -475,9 +478,28 @@ static UINT32 CopyVramToRamAndInitBitmap(BITMAP_T *bitmap) {
 	AHIPOINT_T ahi_point;
 
 	status = RESULT_OK;
-
+	result = RESULT_OK;
+#if 0 /* NOTE: The old version of initialization does not take screenshots from Java applications. */
 	ahi_device_context = DAL_GetDeviceContext(DISPLAY_MAIN);
 	ahi_surface = DAL_GetDrawingSurface(DISPLAY_MAIN);
+#endif
+	ahi_driver_info = suAllocMem(sizeof(AHIDRVINFO_T), &result);
+	if (!ahi_driver_info && result) {
+		return RESULT_FAIL;
+	}
+	status |= AhiDevEnum(&ahi_device, ahi_driver_info, 0);
+	if (status != RESULT_OK) {
+		return RESULT_FAIL;
+	}
+	status |= AhiDevOpen(&ahi_device_context, ahi_device, "Screenshot", 0);
+	if (status != RESULT_OK) {
+		return RESULT_FAIL;
+	}
+
+	status |= AhiDispSurfGet(ahi_device_context, &ahi_surface);
+	status |= AhiDrawSurfDstSet(ahi_device_context, ahi_surface, 0);
+	status |= AhiDrawClipDstSet(ahi_device_context, NULL);
+	status |= AhiDrawClipSrcSet(ahi_device_context, NULL);
 
 	status |= AhiSurfInfo(ahi_device_context, ahi_surface, &ahi_surface_info);
 	bitmap->width = ahi_surface_info.width;
@@ -500,7 +522,12 @@ static UINT32 CopyVramToRamAndInitBitmap(BITMAP_T *bitmap) {
 	ahi_point.x = 0;
 	ahi_point.y = 0;
 
-	status |= AhiSurfCopy(ahi_device_context, ahi_surface, &ahi_bitmap, &ahi_rect, &ahi_point, 0, 1);
+	status |= AhiSurfCopy(ahi_device_context, ahi_surface, &ahi_bitmap, &ahi_rect, &ahi_point, 0, AHIFLAG_COPYFROM);
+
+	status |= AhiDevClose(ahi_device_context);
+	if (ahi_driver_info) {
+		suFreeMem(ahi_driver_info);
+	}
 
 	return status;
 }
