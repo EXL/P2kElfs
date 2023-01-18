@@ -456,11 +456,14 @@ static UINT32 MakeScreenshot(void) {
 
 	status = RESULT_OK;
 	status |= CopyVramToRamAndInitBitmap(&bitmap);
-	status |= CreateConvertedBitmap(&bitmap);
-	status |= PatchBmpHeader(&bitmap);
-	status |= SaveScreenshotFile(&bitmap);
-
-	suFreeMem(bitmap.buffer);
+	if (status == RESULT_OK) {
+		status |= CreateConvertedBitmap(&bitmap);
+		status |= PatchBmpHeader(&bitmap);
+		status |= SaveScreenshotFile(&bitmap);
+		if (bitmap.buffer) {
+			suFreeMem(bitmap.buffer);
+		}
+	}
 
 	return status;
 }
