@@ -308,6 +308,8 @@ static UINT32 HandleStateEnter(EVENT_STACK_T *ev_st, APPLICATION_T *app, ENTER_S
 
 	port = app->port;
 
+	memclr(&content, sizeof(CONTENT_T));
+
 	actions.action[0].operation = ACTION_OP_ADD;
 	actions.action[0].event = EV_DIALOG_DONE;
 	actions.action[0].action_res = app_instance->resources[APP_RESOURCE_ACTION_GOT_IT];

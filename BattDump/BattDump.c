@@ -14,6 +14,7 @@
 
 #include <loader.h>
 #include <apps.h>
+#include <mem.h>
 #include <mme.h>
 #include <uis.h>
 
@@ -146,6 +147,8 @@ static UINT32 HandleStateEnter(EVENT_STACK_T *ev_st, APPLICATION_T *app, ENTER_S
 
 	port = app->port;
 	app_state = app->state;
+
+	memclr(&content, sizeof(CONTENT_T));
 
 	switch (app_state) {
 		case APP_STATE_MAIN:

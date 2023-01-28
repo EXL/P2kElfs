@@ -413,6 +413,8 @@ static UINT32 HandleStateEnter(EVENT_STACK_T *ev_st, APPLICATION_T *app, ENTER_S
 	app_state = app->state;
 	edit_title = app_instance->resources[APP_RESOURCE_STRING_NAME];
 
+	memclr(&content, sizeof(CONTENT_T));
+
 	switch (app_state) {
 		case APP_STATE_MAIN:
 			starting_list_item = APP_MENU_ITEM_FIRST;
