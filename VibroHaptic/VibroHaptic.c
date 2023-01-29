@@ -988,7 +988,7 @@ static void ResetSettingsToDefaultValues(APPLICATION_T *app) {
 
 	firmware_platform = LdrGetFirmwareMajorVersion();
 
-	if (strncmp(platform_R3511, firmware_platform, sizeof(platform_R3511)) == 0) {
+	if (strncmp(platform_R3511, firmware_platform, sizeof(platform_R3511) - 1) == 0) {
 		app_instance->options.trigger = 0;
 		app_instance->options.vibro_motor_signal = 721;
 		app_instance->options.vibro_motor_send_on = 1;
