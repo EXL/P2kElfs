@@ -44,7 +44,7 @@ typedef enum {
 } APP_DISPLAY_T;
 
 typedef enum {
-	APP_TIMER_EXIT
+	APP_TIMER_EXIT = 0x0001
 } APP_TIMER_T;
 
 typedef enum {
@@ -412,6 +412,8 @@ static UINT32 HandleStateEnter(EVENT_STACK_T *ev_st, APPLICATION_T *app, ENTER_S
 	port = app->port;
 	app_state = app->state;
 	edit_title = app_instance->resources[APP_RESOURCE_STRING_NAME];
+
+	memclr(&content, sizeof(CONTENT_T));
 
 	switch (app_state) {
 		case APP_STATE_MAIN:
@@ -986,7 +988,7 @@ static void ResetSettingsToDefaultValues(APPLICATION_T *app) {
 
 	firmware_platform = LdrGetFirmwareMajorVersion();
 
-	if (strncmp(platform_R3511, firmware_platform, sizeof(platform_R3511)) == 0) {
+	if (strncmp(platform_R3511, firmware_platform, sizeof(platform_R3511) - 1) == 0) {
 		app_instance->options.trigger = 0;
 		app_instance->options.vibro_motor_signal = 721;
 		app_instance->options.vibro_motor_send_on = 1;

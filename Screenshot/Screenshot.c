@@ -41,7 +41,7 @@ typedef enum {
 } APP_DISPLAY_T;
 
 typedef enum {
-	APP_TIMER_SCREEN_OK,
+	APP_TIMER_SCREEN_OK = 0x0001,
 	APP_TIMER_SCREEN_FAIL,
 	APP_TIMER_EXIT
 } APP_TIMER_T;
@@ -307,6 +307,8 @@ static UINT32 HandleStateEnter(EVENT_STACK_T *ev_st, APPLICATION_T *app, ENTER_S
 	DeleteDialog(app);
 
 	port = app->port;
+
+	memclr(&content, sizeof(CONTENT_T));
 
 	actions.action[0].operation = ACTION_OP_ADD;
 	actions.action[0].event = EV_DIALOG_DONE;
