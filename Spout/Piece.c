@@ -128,6 +128,8 @@ static const UINT32 spout_palette[] = {
 	ATI_565RGB(0x00, 0x00, 0x00)
 };
 
+static WCHAR g_hiscore_file_path[FS_MAX_URI_NAME_LENGTH];
+
 static EVENT_HANDLER_ENTRY_T g_state_any_hdls[] = {
 	{ EV_REVOKE_TOKEN, APP_HandleUITokenRevoked },
 	{ STATE_HANDLERS_END, NULL }
@@ -158,6 +160,10 @@ UINT32 Register(const char *elf_path_uri, const char *args, UINT32 ev_code) {
 	ev_code_base = ev_code;
 
 	status = APP_Register(&ev_code_base, 1, g_state_table_hdls, APP_STATE_MAX, (void *) ApplicationStart);
+
+	u_atou(elf_path_uri, g_hiscore_file_path);
+	g_hiscore_file_path[u_strlen(g_hiscore_file_path) - 3] = '\0';
+	u_strcat(g_hiscore_file_path, L"sco");
 
 	LdrStartApp(ev_code_base);
 
@@ -345,7 +351,7 @@ typedef enum {
 	KPB_A,
 	KPB_B,
 	KPB_C,
-	KPB_D,
+	KPB_D
 } KEYPAD_BUTTONS_T;
 
 static BOOL keypad[KEYPAD_BUTTONS];
@@ -755,7 +761,7 @@ int pceFontPrintf(const char *fmt, ...)
 }
 
 int pceFileCreate(const char *fname, int mode) {
-	return 0;
+	return RESULT_OK;
 }
 
 int pceFileOpen(FILEACC *pfa, const char *fname, int mode)
@@ -778,18 +784,33 @@ int pceFileOpen(FILEACC *pfa, const char *fname, int mode)
 
 int pceFileReadSct(FILEACC *pfa, void *ptr, int sct, int len)
 {
-//	return read(*pfa, ptr, len);
-	return 0;
+	UINT32 readen;
+	FILE_HANDLE_T file_handle;
+
+	readen = 0;
+	file_handle = DL_FsOpenFile((WCHAR *) g_hiscore_file_path, FILE_READ_MODE, 0);
+
+	DL_FsReadFile(ptr, len, 1, file_handle, &readen);
+	DL_FsCloseFile(file_handle);
+
+	return (readen == 0);
 }
 
 int pceFileWriteSct(FILEACC *pfa, const void *ptr, int sct, int len)
 {
-//	return write(*pfa, ptr, len);
-	return 0;
+	UINT32 written;
+	FILE_HANDLE_T file_handle;
+
+	written = 0;
+	file_handle = DL_FsOpenFile((WCHAR *) g_hiscore_file_path, FILE_WRITE_MODE, 0);
+
+	DL_FsWriteFile((void *) ptr, len, 1, file_handle, &written);
+	DL_FsCloseFile(file_handle);
+
+	return (written == 0);
 }
 
 int pceFileClose(FILEACC *pfa)
 {
-//	close(*pfa);
-	return 0;
+	return RESULT_OK;
 }
