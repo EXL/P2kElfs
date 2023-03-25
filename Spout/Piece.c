@@ -293,6 +293,8 @@ static UINT32 HandleStateEnter(EVENT_STACK_T *ev_st, APPLICATION_T *app, ENTER_S
 //			dialog = UIS_CreateColorCanvas(&port, &buffer, TRUE);
 			dialog = UIS_CreateNullDialog(&port);
 
+			DL_KeyKjavaGetKeyState(); /* Reset Keys. */
+
 			GFX_Draw_Start(app);
 
 			SetLoopTimer(app, TIMER_FAST_UPDATE_MS);
@@ -307,14 +309,6 @@ static UINT32 HandleStateEnter(EVENT_STACK_T *ev_st, APPLICATION_T *app, ENTER_S
 	}
 
 	app->dialog = dialog;
-
-	switch (app_state) {
-		case APP_STATE_MAIN:
-			DL_KeyKjavaGetKeyState(); /* Reset Keys. */
-			break;
-		default:
-			break;
-	}
 
 	return RESULT_OK;
 }
