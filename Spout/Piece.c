@@ -95,7 +95,11 @@ typedef struct {
 	UINT32 timer_handle;
 } APP_INSTANCE_T;
 
-UINT32 Register(const char *elf_path_uri, const char *args, UINT32 ev_code);
+#if defined(EP1)
+UINT32 Register(const char *elf_path_uri, const char *args, UINT32 ev_code); /* ElfPack 1.x entry point. */
+#elif defined(EP2)
+ldrElf *_start(WCHAR *uri, WCHAR *arguments);                                /* ElfPack 2.x entry point. */
+#endif
 
 static UINT32 ApplicationStart(EVENT_STACK_T *ev_st, REG_ID_T reg_id, void *reg_hdl);
 static UINT32 ApplicationStop(EVENT_STACK_T *ev_st, APPLICATION_T *app);
@@ -130,6 +134,10 @@ static const UINT32 spout_palette[] = {
 
 static WCHAR g_hiscore_file_path[FS_MAX_URI_NAME_LENGTH];
 
+#if defined(EP2)
+static ldrElf g_app_elf;
+#endif
+
 static EVENT_HANDLER_ENTRY_T g_state_any_hdls[] = {
 	{ EV_REVOKE_TOKEN, APP_HandleUITokenRevoked },
 	{ STATE_HANDLERS_END, NULL }
@@ -153,6 +161,7 @@ static const STATE_HANDLERS_ENTRY_T g_state_table_hdls[] = {
 	{ APP_STATE_MAIN, HandleStateEnter, HandleStateExit, g_state_main_hdls }
 };
 
+#if defined(EP1)
 UINT32 Register(const char *elf_path_uri, const char *args, UINT32 ev_code) {
 	UINT32 status;
 	UINT32 ev_code_base;
@@ -169,6 +178,36 @@ UINT32 Register(const char *elf_path_uri, const char *args, UINT32 ev_code) {
 
 	return status;
 }
+#elif defined(EP2)
+ldrElf *_start(WCHAR *uri, WCHAR *arguments) {
+	UINT32 status;
+	UINT32 ev_code_base;
+	UINT32 reserve;
+
+	if (ldrIsLoaded(g_app_name)) {
+		cprint("Spout: Error! Application has already been loaded!\n");
+		return NULL;
+	}
+
+	status = RESULT_OK;
+	ev_code_base = ldrRequestEventBase();
+	reserve = ev_code_base + 1;
+	reserve = ldrInitEventHandlersTbl(g_state_any_hdls, reserve);
+	reserve = ldrInitEventHandlersTbl(g_state_init_hdls, reserve);
+	reserve = ldrInitEventHandlersTbl(g_state_main_hdls, reserve);
+
+	status |= APP_Register(&ev_code_base, 1, g_state_table_hdls, APP_STATE_MAX, (void *) ApplicationStart);
+
+	u_strcpy(g_hiscore_file_path, uri);
+	g_hiscore_file_path[u_strlen(g_hiscore_file_path) - 3] = '\0';
+	u_strcat(g_hiscore_file_path, L"sco");
+
+	status |= ldrSendEvent(ev_code_base);
+	g_app_elf.name = (char *) g_app_name;
+
+	return (status == RESULT_OK) ? &g_app_elf : NULL;
+}
+#endif
 
 static UINT32 ApplicationStart(EVENT_STACK_T *ev_st, REG_ID_T reg_id, void *reg_hdl) {
 	UINT32 status;
@@ -192,6 +231,10 @@ static UINT32 ApplicationStart(EVENT_STACK_T *ev_st, REG_ID_T reg_id, void *reg_
 
 		status |= APP_Start(ev_st, &app_instance->app, APP_STATE_MAIN,
 			g_state_table_hdls, ApplicationStop, g_app_name, 0);
+
+#if defined(EP2)
+		g_app_elf.app = (APPLICATION_T *) app_instance;
+#endif
 	}
 
 	return status;
@@ -209,7 +252,11 @@ static UINT32 ApplicationStop(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
 	status |= APP_Exit(ev_st, app, 0);
 	status |= ATI_Driver_Stop(app);
 
+#if defined(EP1)
 	LdrUnloadELF(&Lib);
+#elif defined(EP2)
+	ldrUnloadElf();
+#endif
 
 	return status;
 }
