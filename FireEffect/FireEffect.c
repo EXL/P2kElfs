@@ -26,18 +26,6 @@
 #include <time_date.h>
 #include <utilities.h>
 
-/******** MOVE IT TO SDK ***/
-
-typedef struct {
-	UINT32 size;
-	BOOL sync;
-	AHIRECT_T rect;
-} AHIUPDATEPARAMS_T;
-
-extern UINT32 AhiDispUpdate(AHIDEVCONTEXT_T context, AHIUPDATEPARAMS_T *update_params);
-
-/******** MOVE IT TO SDK ***/
-
 #define TIMER_FAST_TRIGGER_MS             (1)
 #define TIMER_FAST_UPDATE_MS              (1000 / 15) /* ~15 FPS. */
 
