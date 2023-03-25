@@ -31,18 +31,6 @@
 #include "Spout.h"
 #include "Font.h"
 
-/******** MOVE IT TO SDK ***/
-
-typedef struct {
-	UINT32 size;
-	BOOL sync;
-	AHIRECT_T rect;
-} AHIUPDATEPARAMS_T;
-
-extern UINT32 AhiDispUpdate(AHIDEVCONTEXT_T context, AHIUPDATEPARAMS_T *update_params);
-
-/******** MOVE IT TO SDK ***/
-
 #define TIMER_FAST_TRIGGER_MS             (1)
 #define TIMER_FAST_UPDATE_MS              (1000 / 30) /* ~30 FPS. */
 #define KEYPAD_BUTTONS                    (8)
@@ -129,7 +117,7 @@ static const UINT32 spout_palette[] = {
 	ATI_565RGB(0xFF, 0xFF, 0xFF), /*  0 */
 	ATI_565RGB(0xAA, 0xAA, 0xAA), /*  1 */
 	ATI_565RGB(0x55, 0x55, 0x55), /*  2 */
-	ATI_565RGB(0x00, 0x00, 0x00)
+	ATI_565RGB(0x00, 0x00, 0x00)  /*  3 */
 };
 
 static WCHAR g_hiscore_file_path[FS_MAX_URI_NAME_LENGTH];
@@ -666,11 +654,18 @@ static UINT32 GFX_Draw_Step(APPLICATION_T *app) {
 	return status;
 }
 
-void pceLCDDispStop(void) { }
+void pceLCDDispStop(void)
+{
 
-void pceLCDDispStart(void) { }
+}
 
-void pceLCDTrans(void) {
+void pceLCDDispStart(void)
+{
+
+}
+
+void pceLCDTrans(void)
+{
 #if 0 /* Use direct videobuffer drawing without these copying convertions. */
 	int x, y;
 	unsigned char *vbi, *bi;
@@ -686,7 +681,8 @@ void pceLCDTrans(void) {
 #endif
 }
 
-int pcePadGet(void) {
+int pcePadGet(void)
+{
 	static int pad = 0;
 	int i = 0, op = pad & 0x00ff;
 	int p[] = { PAD_UP, PAD_DN, PAD_LF, PAD_RI, PAD_A, PAD_B, PAD_C, PAD_D, -1 };
@@ -709,19 +705,20 @@ int pcePadGet(void) {
 }
 
 int interval = 0;
-
-void pceAppSetProcPeriod(int period) {
+void pceAppSetProcPeriod(int period)
+{
 	interval = period;
 }
 
 int exec = 1;
-
-void pceAppReqExit(int c) {
+void pceAppReqExit(int c)
+{
 	exec = 0;
 }
 
 unsigned char *vBuffer = NULL;
-unsigned char *pceLCDSetBuffer(unsigned char *pbuff) {
+unsigned char *pceLCDSetBuffer(unsigned char *pbuff)
+{
 	if(pbuff) {
 		vBuffer = pbuff;
 	}
@@ -731,8 +728,8 @@ unsigned char *pceLCDSetBuffer(unsigned char *pbuff) {
 int font_posX = 0, font_posY = 0, font_width = 4, font_height = 6;
 unsigned char font_fgcolor = 3, font_bgcolor = 0, font_bgclear = 0;
 const char *font_adr = (char *) FONT6;
-
-void pceFontSetType(int type) {
+void pceFontSetType(int type)
+{
 	const int width[] = {5, 8, 4};
 	const int height[] = {10, 16, 6};
 	const char* adr[] = { (char *) FONT6, (char *) FONT16, (char *) FONT6 };
@@ -745,13 +742,13 @@ void pceFontSetType(int type) {
 
 void pceFontSetTxColor(int color)
 {
-	font_fgcolor = (unsigned char)color;
+	font_fgcolor = (unsigned char) color;
 }
 
 void pceFontSetBkColor(int color)
 {
 	if(color >= 0) {
-		font_bgcolor = (unsigned char)color;
+		font_bgcolor = (unsigned char) color;
 		font_bgclear = 0;
 	} else {
 		font_bgclear = 1;
@@ -764,19 +761,22 @@ void pceFontSetPos(int x, int y)
 	font_posY = y;
 }
 
-int pceFontPrintf1(const char *format, int value1) {
+int pceFontPrintf1(const char *format, int value1)
+{
 	char buffer[FS_MAX_URI_NAME_LENGTH];
 	sprintf(buffer, format, value1);
 	return pceFontPrintf(buffer);
 }
 
-int pceFontPrintf2(const char *format, int value1, int value2) {
+int pceFontPrintf2(const char *format, int value1, int value2)
+{
 	char buffer[FS_MAX_URI_NAME_LENGTH];
 	sprintf(buffer, format, value1, value2);
 	return pceFontPrintf(buffer);
 }
 
-int pceFontPrintf3(const char *format, int value1, int value2, int value3) {
+int pceFontPrintf3(const char *format, int value1, int value2, int value3)
+{
 	char buffer[FS_MAX_URI_NAME_LENGTH];
 	sprintf(buffer, format, value1, value2, value3);
 	return pceFontPrintf(buffer);
@@ -817,26 +817,19 @@ int pceFontPrintf(const char *formatted_string)
 	return 0;
 }
 
-int pceFileCreate(const char *fname, int mode) {
+int pceFileCreate(const char *fname, int mode)
+{
 	return RESULT_OK;
 }
 
 int pceFileOpen(FILEACC *pfa, const char *fname, int mode)
 {
 	return RESULT_OK;
-#if 0
-	if(mode == FOMD_RD) {
-		*pfa = open(fname, O_RDONLY | O_BINARY);
-	} else if(mode == FOMD_WR) {
-		*pfa = open(fname, O_CREAT | O_RDWR | O_BINARY | O_TRUNC, S_IREAD | S_IWRITE);
-	}
+}
 
-	if(*pfa >= 0) {
-		return 0;
-	} else {
-		return 1;
-	}
-#endif
+int pceFileClose(FILEACC *pfa)
+{
+	return RESULT_OK;
 }
 
 int pceFileReadSct(FILEACC *pfa, void *ptr, int sct, int len)
@@ -865,9 +858,4 @@ int pceFileWriteSct(FILEACC *pfa, const void *ptr, int sct, int len)
 	DL_FsCloseFile(file_handle);
 
 	return (written == 0);
-}
-
-int pceFileClose(FILEACC *pfa)
-{
-	return RESULT_OK;
 }
