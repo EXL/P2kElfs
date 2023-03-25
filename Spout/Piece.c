@@ -44,7 +44,7 @@ extern UINT32 AhiDispUpdate(AHIDEVCONTEXT_T context, AHIUPDATEPARAMS_T *update_p
 /******** MOVE IT TO SDK ***/
 
 #define TIMER_FAST_TRIGGER_MS             (1)
-#define TIMER_FAST_UPDATE_MS              (1000 / 20) /* ~25 FPS. */
+#define TIMER_FAST_UPDATE_MS              (1000 / 30) /* ~30 FPS. */
 #define KEYPAD_BUTTONS                    (8)
 
 typedef enum {
@@ -310,8 +310,6 @@ static UINT32 HandleStateEnter(EVENT_STACK_T *ev_st, APPLICATION_T *app, ENTER_S
 	switch (app_state) {
 		case APP_STATE_MAIN:
 			DL_KeyKjavaGetKeyState(); /* Reset Keys. */
-			GFX_Draw_Step(app);
-			ATI_Driver_Flush(app);
 			break;
 		default:
 			break;
@@ -443,9 +441,6 @@ static UINT32 ProcessKeyboard(APPLICATION_T *app, UINT32 key, BOOL pressed) {
 			break;
 		case MULTIKEY_3:
 			keypad[KPB_D] = pressed;
-			break;
-		case MULTIKEY_STAR:
-			pceAppProc(0);
 			break;
 		default:
 			break;
@@ -706,11 +701,11 @@ int pcePadGet(void) {
 		if(keypad[i]) {
 			pad |= p[i];
 		}
-		i++;
+		++i;
 	} while(p[i] >= 0);
 
 	if (autofire) {
-		pad |= PAD_A;
+		pad |= PAD_B;
 	}
 
 	pad |= (pad & (~op)) << 8;
