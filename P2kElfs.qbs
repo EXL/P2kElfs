@@ -4,6 +4,7 @@ Project {
 		"FireEffect/FireEffect.qbs",
 		"PowerAlert/PowerAlert.qbs",
 		"Screenshot/Screenshot.qbs",
+		"Spout/Spout.qbs",
 		"VibroHaptic/VibroHaptic.qbs"
 	]
 }
