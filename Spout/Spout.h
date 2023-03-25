@@ -33,33 +33,32 @@
 #define FOMD_RD 0
 #define FOMD_WR 1
 
-#define pceTimerGetCount SDL_GetTicks
-
+//#define pceTimerGetCount SDL_GetTicks
 #define srand(x) randomize()
 
 #define PP_MODE_SINGLE 0
 #define PP_MODE_REPEAT 1
 #define pcePadSetTrigMode
 
-int pceFontPrintf(const char *fmt, ... );
-void pceFontSetTxColor(int color);
-void pceFontSetBkColor(int color);
-void pceFontSetPos(int x, int y);
-void pceFontSetType(int type);
+extern int pceFontPrintf(const char *fmt, ... );
+extern void pceFontSetTxColor(int color);
+extern void pceFontSetBkColor(int color);
+extern void pceFontSetPos(int x, int y);
+extern void pceFontSetType(int type);
 
 extern void pceLCDDispStop(void);
 extern void pceLCDDispStart(void);
-unsigned char *pceLCDSetBuffer(unsigned char *pbuff);
+extern unsigned char *pceLCDSetBuffer(unsigned char *pbuff);
 extern void pceLCDTrans(void);
 
-void pceAppSetProcPeriod(int period);
-void pceAppReqExit(int c);
+extern void pceAppSetProcPeriod(int period);
+extern void pceAppReqExit(int c);
 
-int pceFileCreate(const char *fname, int mode);
-int pceFileOpen(FILEACC *pfa, const char *fname, int mode);
-int pceFileReadSct(FILEACC *pfa, void *ptr, int sct, int len);
-int pceFileWriteSct(FILEACC *pfa, const void *ptr, int sct, int len);
-int pceFileClose(FILEACC *pfa);
+extern int pceFileCreate(const char *fname, int mode);
+extern int pceFileOpen(FILEACC *pfa, const char *fname, int mode);
+extern int pceFileReadSct(FILEACC *pfa, void *ptr, int sct, int len);
+extern int pceFileWriteSct(FILEACC *pfa, const void *ptr, int sct, int len);
+extern int pceFileClose(FILEACC *pfa);
 
 extern int pcePadGet(void);
 
@@ -67,7 +66,7 @@ extern void pceAppInit(void);
 extern void pceAppExit(void);
 extern void pceAppProc(int cnt);
 
-extern unsigned char vbuff[];
-extern unsigned char vbuff2[];
+extern unsigned char *vbuff;
+extern unsigned char *vbuff2;
 
 #endif // !SPOUT_H

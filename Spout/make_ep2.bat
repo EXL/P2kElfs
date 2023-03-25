@@ -1,4 +1,4 @@
-:: This make.bat script was edited by EXL, 15-Jan-2023.
+:: This make.bat script was edited by EXL, 26-Mar-2023.
 :: Default platform is Motorola P2K, ElfPack v2.x, devkitARM release 26 (GCC 4.4.0) on Windows.
 
 :: Uncomment it for disable verbose output.

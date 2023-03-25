@@ -1,4 +1,4 @@
-const unsigned char	FONT6[] = {
+static const unsigned char	FONT6[] = {
 //	 80,  77,  66,  80,  20,   6,   0,   0,   1,   0, 128,   0,  96,   0, 223, 119,
 //	  0,   6,   0,   0,
 	  0,  64, 192,  64,  64, 128,  96,  64,  64, 128,   0,   0,
@@ -100,7 +100,7 @@ const unsigned char	FONT6[] = {
 	  0,   0,   0,   0
 };
 
-const unsigned char	FONT16[] = {
+static const unsigned char	FONT16[] = {
 //	 80,  77,  66,  80,  20,   6,   0,   0,   1,   0, 128,   0,  96,   0, 223, 119,
 //	  0,   6,   0,   0,   
 	  0,   0,  54,   0,  24,   0,   0,  56,  24, 192,   0,   0,

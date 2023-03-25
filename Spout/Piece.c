@@ -110,8 +110,8 @@ static UINT32 DeleteDialog(APPLICATION_T *app);
 
 static UINT32 SetLoopTimer(APPLICATION_T *app, UINT32 period);
 
-static UINT32 CheckKeyboard(APPLICATION_T *app);
-static UINT32 ProcessKeyboard(APPLICATION_T *app, UINT32 key, BOOL pressed);
+static UINT32 CheckKeyboard(EVENT_STACK_T *ev_st, APPLICATION_T *app);
+static UINT32 ProcessKeyboard(EVENT_STACK_T *ev_st, APPLICATION_T *app, UINT32 key, BOOL pressed);
 
 static UINT32 HandleEventTimerExpired(EVENT_STACK_T *ev_st, APPLICATION_T *app);
 
@@ -227,6 +227,7 @@ static UINT32 ApplicationStart(EVENT_STACK_T *ev_st, REG_ID_T reg_id, void *reg_
 		app_instance->keys.pressed = 0;
 		app_instance->keys.released = 0;
 
+		pceAppInit();
 		status |= ATI_Driver_Start((APPLICATION_T *) app_instance);
 
 		status |= APP_Start(ev_st, &app_instance->app, APP_STATE_MAIN,
@@ -361,7 +362,7 @@ static UINT32 SetLoopTimer(APPLICATION_T *app, UINT32 period) {
 	return status;
 }
 
-static UINT32 CheckKeyboard(APPLICATION_T *app) {
+static UINT32 CheckKeyboard(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
 	UINT32 key;
 	APP_INSTANCE_T *app_instance;
 
@@ -375,11 +376,11 @@ static UINT32 CheckKeyboard(APPLICATION_T *app) {
 		if ((app_instance->keys.released & key) != (app_instance->keys.pressed & key)) {
 			if (app_instance->keys.pressed & key) {
 				/* Key Pressed. */
-				ProcessKeyboard(app, key, TRUE);
+				ProcessKeyboard(ev_st, app, key, TRUE);
 			}
 			if (app_instance->keys.released & key) {
 				/* Key Released. */
-				ProcessKeyboard(app, key, FALSE);
+				ProcessKeyboard(ev_st, app, key, FALSE);
 			}
 		}
 		key >>= 1;
@@ -402,11 +403,12 @@ typedef enum {
 static BOOL keypad[KEYPAD_BUTTONS];
 static BOOL autofire = FALSE;
 
-static UINT32 ProcessKeyboard(APPLICATION_T *app, UINT32 key, BOOL pressed) {
+static UINT32 ProcessKeyboard(EVENT_STACK_T *ev_st, APPLICATION_T *app, UINT32 key, BOOL pressed) {
 	switch (key) {
 		case MULTIKEY_0:
 		case MULTIKEY_SOFT_LEFT:
 			app->exit_status = TRUE;
+//			ApplicationStop(ev_st, app);
 			break;
 		case MULTIKEY_1:
 			if (pressed) {
@@ -459,7 +461,7 @@ static UINT32 HandleEventTimerExpired(EVENT_STACK_T *ev_st, APPLICATION_T *app) 
 
 	switch (timer_id) {
 		case APP_TIMER_LOOP:
-			CheckKeyboard(app);
+			CheckKeyboard(ev_st, app);
 			GFX_Draw_Step(app);
 			ATI_Driver_Flush(app);
 			break;
@@ -641,7 +643,7 @@ static UINT32 GFX_Draw_Start(APPLICATION_T *app) {
 	status = RESULT_OK;
 	appi = (APP_INSTANCE_T *) app;
 
-	pceAppInit();
+	// pceAppInit();
 
 	return status;
 }

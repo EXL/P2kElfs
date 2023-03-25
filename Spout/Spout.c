@@ -4,16 +4,15 @@
 #include <string.h>
 #endif
 
-#define memset __rt_memset
-extern void *__rt_memset( void *, int, int );
-
 #include "Spout.h"
 #include "Sintable.h"
+
+#include <mem.h>
 
 #define FRAMERATE 50
 #define MAX_GRAIN 500
 
-const unsigned char	MATSUMI[] = {
+static const unsigned char	MATSUMI[] = {
 //	 80,  77,  66,  80, 180,   0,   0,   0,   1,   0, 128,   0,  10,   0, 223, 119,
 //	160,   0,   0,   0,
 	  0,   0,   0,   0,   0,   0,   0,  34,  56,  68,  10,   4,
@@ -46,42 +45,52 @@ typedef struct tagGRAIN {
 	unsigned char color;
 } GRAIN;
 
-GRAIN *grainUseLink, *grainFreeLink;
+static GRAIN *grainUseLink, *grainFreeLink;
 
-unsigned char vbuff[128 * 88];
-unsigned char vbuff2[128 * 128];
+unsigned char *vbuff;
+unsigned char *vbuff2;
 
-GRAIN grain[MAX_GRAIN];
-GRAIN *v2g[128 * 128];
+static GRAIN *grain;
+static GRAIN **v2g;
 
-SVECTOR box;
+static SVECTOR box;
 
-VECTOR mPos, mSpeed;
-int mR;
+static VECTOR mPos, mSpeed;
+static int mR;
 
-int nGrain;
+static int nGrain;
 
-int time = FRAMERATE * 60, score = 0, height = 0, dispscore = 0;
-int hiScore[2] = {0, 0};
-int dispPos, upperLine, rollCount;
+static int time = FRAMERATE * 60, score = 0, height = 0, dispscore = 0;
+static int hiScore[2] = {0, 0};
+static int dispPos, upperLine, rollCount;
 
-void spout(int t, int x, int y);
-void sweep(unsigned char c1, unsigned char c2);
-void initGrain(void);
-GRAIN *allocGrain(void);
-GRAIN *freeGrain(GRAIN *current);
+static void spout(int t, int x, int y);
+static void sweep(unsigned char c1, unsigned char c2);
+static void initGrain(void);
+static GRAIN *allocGrain(void);
+static GRAIN *freeGrain(GRAIN *current);
 
 void pceAppInit(void)
 {
+	vbuff = suAllocMem(128 * 88 * 1, NULL);
+	memset(vbuff, 0, 128 * 88);
+
+	vbuff2 = suAllocMem(128 * 128 * 1, NULL);
+	memset(vbuff2, 0, 128 * 128);
+
+	v2g = suAllocMem(128 * 128 * sizeof(GRAIN *), NULL);
+	memset(v2g, 0, 128 * 128 * sizeof(GRAIN *));
+
+	grain = suAllocMem(MAX_GRAIN * sizeof(GRAIN), NULL);
+	memset(grain, 0, MAX_GRAIN * sizeof(GRAIN));
+
 	pceLCDDispStop();
 	pceLCDSetBuffer(vbuff);
 	pceAppSetProcPeriod(1000 / FRAMERATE);
 
-	memset(vbuff, 0, 128 * 88);
-
 	pceLCDDispStart();
 
-	pceCPUSetSpeed(CPU_SPEED_NORMAL);
+	//pceCPUSetSpeed(CPU_SPEED_NORMAL);
 
 	{
 		FILEACC fa;
@@ -91,7 +100,7 @@ void pceAppInit(void)
 		}
 	}
 
-	pcePadSetTrigMode(PP_MODE_SINGLE);
+	//pcePadSetTrigMode(PP_MODE_SINGLE);
 
 	srand(pceTimerGetCount());
 }
@@ -151,11 +160,11 @@ void pceAppProc(int cnt)
 		}
 
 		if(gamePhase & 2) {
-			memset(vbuff2, 0xd2, 128 * 128);
-			memset(vbuff2 + 128 * 0, 0, 128 * 78);
-			memset(vbuff2 + 128 * (128 - 32), 0, 128 * 32);
+			memset((unsigned char *) (vbuff2), 0xd2, 128 * 128);
+			memset((unsigned char *) (vbuff2 + 128 * 0), 0, 128 * 78);
+			memset((unsigned char *) (vbuff2 + 128 * (128 - 32)), 0, 128 * 32);
 		} else {
-			memset(vbuff2, 0, 128 * 128);
+			memset((unsigned char *) vbuff2, 0, 128 * 128);
 		}
 
 		memset(vbuff, 0, 128 * 88);
@@ -190,7 +199,7 @@ void pceAppProc(int cnt)
 		rollCount = 0;
 		gamePhase ++;
 
-		memset(vbuff + 128, 0x03, 128);
+		memset((unsigned char *) (vbuff + 128), 0x03, 128);
 		pceFontSetType(2 + 128);
 		pceFontSetPos(0, 82);
 		if(height > 0) {
@@ -720,10 +729,15 @@ void pceAppProc(int cnt)
 
 void pceAppExit( void )
 {
-	pceCPUSetSpeed(CPU_SPEED_NORMAL);
+	mfree(grain);
+	mfree(v2g);
+	mfree(vbuff2);
+	mfree(vbuff);
+
+	//pceCPUSetSpeed(CPU_SPEED_NORMAL);
 }
 
-void spout(int t, int x, int y)
+static void spout(int t, int x, int y)
 {
 	if(*(vbuff2 + t) == 0) {
 		if(nGrain < MAX_GRAIN) {
@@ -744,7 +758,7 @@ void spout(int t, int x, int y)
 	}
 }
 
-void sweep(unsigned char c1, unsigned char c2)
+static void sweep(unsigned char c1, unsigned char c2)
 {
 	int i;
 
@@ -770,7 +784,7 @@ void sweep(unsigned char c1, unsigned char c2)
 	}
 }
 
-void initGrain(void)
+static void initGrain(void)
 {
 	int i;
 
@@ -785,7 +799,7 @@ void initGrain(void)
 	return;
 }
 
-GRAIN *allocGrain(void)
+static GRAIN *allocGrain(void)
 {
 	GRAIN *current = grainFreeLink;
 
@@ -803,7 +817,7 @@ GRAIN *allocGrain(void)
 	return current;
 }
 
-GRAIN *freeGrain(GRAIN *current)
+static GRAIN *freeGrain(GRAIN *current)
 {
 	GRAIN *next = current->next;
 
