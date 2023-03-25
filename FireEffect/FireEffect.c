@@ -39,7 +39,7 @@ extern UINT32 AhiDispUpdate(AHIDEVCONTEXT_T context, AHIUPDATEPARAMS_T *update_p
 /******** MOVE IT TO SDK ***/
 
 #define TIMER_FAST_TRIGGER_MS             (1)
-#define TIMER_FAST_UPDATE_MS              (1000 / 10) /* 27 FPS. */
+#define TIMER_FAST_UPDATE_MS              (1000 / 15) /* 15 FPS. */
 
 typedef enum {
 	APP_STATE_ANY,
@@ -68,6 +68,11 @@ typedef struct {
 } APP_AHI_T;
 
 typedef struct {
+	UINT32 pressed;
+	UINT32 released;
+} APP_KEYBOARD_T;
+
+typedef struct {
 	APPLICATION_T app;
 
 	BOOL is_CSTN_display;
@@ -80,7 +85,7 @@ typedef struct {
 	UINT16 y_coord;
 
 	APP_AHI_T ahi;
-
+	APP_KEYBOARD_T keys;
 	UINT32 timer_handle;
 } APP_INSTANCE_T;
 
@@ -132,9 +137,12 @@ static UINT32 ApplicationStop(EVENT_STACK_T *ev_st, APPLICATION_T *app);
 static UINT32 HandleStateEnter(EVENT_STACK_T *ev_st, APPLICATION_T *app, ENTER_STATE_TYPE_T state);
 static UINT32 HandleStateExit(EVENT_STACK_T *ev_st, APPLICATION_T *app, EXIT_STATE_TYPE_T state);
 static UINT32 DeleteDialog(APPLICATION_T *app);
+
 static UINT32 SetLoopTimer(APPLICATION_T *app, UINT32 period);
 
-static UINT32 HandleEventKeyPress(EVENT_STACK_T *ev_st, APPLICATION_T *app);
+static UINT32 CheckKeyboard(APPLICATION_T *app);
+static UINT32 ProcessKeyboard(APPLICATION_T *app, UINT32 key, BOOL pressed);
+
 static UINT32 HandleEventTimerExpired(EVENT_STACK_T *ev_st, APPLICATION_T *app);
 
 static UINT32 ATI_Driver_Start(APPLICATION_T *app);
@@ -144,8 +152,6 @@ static UINT32 ATI_Driver_Flush(APPLICATION_T *app);
 static UINT32 GFX_Draw_Start(APPLICATION_T *app);
 static UINT32 GFX_Draw_Stop(APPLICATION_T *app);
 static UINT32 GFX_Draw_Step(APPLICATION_T *app);
-
-static UINT32 SetWorikingArea(GRAPHIC_REGION_T *working_area);
 
 static const char g_app_name[APP_NAME_LEN] = "FireEffect";
 
@@ -200,6 +206,8 @@ static UINT32 ApplicationStart(EVENT_STACK_T *ev_st, REG_ID_T reg_id, void *reg_
 		app_instance->bmp_width = 128;
 		app_instance->bmp_height = 88;
 		app_instance->timer_handle = 0;
+		app_instance->keys.pressed = 0;
+		app_instance->keys.released = 0;
 
 		status |= ATI_Driver_Start((APPLICATION_T *) app_instance);
 
@@ -275,6 +283,7 @@ static UINT32 HandleStateEnter(EVENT_STACK_T *ev_st, APPLICATION_T *app, ENTER_S
 
 	switch (app_state) {
 		case APP_STATE_MAIN:
+			DL_KeyKjavaGetKeyState(); /* Reset Keys. */
 			GFX_Draw_Step(app);
 			ATI_Driver_Flush(app);
 			break;
@@ -328,29 +337,44 @@ static UINT32 SetLoopTimer(APPLICATION_T *app, UINT32 period) {
 	return status;
 }
 
-static UINT32 HandleEventKeyPress(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
-	UINT32 status;
-	EVENT_T *event;
+static UINT32 CheckKeyboard(APPLICATION_T *app) {
+	UINT32 key;
+	APP_INSTANCE_T *app_instance;
 
-	status = RESULT_OK;
-	event = AFW_GetEv(ev_st);
+	key = 0x00080000;
 
-	APP_ConsumeEv(ev_st, app);
+	app_instance = (APP_INSTANCE_T *) app;
+	app_instance->keys.released = app_instance->keys.pressed;
+	app_instance->keys.pressed = DL_KeyKjavaGetKeyState();
 
-	switch (event->data.key_pressed) {
-		case KEY_RED:
-		case KEY_0:
-			status |= APP_UtilStartTimer(TIMER_FAST_TRIGGER_MS, APP_TIMER_EXIT, app);
-			break;
-		case KEY_STAR:
-			DL_AudPlayTone(0x00,  0xFF);
-			return ApplicationStop(ev_st, app);
-			break;
-		default:
-			break;
+	while (key) {
+		if ((app_instance->keys.released & key) != (app_instance->keys.pressed & key)) {
+			if (app_instance->keys.pressed & key) {
+				/* Key Pressed. */
+				ProcessKeyboard(app, key, TRUE);
+			}
+			if (app_instance->keys.released & key) {
+				/* Key Released. */
+				ProcessKeyboard(app, key, FALSE);
+			}
+		}
+		key >>= 1;
 	}
 
-	return status;
+	return RESULT_OK;
+}
+
+static UINT32 ProcessKeyboard(APPLICATION_T *app, UINT32 key, BOOL pressed) {
+	if (pressed) {
+		switch (key) {
+			case MULTIKEY_0:
+				app->exit_status = TRUE;
+				break;
+			default:
+				break;
+		}
+	}
+	return RESULT_OK;
 }
 
 static UINT32 HandleEventTimerExpired(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
@@ -364,6 +388,7 @@ static UINT32 HandleEventTimerExpired(EVENT_STACK_T *ev_st, APPLICATION_T *app) 
 
 	switch (timer_id) {
 		case APP_TIMER_LOOP:
+			CheckKeyboard(app);
 			GFX_Draw_Step(app);
 			ATI_Driver_Flush(app);
 			break;
@@ -384,7 +409,6 @@ static UINT32 ATI_Driver_Start(APPLICATION_T *app) {
 	INT32 result;
 	APP_INSTANCE_T *appi;
 	AHIDEVICE_T ahi_device;
-	GRAPHIC_REGION_T draw_region;
 
 	status = RESULT_OK;
 	result = RESULT_OK;
@@ -479,12 +503,6 @@ static UINT32 ATI_Driver_Start(APPLICATION_T *app) {
 	appi->ahi.rect_bitmap.y1 = 0;
 	appi->ahi.rect_bitmap.x2 = 0 + appi->bmp_width;
 	appi->ahi.rect_bitmap.y2 = 0 + appi->bmp_height;
-
-	status |= SetWorikingArea(&draw_region);
-	appi->ahi.rect_draw.x1 = draw_region.ulc.x;
-	appi->ahi.rect_draw.y1 = draw_region.ulc.y;
-	appi->ahi.rect_draw.x2 = draw_region.lrc.x + 1;
-	appi->ahi.rect_draw.y2 = draw_region.lrc.y + 1;
 
 	appi->ahi.rect_draw.x1 = appi->width / 2 - appi->bmp_width / 2;
 	appi->ahi.rect_draw.y1 = appi->height / 2 - appi->bmp_height / 2;
@@ -612,32 +630,6 @@ static UINT32 GFX_Draw_Step(APPLICATION_T *app) {
 			}
 		}
 	}
-
-	return status;
-}
-
-static UINT32 SetWorikingArea(GRAPHIC_REGION_T *working_area) {
-	UINT32 status;
-	GRAPHIC_REGION_T rect;
-	UINT8 count_lines;
-	UINT8 chars_on_line;
-	UINT8 height_title_bar_end;
-	UINT8 height_soft_keys_start;
-
-	status = RESULT_OK;
-
-	UIS_CanvasGetWorkingArea(&rect, &count_lines, &chars_on_line, TITLE_BAR_AREA, TRUE, 1);
-	height_title_bar_end = rect.lrc.y + 1;
-
-	UIS_CanvasGetWorkingArea(&rect, &count_lines, &chars_on_line, SOFTKEY_AREA, TRUE, 1);
-	height_soft_keys_start = rect.ulc.y - 1;
-
-	rect.ulc.y = height_title_bar_end;
-	/* rect.lrc.x -= 1; */
-	rect.lrc.y = height_soft_keys_start;
-	/* rect.lrc.y += 1; */
-
-	memcpy(working_area, &rect, sizeof(GRAPHIC_REGION_T));
 
 	return status;
 }
