@@ -39,7 +39,7 @@ extern UINT32 AhiDispUpdate(AHIDEVCONTEXT_T context, AHIUPDATEPARAMS_T *update_p
 /******** MOVE IT TO SDK ***/
 
 #define TIMER_FAST_TRIGGER_MS             (1)
-#define TIMER_FAST_UPDATE_MS              (1000 / 15) /* 15 FPS. */
+#define TIMER_FAST_UPDATE_MS              (1000 / 15) /* ~15 FPS. */
 
 typedef enum {
 	APP_STATE_ANY,
@@ -89,6 +89,32 @@ typedef struct {
 	UINT32 timer_handle;
 } APP_INSTANCE_T;
 
+UINT32 Register(const char *elf_path_uri, const char *args, UINT32 ev_code);
+
+static UINT32 ApplicationStart(EVENT_STACK_T *ev_st, REG_ID_T reg_id, void *reg_hdl);
+static UINT32 ApplicationStop(EVENT_STACK_T *ev_st, APPLICATION_T *app);
+
+static UINT32 HandleStateEnter(EVENT_STACK_T *ev_st, APPLICATION_T *app, ENTER_STATE_TYPE_T state);
+static UINT32 HandleStateExit(EVENT_STACK_T *ev_st, APPLICATION_T *app, EXIT_STATE_TYPE_T state);
+static UINT32 DeleteDialog(APPLICATION_T *app);
+
+static UINT32 SetLoopTimer(APPLICATION_T *app, UINT32 period);
+
+static UINT32 CheckKeyboard(APPLICATION_T *app);
+static UINT32 ProcessKeyboard(APPLICATION_T *app, UINT32 key, BOOL pressed);
+
+static UINT32 HandleEventTimerExpired(EVENT_STACK_T *ev_st, APPLICATION_T *app);
+
+static UINT32 ATI_Driver_Start(APPLICATION_T *app);
+static UINT32 ATI_Driver_Stop(APPLICATION_T *app);
+static UINT32 ATI_Driver_Flush(APPLICATION_T *app);
+
+static UINT32 GFX_Draw_Start(APPLICATION_T *app);
+static UINT32 GFX_Draw_Stop(APPLICATION_T *app);
+static UINT32 GFX_Draw_Step(APPLICATION_T *app);
+
+static const char g_app_name[APP_NAME_LEN] = "FireEffect";
+
 static const UINT32 fire_palette[] = {
 	ATI_565RGB(0x07, 0x07, 0x07), /*  0 */
 	ATI_565RGB(0x1F, 0x07, 0x07), /*  1 */
@@ -128,32 +154,6 @@ static const UINT32 fire_palette[] = {
 	ATI_565RGB(0xEF, 0xEF, 0xC7), /* 35 */
 	ATI_565RGB(0xFF, 0xFF, 0xFF)  /* 36 */
 };
-
-UINT32 Register(const char *elf_path_uri, const char *args, UINT32 ev_code); /* ElfPack 1.x entry point. */
-
-static UINT32 ApplicationStart(EVENT_STACK_T *ev_st, REG_ID_T reg_id, void *reg_hdl);
-static UINT32 ApplicationStop(EVENT_STACK_T *ev_st, APPLICATION_T *app);
-
-static UINT32 HandleStateEnter(EVENT_STACK_T *ev_st, APPLICATION_T *app, ENTER_STATE_TYPE_T state);
-static UINT32 HandleStateExit(EVENT_STACK_T *ev_st, APPLICATION_T *app, EXIT_STATE_TYPE_T state);
-static UINT32 DeleteDialog(APPLICATION_T *app);
-
-static UINT32 SetLoopTimer(APPLICATION_T *app, UINT32 period);
-
-static UINT32 CheckKeyboard(APPLICATION_T *app);
-static UINT32 ProcessKeyboard(APPLICATION_T *app, UINT32 key, BOOL pressed);
-
-static UINT32 HandleEventTimerExpired(EVENT_STACK_T *ev_st, APPLICATION_T *app);
-
-static UINT32 ATI_Driver_Start(APPLICATION_T *app);
-static UINT32 ATI_Driver_Stop(APPLICATION_T *app);
-static UINT32 ATI_Driver_Flush(APPLICATION_T *app);
-
-static UINT32 GFX_Draw_Start(APPLICATION_T *app);
-static UINT32 GFX_Draw_Stop(APPLICATION_T *app);
-static UINT32 GFX_Draw_Step(APPLICATION_T *app);
-
-static const char g_app_name[APP_NAME_LEN] = "FireEffect";
 
 static EVENT_HANDLER_ENTRY_T g_state_any_hdls[] = {
 	{ EV_REVOKE_TOKEN, APP_HandleUITokenRevoked },
