@@ -464,6 +464,7 @@ static UINT32 ATI_Driver_Start(APPLICATION_T *app) {
 	INT32 result;
 	APP_INSTANCE_T *appi;
 	AHIDEVICE_T ahi_device;
+	AHIDISPMODE_T display_mode;
 
 	status = RESULT_OK;
 	result = RESULT_OK;
@@ -482,12 +483,16 @@ static UINT32 ATI_Driver_Start(APPLICATION_T *app) {
 		return RESULT_FAIL;
 	}
 
+	status |= AhiDispModeGet(appi->ahi.context, &display_mode);
+
 	status |= AhiDispSurfGet(appi->ahi.context, &appi->ahi.screen);
 	appi->ahi.draw = DAL_GetDrawingSurface(DISPLAY_MAIN);
-	status |= AhiDrawSurfDstSet(appi->ahi.context, appi->ahi.screen, 0);
-//	status |= AhiDrawSurfDstSet(appi->ahi.context, appi->ahi.draw, 0);
+
+//	status |= AhiDrawSurfDstSet(appi->ahi.context, appi->ahi.screen, 0);
+	status |= AhiDrawSurfDstSet(appi->ahi.context, appi->ahi.draw, 0);
 	status |= AhiDrawClipDstSet(appi->ahi.context, NULL);
 	status |= AhiDrawClipSrcSet(appi->ahi.context, NULL);
+
 	status |= AhiSurfInfo(appi->ahi.context, appi->ahi.screen, &appi->ahi.info_surface);
 
 #define LOG_ATI(format, ...) UtilLogStringData(format, ##__VA_ARGS__); PFprintf(format, ##__VA_ARGS__)
@@ -524,6 +529,10 @@ static UINT32 ATI_Driver_Start(APPLICATION_T *app) {
 			&size, &align, AHIFLAG_EXTMEMORY);
 		LOG_ATI("ATI External Memory Largest Block: result=%d, size=%d, size=%d KiB, align=%d\n",
 			result, size, size / 1024, align);
+
+		LOG_ATI("ATI Display Mode: size=%dx%d, pixel_format=%d, frequency=%d, rotation=%d, mirror=%d",
+			display_mode.size.x, display_mode.size.y,
+			display_mode.pixel_format, display_mode.frequency, display_mode.rotation, display_mode.mirror);
 
 		LOG_ATI("ATI Surface Info: width=%d, height=%d, pixFormat=%d, byteSize=%d, byteSize=%d KiB\n",
 			appi->ahi.info_surface.width, appi->ahi.info_surface.height, appi->ahi.info_surface.pixFormat,
@@ -564,10 +573,12 @@ static UINT32 ATI_Driver_Start(APPLICATION_T *app) {
 	appi->ahi.rect_draw.x2 = (appi->width / 2 - appi->bmp_width / 2) + appi->bmp_width;
 	appi->ahi.rect_draw.y2 = (appi->height / 2 - appi->bmp_height / 2) + appi->bmp_height;
 
+#if 0
 	status |= AhiDrawBrushFgColorSet(appi->ahi.context, ATI_565RGB(0x00, 0x00, 0x00));
 	status |= AhiDrawBrushSet(appi->ahi.context, NULL, NULL, 0, AHIFLAG_BRUSH_SOLID);
 	status |= AhiDrawRopSet(appi->ahi.context, AHIROP3(AHIROP_PATCOPY));
 	status |= AhiDrawSpans(appi->ahi.context, &appi->ahi.update_params.rect, 1, 0);
+#endif
 
 	return status;
 }
@@ -594,17 +605,17 @@ static UINT32 ATI_Driver_Flush(APPLICATION_T *app) {
 	status = RESULT_OK;
 	appi = (APP_INSTANCE_T *) app;
 
-//	status |= AhiDrawSurfDstSet(appi->ahi.context, appi->ahi.draw, 0);
+	status |= AhiDrawSurfDstSet(appi->ahi.context, appi->ahi.draw, 0);
 	status |= AhiDrawRopSet(appi->ahi.context, AHIROP3(AHIROP_SRCCOPY));
 	status |= AhiDrawBitmapBlt(appi->ahi.context,
-		&appi->ahi.rect_draw, &appi->ahi.point_bitmap, &appi->ahi.bitmap, (void *) spout_palette, 0);
+		&appi->ahi.rect_bitmap, &appi->ahi.point_bitmap, &appi->ahi.bitmap, (void *) spout_palette, 0);
 
-//	status |= AhiDrawSurfSrcSet(appi->ahi.context, appi->ahi.draw, 0);
-//	status |= AhiDrawSurfDstSet(appi->ahi.context, appi->ahi.screen, 0);
+	status |= AhiDrawSurfSrcSet(appi->ahi.context, appi->ahi.draw, 0);
+	status |= AhiDrawSurfDstSet(appi->ahi.context, appi->ahi.screen, 0);
 
-//	status |= AhiDispWaitVBlank(appi->ahi.context, 0);
-	/* 1 - AHIFLAG_STRETCHFAST */
-//	status |= AhiDrawStretchBlt(appi->ahi.context, &appi->ahi.rect_draw, &appi->ahi.rect_bitmap, 1);
+	status |= AhiDispWaitVBlank(appi->ahi.context, 0);
+	status |=
+		AhiDrawStretchBlt(appi->ahi.context, &appi->ahi.update_params.rect, &appi->ahi.rect_bitmap, AHIFLAG_STRETCHFAST);
 
 	/*
 	status |= AhiDrawRotateBlt(appi->ahi.context,
