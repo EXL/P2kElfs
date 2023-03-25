@@ -40,7 +40,10 @@
 #define PP_MODE_REPEAT 1
 #define pcePadSetTrigMode
 
-extern int pceFontPrintf(const char *fmt, ... );
+extern int pceFontPrintf1(const char *format, int);
+extern int pceFontPrintf2(const char *format, int, int);
+extern int pceFontPrintf3(const char *format, int, int, int);
+extern int pceFontPrintf(const char *formatted_string);
 extern void pceFontSetTxColor(int color);
 extern void pceFontSetBkColor(int color);
 extern void pceFontSetPos(int x, int y);

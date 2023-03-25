@@ -764,18 +764,30 @@ void pceFontSetPos(int x, int y)
 	font_posY = y;
 }
 
-int pceFontPrintf(const char *fmt, ...)
+int pceFontPrintf1(const char *format, int value1) {
+	char buffer[FS_MAX_URI_NAME_LENGTH];
+	sprintf(buffer, format, value1);
+	return pceFontPrintf(buffer);
+}
+
+int pceFontPrintf2(const char *format, int value1, int value2) {
+	char buffer[FS_MAX_URI_NAME_LENGTH];
+	sprintf(buffer, format, value1, value2);
+	return pceFontPrintf(buffer);
+}
+
+int pceFontPrintf3(const char *format, int value1, int value2, int value3) {
+	char buffer[FS_MAX_URI_NAME_LENGTH];
+	sprintf(buffer, format, value1, value2, value3);
+	return pceFontPrintf(buffer);
+}
+
+int pceFontPrintf(const char *formatted_string)
 {
 	unsigned char *adr = vBuffer + font_posX + font_posY * 128;
 	unsigned char *pC;
-	char c[1024];
-	va_list argp;
 
-	va_start(argp, fmt);
-	vsprintf(c, fmt, argp);
-	va_end(argp);
-
-	pC = (unsigned char *) c;
+	pC = (unsigned char *) formatted_string;
 	while(*pC) {
 		int i, x, y;
 		const unsigned char *sAdr;

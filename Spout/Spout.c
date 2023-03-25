@@ -203,9 +203,9 @@ void pceAppProc(int cnt)
 		pceFontSetType(2 + 128);
 		pceFontSetPos(0, 82);
 		if(height > 0) {
-			pceFontPrintf("time:%2d height:%4d score:%6d", (time + FRAMERATE - 1) / FRAMERATE, height % 10000, score % 1000000);
+			pceFontPrintf3("time:%2d height:%4d score:%6d", (time + FRAMERATE - 1) / FRAMERATE, height % 10000, score % 1000000);
 		} else {
-			pceFontPrintf("time:%2d height:   0 score:%6d", (time + FRAMERATE - 1) / FRAMERATE, score % 1000000);
+			pceFontPrintf2("time:%2d height:   0 score:%6d", (time + FRAMERATE - 1) / FRAMERATE, score % 1000000);
 		}
 		pceFontSetType(0);
 	}
@@ -279,12 +279,12 @@ void pceAppProc(int cnt)
 						}
 						pceFontSetType(2 + 128);
 						pceFontSetPos(4 * 5, 82);
-						pceFontPrintf("%2d", (time + FRAMERATE - 1) / FRAMERATE);
+						pceFontPrintf1("%2d", (time + FRAMERATE - 1) / FRAMERATE);
 						pceFontSetType(0);
 					}
 					pceFontSetType(2 + 128);
 					pceFontSetPos(4 * 15, 82);
-					pceFontPrintf("%4d", height % 10000);
+					pceFontPrintf1("%4d", height % 10000);
 					pceFontSetType(0);
 				}
 
@@ -379,9 +379,9 @@ void pceAppProc(int cnt)
 						pceFontSetTxColor(0xc3);
 						pceFontSetType(2 + 128);
 						pceFontSetPos(118 - 20 * 4, 0);
-						pceFontPrintf("    height: %8d", hiScore[1] % 1000000);
+						pceFontPrintf1("    height: %8d", hiScore[1] % 1000000);
 						pceFontSetPos(118 - 20 * 4, 6);
-						pceFontPrintf("high-score: %8d", hiScore[0] % 1000000);
+						pceFontPrintf1("high-score: %8d", hiScore[0] % 1000000);
 						break;
 
 					case 1:
@@ -697,7 +697,7 @@ void pceAppProc(int cnt)
 		if((time % FRAMERATE) == 0) {
 			pceFontSetType(2 + 128);
 			pceFontSetPos(4 * 5, 82);
-			pceFontPrintf("%2d", (time + FRAMERATE - 1) / FRAMERATE);
+			pceFontPrintf1("%2d", (time + FRAMERATE - 1) / FRAMERATE);
 			pceFontSetType(0);
 		}
 		if(time == 0) {
@@ -712,7 +712,7 @@ void pceAppProc(int cnt)
 		}
 		pceFontSetType(2 + 128);
 		pceFontSetPos(4 * 26, 82);
-		pceFontPrintf("%6d", dispscore % 1000000);
+		pceFontPrintf1("%6d", dispscore % 1000000);
 		pceFontSetType(0);
 	}
 
