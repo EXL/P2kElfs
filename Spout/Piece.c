@@ -44,7 +44,7 @@ extern UINT32 AhiDispUpdate(AHIDEVCONTEXT_T context, AHIUPDATEPARAMS_T *update_p
 /******** MOVE IT TO SDK ***/
 
 #define TIMER_FAST_TRIGGER_MS             (1)
-#define TIMER_FAST_UPDATE_MS              (1000 / 25) /* ~25 FPS. */
+#define TIMER_FAST_UPDATE_MS              (1000 / 20) /* ~25 FPS. */
 #define KEYPAD_BUTTONS                    (8)
 
 typedef enum {
@@ -397,6 +397,9 @@ static UINT32 ProcessKeyboard(APPLICATION_T *app, UINT32 key, BOOL pressed) {
 		case MULTIKEY_3:
 			keypad[KPB_D] = pressed;
 			break;
+		case MULTIKEY_STAR:
+			pceAppProc(0);
+			break;
 		default:
 			break;
 	}
@@ -679,8 +682,12 @@ void pceAppReqExit(int c) {
 	exec = 0;
 }
 
+unsigned char *vBuffer = NULL;
 unsigned char *pceLCDSetBuffer(unsigned char *pbuff) {
-	return NULL;
+	if(pbuff) {
+		vBuffer = pbuff;
+	}
+	return vBuffer;
 }
 
 int font_posX = 0, font_posY = 0, font_width = 4, font_height = 6;
@@ -721,7 +728,7 @@ void pceFontSetPos(int x, int y)
 
 int pceFontPrintf(const char *fmt, ...)
 {
-	unsigned char *adr = vbuff + font_posX + font_posY * 128;
+	unsigned char *adr = vBuffer + font_posX + font_posY * 128;
 	unsigned char *pC;
 	char c[1024];
 	va_list argp;
@@ -739,7 +746,7 @@ int pceFontPrintf(const char *fmt, ...)
 		} else {
 			i = 0;
 		}
-		sAdr = (unsigned char *) (font_adr + (i & 15) + (i >> 4) * 16 * 16);
+		sAdr = (unsigned char *) font_adr + (i & 15) + (i >> 4) * 16 * 16;
 		for(y = 0; y < font_height; y ++) {
 			unsigned char c = *sAdr;
 			for(x = 0; x < font_width; x ++) {

@@ -68,5 +68,6 @@ extern void pceAppExit(void);
 extern void pceAppProc(int cnt);
 
 extern unsigned char vbuff[];
+extern unsigned char vbuff2[];
 
 #endif // !SPOUT_H

@@ -201,6 +201,7 @@ void pceAppProc(int cnt)
 		pceFontSetType(0);
 	}
 
+
 	if((pad & TRG_C) && gamePhase == 3 && gameover == 0) {
 		pceFontSetType(2 + 128);
 		pceFontSetPos(64 - 7 * 4 / 2, 33);
