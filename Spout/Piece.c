@@ -45,6 +45,7 @@ extern UINT32 AhiDispUpdate(AHIDEVCONTEXT_T context, AHIUPDATEPARAMS_T *update_p
 
 #define TIMER_FAST_TRIGGER_MS             (1)
 #define TIMER_FAST_UPDATE_MS              (1000 / 25) /* ~25 FPS. */
+#define KEYPAD_BUTTONS                    (8)
 
 typedef enum {
 	APP_STATE_ANY,
@@ -336,15 +337,62 @@ static UINT32 CheckKeyboard(APPLICATION_T *app) {
 	return RESULT_OK;
 }
 
+typedef enum {
+	KPB_UP,
+	KPB_DOWN,
+	KPB_LEFT,
+	KPB_RIGHT,
+	KPB_A,
+	KPB_B,
+	KPB_C,
+	KPB_D,
+} KEYPAD_BUTTONS_T;
+
+static BOOL keypad[KEYPAD_BUTTONS];
+static BOOL autofire = FALSE;
+
 static UINT32 ProcessKeyboard(APPLICATION_T *app, UINT32 key, BOOL pressed) {
-	if (pressed) {
-		switch (key) {
-			case MULTIKEY_0:
-				app->exit_status = TRUE;
-				break;
-			default:
-				break;
-		}
+	switch (key) {
+		case MULTIKEY_0:
+		case MULTIKEY_SOFT_LEFT:
+			app->exit_status = TRUE;
+			break;
+		case MULTIKEY_1:
+			if (pressed) {
+				autofire = !autofire;
+			}
+			break;
+		case MULTIKEY_2:
+		case MULTIKEY_UP:
+			keypad[KPB_UP] = pressed;
+			break;
+		case MULTIKEY_8:
+		case MULTIKEY_DOWN:
+			keypad[KPB_DOWN] = pressed;
+			break;
+		case MULTIKEY_4:
+		case MULTIKEY_LEFT:
+			keypad[KPB_LEFT] = pressed;
+			break;
+		case MULTIKEY_6:
+		case MULTIKEY_RIGHT:
+			keypad[KPB_RIGHT] = pressed;
+			break;
+		case MULTIKEY_5:
+		case MULTIKEY_JOY_OK:
+			keypad[KPB_A] = pressed;
+			break;
+		case MULTIKEY_7:
+			keypad[KPB_B] = pressed;
+			break;
+		case MULTIKEY_9:
+			keypad[KPB_C] = pressed;
+			break;
+		case MULTIKEY_3:
+			keypad[KPB_D] = pressed;
+			break;
+		default:
+			break;
 	}
 	return RESULT_OK;
 }
@@ -576,7 +624,7 @@ void pceLCDDispStop(void) { }
 void pceLCDDispStart(void) { }
 
 void pceLCDTrans(void) {
-	/*
+#if 0 /* Use direct videobuffer drawing without these copying convertions. */
 	int x, y;
 	unsigned char *vbi, *bi;
 
@@ -588,11 +636,29 @@ void pceLCDTrans(void) {
 		}
 		bi += app_p->ahi.bitmap.stride - SDL_WIDTH;
 	}
-	*/
+#endif
 }
 
 int pcePadGet(void) {
-	return RESULT_OK;
+	static int pad = 0;
+	int i = 0, op = pad & 0x00ff;
+	int p[] = { PAD_UP, PAD_DN, PAD_LF, PAD_RI, PAD_A, PAD_B, PAD_C, PAD_D, -1 };
+
+	pad = 0;
+
+	do {
+		if(keypad[i]) {
+			pad |= p[i];
+		}
+		i++;
+	} while(p[i] >= 0);
+
+	if (autofire) {
+		pad |= PAD_A;
+	}
+
+	pad |= (pad & (~op)) << 8;
+	return pad;
 }
 
 int interval = 0;
