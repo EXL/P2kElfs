@@ -44,7 +44,7 @@ extern UINT32 AhiDispUpdate(AHIDEVCONTEXT_T context, AHIUPDATEPARAMS_T *update_p
 /******** MOVE IT TO SDK ***/
 
 #define TIMER_FAST_TRIGGER_MS             (1)
-#define TIMER_FAST_UPDATE_MS              (1000 / 25) /* ~20 FPS. */
+#define TIMER_FAST_UPDATE_MS              (1000 / 25) /* ~25 FPS. */
 
 typedef enum {
 	APP_STATE_ANY,
@@ -175,8 +175,8 @@ static UINT32 ApplicationStart(EVENT_STACK_T *ev_st, REG_ID_T reg_id, void *reg_
 
 		app_instance->ahi.info_driver = NULL;
 		app_instance->p_spout = NULL;
-		app_instance->bmp_width = 128;
-		app_instance->bmp_height = 88;
+		app_instance->bmp_width = SPOUT_WIDTH;
+		app_instance->bmp_height = SPOUT_HEIGHT;
 		app_instance->timer_handle = 0;
 		app_instance->keys.pressed = 0;
 		app_instance->keys.released = 0;
@@ -685,6 +685,11 @@ int pceFontPrintf(const char *fmt, ...)
 		adr -= 128 * font_height - font_width;
 		pC ++;
 	}
+	return 0;
+}
+
+int pceFileCreate(const char *fname, int mode) {
+	return 0;
 }
 
 int pceFileOpen(FILEACC *pfa, const char *fname, int mode)

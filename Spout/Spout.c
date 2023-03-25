@@ -1,6 +1,11 @@
-//#include <stdio.h>
-//#include <stdlib.h>
-//#include <string.h>
+#if 0 /* Not available on Motorola P2K platform. */
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#endif
+
+#define memset __rt_memset
+extern void *__rt_memset( void *, int, int );
 
 #include "Spout.h"
 #include "Sintable.h"

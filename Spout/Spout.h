@@ -3,9 +3,8 @@
 
 #include <utilities.h>
 
-#define ZOOM 1
-#define SDL_WIDTH (128 * ZOOM)
-#define SDL_HEIGHT (88 * ZOOM)
+#define SPOUT_WIDTH (128)
+#define SPOUT_HEIGHT (88)
 
 #define PAD_RI 0x01
 #define PAD_LF 0x02
@@ -33,9 +32,9 @@
 #define FILEACC int
 #define FOMD_RD 0
 #define FOMD_WR 1
-#define pceFileCreate
 
 #define pceTimerGetCount SDL_GetTicks
+
 #define srand(x) randomize()
 
 #define PP_MODE_SINGLE 0
@@ -56,12 +55,17 @@ extern void pceLCDTrans(void);
 void pceAppSetProcPeriod(int period);
 void pceAppReqExit(int c);
 
+int pceFileCreate(const char *fname, int mode);
 int pceFileOpen(FILEACC *pfa, const char *fname, int mode);
 int pceFileReadSct(FILEACC *pfa, void *ptr, int sct, int len);
 int pceFileWriteSct(FILEACC *pfa, const void *ptr, int sct, int len);
 int pceFileClose(FILEACC *pfa);
 
 extern int pcePadGet(void);
+
+extern void pceAppInit(void);
+extern void pceAppExit(void);
+extern void pceAppProc(int cnt);
 
 extern unsigned char vbuff[];
 
