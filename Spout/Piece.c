@@ -44,7 +44,7 @@ extern UINT32 AhiDispUpdate(AHIDEVCONTEXT_T context, AHIUPDATEPARAMS_T *update_p
 /******** MOVE IT TO SDK ***/
 
 #define TIMER_FAST_TRIGGER_MS             (1)
-#define TIMER_FAST_UPDATE_MS              (1000 / 27) /* ~27 FPS. */
+#define TIMER_FAST_UPDATE_MS              (1000 / 25) /* ~20 FPS. */
 
 typedef enum {
 	APP_STATE_ANY,
@@ -127,8 +127,6 @@ static const UINT32 spout_palette[] = {
 	ATI_565RGB(0x00, 0x00, 0x00)
 };
 
-static APP_INSTANCE_T *app_p;
-
 static EVENT_HANDLER_ENTRY_T g_state_any_hdls[] = {
 	{ EV_REVOKE_TOKEN, APP_HandleUITokenRevoked },
 	{ STATE_HANDLERS_END, NULL }
@@ -182,7 +180,6 @@ static UINT32 ApplicationStart(EVENT_STACK_T *ev_st, REG_ID_T reg_id, void *reg_
 		app_instance->timer_handle = 0;
 		app_instance->keys.pressed = 0;
 		app_instance->keys.released = 0;
-		app_p = app_instance;
 
 		status |= ATI_Driver_Start((APPLICATION_T *) app_instance);
 
@@ -470,7 +467,7 @@ static UINT32 ATI_Driver_Start(APPLICATION_T *app) {
 	appi->ahi.bitmap.height = appi->bmp_height;
 	appi->ahi.bitmap.stride = appi->bmp_width; /* (width * bpp) */
 	appi->ahi.bitmap.format = AHIFMT_8BPP;
-	appi->ahi.bitmap.image = suAllocMem(appi->bmp_width * appi->bmp_height, &result);
+	appi->ahi.bitmap.image = vbuff;
 	if (result) {
 		return RESULT_FAIL;
 	}
@@ -578,9 +575,8 @@ void pceLCDDispStop(void) { }
 
 void pceLCDDispStart(void) { }
 
-static UINT8 *vBuffer = NULL;
-
 void pceLCDTrans(void) {
+	/*
 	int x, y;
 	unsigned char *vbi, *bi;
 
@@ -592,6 +588,7 @@ void pceLCDTrans(void) {
 		}
 		bi += app_p->ahi.bitmap.stride - SDL_WIDTH;
 	}
+	*/
 }
 
 int pcePadGet(void) {
@@ -611,10 +608,7 @@ void pceAppReqExit(int c) {
 }
 
 unsigned char *pceLCDSetBuffer(unsigned char *pbuff) {
-	if(pbuff) {
-		vBuffer = pbuff;
-	}
-	return vBuffer;
+	return NULL;
 }
 
 int font_posX = 0, font_posY = 0, font_width = 4, font_height = 6;
@@ -655,7 +649,7 @@ void pceFontSetPos(int x, int y)
 
 int pceFontPrintf(const char *fmt, ...)
 {
-	unsigned char *adr = vBuffer + font_posX + font_posY * 128;
+	unsigned char *adr = vbuff + font_posX + font_posY * 128;
 	unsigned char *pC;
 	char c[1024];
 	va_list argp;

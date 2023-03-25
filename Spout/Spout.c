@@ -815,4 +815,3 @@ GRAIN *freeGrain(GRAIN *current)
 
 	return next;
 }
-

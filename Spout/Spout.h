@@ -63,4 +63,6 @@ int pceFileClose(FILEACC *pfa);
 
 extern int pcePadGet(void);
 
+extern unsigned char vbuff[];
+
 #endif // !SPOUT_H
