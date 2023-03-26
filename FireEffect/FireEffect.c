@@ -27,7 +27,14 @@
 #include <utilities.h>
 
 #define TIMER_FAST_TRIGGER_MS             (1)
+#if defined(FPS_15)
 #define TIMER_FAST_UPDATE_MS              (1000 / 15) /* ~15 FPS. */
+#elif defined(FPS_30)
+#define TIMER_FAST_UPDATE_MS              (1000 / 30) /* ~30 FPS. */
+#endif
+#define KEYPAD_BUTTONS                    (8)
+#define BITMAP_WIDTH                      (128)
+#define BITMAP_HEIGHT                     (88)
 
 typedef enum {
 	APP_STATE_ANY,
@@ -75,9 +82,14 @@ typedef struct {
 	APP_AHI_T ahi;
 	APP_KEYBOARD_T keys;
 	UINT32 timer_handle;
+	UINT8 keyboard_volume_level;
 } APP_INSTANCE_T;
 
-UINT32 Register(const char *elf_path_uri, const char *args, UINT32 ev_code);
+#if defined(EP1)
+UINT32 Register(const char *elf_path_uri, const char *args, UINT32 ev_code); /* ElfPack 1.x entry point. */
+#elif defined(EP2)
+ldrElf *_start(WCHAR *uri, WCHAR *arguments);                                /* ElfPack 2.x entry point. */
+#endif
 
 static UINT32 ApplicationStart(EVENT_STACK_T *ev_st, REG_ID_T reg_id, void *reg_hdl);
 static UINT32 ApplicationStop(EVENT_STACK_T *ev_st, APPLICATION_T *app);
@@ -88,10 +100,11 @@ static UINT32 DeleteDialog(APPLICATION_T *app);
 
 static UINT32 SetLoopTimer(APPLICATION_T *app, UINT32 period);
 
-static UINT32 CheckKeyboard(APPLICATION_T *app);
-static UINT32 ProcessKeyboard(APPLICATION_T *app, UINT32 key, BOOL pressed);
+static UINT32 CheckKeyboard(EVENT_STACK_T *ev_st, APPLICATION_T *app);
+static UINT32 ProcessKeyboard(EVENT_STACK_T *ev_st, APPLICATION_T *app, UINT32 key, BOOL pressed);
 
 static UINT32 HandleEventTimerExpired(EVENT_STACK_T *ev_st, APPLICATION_T *app);
+static void FPS_Meter(void);
 
 static UINT32 ATI_Driver_Start(APPLICATION_T *app);
 static UINT32 ATI_Driver_Stop(APPLICATION_T *app);
@@ -143,6 +156,10 @@ static const UINT32 fire_palette[] = {
 	ATI_565RGB(0xFF, 0xFF, 0xFF)  /* 36 */
 };
 
+#if defined(EP2)
+static ldrElf g_app_elf;
+#endif
+
 static EVENT_HANDLER_ENTRY_T g_state_any_hdls[] = {
 	{ EV_REVOKE_TOKEN, APP_HandleUITokenRevoked },
 	{ STATE_HANDLERS_END, NULL }
@@ -166,6 +183,7 @@ static const STATE_HANDLERS_ENTRY_T g_state_table_hdls[] = {
 	{ APP_STATE_MAIN, HandleStateEnter, HandleStateExit, g_state_main_hdls }
 };
 
+#if defined(EP1)
 UINT32 Register(const char *elf_path_uri, const char *args, UINT32 ev_code) {
 	UINT32 status;
 	UINT32 ev_code_base;
@@ -178,6 +196,32 @@ UINT32 Register(const char *elf_path_uri, const char *args, UINT32 ev_code) {
 
 	return status;
 }
+#elif defined(EP2)
+ldrElf *_start(WCHAR *uri, WCHAR *arguments) {
+	UINT32 status;
+	UINT32 ev_code_base;
+	UINT32 reserve;
+
+	if (ldrIsLoaded(g_app_name)) {
+		cprint("Spout: Error! Application has already been loaded!\n");
+		return NULL;
+	}
+
+	status = RESULT_OK;
+	ev_code_base = ldrRequestEventBase();
+	reserve = ev_code_base + 1;
+	reserve = ldrInitEventHandlersTbl(g_state_any_hdls, reserve);
+	reserve = ldrInitEventHandlersTbl(g_state_init_hdls, reserve);
+	reserve = ldrInitEventHandlersTbl(g_state_main_hdls, reserve);
+
+	status |= APP_Register(&ev_code_base, 1, g_state_table_hdls, APP_STATE_MAX, (void *) ApplicationStart);
+
+	status |= ldrSendEvent(ev_code_base);
+	g_app_elf.name = (char *) g_app_name;
+
+	return (status == RESULT_OK) ? &g_app_elf : NULL;
+}
+#endif
 
 static UINT32 ApplicationStart(EVENT_STACK_T *ev_st, REG_ID_T reg_id, void *reg_hdl) {
 	UINT32 status;
@@ -190,17 +234,24 @@ static UINT32 ApplicationStart(EVENT_STACK_T *ev_st, REG_ID_T reg_id, void *reg_
 			reg_id, 0, 0, 1, 1, 1, 0);
 
 		app_instance->ahi.info_driver = NULL;
+		app_instance->bmp_width = BITMAP_WIDTH;
+		app_instance->bmp_height = BITMAP_HEIGHT;
 		app_instance->p_fire = NULL;
-		app_instance->bmp_width = 128;
-		app_instance->bmp_height = 88;
 		app_instance->timer_handle = 0;
 		app_instance->keys.pressed = 0;
 		app_instance->keys.released = 0;
+
+		DL_AudGetVolumeSetting(PHONE, &app_instance->keyboard_volume_level);
+		DL_AudSetVolumeSetting(PHONE, 0);
 
 		status |= ATI_Driver_Start((APPLICATION_T *) app_instance);
 
 		status |= APP_Start(ev_st, &app_instance->app, APP_STATE_MAIN,
 			g_state_table_hdls, ApplicationStop, g_app_name, 0);
+
+#if defined(EP2)
+		g_app_elf.app = (APPLICATION_T *) app_instance;
+#endif
 	}
 
 	return status;
@@ -208,17 +259,25 @@ static UINT32 ApplicationStart(EVENT_STACK_T *ev_st, REG_ID_T reg_id, void *reg_
 
 static UINT32 ApplicationStop(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
 	UINT32 status;
+	APP_INSTANCE_T *app_instance;
 
 	status = RESULT_OK;
+	app_instance = (APP_INSTANCE_T *) app;
 
 	DeleteDialog(app);
 
+	DL_AudSetVolumeSetting(PHONE, app_instance->keyboard_volume_level);
+
 	status |= GFX_Draw_Stop(app);
 	status |= SetLoopTimer(app, 0);
-	status |= APP_Exit(ev_st, app, 0);
 	status |= ATI_Driver_Stop(app);
+	status |= APP_Exit(ev_st, app, 0);
 
+#if defined(EP1)
 	LdrUnloadELF(&Lib);
+#elif defined(EP2)
+	ldrUnloadElf();
+#endif
 
 	return status;
 }
@@ -227,10 +286,6 @@ static UINT32 HandleStateEnter(EVENT_STACK_T *ev_st, APPLICATION_T *app, ENTER_S
 	SU_PORT_T port;
 	UIS_DIALOG_T dialog;
 	APP_STATE_T app_state;
-	DRAWING_BUFFER_T buffer;
-	APP_INSTANCE_T *app_instance;
-
-	app_instance = (APP_INSTANCE_T *) app;
 
 	if (state != ENTER_STATE_ENTER) {
 		if (app->state != APP_STATE_MAIN) {
@@ -247,12 +302,9 @@ static UINT32 HandleStateEnter(EVENT_STACK_T *ev_st, APPLICATION_T *app, ENTER_S
 
 	switch (app_state) {
 		case APP_STATE_MAIN:
-			buffer.w = app_instance->width;
-			buffer.h = app_instance->height;
-			buffer.buf = NULL;
-
-//			dialog = UIS_CreateColorCanvas(&port, &buffer, TRUE);
 			dialog = UIS_CreateNullDialog(&port);
+
+			DL_KeyKjavaGetKeyState(); /* Reset Keys. */
 
 			GFX_Draw_Start(app);
 
@@ -268,16 +320,6 @@ static UINT32 HandleStateEnter(EVENT_STACK_T *ev_st, APPLICATION_T *app, ENTER_S
 	}
 
 	app->dialog = dialog;
-
-	switch (app_state) {
-		case APP_STATE_MAIN:
-			DL_KeyKjavaGetKeyState(); /* Reset Keys. */
-			GFX_Draw_Step(app);
-			ATI_Driver_Flush(app);
-			break;
-		default:
-			break;
-	}
 
 	return RESULT_OK;
 }
@@ -325,7 +367,7 @@ static UINT32 SetLoopTimer(APPLICATION_T *app, UINT32 period) {
 	return status;
 }
 
-static UINT32 CheckKeyboard(APPLICATION_T *app) {
+static UINT32 CheckKeyboard(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
 	UINT32 key;
 	APP_INSTANCE_T *app_instance;
 
@@ -339,11 +381,11 @@ static UINT32 CheckKeyboard(APPLICATION_T *app) {
 		if ((app_instance->keys.released & key) != (app_instance->keys.pressed & key)) {
 			if (app_instance->keys.pressed & key) {
 				/* Key Pressed. */
-				ProcessKeyboard(app, key, TRUE);
+				ProcessKeyboard(ev_st, app, key, TRUE);
 			}
 			if (app_instance->keys.released & key) {
 				/* Key Released. */
-				ProcessKeyboard(app, key, FALSE);
+				ProcessKeyboard(ev_st, app, key, FALSE);
 			}
 		}
 		key >>= 1;
@@ -352,15 +394,58 @@ static UINT32 CheckKeyboard(APPLICATION_T *app) {
 	return RESULT_OK;
 }
 
-static UINT32 ProcessKeyboard(APPLICATION_T *app, UINT32 key, BOOL pressed) {
-	if (pressed) {
-		switch (key) {
-			case MULTIKEY_0:
-				app->exit_status = TRUE;
-				break;
-			default:
-				break;
-		}
+static UINT32 ProcessKeyboard(EVENT_STACK_T *ev_st, APPLICATION_T *app, UINT32 key, BOOL pressed) {
+	#if defined(ROT_90_DEG_LANDSCAPE)
+		#define KK_2 MULTIKEY_4
+		#define KK_UP MULTIKEY_LEFT
+		#define KK_4 MULTIKEY_8
+		#define KK_LEFT MULTIKEY_DOWN
+		#define KK_6 MULTIKEY_2
+		#define KK_RIGHT MULTIKEY_UP
+		#define KK_8 MULTIKEY_6
+		#define KK_DOWN MULTIKEY_RIGHT
+	#elif defined(ROT_0_DEG_PORTRAIT)
+		#define KK_2 MULTIKEY_2
+		#define KK_UP MULTIKEY_UP
+		#define KK_4 MULTIKEY_4
+		#define KK_LEFT MULTIKEY_LEFT
+		#define KK_6 MULTIKEY_6
+		#define KK_RIGHT MULTIKEY_RIGHT
+		#define KK_8 MULTIKEY_8
+		#define KK_DOWN MULTIKEY_DOWN
+	#endif
+
+	switch (key) {
+		case MULTIKEY_0:
+		case MULTIKEY_SOFT_LEFT:
+			app->exit_status = TRUE;
+			break;
+		case MULTIKEY_1:
+			break;
+		case KK_2:
+		case KK_UP:
+			break;
+		case MULTIKEY_3:
+			break;
+		case KK_4:
+		case KK_LEFT:
+			break;
+		case MULTIKEY_5:
+		case MULTIKEY_JOY_OK:
+			break;
+		case KK_6:
+		case KK_RIGHT:
+			break;
+		case MULTIKEY_7:
+			break;
+		case KK_8:
+		case KK_DOWN:
+			break;
+		case MULTIKEY_9:
+		case MULTIKEY_SOFT_RIGHT:
+			break;
+		default:
+			break;
 	}
 	return RESULT_OK;
 }
@@ -376,7 +461,8 @@ static UINT32 HandleEventTimerExpired(EVENT_STACK_T *ev_st, APPLICATION_T *app) 
 
 	switch (timer_id) {
 		case APP_TIMER_LOOP:
-			CheckKeyboard(app);
+			FPS_Meter();
+			CheckKeyboard(ev_st, app);
 			GFX_Draw_Step(app);
 			ATI_Driver_Flush(app);
 			break;
@@ -392,11 +478,43 @@ static UINT32 HandleEventTimerExpired(EVENT_STACK_T *ev_st, APPLICATION_T *app) 
 	return RESULT_OK;
 }
 
+static void FPS_Meter(void) {
+#if defined(FPS_METER)
+	UINT64 current_time;
+	UINT32 delta;
+
+	static UINT32 one = 0;
+	static UINT64 last_time = 0;
+	static UINT32 tick = 0;
+	static UINT32 fps = 0;
+
+	current_time = suPalTicksToMsec(suPalReadTime());
+	delta = (UINT32) (current_time - last_time);
+	last_time = current_time;
+
+	tick = (tick + delta) / 2;
+	if (tick != 0) {
+		fps = 1000 * 10 / tick;
+	}
+
+	if (one > 30) {
+		UtilLogStringData("FPS x 10: %d\n", fps);
+		PFprintf("FPS x 10: %d\n", fps);
+#if defined(EP2)
+		cprintf("FPS x 10: %d\n", fps);
+#endif
+		one = 0;
+	}
+	one++;
+#endif
+}
+
 static UINT32 ATI_Driver_Start(APPLICATION_T *app) {
 	UINT32 status;
 	INT32 result;
 	APP_INSTANCE_T *appi;
 	AHIDEVICE_T ahi_device;
+	AHIDISPMODE_T display_mode;
 
 	status = RESULT_OK;
 	result = RESULT_OK;
@@ -415,12 +533,14 @@ static UINT32 ATI_Driver_Start(APPLICATION_T *app) {
 		return RESULT_FAIL;
 	}
 
+	status |= AhiDispModeGet(appi->ahi.context, &display_mode);
+
 	status |= AhiDispSurfGet(appi->ahi.context, &appi->ahi.screen);
 	appi->ahi.draw = DAL_GetDrawingSurface(DISPLAY_MAIN);
-	status |= AhiDrawSurfDstSet(appi->ahi.context, appi->ahi.screen, 0);
-//	status |= AhiDrawSurfDstSet(appi->ahi.context, appi->ahi.draw, 0);
+
 	status |= AhiDrawClipDstSet(appi->ahi.context, NULL);
 	status |= AhiDrawClipSrcSet(appi->ahi.context, NULL);
+
 	status |= AhiSurfInfo(appi->ahi.context, appi->ahi.screen, &appi->ahi.info_surface);
 
 #define LOG_ATI(format, ...) UtilLogStringData(format, ##__VA_ARGS__); PFprintf(format, ##__VA_ARGS__)
@@ -458,6 +578,10 @@ static UINT32 ATI_Driver_Start(APPLICATION_T *app) {
 		LOG_ATI("ATI External Memory Largest Block: result=%d, size=%d, size=%d KiB, align=%d\n",
 			result, size, size / 1024, align);
 
+		LOG_ATI("ATI Display Mode: size=%dx%d, pixel_format=%d, frequency=%d, rotation=%d, mirror=%d",
+			display_mode.size.x, display_mode.size.y,
+			display_mode.pixel_format, display_mode.frequency, display_mode.rotation, display_mode.mirror);
+
 		LOG_ATI("ATI Surface Info: width=%d, height=%d, pixFormat=%d, byteSize=%d, byteSize=%d KiB\n",
 			appi->ahi.info_surface.width, appi->ahi.info_surface.height, appi->ahi.info_surface.pixFormat,
 			appi->ahi.info_surface.byteSize, appi->ahi.info_surface.byteSize / 1024);
@@ -492,15 +616,26 @@ static UINT32 ATI_Driver_Start(APPLICATION_T *app) {
 	appi->ahi.rect_bitmap.x2 = 0 + appi->bmp_width;
 	appi->ahi.rect_bitmap.y2 = 0 + appi->bmp_height;
 
+#if defined(ROT_90_DEG_LANDSCAPE)
+	appi->ahi.rect_draw.x1 = 0;
+	appi->ahi.rect_draw.y1 = appi->bmp_height + 1;
+	appi->ahi.rect_draw.x2 = 0 + appi->bmp_height;
+	appi->ahi.rect_draw.y2 = appi->bmp_height + 1 + appi->bmp_width;
+#elif defined(ROT_0_DEG_PORTRAIT)
 	appi->ahi.rect_draw.x1 = appi->width / 2 - appi->bmp_width / 2;
 	appi->ahi.rect_draw.y1 = appi->height / 2 - appi->bmp_height / 2;
 	appi->ahi.rect_draw.x2 = (appi->width / 2 - appi->bmp_width / 2) + appi->bmp_width;
 	appi->ahi.rect_draw.y2 = (appi->height / 2 - appi->bmp_height / 2) + appi->bmp_height;
 
-	status |= AhiDrawBrushFgColorSet(appi->ahi.context, ATI_565RGB(0x00, 0x00, 0x00));
+	status |= AhiDrawSurfDstSet(appi->ahi.context, appi->ahi.screen, 0);
+
+	status |= AhiDrawBrushFgColorSet(appi->ahi.context, ATI_565RGB(0xFF, 0xFF, 0xFF));
 	status |= AhiDrawBrushSet(appi->ahi.context, NULL, NULL, 0, AHIFLAG_BRUSH_SOLID);
 	status |= AhiDrawRopSet(appi->ahi.context, AHIROP3(AHIROP_PATCOPY));
 	status |= AhiDrawSpans(appi->ahi.context, &appi->ahi.update_params.rect, 1, 0);
+#endif
+
+	AhiDrawRopSet(appi->ahi.context, AHIROP3(AHIROP_SRCCOPY));
 
 	return status;
 }
@@ -521,34 +656,35 @@ static UINT32 ATI_Driver_Stop(APPLICATION_T *app) {
 }
 
 static UINT32 ATI_Driver_Flush(APPLICATION_T *app) {
-	UINT32 status;
 	APP_INSTANCE_T *appi;
 
-	status = RESULT_OK;
 	appi = (APP_INSTANCE_T *) app;
 
-//	status |= AhiDrawSurfDstSet(appi->ahi.context, appi->ahi.draw, 0);
-	status |= AhiDrawRopSet(appi->ahi.context, AHIROP3(AHIROP_SRCCOPY));
-	status |= AhiDrawBitmapBlt(appi->ahi.context,
+#if defined(ROT_0_DEG_PORTRAIT)
+	AhiDrawSurfDstSet(appi->ahi.context, appi->ahi.screen, 0);
+	AhiDrawBitmapBlt(appi->ahi.context,
 		&appi->ahi.rect_draw, &appi->ahi.point_bitmap, &appi->ahi.bitmap, (void *) fire_palette, 0);
+	AhiDispWaitVBlank(appi->ahi.context, 0);
+#elif defined(ROT_90_DEG_LANDSCAPE)
+	AhiDrawSurfDstSet(appi->ahi.context, appi->ahi.draw, 0);
+	AhiDrawBitmapBlt(appi->ahi.context,
+		&appi->ahi.rect_bitmap, &appi->ahi.point_bitmap, &appi->ahi.bitmap, (void *) fire_palette, 0);
 
-//	status |= AhiDrawSurfSrcSet(appi->ahi.context, appi->ahi.draw, 0);
-//	status |= AhiDrawSurfDstSet(appi->ahi.context, appi->ahi.screen, 0);
+	AhiDrawRotateBlt(appi->ahi.context,
+		&appi->ahi.rect_draw, &appi->ahi.point_bitmap, AHIROT_90, AHIMIRR_NO, 0);
 
-//	status |= AhiDispWaitVBlank(appi->ahi.context, 0);
-	/* 1 - AHIFLAG_STRETCHFAST */
-//	status |= AhiDrawStretchBlt(appi->ahi.context, &appi->ahi.rect_draw, &appi->ahi.rect_bitmap, 1);
+	AhiDrawSurfSrcSet(appi->ahi.context, appi->ahi.draw, 0);
+	AhiDrawSurfDstSet(appi->ahi.context, appi->ahi.screen, 0);
 
-	/*
-	status |= AhiDrawRotateBlt(appi->ahi.context,
-		&appi->ahi.rect_screen, &appi->ahi.point_bitmap, AHIROT_90, AHIMIRR_NO, 0);
-	*/
+	AhiDispWaitVBlank(appi->ahi.context, 0);
+	AhiDrawStretchBlt(appi->ahi.context, &appi->ahi.update_params.rect, &appi->ahi.rect_draw, AHIFLAG_STRETCHFAST);
+#endif
 
 	if (appi->is_CSTN_display) {
-		status |= AhiDispUpdate(appi->ahi.context, &appi->ahi.update_params);
+		AhiDispUpdate(appi->ahi.context, &appi->ahi.update_params);
 	}
 
-	return status;
+	return RESULT_OK;
 }
 
 static UINT32 GFX_Draw_Start(APPLICATION_T *app) {
@@ -567,14 +703,12 @@ static UINT32 GFX_Draw_Start(APPLICATION_T *app) {
 	/* Fill last line to RGB(0xFF, 0xFF, 0xFF) except last line. */
 	memset((UINT8 *) (appi->p_fire + (appi->bmp_height - 1) * appi->bmp_width), 36, appi->bmp_width);
 
-	return status;
+	return RESULT_OK;
 }
 
 static UINT32 GFX_Draw_Stop(APPLICATION_T *app) {
-	UINT32 status;
 	APP_INSTANCE_T *appi;
 
-	status = RESULT_OK;
 	appi = (APP_INSTANCE_T *) app;
 
 	if (appi->p_fire) {
@@ -582,16 +716,14 @@ static UINT32 GFX_Draw_Stop(APPLICATION_T *app) {
 		appi->p_fire = NULL;
 	}
 
-	return status;
+	return RESULT_OK;
 }
 
 static UINT32 GFX_Draw_Step(APPLICATION_T *app) {
-	UINT32 status;
 	UINT16 x;
 	UINT16 y;
 	APP_INSTANCE_T *appi;
 
-	status = RESULT_OK;
 	appi = (APP_INSTANCE_T *) app;
 
 	for (x = 0; x < appi->bmp_width; ++x) {
@@ -619,5 +751,5 @@ static UINT32 GFX_Draw_Step(APPLICATION_T *app) {
 		}
 	}
 
-	return status;
+	return RESULT_OK;
 }
