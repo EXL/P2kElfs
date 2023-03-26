@@ -107,6 +107,7 @@ static UINT32 CheckKeyboard(EVENT_STACK_T *ev_st, APPLICATION_T *app);
 static UINT32 ProcessKeyboard(EVENT_STACK_T *ev_st, APPLICATION_T *app, UINT32 key, BOOL pressed);
 
 static UINT32 HandleEventTimerExpired(EVENT_STACK_T *ev_st, APPLICATION_T *app);
+static void FPS_Meter(void);
 
 static UINT32 ATI_Driver_Start(APPLICATION_T *app);
 static UINT32 ATI_Driver_Stop(APPLICATION_T *app);
@@ -266,9 +267,6 @@ static UINT32 HandleStateEnter(EVENT_STACK_T *ev_st, APPLICATION_T *app, ENTER_S
 	SU_PORT_T port;
 	UIS_DIALOG_T dialog;
 	APP_STATE_T app_state;
-	APP_INSTANCE_T *app_instance;
-
-	app_instance = (APP_INSTANCE_T *) app;
 
 	if (state != ENTER_STATE_ENTER) {
 		if (app->state != APP_STATE_MAIN) {
@@ -469,6 +467,7 @@ static UINT32 HandleEventTimerExpired(EVENT_STACK_T *ev_st, APPLICATION_T *app) 
 
 	switch (timer_id) {
 		case APP_TIMER_LOOP:
+			FPS_Meter();
 			CheckKeyboard(ev_st, app);
 			GFX_Draw_Step(app);
 			ATI_Driver_Flush(app);
@@ -483,6 +482,37 @@ static UINT32 HandleEventTimerExpired(EVENT_STACK_T *ev_st, APPLICATION_T *app) 
 	}
 
 	return RESULT_OK;
+}
+
+static void FPS_Meter(void) {
+#if defined(FPS_METER)
+	UINT64 current_time;
+	UINT32 delta;
+
+	static UINT32 one = 0;
+	static UINT64 last_time = 0;
+	static UINT32 tick = 0;
+	static UINT32 fps = 0;
+
+	current_time = suPalTicksToMsec(suPalReadTime());
+	delta = (UINT32) (current_time - last_time);
+	last_time = current_time;
+
+	tick = (tick + delta) / 2;
+	if (tick != 0) {
+		fps = 1000 * 10 / tick;
+	}
+
+	if (one > 30) {
+		UtilLogStringData("FPS x 10: %d\n", fps);
+		PFprintf("FPS x 10: %d\n", fps);
+#if defined(EP2)
+		cprintf("FPS x 10: %d\n", fps);
+#endif
+		one = 0;
+	}
+	one++;
+#endif
 }
 
 static UINT32 ATI_Driver_Start(APPLICATION_T *app) {
