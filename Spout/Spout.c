@@ -381,6 +381,10 @@ void pceAppProc(int cnt)
 						pceFontPrintf1("    height: %8d", hiScore[1] % 1000000);
 						pceFontSetPos(118 - 20 * 4, 6);
 						pceFontPrintf1("high-score: %8d", hiScore[0] % 1000000);
+						pceFontSetPos (6, 18);
+						pceFontPrintf ("(c)2023 EXL/Motorola P2K port");
+						pceFontSetPos (6, 24);
+						pceFontPrintf ("http://github.com/EXL/P2kElfs");
 						break;
 
 					case 1:
