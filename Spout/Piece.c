@@ -79,9 +79,6 @@ typedef struct {
 	UINT16 bmp_width;
 	UINT16 bmp_height;
 
-	UINT8 *p_spout;
-	UINT16 y_coord;
-
 	APP_AHI_T ahi;
 	APP_KEYBOARD_T keys;
 	UINT32 timer_handle;
@@ -214,7 +211,6 @@ static UINT32 ApplicationStart(EVENT_STACK_T *ev_st, REG_ID_T reg_id, void *reg_
 			reg_id, 0, 0, 1, 1, 1, 0);
 
 		app_instance->ahi.info_driver = NULL;
-		app_instance->p_spout = NULL;
 		app_instance->bmp_width = SPOUT_WIDTH;
 		app_instance->bmp_height = SPOUT_HEIGHT;
 		app_instance->timer_handle = 0;
