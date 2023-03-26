@@ -85,6 +85,7 @@ typedef struct {
 	APP_AHI_T ahi;
 	APP_KEYBOARD_T keys;
 	UINT32 timer_handle;
+	UINT8 keyboard_volume_level;
 } APP_INSTANCE_T;
 
 #if defined(EP1)
@@ -219,6 +220,9 @@ static UINT32 ApplicationStart(EVENT_STACK_T *ev_st, REG_ID_T reg_id, void *reg_
 		app_instance->keys.pressed = 0;
 		app_instance->keys.released = 0;
 
+		DL_AudGetVolumeSetting(PHONE, &app_instance->keyboard_volume_level);
+		DL_AudSetVolumeSetting(PHONE, 0);
+
 		pceAppInit();
 		status |= ATI_Driver_Start((APPLICATION_T *) app_instance);
 
@@ -235,15 +239,19 @@ static UINT32 ApplicationStart(EVENT_STACK_T *ev_st, REG_ID_T reg_id, void *reg_
 
 static UINT32 ApplicationStop(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
 	UINT32 status;
+	APP_INSTANCE_T *app_instance;
 
 	status = RESULT_OK;
+	app_instance = (APP_INSTANCE_T *) app;
 
 	DeleteDialog(app);
 
+	DL_AudSetVolumeSetting(PHONE, app_instance->keyboard_volume_level);
+
 	status |= GFX_Draw_Stop(app);
 	status |= SetLoopTimer(app, 0);
-	status |= APP_Exit(ev_st, app, 0);
 	status |= ATI_Driver_Stop(app);
+	status |= APP_Exit(ev_st, app, 0);
 
 #if defined(EP1)
 	LdrUnloadELF(&Lib);
@@ -258,7 +266,6 @@ static UINT32 HandleStateEnter(EVENT_STACK_T *ev_st, APPLICATION_T *app, ENTER_S
 	SU_PORT_T port;
 	UIS_DIALOG_T dialog;
 	APP_STATE_T app_state;
-	DRAWING_BUFFER_T buffer;
 	APP_INSTANCE_T *app_instance;
 
 	app_instance = (APP_INSTANCE_T *) app;
@@ -278,11 +285,6 @@ static UINT32 HandleStateEnter(EVENT_STACK_T *ev_st, APPLICATION_T *app, ENTER_S
 
 	switch (app_state) {
 		case APP_STATE_MAIN:
-			buffer.w = app_instance->width;
-			buffer.h = app_instance->height;
-			buffer.buf = NULL;
-
-//			dialog = UIS_CreateColorCanvas(&port, &buffer, TRUE);
 			dialog = UIS_CreateNullDialog(&port);
 
 			DL_KeyKjavaGetKeyState(); /* Reset Keys. */
