@@ -1,4 +1,4 @@
-:: This make.bat script was edited by EXL, 25-Mar-2022.
+:: This make.bat script was edited by EXL, 26-Mar-2023.
 :: Default platform is Motorola P2K, ElfPack v1.x, ADS1.2 [Build 848] on Windows.
 :: Warning: `-nodebug` flag option for `armlink` is buggy.
 
@@ -22,16 +22,57 @@ set DEFINES=-D__P2K__ -DEP1
 
 :: ELF name.
 set ELF_NAME=Spout
+set PCS_NAME=Piece
 
 :: Compiling step.
-%ARM_PATH%\tcc -I%SDK_PATH% %DEFINES% -bigend -apcs /interwork -O2 -c %ELF_NAME%.c -o %ELF_NAME%.o
-%ARM_PATH%\tcc -I%SDK_PATH% %DEFINES% -bigend -apcs /interwork -O2 -c Piece.c -o Piece.o
-
+%ARM_PATH%\tcc -I%SDK_PATH% %DEFINES% -DROT_90_DEG_LANDSCAPE -DFPS_30 -bigend -apcs /interwork -O2 -c %ELF_NAME%.c ^
+	-o %ELF_NAME%.o
+%ARM_PATH%\tcc -I%SDK_PATH% %DEFINES% -DROT_90_DEG_LANDSCAPE -DFPS_30 -bigend -apcs /interwork -O2 -c %PCS_NAME%.c ^
+	-o %PCS_NAME%.o
 :: Linking step.
-%ARM_PATH%\armlink -nolocals -reloc -first %LIB_MAIN%(Lib) %ELF_NAME%.o Piece.o %LIB_PATH%\%LIB_MAIN% -o %ELF_NAME%.elf
+%ARM_PATH%\armlink -nolocals -reloc -first %LIB_MAIN%(Lib) %ELF_NAME%.o %PCS_NAME%.o %LIB_PATH%\%LIB_MAIN% ^
+	-o %ELF_NAME%.elf
+:: Renaming step.
+del *.o
+move /y %ELF_NAME%.elf %ELF_NAME%_EP1_D90_F30.elf
+
+:: Compiling step.
+%ARM_PATH%\tcc -I%SDK_PATH% %DEFINES% -DROT_90_DEG_LANDSCAPE -DFPS_15 -bigend -apcs /interwork -O2 -c %ELF_NAME%.c ^
+	-o %ELF_NAME%.o
+%ARM_PATH%\tcc -I%SDK_PATH% %DEFINES% -DROT_90_DEG_LANDSCAPE -DFPS_15 -bigend -apcs /interwork -O2 -c %PCS_NAME%.c ^
+	-o %PCS_NAME%.o
+:: Linking step.
+%ARM_PATH%\armlink -nolocals -reloc -first %LIB_MAIN%(Lib) %ELF_NAME%.o %PCS_NAME%.o %LIB_PATH%\%LIB_MAIN% ^
+	-o %ELF_NAME%.elf
+:: Renaming step.
+del *.o
+move /y %ELF_NAME%.elf %ELF_NAME%_EP1_D90_F15.elf
+
+:: Compiling step.
+%ARM_PATH%\tcc -I%SDK_PATH% %DEFINES% -DROT_0_DEG_PORTRAIT -DFPS_30 -bigend -apcs /interwork -O2 -c %ELF_NAME%.c ^
+	-o %ELF_NAME%.o
+%ARM_PATH%\tcc -I%SDK_PATH% %DEFINES% -DROT_0_DEG_PORTRAIT -DFPS_30 -bigend -apcs /interwork -O2 -c %PCS_NAME%.c ^
+	-o %PCS_NAME%.o
+:: Linking step.
+%ARM_PATH%\armlink -nolocals -reloc -first %LIB_MAIN%(Lib) %ELF_NAME%.o %PCS_NAME%.o %LIB_PATH%\%LIB_MAIN% ^
+	-o %ELF_NAME%.elf
+:: Renaming step.
+del *.o
+move /y %ELF_NAME%.elf %ELF_NAME%_EP1_D0_F30.elf
+
+:: Compiling step.
+%ARM_PATH%\tcc -I%SDK_PATH% %DEFINES% -DROT_0_DEG_PORTRAIT -DFPS_15 -bigend -apcs /interwork -O2 -c %ELF_NAME%.c ^
+	-o %ELF_NAME%.o
+%ARM_PATH%\tcc -I%SDK_PATH% %DEFINES% -DROT_0_DEG_PORTRAIT -DFPS_15 -bigend -apcs /interwork -O2 -c %PCS_NAME%.c ^
+	-o %PCS_NAME%.o
+:: Linking step.
+%ARM_PATH%\armlink -nolocals -reloc -first %LIB_MAIN%(Lib) %ELF_NAME%.o %PCS_NAME%.o %LIB_PATH%\%LIB_MAIN% ^
+	-o %ELF_NAME%.elf
+:: Renaming step.
+del *.o
+move /y %ELF_NAME%.elf %ELF_NAME%_EP1_D0_F15.elf
 
 if /I "%1"=="clean" (
-	del %ELF_NAME%.o
-	del Piece.o
-	del %ELF_NAME%.elf
+	del *.o
+	del *.elf
 )

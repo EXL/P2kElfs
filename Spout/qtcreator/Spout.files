@@ -4,6 +4,7 @@
 ../Font.h
 ../Sintable.h
 ../Makefile
-../make.bat
+../make_ep1.bat
+../make_ep2.bat
 ../ReadMe.md
 ../License.txt
