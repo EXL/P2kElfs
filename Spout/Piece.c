@@ -386,45 +386,66 @@ static BOOL keypad[KEYPAD_BUTTONS];
 static BOOL autofire = FALSE;
 
 static UINT32 ProcessKeyboard(EVENT_STACK_T *ev_st, APPLICATION_T *app, UINT32 key, BOOL pressed) {
+#if defined(LANDSCAPE_ROT90)
+#define KK_2 MULTIKEY_4
+#define KK_UP MULTIKEY_LEFT
+#define KK_4 MULTIKEY_8
+#define KK_LEFT MULTIKEY_DOWN
+#define KK_6 MULTIKEY_2
+#define KK_RIGHT MULTIKEY_UP
+#define KK_8 MULTIKEY_6
+#define KK_DOWN MULTIKEY_RIGHT
+#elif defined(PORTRAIT_ROT0)
+#define KK_2 MULTIKEY_2
+#define KK_UP MULTIKEY_UP
+#define KK_4 MULTIKEY_4
+#define KK_LEFT MULTIKEY_LEFT
+#define KK_6 MULTIKEY_6
+#define KK_RIGHT MULTIKEY_RIGHT
+#define KK_8 MULTIKEY_8
+#define KK_DOWN MULTIKEY_DOWN
+#else
+#error "Unknown rotation mode!"
+#endif
 	switch (key) {
 		case MULTIKEY_0:
 		case MULTIKEY_SOFT_LEFT:
 			app->exit_status = TRUE;
-//			ApplicationStop(ev_st, app);
 			break;
 		case MULTIKEY_1:
+			keypad[KPB_D] = pressed;
+			break;
+		case KK_2:
+		case KK_UP:
+			keypad[KPB_UP] = pressed;
+			break;
+		case MULTIKEY_3:
 			if (pressed) {
 				autofire = !autofire;
 			}
 			break;
-		case MULTIKEY_2:
-		case MULTIKEY_UP:
-			keypad[KPB_UP] = pressed;
-			break;
-		case MULTIKEY_8:
-		case MULTIKEY_DOWN:
-			keypad[KPB_DOWN] = pressed;
-			break;
-		case MULTIKEY_4:
-		case MULTIKEY_LEFT:
+		case KK_4:
+		case KK_LEFT:
 			keypad[KPB_LEFT] = pressed;
-			break;
-		case MULTIKEY_6:
-		case MULTIKEY_RIGHT:
-			keypad[KPB_RIGHT] = pressed;
 			break;
 		case MULTIKEY_5:
 		case MULTIKEY_JOY_OK:
 			keypad[KPB_A] = pressed;
 			break;
+		case KK_6:
+		case KK_RIGHT:
+			keypad[KPB_RIGHT] = pressed;
+			break;
 		case MULTIKEY_7:
 			keypad[KPB_B] = pressed;
 			break;
-		case MULTIKEY_9:
-			keypad[KPB_C] = pressed;
+		case KK_8:
+		case KK_DOWN:
+			keypad[KPB_DOWN] = pressed;
 			break;
-		case MULTIKEY_3:
-			keypad[KPB_D] = pressed;
+		case MULTIKEY_9:
+		case MULTIKEY_SOFT_RIGHT:
+			keypad[KPB_C] = pressed;
 			break;
 		default:
 			break;
@@ -488,8 +509,6 @@ static UINT32 ATI_Driver_Start(APPLICATION_T *app) {
 	status |= AhiDispSurfGet(appi->ahi.context, &appi->ahi.screen);
 	appi->ahi.draw = DAL_GetDrawingSurface(DISPLAY_MAIN);
 
-//	status |= AhiDrawSurfDstSet(appi->ahi.context, appi->ahi.screen, 0);
-	status |= AhiDrawSurfDstSet(appi->ahi.context, appi->ahi.draw, 0);
 	status |= AhiDrawClipDstSet(appi->ahi.context, NULL);
 	status |= AhiDrawClipSrcSet(appi->ahi.context, NULL);
 
@@ -568,17 +587,10 @@ static UINT32 ATI_Driver_Start(APPLICATION_T *app) {
 	appi->ahi.rect_bitmap.x2 = 0 + appi->bmp_width;
 	appi->ahi.rect_bitmap.y2 = 0 + appi->bmp_height;
 
-	appi->ahi.rect_draw.x1 = appi->width / 2 - appi->bmp_width / 2;
-	appi->ahi.rect_draw.y1 = appi->height / 2 - appi->bmp_height / 2;
-	appi->ahi.rect_draw.x2 = (appi->width / 2 - appi->bmp_width / 2) + appi->bmp_width;
-	appi->ahi.rect_draw.y2 = (appi->height / 2 - appi->bmp_height / 2) + appi->bmp_height;
-
-#if 0
-	status |= AhiDrawBrushFgColorSet(appi->ahi.context, ATI_565RGB(0x00, 0x00, 0x00));
-	status |= AhiDrawBrushSet(appi->ahi.context, NULL, NULL, 0, AHIFLAG_BRUSH_SOLID);
-	status |= AhiDrawRopSet(appi->ahi.context, AHIROP3(AHIROP_PATCOPY));
-	status |= AhiDrawSpans(appi->ahi.context, &appi->ahi.update_params.rect, 1, 0);
-#endif
+	appi->ahi.rect_draw.x1 = 0;
+	appi->ahi.rect_draw.y1 = appi->bmp_height + 1;
+	appi->ahi.rect_draw.x2 = 0 + appi->bmp_height;
+	appi->ahi.rect_draw.y2 = appi->bmp_height + 1 + appi->bmp_width;
 
 	return status;
 }
@@ -599,34 +611,28 @@ static UINT32 ATI_Driver_Stop(APPLICATION_T *app) {
 }
 
 static UINT32 ATI_Driver_Flush(APPLICATION_T *app) {
-	UINT32 status;
 	APP_INSTANCE_T *appi;
 
-	status = RESULT_OK;
 	appi = (APP_INSTANCE_T *) app;
 
-	status |= AhiDrawSurfDstSet(appi->ahi.context, appi->ahi.draw, 0);
-	status |= AhiDrawRopSet(appi->ahi.context, AHIROP3(AHIROP_SRCCOPY));
-	status |= AhiDrawBitmapBlt(appi->ahi.context,
+	AhiDrawSurfDstSet(appi->ahi.context, appi->ahi.draw, 0);
+	AhiDrawRopSet(appi->ahi.context, AHIROP3(AHIROP_SRCCOPY));
+	AhiDrawBitmapBlt(appi->ahi.context,
 		&appi->ahi.rect_bitmap, &appi->ahi.point_bitmap, &appi->ahi.bitmap, (void *) spout_palette, 0);
+	AhiDrawRotateBlt(appi->ahi.context,
+		&appi->ahi.rect_draw, &appi->ahi.point_bitmap, AHIROT_90, AHIMIRR_NO, 0);
 
-	status |= AhiDrawSurfSrcSet(appi->ahi.context, appi->ahi.draw, 0);
-	status |= AhiDrawSurfDstSet(appi->ahi.context, appi->ahi.screen, 0);
+	AhiDrawSurfSrcSet(appi->ahi.context, appi->ahi.draw, 0);
+	AhiDrawSurfDstSet(appi->ahi.context, appi->ahi.screen, 0);
 
-	status |= AhiDispWaitVBlank(appi->ahi.context, 0);
-	status |=
-		AhiDrawStretchBlt(appi->ahi.context, &appi->ahi.update_params.rect, &appi->ahi.rect_bitmap, AHIFLAG_STRETCHFAST);
-
-	/*
-	status |= AhiDrawRotateBlt(appi->ahi.context,
-		&appi->ahi.rect_screen, &appi->ahi.point_bitmap, AHIROT_90, AHIMIRR_NO, 0);
-	*/
+	AhiDispWaitVBlank(appi->ahi.context, 0);
+	AhiDrawStretchBlt(appi->ahi.context, &appi->ahi.update_params.rect, &appi->ahi.rect_draw, AHIFLAG_STRETCHFAST);
 
 	if (appi->is_CSTN_display) {
-		status |= AhiDispUpdate(appi->ahi.context, &appi->ahi.update_params);
+		AhiDispUpdate(appi->ahi.context, &appi->ahi.update_params);
 	}
 
-	return status;
+	return RESULT_OK;
 }
 
 static UINT32 GFX_Draw_Start(APPLICATION_T *app) {
@@ -677,7 +683,8 @@ void pceLCDDispStart(void)
 
 void pceLCDTrans(void)
 {
-#if 0 /* Use direct videobuffer drawing without these copying convertions. */
+/* Use ATI videochip for manipulate drawing buffer (rotating, resizing, etc.) with hardware accelerated functions. */
+#if 0
 	int x, y;
 	unsigned char *vbi, *bi;
 
