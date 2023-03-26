@@ -32,7 +32,11 @@
 #include "Font.h"
 
 #define TIMER_FAST_TRIGGER_MS             (1)
+#if defined(FPS_15)
+#define TIMER_FAST_UPDATE_MS              (1000 / 15) /* ~15 FPS. */
+#elif defined(FPS_30)
 #define TIMER_FAST_UPDATE_MS              (1000 / 30) /* ~30 FPS. */
+#endif
 #define KEYPAD_BUTTONS                    (8)
 
 typedef enum {
@@ -386,27 +390,26 @@ static BOOL keypad[KEYPAD_BUTTONS];
 static BOOL autofire = FALSE;
 
 static UINT32 ProcessKeyboard(EVENT_STACK_T *ev_st, APPLICATION_T *app, UINT32 key, BOOL pressed) {
-#if defined(LANDSCAPE_ROT90)
-#define KK_2 MULTIKEY_4
-#define KK_UP MULTIKEY_LEFT
-#define KK_4 MULTIKEY_8
-#define KK_LEFT MULTIKEY_DOWN
-#define KK_6 MULTIKEY_2
-#define KK_RIGHT MULTIKEY_UP
-#define KK_8 MULTIKEY_6
-#define KK_DOWN MULTIKEY_RIGHT
-#elif defined(PORTRAIT_ROT0)
-#define KK_2 MULTIKEY_2
-#define KK_UP MULTIKEY_UP
-#define KK_4 MULTIKEY_4
-#define KK_LEFT MULTIKEY_LEFT
-#define KK_6 MULTIKEY_6
-#define KK_RIGHT MULTIKEY_RIGHT
-#define KK_8 MULTIKEY_8
-#define KK_DOWN MULTIKEY_DOWN
-#else
-#error "Unknown rotation mode!"
-#endif
+	#if defined(ROT_90_DEG_LANDSCAPE)
+		#define KK_2 MULTIKEY_4
+		#define KK_UP MULTIKEY_LEFT
+		#define KK_4 MULTIKEY_8
+		#define KK_LEFT MULTIKEY_DOWN
+		#define KK_6 MULTIKEY_2
+		#define KK_RIGHT MULTIKEY_UP
+		#define KK_8 MULTIKEY_6
+		#define KK_DOWN MULTIKEY_RIGHT
+	#elif defined(ROT_0_DEG_PORTRAIT)
+		#define KK_2 MULTIKEY_2
+		#define KK_UP MULTIKEY_UP
+		#define KK_4 MULTIKEY_4
+		#define KK_LEFT MULTIKEY_LEFT
+		#define KK_6 MULTIKEY_6
+		#define KK_RIGHT MULTIKEY_RIGHT
+		#define KK_8 MULTIKEY_8
+		#define KK_DOWN MULTIKEY_DOWN
+	#endif
+
 	switch (key) {
 		case MULTIKEY_0:
 		case MULTIKEY_SOFT_LEFT:
@@ -587,10 +590,26 @@ static UINT32 ATI_Driver_Start(APPLICATION_T *app) {
 	appi->ahi.rect_bitmap.x2 = 0 + appi->bmp_width;
 	appi->ahi.rect_bitmap.y2 = 0 + appi->bmp_height;
 
+#if defined(ROT_90_DEG_LANDSCAPE)
 	appi->ahi.rect_draw.x1 = 0;
 	appi->ahi.rect_draw.y1 = appi->bmp_height + 1;
 	appi->ahi.rect_draw.x2 = 0 + appi->bmp_height;
 	appi->ahi.rect_draw.y2 = appi->bmp_height + 1 + appi->bmp_width;
+#elif defined(ROT_0_DEG_PORTRAIT)
+	appi->ahi.rect_draw.x1 = appi->width / 2 - appi->bmp_width / 2;
+	appi->ahi.rect_draw.y1 = appi->height / 2 - appi->bmp_height / 2;
+	appi->ahi.rect_draw.x2 = (appi->width / 2 - appi->bmp_width / 2) + appi->bmp_width;
+	appi->ahi.rect_draw.y2 = (appi->height / 2 - appi->bmp_height / 2) + appi->bmp_height;
+
+	status |= AhiDrawSurfDstSet(appi->ahi.context, appi->ahi.screen, 0);
+
+	status |= AhiDrawBrushFgColorSet(appi->ahi.context, ATI_565RGB(0xFF, 0xFF, 0xFF));
+	status |= AhiDrawBrushSet(appi->ahi.context, NULL, NULL, 0, AHIFLAG_BRUSH_SOLID);
+	status |= AhiDrawRopSet(appi->ahi.context, AHIROP3(AHIROP_PATCOPY));
+	status |= AhiDrawSpans(appi->ahi.context, &appi->ahi.update_params.rect, 1, 0);
+#endif
+
+	AhiDrawRopSet(appi->ahi.context, AHIROP3(AHIROP_SRCCOPY));
 
 	return status;
 }
@@ -615,10 +634,16 @@ static UINT32 ATI_Driver_Flush(APPLICATION_T *app) {
 
 	appi = (APP_INSTANCE_T *) app;
 
+#if defined(ROT_0_DEG_PORTRAIT)
+	AhiDrawSurfDstSet(appi->ahi.context, appi->ahi.screen, 0);
+	AhiDrawBitmapBlt(appi->ahi.context,
+		&appi->ahi.rect_draw, &appi->ahi.point_bitmap, &appi->ahi.bitmap, (void *) spout_palette, 0);
+	AhiDispWaitVBlank(appi->ahi.context, 0);
+#elif defined(ROT_90_DEG_LANDSCAPE)
 	AhiDrawSurfDstSet(appi->ahi.context, appi->ahi.draw, 0);
-	AhiDrawRopSet(appi->ahi.context, AHIROP3(AHIROP_SRCCOPY));
 	AhiDrawBitmapBlt(appi->ahi.context,
 		&appi->ahi.rect_bitmap, &appi->ahi.point_bitmap, &appi->ahi.bitmap, (void *) spout_palette, 0);
+
 	AhiDrawRotateBlt(appi->ahi.context,
 		&appi->ahi.rect_draw, &appi->ahi.point_bitmap, AHIROT_90, AHIMIRR_NO, 0);
 
@@ -627,6 +652,7 @@ static UINT32 ATI_Driver_Flush(APPLICATION_T *app) {
 
 	AhiDispWaitVBlank(appi->ahi.context, 0);
 	AhiDrawStretchBlt(appi->ahi.context, &appi->ahi.update_params.rect, &appi->ahi.rect_draw, AHIFLAG_STRETCHFAST);
+#endif
 
 	if (appi->is_CSTN_display) {
 		AhiDispUpdate(appi->ahi.context, &appi->ahi.update_params);
@@ -636,39 +662,18 @@ static UINT32 ATI_Driver_Flush(APPLICATION_T *app) {
 }
 
 static UINT32 GFX_Draw_Start(APPLICATION_T *app) {
-	UINT32 status;
-	APP_INSTANCE_T *appi;
-
-	status = RESULT_OK;
-	appi = (APP_INSTANCE_T *) app;
-
 	// pceAppInit();
-
-	return status;
+	return RESULT_OK;
 }
 
 static UINT32 GFX_Draw_Stop(APPLICATION_T *app) {
-	UINT32 status;
-	APP_INSTANCE_T *appi;
-
-	status = RESULT_OK;
-	appi = (APP_INSTANCE_T *) app;
-
 	pceAppExit();
-
-	return status;
+	return RESULT_OK;
 }
 
 static UINT32 GFX_Draw_Step(APPLICATION_T *app) {
-	UINT32 status;
-	APP_INSTANCE_T *appi;
-
-	status = RESULT_OK;
-	appi = (APP_INSTANCE_T *) app;
-
 	pceAppProc(0);
-
-	return status;
+	return RESULT_OK;
 }
 
 void pceLCDDispStop(void)
