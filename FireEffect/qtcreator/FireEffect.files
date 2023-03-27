@@ -1,4 +1,5 @@
 ../FireEffect.c
 ../Makefile
-../make.bat
+../make_ep1.bat
+../make_ep2.bat
 ../ReadMe.md

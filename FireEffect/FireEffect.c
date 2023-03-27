@@ -33,8 +33,8 @@
 #define TIMER_FAST_UPDATE_MS              (1000 / 30) /* ~30 FPS. */
 #endif
 #define KEYPAD_BUTTONS                    (8)
-#define BITMAP_WIDTH                      (128)
-#define BITMAP_HEIGHT                     (88)
+#define BITMAP_WIDTH                      (100)
+#define BITMAP_HEIGHT                     (80)
 
 typedef enum {
 	APP_STATE_ANY,
@@ -395,7 +395,7 @@ static UINT32 CheckKeyboard(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
 }
 
 static UINT32 ProcessKeyboard(EVENT_STACK_T *ev_st, APPLICATION_T *app, UINT32 key, BOOL pressed) {
-	#if defined(ROT_90_DEG_LANDSCAPE)
+	#if defined(ROT_90)
 		#define KK_2 MULTIKEY_4
 		#define KK_UP MULTIKEY_LEFT
 		#define KK_4 MULTIKEY_8
@@ -404,7 +404,7 @@ static UINT32 ProcessKeyboard(EVENT_STACK_T *ev_st, APPLICATION_T *app, UINT32 k
 		#define KK_RIGHT MULTIKEY_UP
 		#define KK_8 MULTIKEY_6
 		#define KK_DOWN MULTIKEY_RIGHT
-	#elif defined(ROT_0_DEG_PORTRAIT)
+	#elif defined(ROT_0)
 		#define KK_2 MULTIKEY_2
 		#define KK_UP MULTIKEY_UP
 		#define KK_4 MULTIKEY_4
@@ -616,12 +616,12 @@ static UINT32 ATI_Driver_Start(APPLICATION_T *app) {
 	appi->ahi.rect_bitmap.x2 = 0 + appi->bmp_width;
 	appi->ahi.rect_bitmap.y2 = 0 + appi->bmp_height;
 
-#if defined(ROT_90_DEG_LANDSCAPE)
+#if defined(ROT_90)
 	appi->ahi.rect_draw.x1 = 0;
 	appi->ahi.rect_draw.y1 = appi->bmp_height + 1;
 	appi->ahi.rect_draw.x2 = 0 + appi->bmp_height;
 	appi->ahi.rect_draw.y2 = appi->bmp_height + 1 + appi->bmp_width;
-#elif defined(ROT_0_DEG_PORTRAIT)
+#elif defined(ROT_0)
 	appi->ahi.rect_draw.x1 = appi->width / 2 - appi->bmp_width / 2;
 	appi->ahi.rect_draw.y1 = appi->height / 2 - appi->bmp_height / 2;
 	appi->ahi.rect_draw.x2 = (appi->width / 2 - appi->bmp_width / 2) + appi->bmp_width;
@@ -660,12 +660,12 @@ static UINT32 ATI_Driver_Flush(APPLICATION_T *app) {
 
 	appi = (APP_INSTANCE_T *) app;
 
-#if defined(ROT_0_DEG_PORTRAIT)
+#if defined(ROT_0)
 	AhiDrawSurfDstSet(appi->ahi.context, appi->ahi.screen, 0);
 	AhiDrawBitmapBlt(appi->ahi.context,
 		&appi->ahi.rect_draw, &appi->ahi.point_bitmap, &appi->ahi.bitmap, (void *) fire_palette, 0);
 	AhiDispWaitVBlank(appi->ahi.context, 0);
-#elif defined(ROT_90_DEG_LANDSCAPE)
+#elif defined(ROT_90)
 	AhiDrawSurfDstSet(appi->ahi.context, appi->ahi.draw, 0);
 	AhiDrawBitmapBlt(appi->ahi.context,
 		&appi->ahi.rect_bitmap, &appi->ahi.point_bitmap, &appi->ahi.bitmap, (void *) fire_palette, 0);
