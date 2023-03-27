@@ -26,6 +26,8 @@
 #include <time_date.h>
 #include <utilities.h>
 
+#include "Doom_Logo.bmp.h"
+
 #define TIMER_FAST_TRIGGER_MS             (1)
 #if defined(FPS_15)
 #define TIMER_FAST_UPDATE_MS              (1000 / 15) /* ~15 FPS. */
@@ -33,8 +35,8 @@
 #define TIMER_FAST_UPDATE_MS              (1000 / 30) /* ~30 FPS. */
 #endif
 #define KEYPAD_BUTTONS                    (8)
-#define BITMAP_WIDTH                      (100)
-#define BITMAP_HEIGHT                     (80)
+#define BITMAP_WIDTH                      (44)
+#define BITMAP_HEIGHT                     (64)
 
 typedef enum {
 	APP_STATE_ANY,
@@ -627,12 +629,12 @@ static UINT32 ATI_Driver_Start(APPLICATION_T *app) {
 	appi->ahi.rect_draw.x2 = (appi->width / 2 - appi->bmp_width / 2) + appi->bmp_width;
 	appi->ahi.rect_draw.y2 = (appi->height / 2 - appi->bmp_height / 2) + appi->bmp_height;
 
-	status |= AhiDrawSurfDstSet(appi->ahi.context, appi->ahi.screen, 0);
+//	status |= AhiDrawSurfDstSet(appi->ahi.context, appi->ahi.screen, 0);
 
-	status |= AhiDrawBrushFgColorSet(appi->ahi.context, ATI_565RGB(0xFF, 0xFF, 0xFF));
-	status |= AhiDrawBrushSet(appi->ahi.context, NULL, NULL, 0, AHIFLAG_BRUSH_SOLID);
-	status |= AhiDrawRopSet(appi->ahi.context, AHIROP3(AHIROP_PATCOPY));
-	status |= AhiDrawSpans(appi->ahi.context, &appi->ahi.update_params.rect, 1, 0);
+//	status |= AhiDrawBrushFgColorSet(appi->ahi.context, ATI_565RGB(0xFF, 0xFF, 0xFF));
+//	status |= AhiDrawBrushSet(appi->ahi.context, NULL, NULL, 0, AHIFLAG_BRUSH_SOLID);
+//	status |= AhiDrawRopSet(appi->ahi.context, AHIROP3(AHIROP_PATCOPY));
+//	status |= AhiDrawSpans(appi->ahi.context, &appi->ahi.update_params.rect, 1, 0);
 #endif
 
 	AhiDrawRopSet(appi->ahi.context, AHIROP3(AHIROP_SRCCOPY));
@@ -657,29 +659,42 @@ static UINT32 ATI_Driver_Stop(APPLICATION_T *app) {
 
 static UINT32 ATI_Driver_Flush(APPLICATION_T *app) {
 	APP_INSTANCE_T *appi;
+	AHIRECT_T r;
 
 	appi = (APP_INSTANCE_T *) app;
 
-#if defined(ROT_0)
+	r.x1 = appi->ahi.rect_draw.x1;
+	r.y1 = appi->y_coord;
+	r.x2 = appi->ahi.rect_draw.x1 + bmp_doom_logo.width;
+	r.y2 = appi->y_coord + bmp_doom_logo.height;
+
 	AhiDrawSurfDstSet(appi->ahi.context, appi->ahi.screen, 0);
+
 	AhiDrawBitmapBlt(appi->ahi.context,
-		&appi->ahi.rect_draw, &appi->ahi.point_bitmap, &appi->ahi.bitmap, (void *) fire_palette, 0);
+		&r, &appi->ahi.point_bitmap, &bmp_doom_logo, NULL, 0);
+
+	AhiDrawBitmapBlt(appi->ahi.context,
+		&appi->ahi.rect_draw, &appi->ahi.point_bitmap, &appi->ahi.bitmap, (void *) fire_palette, 1);
+
+/*
+#if defined(ROT_0)
+	AhiDrawBitmapBlt(appi->ahi.context,
+		&appi->ahi.rect_draw, &appi->ahi.point_bitmap, &appi->ahi.bitmap, (void *) fire_palette, 1);
 	AhiDispWaitVBlank(appi->ahi.context, 0);
 #elif defined(ROT_90)
-	AhiDrawSurfDstSet(appi->ahi.context, appi->ahi.draw, 0);
 	AhiDrawBitmapBlt(appi->ahi.context,
-		&appi->ahi.rect_bitmap, &appi->ahi.point_bitmap, &appi->ahi.bitmap, (void *) fire_palette, 0);
+		&appi->ahi.rect_bitmap, &appi->ahi.point_bitmap, &appi->ahi.bitmap, (void *) fire_palette, 1);
 
 	AhiDrawRotateBlt(appi->ahi.context,
 		&appi->ahi.rect_draw, &appi->ahi.point_bitmap, AHIROT_90, AHIMIRR_NO, 0);
+#endif
 
 	AhiDrawSurfSrcSet(appi->ahi.context, appi->ahi.draw, 0);
 	AhiDrawSurfDstSet(appi->ahi.context, appi->ahi.screen, 0);
 
 	AhiDispWaitVBlank(appi->ahi.context, 0);
 	AhiDrawStretchBlt(appi->ahi.context, &appi->ahi.update_params.rect, &appi->ahi.rect_draw, AHIFLAG_STRETCHFAST);
-#endif
-
+*/
 	if (appi->is_CSTN_display) {
 		AhiDispUpdate(appi->ahi.context, &appi->ahi.update_params);
 	}
@@ -739,7 +754,7 @@ static UINT32 GFX_Draw_Step(APPLICATION_T *app) {
 		}
 	}
 
-	if (appi->y_coord != appi->bmp_height / 4) {
+	if (appi->y_coord != appi->bmp_height) {
 		appi->y_coord -= 2;
 	} else {
 		for(y = appi->bmp_height - 1; y > appi->bmp_height - 8; --y) {
