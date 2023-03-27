@@ -664,9 +664,9 @@ static UINT32 ATI_Driver_Flush(APPLICATION_T *app) {
 
 #if defined(ROT_0)
 	AhiDrawSurfDstSet(appi->ahi.context, appi->ahi.screen, 0);
+	AhiDispWaitVBlank(appi->ahi.context, 0);
 	AhiDrawBitmapBlt(appi->ahi.context,
 		&appi->ahi.rect_draw, &appi->ahi.point_bitmap, &appi->ahi.bitmap, (void *) spout_palette, 0);
-	AhiDispWaitVBlank(appi->ahi.context, 0);
 #elif defined(ROT_90)
 	AhiDrawSurfDstSet(appi->ahi.context, appi->ahi.draw, 0);
 	AhiDrawBitmapBlt(appi->ahi.context,
