@@ -401,7 +401,7 @@ static UINT32 ProcessKeyboard(EVENT_STACK_T *ev_st, APPLICATION_T *app, UINT32 k
 				app_instance->palette = (UINT32 *) gray_palette;
 			}
 			break;
-		case MULTIKEY_4:
+		case MULTIKEY_5:
 			if (pressed) {
 				app_instance->fire_flag = !app_instance->fire_flag;
 			}
@@ -650,8 +650,8 @@ static UINT32 ATI_Driver_Flush(APPLICATION_T *app) {
 	return RESULT_OK;
 }
 
-static void game_screen_init();
-static void game_screen_update();
+static void game_screen_init(void);
+static void game_screen_update(void);
 static void game_screen_draw(APPLICATION_T *app);
 
 static UINT32 GFX_Draw_Start(APPLICATION_T *app) {
@@ -677,13 +677,13 @@ static Fixed dy_low = FIX(0);
 static Fixed dy_high = FIX(0);
 static Fixed angle = FIX(0);
 
-static void game_screen_init() {
+static void game_screen_init(void) {
 	dy_low = FIX(0);
 	dy_high = FIX(0);
 	angle = FIX(0);
 }
 
-static void game_screen_update() {
+static void game_screen_update(void) {
 	randoms = 0;
 	rotations = 0;
 	gradients = 0;

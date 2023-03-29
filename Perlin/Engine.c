@@ -16,7 +16,7 @@ int rotations = 0;
 int gradients = 0;
 int interpolations = 0;
 
-/*
+#ifndef __P2K__
 float to_float(Fixed fp)
 {
     int int_part = fp >> FRAC_BITS;
@@ -28,7 +28,7 @@ float to_float(Fixed fp)
 
     return (float)int_part + (((float)frac_part) / (1 << FRAC_BITS));
 }
-*/
+#endif
 
 FixVector2 randomGradient(int ix, int iy)
 {
