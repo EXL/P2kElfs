@@ -36,8 +36,16 @@ set ELF_NAME=Perlin
 	-fshort-wchar -fshort-enums -fpack-struct=4 -fno-builtin -fvisibility=hidden ^
 	-I%SDK_PATH% %INCLUDES% %DEFINES% %OPTIM% %ELF_NAME%.c -o %ELF_NAME%.o
 
+%ARM_PATH%\bin\arm-eabi-gcc -c -Wall -mbig-endian -mthumb -mthumb-interwork -nostdlib ^
+	-fshort-wchar -fshort-enums -fpack-struct=4 -fno-builtin -fvisibility=hidden ^
+	-I%SDK_PATH% %INCLUDES% %DEFINES% %OPTIM% Engine.c -o Engine.o
+
+%ARM_PATH%\bin\arm-eabi-gcc -c -Wall -mbig-endian -mthumb -mthumb-interwork -nostdlib ^
+	-fshort-wchar -fshort-enums -fpack-struct=4 -fno-builtin -fvisibility=hidden ^
+	-I%SDK_PATH% %INCLUDES% %DEFINES% %OPTIM% Trig.c -o Trig.o
+
 :: Linking step.
-%ARM_PATH%\bin\arm-eabi-ld -pie -EB %OPTIM% -nostdlib %ELF_NAME%.o ^
+%ARM_PATH%\bin\arm-eabi-ld -pie -EB %OPTIM% -nostdlib %ELF_NAME%.o Engine.o Trig.o ^
 	%LIB_PATH%\%LIB_MAIN% %LIB_PATH%\%LIB_LIBC% -o %ELF_NAME%_p.elf
 
 :: Post linking step.
