@@ -15,7 +15,7 @@ LIB_PATH = $(ARM_PATH)/lib
 LIB_MAIN = Lib.o
 
 # Defines.
-DEFINES = -D__P2K__ -DEP1 -DROT_90 -DFPS_30
+DEFINES = -D__P2K__ -DEP1 -DROT_90 -DFPS_15
 
 # ELF name.
 ELF_NAME = Perlin

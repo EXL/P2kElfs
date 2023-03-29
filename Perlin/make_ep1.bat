@@ -32,6 +32,11 @@ set ELF_NAME=Perlin
 %ARM_PATH%\armlink -nolocals -reloc -first %LIB_MAIN%(Lib) %ELF_NAME%.o Engine.o Trig.o %LIB_PATH%\%LIB_MAIN% ^
 	-o %ELF_NAME%.elf
 
+:: Renaming step.
+del *.o
+del *_p.elf
+move /y %ELF_NAME%.elf %ELF_NAME%_EP1.elf
+
 if /I "%1"=="clean" (
 	del %ELF_NAME%.o
 	del %ELF_NAME%.elf
