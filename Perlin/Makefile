@@ -23,8 +23,12 @@ ELF_NAME = Perlin
 all:
 	$(ARM_PATH)/bin/tcc -I$(SDK_PATH) $(DEFINES) -bigend -apcs /interwork -O2 -c $(ELF_NAME).c \
 		-o $(ELF_NAME).o
-	$(ARM_PATH)/bin/armlink -nolocals -reloc -first $(LIB_MAIN)\(Lib\) $(ELF_NAME).o $(LIB_PATH)/$(LIB_MAIN) \
-		-o $(ELF_NAME).elf
+	$(ARM_PATH)/bin/tcc -I$(SDK_PATH) $(DEFINES) -bigend -apcs /interwork -O2 -c Engine.c \
+		-o Engine.o
+	$(ARM_PATH)/bin/tcc -I$(SDK_PATH) $(DEFINES) -bigend -apcs /interwork -O2 -c Trig.c \
+		-o Trig.o
+	$(ARM_PATH)/bin/armlink -nolocals -reloc -first $(LIB_MAIN)\(Lib\) $(ELF_NAME).o Engine.o Trig.o \
+		$(LIB_PATH)/$(LIB_MAIN) -o $(ELF_NAME).elf
 
 clean:
 	-rm -f $(ELF_NAME).o

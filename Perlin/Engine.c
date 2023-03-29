@@ -1,11 +1,6 @@
 #include "Engine.h"
 #include "Trig.h"
 
-#include <typedefs.h>
-void memcpy(void *dst, void *src, size_t sz) {
-	__rt_memcpy((void *)dst,(void *)src,(size_t)sz);
-}
-
 typedef struct FixVector2_
 {
     Fixed x;
@@ -171,7 +166,7 @@ void perlin16_fast(int width, int height, Fixed angle)
 			uchar y1;
 			Fixed x, y;
 			int i;
-			Fixed n0, n1, ix0, ix1;
+			Fixed ix0, ix1;
 
             if (x0 == 0)
             {

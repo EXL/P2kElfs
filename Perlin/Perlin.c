@@ -709,7 +709,7 @@ static void game_screen_draw(APPLICATION_T *app) {
 		Fixed one_over_screen_height = FIX_DIV(ONE, FIX(NOKIA_3110_SCREEN_HEIGHT));
 		for (j = 0; j < NOKIA_3110_SCREEN_HEIGHT; j++) {
 			for (i = 0; i < NOKIA_3110_SCREEN_WIDTH - 1; i++) {
-				if (i + j & 1) {
+				if ((i + j) & 1) {
 					Fixed val_high, res;
 					Fixed val_low = perlin(FIX(i) / cell_size, FIX(j) / cell_size + dy_low, angle, 0);
 					Fixed mul = FIX_MUL(FIX(j), one_over_screen_height);

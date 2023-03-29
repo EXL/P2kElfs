@@ -44,6 +44,11 @@ set ELF_NAME=Perlin
 	-fshort-wchar -fshort-enums -fpack-struct=4 -fno-builtin -fvisibility=hidden ^
 	-I%SDK_PATH% %INCLUDES% %DEFINES% %OPTIM% Trig.c -o Trig.o
 
+:: HACK:
+:: Highly intelligent GCC compiler optimizes struct arguments in variadic functions
+:: using the explicit `memcpy()` call and this feature can't be disabled.
+%ARM_PATH%\bin\arm-eabi-objcopy --redefine-sym memcpy=__rt_memcpy Engine.o
+
 :: Linking step.
 %ARM_PATH%\bin\arm-eabi-ld -pie -EB %OPTIM% -nostdlib %ELF_NAME%.o Engine.o Trig.o ^
 	%LIB_PATH%\%LIB_MAIN% %LIB_PATH%\%LIB_LIBC% -o %ELF_NAME%_p.elf
