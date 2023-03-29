@@ -460,10 +460,10 @@ static void FPS_Meter(void) {
 	}
 
 	if (one > 30) {
-		UtilLogStringData("FPS x 10: %d\n", fps);
-		PFprintf("FPS x 10: %d\n", fps);
+		UtilLogStringData("FPS: %d.%d\n", fps / 10, fps % 10);
+		PFprintf("FPS: %d.%d\n", fps / 10, fps % 10);
 #if defined(EP2)
-		cprintf("FPS x 10: %d\n", fps);
+		cprintf("FPS: %d.%d\n", fps / 10, fps % 10);
 #endif
 		one = 0;
 	}
