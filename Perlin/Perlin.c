@@ -82,6 +82,9 @@ typedef struct {
 	APP_KEYBOARD_T keys;
 	UINT32 timer_handle;
 	UINT8 keyboard_volume_level;
+
+	UINT32 *palette;
+	BOOL fire_flag;
 } APP_INSTANCE_T;
 
 #if defined(EP1)
@@ -115,9 +118,19 @@ static UINT32 GFX_Draw_Step(APPLICATION_T *app);
 
 static const char g_app_name[APP_NAME_LEN] = "Perlin";
 
-static const UINT32 spout_palette[] = {
-	ATI_565RGB(0xC7, 0xF0, 0xD8), /*  0 */
-	ATI_565RGB(0x43, 0x52, 0x3D), /*  1 */
+static const UINT32 orig_palette[] = {
+	ATI_565RGB(0xC7, 0xF0, 0xD8), /* background */
+	ATI_565RGB(0x43, 0x52, 0x3D), /* foreground */
+};
+
+static const UINT32 harsh_palette[] = {
+	ATI_565RGB(0x9B, 0xC7, 0x00), /* background */
+	ATI_565RGB(0x2B, 0x3F, 0x09), /* foreground */
+};
+
+static const UINT32 gray_palette[] = {
+	ATI_565RGB(0x87, 0x91, 0x88), /* background */
+	ATI_565RGB(0x1A, 0x19, 0x14), /* foreground */
 };
 
 #if defined(EP2)
@@ -205,6 +218,8 @@ static UINT32 ApplicationStart(EVENT_STACK_T *ev_st, REG_ID_T reg_id, void *reg_
 		app_instance->timer_handle = 0;
 		app_instance->keys.pressed = 0;
 		app_instance->keys.released = 0;
+		app_instance->palette = (UINT32 *) harsh_palette;
+		app_instance->fire_flag = FALSE;
 
 		pixels = NULL;
 
@@ -362,25 +377,9 @@ static UINT32 CheckKeyboard(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
 }
 
 static UINT32 ProcessKeyboard(EVENT_STACK_T *ev_st, APPLICATION_T *app, UINT32 key, BOOL pressed) {
-	#if defined(ROT_90)
-		#define KK_2 MULTIKEY_4
-		#define KK_UP MULTIKEY_LEFT
-		#define KK_4 MULTIKEY_8
-		#define KK_LEFT MULTIKEY_DOWN
-		#define KK_6 MULTIKEY_2
-		#define KK_RIGHT MULTIKEY_UP
-		#define KK_8 MULTIKEY_6
-		#define KK_DOWN MULTIKEY_RIGHT
-	#elif defined(ROT_0)
-		#define KK_2 MULTIKEY_2
-		#define KK_UP MULTIKEY_UP
-		#define KK_4 MULTIKEY_4
-		#define KK_LEFT MULTIKEY_LEFT
-		#define KK_6 MULTIKEY_6
-		#define KK_RIGHT MULTIKEY_RIGHT
-		#define KK_8 MULTIKEY_8
-		#define KK_DOWN MULTIKEY_DOWN
-	#endif
+	APP_INSTANCE_T *app_instance;
+
+	app_instance = (APP_INSTANCE_T *) app;
 
 	switch (key) {
 		case MULTIKEY_0:
@@ -388,28 +387,24 @@ static UINT32 ProcessKeyboard(EVENT_STACK_T *ev_st, APPLICATION_T *app, UINT32 k
 			app->exit_status = TRUE;
 			break;
 		case MULTIKEY_1:
+			if (pressed) {
+				app_instance->palette = (UINT32 *) orig_palette;
+			}
 			break;
-		case KK_2:
-		case KK_UP:
+		case MULTIKEY_2:
+			if (pressed) {
+				app_instance->palette = (UINT32 *) harsh_palette;
+			}
 			break;
 		case MULTIKEY_3:
+			if (pressed) {
+				app_instance->palette = (UINT32 *) gray_palette;
+			}
 			break;
-		case KK_4:
-		case KK_LEFT:
-			break;
-		case MULTIKEY_5:
-		case MULTIKEY_JOY_OK:
-			break;
-		case KK_6:
-		case KK_RIGHT:
-			break;
-		case MULTIKEY_7:
-			break;
-		case KK_8:
-		case KK_DOWN:
-			break;
-		case MULTIKEY_9:
-		case MULTIKEY_SOFT_RIGHT:
+		case MULTIKEY_4:
+			if (pressed) {
+				app_instance->fire_flag = !app_instance->fire_flag;
+			}
 			break;
 		default:
 			break;
@@ -632,11 +627,11 @@ static UINT32 ATI_Driver_Flush(APPLICATION_T *app) {
 	AhiDrawSurfDstSet(appi->ahi.context, appi->ahi.screen, 0);
 	AhiDispWaitVBlank(appi->ahi.context, 0);
 	AhiDrawBitmapBlt(appi->ahi.context,
-					 &appi->ahi.rect_draw, &appi->ahi.point_bitmap, &appi->ahi.bitmap, (void *) spout_palette, 0);
+					 &appi->ahi.rect_draw, &appi->ahi.point_bitmap, &appi->ahi.bitmap, appi->palette, 0);
 #elif defined(ROT_90)
 	AhiDrawSurfDstSet(appi->ahi.context, appi->ahi.draw, 0);
 	AhiDrawBitmapBlt(appi->ahi.context,
-					 &appi->ahi.rect_bitmap, &appi->ahi.point_bitmap, &appi->ahi.bitmap, (void *) spout_palette, 0);
+					 &appi->ahi.rect_bitmap, &appi->ahi.point_bitmap, &appi->ahi.bitmap, appi->palette, 0);
 
 	AhiDrawRotateBlt(appi->ahi.context,
 					 &appi->ahi.rect_draw, &appi->ahi.point_bitmap, AHIROT_90, AHIMIRR_NO, 0);
@@ -655,9 +650,9 @@ static UINT32 ATI_Driver_Flush(APPLICATION_T *app) {
 	return RESULT_OK;
 }
 
-void game_screen_init();
-void game_screen_update();
-void game_screen_draw();
+static void game_screen_init();
+static void game_screen_update();
+static void game_screen_draw(APPLICATION_T *app);
 
 static UINT32 GFX_Draw_Start(APPLICATION_T *app) {
 	game_screen_init();
@@ -674,34 +669,36 @@ static UINT32 GFX_Draw_Stop(APPLICATION_T *app) {
 static UINT32 GFX_Draw_Step(APPLICATION_T *app) {
 	game_screen_update();
 	memset(pixels, 0, NOKIA_3110_SCREEN_WIDTH * NOKIA_3110_SCREEN_HEIGHT);
-	game_screen_draw();
+	game_screen_draw(app);
 	return RESULT_OK;
 }
 
-Fixed dy_low = FIX(0);
-Fixed dy_high = FIX(0);
-Fixed angle = FIX(0);
+static Fixed dy_low = FIX(0);
+static Fixed dy_high = FIX(0);
+static Fixed angle = FIX(0);
 
-int fire_flag = 0;
-
-void game_screen_init() {
+static void game_screen_init() {
 	dy_low = FIX(0);
 	dy_high = FIX(0);
 	angle = FIX(0);
 }
 
-void game_screen_update() {
+static void game_screen_update() {
 	randoms = 0;
 	rotations = 0;
 	gradients = 0;
 	interpolations = 0;
 }
 
-void game_screen_draw() {
+static void game_screen_draw(APPLICATION_T *app) {
+	APP_INSTANCE_T *app_instance;
+
+	app_instance = (APP_INSTANCE_T *) app;
+
 	dy_low += ONE / 6;
 	dy_high += ONE / 4;
 
-	if (!fire_flag) {
+	if (!app_instance->fire_flag) {
 		angle -= FIX(8);
 		perlin16_fast(NOKIA_3110_SCREEN_WIDTH, NOKIA_3110_SCREEN_HEIGHT, angle);
 	} else {
