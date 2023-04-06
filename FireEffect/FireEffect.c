@@ -33,8 +33,9 @@
 #define TIMER_FAST_UPDATE_MS              (1000 / 30) /* ~30 FPS. */
 #endif
 #define KEYPAD_BUTTONS                    (8)
-#define BITMAP_WIDTH                      (100)
-#define BITMAP_HEIGHT                     (80)
+#define BITMAP_WIDTH                      (64)
+#define BITMAP_HEIGHT                     (48)
+#define START_Y_COORD                     (220)
 
 typedef enum {
 	APP_STATE_ANY,
@@ -78,6 +79,7 @@ typedef struct {
 
 	UINT8 *p_fire;
 	UINT16 y_coord;
+	BOOL flag_restart_demo;
 
 	APP_AHI_T ahi;
 	APP_KEYBOARD_T keys;
@@ -113,6 +115,8 @@ static UINT32 ATI_Driver_Flush(APPLICATION_T *app);
 static UINT32 GFX_Draw_Start(APPLICATION_T *app);
 static UINT32 GFX_Draw_Stop(APPLICATION_T *app);
 static UINT32 GFX_Draw_Step(APPLICATION_T *app);
+
+static BOOL Fire_Demo_Is_Scree_Empty(APPLICATION_T *app);
 
 static const char g_app_name[APP_NAME_LEN] = "FireEffect";
 
@@ -240,6 +244,7 @@ static UINT32 ApplicationStart(EVENT_STACK_T *ev_st, REG_ID_T reg_id, void *reg_
 		app_instance->timer_handle = 0;
 		app_instance->keys.pressed = 0;
 		app_instance->keys.released = 0;
+		app_instance->flag_restart_demo = FALSE;
 
 		DL_AudGetVolumeSetting(PHONE, &app_instance->keyboard_volume_level);
 		DL_AudSetVolumeSetting(PHONE, 0);
@@ -688,13 +693,11 @@ static UINT32 ATI_Driver_Flush(APPLICATION_T *app) {
 }
 
 static UINT32 GFX_Draw_Start(APPLICATION_T *app) {
-	UINT32 status;
 	APP_INSTANCE_T *appi;
 
-	status = RESULT_OK;
 	appi = (APP_INSTANCE_T *) app;
 
-	appi->y_coord = 440;
+	appi->y_coord = START_Y_COORD;
 	appi->p_fire = (UINT8 *) appi->ahi.bitmap.image;
 
 	/* Fill all screen to RGB(0x07, 0x07, 0x07) except last line. */
@@ -722,9 +725,16 @@ static UINT32 GFX_Draw_Stop(APPLICATION_T *app) {
 static UINT32 GFX_Draw_Step(APPLICATION_T *app) {
 	UINT16 x;
 	UINT16 y;
+	UINT16 start;
+	UINT16 stop;
 	APP_INSTANCE_T *appi;
 
 	appi = (APP_INSTANCE_T *) app;
+
+	if (appi->flag_restart_demo) {
+		GFX_Draw_Start(app);
+		appi->flag_restart_demo = FALSE;
+	}
 
 	for (x = 0; x < appi->bmp_width; ++x) {
 		for (y = 1; y < appi->bmp_height; ++y) {
@@ -739,17 +749,38 @@ static UINT32 GFX_Draw_Step(APPLICATION_T *app) {
 		}
 	}
 
+	start = appi->bmp_height - 1;
+	stop = appi->bmp_height - 8;
+
 	if (appi->y_coord != appi->bmp_height / 4) {
 		appi->y_coord -= 2;
 	} else {
-		for(y = appi->bmp_height - 1; y > appi->bmp_height - 8; --y) {
+		for(y = start; y > stop; --y) {
 			for(x = 0; x < appi->bmp_width; ++x) {
 				if (appi->p_fire[y * appi->bmp_width + x] > 0) {
 					appi->p_fire[y * appi->bmp_width + x] -= ((rand() % 2) & 3);
 				}
 			}
 		}
+		appi->flag_restart_demo = Fire_Demo_Is_Scree_Empty(app);
 	}
 
 	return RESULT_OK;
+}
+
+static BOOL Fire_Demo_Is_Scree_Empty(APPLICATION_T *app) {
+	UINT16 i;
+	UINT16 stop;
+	APP_INSTANCE_T *appi;
+
+	appi = (APP_INSTANCE_T *) app;
+
+	stop = appi->bmp_width * appi->bmp_height;
+	for (i = 0; i < stop; ++i) {
+		if (appi->p_fire[i]) {
+			return FALSE;
+		}
+	}
+
+	return TRUE;
 }

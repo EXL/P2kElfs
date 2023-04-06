@@ -20,7 +20,7 @@ set LIB_MAIN=std.sa
 set LIB_LIBC=libc.a
 
 :: Defines.
-set DEFINES=-D__P2K__ -DEP2 -DROT_90 -DFPS_30 -DFPS_METER
+set DEFINES=-D__P2K__ -DEP2 -DROT_90 -DFPS_30
 
 :: Includes.
 set INCLUDES=-I..\src\
