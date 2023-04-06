@@ -14,7 +14,7 @@ Port of the "Perlin" plasma and fire demo by [@BOOtak](https://github.com/BOOtak
 ## Key controls
 
 * 1, 2, 3 - Change palette.
-* 5 - Enable or disable fire demo.
+* 5 - Enable or disable fire demo (slow!).
 * Left Soft Key, End Key, 0 - Quit.
 
 ## Additional information
