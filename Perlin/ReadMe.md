@@ -1,7 +1,7 @@
 Perlin
 ======
 
-Port of the "Perlin" plasma and fire demo by [@BOOtak](https://github.com/BOOtak) (Kirill Leyfer) to the Motorola P2K phones platform.
+Port of the "Perlin" plasma and fire demo by [@BOOtak](https://github.com/BOOtak) (Kirill Leyfer) from DCT-3 platform (Nokia 3310) to the Motorola P2K phones platform.
 
 ## Screenshots from Motorola SLVR L6
 
