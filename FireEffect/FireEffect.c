@@ -9,7 +9,7 @@
  *   MIT
  *
  * Additional information:
- *   https://fabiensanglard.net/doom_fire_psx/
+ *   https://fabiensanglard.net/doom_fire_psx
  *   https://github.com/EXL/Stuff/tree/master/Sandbox/SDL/doom_fire_demo
  *
  * Application type:
