@@ -47,7 +47,7 @@ set PCS_NAME=Piece
 :: Renaming step.
 del *.o
 del *_p.elf
-move /y %ELF_NAME%.elf %ELF_NAME%_EP2_D90_F30.elf
+move /y %ELF_NAME%.elf %ELF_NAME%_EP2_R90_F30.elf
 
 :: Compiling step.
 %ARM_PATH%\bin\arm-eabi-gcc -c -Wall -mbig-endian -mthumb -mthumb-interwork -nostdlib ^
@@ -64,7 +64,7 @@ move /y %ELF_NAME%.elf %ELF_NAME%_EP2_D90_F30.elf
 :: Renaming step.
 del *.o
 del *_p.elf
-move /y %ELF_NAME%.elf %ELF_NAME%_EP2_D90_F15.elf
+move /y %ELF_NAME%.elf %ELF_NAME%_EP2_R90_F15.elf
 
 :: Compiling step.
 %ARM_PATH%\bin\arm-eabi-gcc -c -Wall -mbig-endian -mthumb -mthumb-interwork -nostdlib ^
@@ -81,7 +81,7 @@ move /y %ELF_NAME%.elf %ELF_NAME%_EP2_D90_F15.elf
 :: Renaming step.
 del *.o
 del *_p.elf
-move /y %ELF_NAME%.elf %ELF_NAME%_EP2_D0_F30.elf
+move /y %ELF_NAME%.elf %ELF_NAME%_EP2_R0_F30.elf
 
 :: Compiling step.
 %ARM_PATH%\bin\arm-eabi-gcc -c -Wall -mbig-endian -mthumb -mthumb-interwork -nostdlib ^
@@ -98,7 +98,7 @@ move /y %ELF_NAME%.elf %ELF_NAME%_EP2_D0_F30.elf
 :: Renaming step.
 del *.o
 del *_p.elf
-move /y %ELF_NAME%.elf %ELF_NAME%_EP2_D0_F15.elf
+move /y %ELF_NAME%.elf %ELF_NAME%_EP2_R0_F15.elf
 
 :: Clean step.
 if /I "%1"=="clean" (
