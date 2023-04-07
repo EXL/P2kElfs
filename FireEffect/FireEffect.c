@@ -116,7 +116,7 @@ static UINT32 GFX_Draw_Start(APPLICATION_T *app);
 static UINT32 GFX_Draw_Stop(APPLICATION_T *app);
 static UINT32 GFX_Draw_Step(APPLICATION_T *app);
 
-static BOOL Fire_Demo_Is_Scree_Empty(APPLICATION_T *app);
+static BOOL Fire_Demo_Is_Screen_Empty(APPLICATION_T *app);
 
 static const char g_app_name[APP_NAME_LEN] = "FireEffect";
 
@@ -762,13 +762,13 @@ static UINT32 GFX_Draw_Step(APPLICATION_T *app) {
 				}
 			}
 		}
-		appi->flag_restart_demo = Fire_Demo_Is_Scree_Empty(app);
+		appi->flag_restart_demo = Fire_Demo_Is_Screen_Empty(app);
 	}
 
 	return RESULT_OK;
 }
 
-static BOOL Fire_Demo_Is_Scree_Empty(APPLICATION_T *app) {
+static BOOL Fire_Demo_Is_Screen_Empty(APPLICATION_T *app) {
 	UINT16 i;
 	UINT16 stop;
 	APP_INSTANCE_T *appi;
