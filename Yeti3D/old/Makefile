@@ -1,8 +1,33 @@
-all: linux
+# This Makefile was edited by EXL, 20-Apr-2023.
+# Default platform is Motorola P2K, ElfPack v1.x, ADS1.2 [Build 848] on Linux.
+# Warning: `-nodebug` flag option for `armlink` is buggy.
 
-linux:
-	g++ -O2 -DPLATFORM_SDL data.cpp draw.cpp main.cpp yeti.cpp -o yeti3d.elf -lSDL
+# Compiler path.
+ARM_PATH = /opt/arm
+
+# SDK path.
+SDK_PATH = $(ARM_PATH)/SDK
+
+# Libraries path.
+LIB_PATH = $(ARM_PATH)/lib
+
+# Main link library.
+LIB_MAIN = Lib.o
+
+# Defines.
+DEFINES = -D__P2K__ -DEP1 -DROT_90 -DFPS_30
+
+# ELF name.
+ELF_NAME = Yeti3D
+
+all:
+	$(ARM_PATH)/bin/armcpp -I$(SDK_PATH) $(DEFINES) -bigend -apcs /interwork -O2 -c data.cpp -o data.o
+	$(ARM_PATH)/bin/armcpp -I$(SDK_PATH) $(DEFINES) -bigend -apcs /interwork -O2 -c draw.cpp -o draw.o
+	$(ARM_PATH)/bin/armcpp -I$(SDK_PATH) $(DEFINES) -bigend -apcs /interwork -O2 -c yeti.cpp -o yeti.o
+	$(ARM_PATH)/bin/tcc -I$(SDK_PATH) $(DEFINES) -bigend -apcs /interwork -O2 -c $(ELF_NAME).c -o $(ELF_NAME).o
+	$(ARM_PATH)/bin/armlink -nolocals -reloc -first $(LIB_MAIN)\(Lib\) data.o draw.o yeti.o $(ELF_NAME).o \
+		$(LIB_PATH)/$(LIB_MAIN) -o $(ELF_NAME).elf
 
 clean:
-	-rm -Rf *.o
-	-rm -Rf *.elf
+	-rm -f *.o
+	-rm -f $(ELF_NAME).elf
