@@ -45,8 +45,13 @@ void behaviour(entity_t* const e)
 
 void world_create(world_t* world)
 {
+#if defined(PLATFORM_GBA)
   world->screen = (viewport_t*) 0x06000000;
   world->buffer = (viewport_t*) 0x0600A000;
+#elif defined(PLATFORM_SDL)
+  world->screen = (viewport_t*) malloc(VIEWPORT_WIDTH * VIEWPORT_HEIGHT * 2);
+  world->buffer = (viewport_t*) malloc(VIEWPORT_WIDTH * VIEWPORT_HEIGHT * 2);
+#endif
 
   camera->x = MAP_SIZE << 15;
   camera->y = MAP_SIZE << 15;
@@ -58,6 +63,7 @@ int main(void)
 {
   int x, y;
 
+#if defined(PLATFORM_GBA)
   *(short*)0x4000000 = 0x405;
   *(short*)0x4000020 = 0;
   *(short*)0x4000022 = -128;
@@ -65,6 +71,7 @@ int main(void)
   *(short*)0x4000026 = 0;
   *(short*)0x4000028 = i2f(120);
   *(short*)0x400002C = i2f(4);
+#endif
 
   world_create(&world);
 

@@ -84,11 +84,19 @@ extern const int sintable[2048];
 #define fixsin(A) (fixsin16(A)>>8)
 #define fixcos(A) (fixcos16(A)>>8)
 
+#if defined(PLATFORM_GBA)
 #define ROMMEM __attribute__ ((section (".ewram")))
 #define CODE_IN_IWRAM __attribute__ ((section (".iwram"), long_call))
 #define CODE_IN_ROM __attribute__ ((section (".text"), long_call))
 #define IN_IWRAM __attribute__ ((section (".iwram")))
 #define IN_EWRAM __attribute__ ((section (".ewram")))
+#else
+#define ROMMEM
+#define CODE_IN_IWRAM
+#define CODE_IN_ROM
+#define IN_IWRAM
+#define IN_EWRAM
+#endif
 
 struct vec2_t
 {
@@ -328,6 +336,7 @@ extern IN_EWRAM entity_t entities[];
 extern int nentities;
 extern entity_t* camera;
 
+#if defined(PLATFORM_GBA)
 #define KEY_STATE (*(unsigned long*)0x04000130)
 
 #define KEY_SELECT !(KEY_STATE & 4)
@@ -335,6 +344,15 @@ extern entity_t* camera;
 #define KEY_LEFT !(KEY_STATE & 32)
 #define KEY_UP !(KEY_STATE & 64)
 #define KEY_DOWN !(KEY_STATE & 128)
+#elif defined(PLATFORM_SDL)
+#define KEY_STATE (4)
+
+#define KEY_SELECT !(KEY_STATE & 4)
+#define KEY_RIGHT !(KEY_STATE & 16)
+#define KEY_LEFT !(KEY_STATE & 32)
+#define KEY_UP !(KEY_STATE & 64)
+#define KEY_DOWN !(KEY_STATE & 128)
+#endif
 
 void entity_to_world_collision(entity_t* const e, int const radius);
 entity_t* entity_create(int x, int y, int z);
