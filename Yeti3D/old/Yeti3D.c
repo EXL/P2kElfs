@@ -117,49 +117,11 @@ static UINT32 GFX_Draw_Step(APPLICATION_T *app);
 
 static const char g_app_name[APP_NAME_LEN] = "FireEffect";
 
-static const UINT32 fire_palette[] = {
-	ATI_565RGB(0x07, 0x07, 0x07), /*  0 */
-	ATI_565RGB(0x1F, 0x07, 0x07), /*  1 */
-	ATI_565RGB(0x2F, 0x0F, 0x07), /*  2 */
-	ATI_565RGB(0x47, 0x0F, 0x07), /*  3 */
-	ATI_565RGB(0x57, 0x17, 0x07), /*  4 */
-	ATI_565RGB(0x67, 0x1F, 0x07), /*  5 */
-	ATI_565RGB(0x77, 0x1F, 0x07), /*  6 */
-	ATI_565RGB(0x8F, 0x27, 0x07), /*  7 */
-	ATI_565RGB(0x9F, 0x2F, 0x07), /*  8 */
-	ATI_565RGB(0xAF, 0x3F, 0x07), /*  9 */
-	ATI_565RGB(0xBF, 0x47, 0x07), /* 10 */
-	ATI_565RGB(0xC7, 0x47, 0x07), /* 11 */
-	ATI_565RGB(0xDF, 0x4F, 0x07), /* 12 */
-	ATI_565RGB(0xDF, 0x57, 0x07), /* 13 */
-	ATI_565RGB(0xDF, 0x57, 0x07), /* 14 */
-	ATI_565RGB(0xD7, 0x5F, 0x07), /* 15 */
-	ATI_565RGB(0xD7, 0x5F, 0x07), /* 16 */
-	ATI_565RGB(0xD7, 0x67, 0x0F), /* 17 */
-	ATI_565RGB(0xCF, 0x6F, 0x0F), /* 18 */
-	ATI_565RGB(0xCF, 0x77, 0x0F), /* 19 */
-	ATI_565RGB(0xCF, 0x7F, 0x0F), /* 20 */
-	ATI_565RGB(0xCF, 0x87, 0x17), /* 21 */
-	ATI_565RGB(0xC7, 0x87, 0x17), /* 22 */
-	ATI_565RGB(0xC7, 0x8F, 0x17), /* 23 */
-	ATI_565RGB(0xC7, 0x97, 0x1F), /* 24 */
-	ATI_565RGB(0xBF, 0x9F, 0x1F), /* 25 */
-	ATI_565RGB(0xBF, 0x9F, 0x1F), /* 26 */
-	ATI_565RGB(0xBF, 0xA7, 0x27), /* 27 */
-	ATI_565RGB(0xBF, 0xA7, 0x27), /* 28 */
-	ATI_565RGB(0xBF, 0xAF, 0x2F), /* 29 */
-	ATI_565RGB(0xB7, 0xAF, 0x2F), /* 30 */
-	ATI_565RGB(0xB7, 0xB7, 0x2F), /* 31 */
-	ATI_565RGB(0xB7, 0xB7, 0x37), /* 32 */
-	ATI_565RGB(0xCF, 0xCF, 0x6F), /* 33 */
-	ATI_565RGB(0xDF, 0xDF, 0x9F), /* 34 */
-	ATI_565RGB(0xEF, 0xEF, 0xC7), /* 35 */
-	ATI_565RGB(0xFF, 0xFF, 0xFF)  /* 36 */
-};
-
 #if defined(EP2)
 static ldrElf g_app_elf;
 #endif
+
+static int m_KEY_UP, m_KEY_DOWN, m_KEY_LEFT, m_KEY_RIGHT = 0;
 
 static EVENT_HANDLER_ENTRY_T g_state_any_hdls[] = {
 	{ EV_REVOKE_TOKEN, APP_HandleUITokenRevoked },
@@ -406,14 +368,14 @@ static UINT32 ProcessKeyboard(EVENT_STACK_T *ev_st, APPLICATION_T *app, UINT32 k
 		#define KK_8 MULTIKEY_6
 		#define KK_DOWN MULTIKEY_RIGHT
 	#elif defined(ROT_0)
-		#define KK_2 MULTIKEY_2
-		#define KK_UP MULTIKEY_UP
-		#define KK_4 MULTIKEY_4
-		#define KK_LEFT MULTIKEY_LEFT
-		#define KK_6 MULTIKEY_6
-		#define KK_RIGHT MULTIKEY_RIGHT
-		#define KK_8 MULTIKEY_8
-		#define KK_DOWN MULTIKEY_DOWN
+		#define KK_2 MULTIKEY_6
+		#define KK_UP MULTIKEY_RIGHT
+		#define KK_4 MULTIKEY_2
+		#define KK_LEFT MULTIKEY_UP
+		#define KK_6 MULTIKEY_8
+		#define KK_RIGHT MULTIKEY_DOWN
+		#define KK_8 MULTIKEY_4
+		#define KK_DOWN MULTIKEY_LEFT
 	#endif
 
 	switch (key) {
@@ -425,22 +387,26 @@ static UINT32 ProcessKeyboard(EVENT_STACK_T *ev_st, APPLICATION_T *app, UINT32 k
 			break;
 		case KK_2:
 		case KK_UP:
+			m_KEY_UP = pressed;
 			break;
 		case MULTIKEY_3:
 			break;
 		case KK_4:
 		case KK_LEFT:
+			m_KEY_LEFT = pressed;
 			break;
 		case MULTIKEY_5:
 		case MULTIKEY_JOY_OK:
 			break;
 		case KK_6:
 		case KK_RIGHT:
+			m_KEY_RIGHT = pressed;
 			break;
 		case MULTIKEY_7:
 			break;
 		case KK_8:
 		case KK_DOWN:
+			m_KEY_DOWN = pressed;
 			break;
 		case MULTIKEY_9:
 		case MULTIKEY_SOFT_RIGHT:
@@ -664,12 +630,12 @@ static UINT32 ATI_Driver_Flush(APPLICATION_T *app) {
 #if defined(ROT_0)
 	AhiDrawSurfDstSet(appi->ahi.context, appi->ahi.screen, 0);
 	AhiDrawBitmapBlt(appi->ahi.context,
-		&appi->ahi.rect_draw, &appi->ahi.point_bitmap, &appi->ahi.bitmap, (void *) fire_palette, 0);
+		&appi->ahi.rect_draw, &appi->ahi.point_bitmap, &appi->ahi.bitmap, NULL, 0);
 	AhiDispWaitVBlank(appi->ahi.context, 0);
 #elif defined(ROT_90)
 	AhiDrawSurfDstSet(appi->ahi.context, appi->ahi.draw, 0);
 	AhiDrawBitmapBlt(appi->ahi.context,
-		&appi->ahi.rect_bitmap, &appi->ahi.point_bitmap, &appi->ahi.bitmap, (void *) fire_palette, 0);
+		&appi->ahi.rect_bitmap, &appi->ahi.point_bitmap, &appi->ahi.bitmap, NULL, 0);
 
 	AhiDrawRotateBlt(appi->ahi.context,
 		&appi->ahi.rect_draw, &appi->ahi.point_bitmap, AHIROT_90, AHIMIRR_NO, 0);
@@ -689,32 +655,31 @@ static UINT32 ATI_Driver_Flush(APPLICATION_T *app) {
 }
 
 static entity_t* box;
+texture_t *textures;
 
 static void behaviour(entity_t* const e)
 {
-#if 0
-  if (KEY_LEFT)
+  if (m_KEY_LEFT)
   {
     e->tt -= (12 << 16);
     e->r -= 800000;
   }
-  if (KEY_RIGHT)
+  if (m_KEY_RIGHT)
   {
     e->tt += (12 << 16);
     e->r += 800000;
   }
 
-  if (KEY_UP)
+  if (m_KEY_UP)
   {
     e->xx += fixsin16(e->t >> 16) >> 5;
     e->yy += fixcos16(e->t >> 16) >> 5;
   }
-  if (KEY_DOWN)
+  if (m_KEY_DOWN)
   {
     e->xx -= fixsin16(e->t >> 16) >> 5;
     e->yy -= fixcos16(e->t >> 16) >> 5;
   }
-#endif
   e->xx -= ((e->xx + (e->xx < 0 ? -15 : 15)) >> 4);
   e->yy -= ((e->yy + (e->yy < 0 ? -15 : 15)) >> 4);
   e->tt -= ((e->tt + (e->tt < 0 ? - 3 :  3)) >> 2);
@@ -729,9 +694,9 @@ static void behaviour(entity_t* const e)
 
 static void world_create(APPLICATION_T *app, world_t* world)
 {
-	APP_INSTANCE_T *appi;
+  APP_INSTANCE_T *appi;
 
-	appi = (APP_INSTANCE_T *) app;
+  appi = (APP_INSTANCE_T *) app;
 
   world->screen = NULL;
   world->buffer = (viewport_t*) appi->p_bitmap;
@@ -747,10 +712,18 @@ static void world_create(APPLICATION_T *app, world_t* world)
 static UINT32 GFX_Draw_Start(APPLICATION_T *app) {
 	int x, y;
 	APP_INSTANCE_T *appi;
+	UINT32 readen;
+	FILE_HANDLE_T file_handle;
 
 	appi = (APP_INSTANCE_T *) app;
 
 	appi->p_bitmap = (UINT8 *) appi->ahi.bitmap.image;
+
+	textures = (texture_t *) malloc(TEXTURE_WIDTH * TEXTURE_HEIGHT * POLYGON_MAX);
+
+	file_handle = DL_FsOpenFile(L"/c/Elf/textu.res", FILE_READ_MODE, 0);
+	DL_FsReadFile(textures, TEXTURE_WIDTH * TEXTURE_HEIGHT * POLYGON_MAX, 1, file_handle, &readen);
+	DL_FsCloseFile(file_handle);
 
 	world_create(app, &world);
 	box = entity_create(33 << 16, 35 << 16, 1 << 16);
@@ -833,6 +806,11 @@ static UINT32 GFX_Draw_Stop(APPLICATION_T *app) {
 	if (appi->p_bitmap) {
 		suFreeMem(appi->p_bitmap);
 		appi->p_bitmap = NULL;
+	}
+
+	if (textures) {
+		suFreeMem(textures);
+		textures = NULL;
 	}
 
 	return RESULT_OK;

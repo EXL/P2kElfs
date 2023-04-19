@@ -17,6 +17,8 @@ static int quit_loop = 0;
 static const int SCREEN_FPS = 35;
 #endif
 
+texture_t *textures = NULL;
+
 void behaviour(entity_t* const e)
 {    
   if (KEY_LEFT)
@@ -88,6 +90,11 @@ int main(void)
   SDL_Init(SDL_INIT_VIDEO);
   video = SDL_SetVideoMode(VIEWPORT_WIDTH, VIEWPORT_HEIGHT, 16, SDL_HWSURFACE);
 #endif
+
+  textures = (texture_t*) malloc(TEXTURE_WIDTH * TEXTURE_HEIGHT * POLYGON_MAX);
+  FILE *f1 = fopen("textu.res", "rb");
+  fread(textures, TEXTURE_WIDTH * TEXTURE_HEIGHT * POLYGON_MAX, 1, f1);
+  fclose(f1);
 
   world_create(&world);
 
