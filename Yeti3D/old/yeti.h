@@ -16,12 +16,18 @@
 #include <string.h>
 #include <limits.h>
 
+#if defined(__P2K__)
+#define inline __inline
+#endif
+
 #define RGB_SET(r,g,b) (((b)<<10)+((g)<<5)+(r))
 
+#if 0 /* EXL: Dublicate function? */
 inline int abs(const int a)
 {
   return a < 0 ? -a : a;
 }
+#endif
 
 inline int min(const int a, const int b)
 {
@@ -98,16 +104,16 @@ extern const int sintable[2048];
 #define IN_EWRAM
 #endif
 
-struct vec2_t
+typedef struct
 {
   int x, y;
-};
+} vec2_t;
 
-struct vec3_t
+typedef struct
 {
   int x, y;
   int z;
-};
+} vec3_t;
 
 inline void vector_init(vec3_t* v, int x, int y, int z)
 {
@@ -199,11 +205,12 @@ inline void matrix_rotate_z(matrix_t dst, int angle)
 
 inline void matrix_multiply(matrix_t dst, matrix_t ma1, matrix_t ma2)
 {
+  int i, j;
   matrix_t tmp;
 
-  for (int i = 3; i--;)
+  for (i = 3; i--;)
   {
-    for (int j = 3; j--;)
+    for (j = 3; j--;)
     {
       tmp[i][j] =
         fixmul(ma2[i][0], ma1[0][j]) +
@@ -216,7 +223,8 @@ inline void matrix_multiply(matrix_t dst, matrix_t ma1, matrix_t ma2)
 
 inline void matrix_transpose(matrix_t dst, matrix_t src)
 {
-  for (int y = 3; y--;) for (int x = 3; x--;) dst[x][y] = src[y][x];
+  int y, x;
+  for (y = 3; y--;) for (x = 3; x--;) dst[x][y] = src[y][x];
 }
 
 inline void matrix_rotate_world(matrix_t m, int alp, int bet, int gam)
@@ -283,10 +291,12 @@ typedef unsigned char texture_t[TEXTURE_HEIGHT][TEXTURE_WIDTH];
 typedef unsigned short lua_t[64][256];
 
 // Type definition of a polygon vertex
-struct vertex_t : vec3_t
+typedef struct
 {
+  int x, y;
+  int z;
   int l, u, v, d;
-};
+} vertex_t;
 
 // The maxium numver of verties allowed in a polyogn.
 #define POLYGON_MAX 8
@@ -296,7 +306,7 @@ typedef vertex_t polygon_t[POLYGON_MAX];
 
 #define ENTITY_VISIBLE 1
 
-struct entity_t
+typedef struct
 {
   int x, xx;
   int y, yy;
@@ -306,31 +316,31 @@ struct entity_t
   int t, tt; // turn
   unsigned short time;
   unsigned char flags;
-};
+} entity_t;
 
 //#define CELL_SOLID 1
 //#define CELL_SPACE 0
 
 #define CELL_ISSOLID(A) ((A)->top <= (A)->bot)
 
-struct cell_t
+typedef struct
 {
   unsigned char l, ent;
   unsigned char wtx, ttx, btx;
   signed char top, bot;
   unsigned short time;
-};
+} cell_t;
 
 #define MAP_SIZE 64
 
-struct world_t
+typedef struct
 {
   viewport_t* screen;
   viewport_t* buffer;
   cell_t cells[MAP_SIZE][MAP_SIZE];
   int time;
   matrix_t m;
-};
+} world_t;
 
 extern IN_EWRAM world_t world;
 extern IN_EWRAM entity_t entities[];

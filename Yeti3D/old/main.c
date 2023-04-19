@@ -63,6 +63,8 @@ void world_create(world_t* world)
   world->buffer = (viewport_t*) surface->pixels;
 #endif
 
+  camera = entity_create(0, 0, 0);
+
   camera->x = MAP_SIZE << 15;
   camera->y = MAP_SIZE << 15;
   camera->z = 3 << 15;

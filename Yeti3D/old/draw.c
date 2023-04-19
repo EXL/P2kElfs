@@ -17,7 +17,7 @@
 world_t world;
 int nentities;
 entity_t entities[100];
-entity_t* camera = entity_create(0, 0, 0);
+entity_t* camera;
 
 const signed char cube[] =
 {
@@ -45,11 +45,12 @@ const signed char cube[] =
 */
 inline int polygon_clip(vertex_t* dst, vertex_t* src, int n)
 {
+  vertex_t* pre;
   vertex_t* start = dst;
 
   if (n > 2)
   {
-    for (vertex_t* pre = &src[n - 1]; n--; pre = src++)
+    for (pre = &src[n - 1]; n--; pre = src++)
     {
       if (pre->d >= 0) *dst++ = *pre;
 
@@ -150,12 +151,13 @@ void draw_texture(
 
       if ((i = x2 - x1) > 0)
       {
+        unsigned short* fb;
         j  = reciprocal[i];
         uu = ((rt_u - (u = lt_u)) * j) >> 16;
         vv = ((rt_v - (v = lt_v)) * j) >> 16;
         ll = ((rt_l - (l = lt_l)) * j) >> 16;
 
-        unsigned short* fb = &dst->pixels[y1][x1];
+        fb = &dst->pixels[y1][x1];
 
 #define CASE(I) case I: AFFINE(0) fb++;
 
@@ -184,9 +186,10 @@ CASE( 8) CASE( 7) CASE( 6) CASE( 5) CASE( 4) CASE( 3) CASE( 2) CASE( 1) \
 
 void CODE_IN_IWRAM draw_square(const texture_t texture, polygon_t p, const int light_offset)
 { 
+  int i;
   polygon_t pp;
   
-  for (int i = 4; i--;)
+  for (i = 4; i--;)
   {
     int x = p[i].x - (camera->x >> 8);
     int y = p[i].y - (camera->z >> 8);
@@ -343,6 +346,7 @@ void CODE_IN_IWRAM draw_cell(int x1, int y1)
 
 void CODE_IN_IWRAM draw_world(void)
 {
+  int x, y, i;
   int ray_x[RAY_COUNT], ray_xx[RAY_COUNT];
   int ray_y[RAY_COUNT], ray_yy[RAY_COUNT];
   vec2_t visible_cells[CELL_MAX];
@@ -352,10 +356,10 @@ void CODE_IN_IWRAM draw_world(void)
     
   matrix_rotate_world(world.m, -(camera->r >> 16), -(camera->p >> 16), -(camera->t >> 16));
   
-  int x = camera->x;
-  int y = camera->y;
+  x = camera->x;
+  y = camera->y;
   
-  for (int i = 0; i < RAY_COUNT; i++)
+  for (i = 0; i < RAY_COUNT; i++)
   {
     int a = ((i - (RAY_COUNT >> 1)) * RAY_WIDTH) + (camera->t >> 16);
 
@@ -365,7 +369,7 @@ void CODE_IN_IWRAM draw_world(void)
   
   for (raycount = RAY_COUNT, cellcount = 0; raycount > 0 && cellcount < CELL_MAX;)
   {
-    for (int i = RAY_COUNT; i--;)
+    for (i = RAY_COUNT; i--;)
     {    
       if (ray_x[i])
       {
@@ -395,7 +399,7 @@ void CODE_IN_IWRAM draw_world(void)
   }
   
   /* Merge entities into world map. */
-  for (int i = 0; i < nentities; i++)
+  for (i = 0; i < nentities; i++)
   {
     int x = entities[i].x;
     int y = entities[i].y;
@@ -404,7 +408,7 @@ void CODE_IN_IWRAM draw_world(void)
     world.cells[y >> 16][x >> 16].ent = i;
   }
   /* Render cells from back to front. */
-  for (int i = cellcount; i--;)
+  for (i = cellcount; i--;)
   {
     draw_cell(visible_cells[i].x, visible_cells[i].y);
   }
@@ -426,11 +430,12 @@ void CODE_IN_IWRAM draw_entity(const entity_t* entity, const signed char* model)
 {
   matrix_t m;
   polygon_t p;
+  int nvertices, i, j;
   vec3_t vertices[100];
 
   matrix_rotate_object(m, entity->r >> 16, entity->p >> 16, entity->t >> 16);
   
-  for (int nvertices = *model++, i = 0; i < nvertices; i++)
+  for (nvertices = *model++, i = 0; i < nvertices; i++)
   {
     int u = *model++ << 1;
     int v = *model++ << 1;
@@ -443,10 +448,10 @@ void CODE_IN_IWRAM draw_entity(const entity_t* entity, const signed char* model)
     vertices[i].y = fixmul(world.m[1][0], x) + fixmul(world.m[1][1], y) + fixmul(world.m[1][2], z);
     vertices[i].z = fixmul(world.m[2][0], x) + fixmul(world.m[2][1], y) + fixmul(world.m[2][2], z);
   }
-  for (int i = *model++; i--;)
+  for (i = *model++; i--;)
   {
     int npts = *model++;
-    for (int j = 0; j < npts; j++)
+    for (j = 0; j < npts; j++)
     {
       *((vec3_t*)&p[j]) = vertices[*model++];
       p[j].u = i2f(*model++);

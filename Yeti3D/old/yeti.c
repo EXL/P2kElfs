@@ -27,9 +27,10 @@ entity_t* entity_create(int x, int y, int z)
 */
 void draw_light(const int lightx, const int lighty, const int diffuse)
 {
+  int i;
   world.time++;
 
-  for (int i = 0; i < 2048; i += 8)
+  for (i = 0; i < 2048; i += 8)
   {
     int x = lightx + 0x8000, xx = fixsin16(i) >> 1;
     int y = lighty + 0x8000, yy = fixcos16(i) >> 1;
