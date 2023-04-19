@@ -412,10 +412,10 @@ void CODE_IN_IWRAM draw_world(void)
   // flip the screen display buffers
 #if defined(PLATFORM_GBA)
   *(unsigned char*)0x04000000 ^= 0x10;
-#endif
   viewport_t* temp = world.screen;
   world.screen = world.buffer;
   world.buffer = temp;
+#endif
 }
 
 /*

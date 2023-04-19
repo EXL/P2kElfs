@@ -262,8 +262,8 @@ inline void matrix_rotate_object(matrix_t m, int alp, int bet, int gam)
   m[2][2] =  fixmul(cosbet,cosgam);
 }
 
-#define VIEWPORT_WIDTH 160
-#define VIEWPORT_HEIGHT 128
+#define VIEWPORT_WIDTH 128
+#define VIEWPORT_HEIGHT 160
 #define VIEWPORT_X1 0
 #define VIEWPORT_Y1 0
 #define VIEWPORT_X2 (VIEWPORT_WIDTH - 0)
@@ -345,13 +345,13 @@ extern entity_t* camera;
 #define KEY_UP !(KEY_STATE & 64)
 #define KEY_DOWN !(KEY_STATE & 128)
 #elif defined(PLATFORM_SDL)
-#define KEY_STATE (4)
+#define KEY_STATE (SDL_GetKeyState(NULL))
 
-#define KEY_SELECT !(KEY_STATE & 4)
-#define KEY_RIGHT !(KEY_STATE & 16)
-#define KEY_LEFT !(KEY_STATE & 32)
-#define KEY_UP !(KEY_STATE & 64)
-#define KEY_DOWN !(KEY_STATE & 128)
+#define KEY_SELECT (KEY_STATE[SDLK_ESCAPE])
+#define KEY_RIGHT (KEY_STATE[SDLK_RIGHT])
+#define KEY_LEFT (KEY_STATE[SDLK_LEFT])
+#define KEY_UP (KEY_STATE[SDLK_UP])
+#define KEY_DOWN (KEY_STATE[SDLK_DOWN])
 #endif
 
 void entity_to_world_collision(entity_t* const e, int const radius);

@@ -8,6 +8,15 @@
 
 #include "yeti.h"
 
+#if defined(PLATFORM_SDL)
+#include <SDL/SDL.h>
+
+static SDL_Surface *video;
+static SDL_Surface *surface;
+static int quit_loop = 0;
+static const int SCREEN_FPS = 35;
+#endif
+
 void behaviour(entity_t* const e)
 {    
   if (KEY_LEFT)
@@ -49,8 +58,9 @@ void world_create(world_t* world)
   world->screen = (viewport_t*) 0x06000000;
   world->buffer = (viewport_t*) 0x0600A000;
 #elif defined(PLATFORM_SDL)
-  world->screen = (viewport_t*) malloc(VIEWPORT_WIDTH * VIEWPORT_HEIGHT * 2);
-  world->buffer = (viewport_t*) malloc(VIEWPORT_WIDTH * VIEWPORT_HEIGHT * 2);
+  surface = SDL_CreateRGBSurface(SDL_HWPALETTE, VIEWPORT_WIDTH, VIEWPORT_HEIGHT, 16, 0x7C00, 0x03E0, 0x001F, 0x0000);
+  world->screen = NULL;
+  world->buffer = (viewport_t*) surface->pixels;
 #endif
 
   camera->x = MAP_SIZE << 15;
@@ -71,6 +81,10 @@ int main(void)
   *(short*)0x4000026 = 0;
   *(short*)0x4000028 = i2f(120);
   *(short*)0x400002C = i2f(4);
+#elif defined(PLATFORM_SDL)
+  SDL_Event event;
+  SDL_Init(SDL_INIT_VIDEO);
+  video = SDL_SetVideoMode(VIEWPORT_WIDTH, VIEWPORT_HEIGHT, 16, SDL_HWSURFACE);
 #endif
 
   world_create(&world);
@@ -143,7 +157,7 @@ int main(void)
       world.cells[y][x].btx = 6;
     }
   } 
-  
+#if defined(PLATFORM_GBA)
   while (!KEY_SELECT)
   {     
     behaviour(camera);
@@ -153,6 +167,33 @@ int main(void)
 
     draw_world();
   }
+#elif defined(PLATFORM_SDL)
+  while (!quit_loop) {
+      if (KEY_SELECT) {
+          quit_loop = 1;
+      }
+      while (SDL_PollEvent(&event)) {
+        switch (event.type) {
+          case SDL_QUIT:
+            quit_loop = 1;
+            break;
+        }
+      }
+      behaviour(camera);
+      box->t += 50 << 16;
+      box->r += 40 << 16;
+      box->p += 30 << 16;
+      draw_world();
+
+      SDL_BlitSurface(surface, NULL, video, NULL);
+      SDL_Flip(video);
+      SDL_Delay(1000 / SCREEN_FPS);
+    }
+
+  SDL_FreeSurface(surface);
+  SDL_FreeSurface(video);
+  SDL_Quit();
+#endif
 
   return 0;
 }
