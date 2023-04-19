@@ -16,6 +16,8 @@
  *   GUI + ATI
  */
 
+#include "yeti.h"
+
 #include <loader.h>
 #include <ati.h>
 #include <apps.h>
@@ -33,9 +35,8 @@
 #define TIMER_FAST_UPDATE_MS              (1000 / 30) /* ~30 FPS. */
 #endif
 #define KEYPAD_BUTTONS                    (8)
-#define BITMAP_WIDTH                      (64)
-#define BITMAP_HEIGHT                     (48)
-#define START_Y_COORD                     (220)
+#define BITMAP_WIDTH                      (128)
+#define BITMAP_HEIGHT                     (160)
 
 typedef enum {
 	APP_STATE_ANY,
@@ -77,9 +78,7 @@ typedef struct {
 	UINT16 bmp_width;
 	UINT16 bmp_height;
 
-	UINT8 *p_fire;
-	UINT16 y_coord;
-	BOOL flag_restart_demo;
+	UINT8 *p_bitmap;
 
 	APP_AHI_T ahi;
 	APP_KEYBOARD_T keys;
@@ -115,8 +114,6 @@ static UINT32 ATI_Driver_Flush(APPLICATION_T *app);
 static UINT32 GFX_Draw_Start(APPLICATION_T *app);
 static UINT32 GFX_Draw_Stop(APPLICATION_T *app);
 static UINT32 GFX_Draw_Step(APPLICATION_T *app);
-
-static BOOL Fire_Demo_Is_Screen_Empty(APPLICATION_T *app);
 
 static const char g_app_name[APP_NAME_LEN] = "FireEffect";
 
@@ -240,11 +237,10 @@ static UINT32 ApplicationStart(EVENT_STACK_T *ev_st, REG_ID_T reg_id, void *reg_
 		app_instance->ahi.info_driver = NULL;
 		app_instance->bmp_width = BITMAP_WIDTH;
 		app_instance->bmp_height = BITMAP_HEIGHT;
-		app_instance->p_fire = NULL;
+		app_instance->p_bitmap = NULL;
 		app_instance->timer_handle = 0;
 		app_instance->keys.pressed = 0;
 		app_instance->keys.released = 0;
-		app_instance->flag_restart_demo = FALSE;
 
 		DL_AudGetVolumeSetting(PHONE, &app_instance->keyboard_volume_level);
 		DL_AudSetVolumeSetting(PHONE, 0);
@@ -610,8 +606,8 @@ static UINT32 ATI_Driver_Start(APPLICATION_T *app) {
 
 	appi->ahi.bitmap.width = appi->bmp_width;
 	appi->ahi.bitmap.height = appi->bmp_height;
-	appi->ahi.bitmap.stride = appi->bmp_width; /* (width * bpp) */
-	appi->ahi.bitmap.format = AHIFMT_8BPP;
+	appi->ahi.bitmap.stride = appi->bmp_width * 2; /* (width * bpp) */
+	appi->ahi.bitmap.format = AHIFMT_16BPP_565;
 	appi->ahi.bitmap.image = suAllocMem(appi->bmp_width * appi->bmp_height, &result);
 	if (result) {
 		return RESULT_FAIL;
@@ -634,7 +630,7 @@ static UINT32 ATI_Driver_Start(APPLICATION_T *app) {
 
 	status |= AhiDrawSurfDstSet(appi->ahi.context, appi->ahi.screen, 0);
 
-	status |= AhiDrawBrushFgColorSet(appi->ahi.context, ATI_565RGB(0xFF, 0xFF, 0xFF));
+	status |= AhiDrawBrushFgColorSet(appi->ahi.context, ATI_565RGB(0x00, 0xFF, 0x00));
 	status |= AhiDrawBrushSet(appi->ahi.context, NULL, NULL, 0, AHIFLAG_BRUSH_SOLID);
 	status |= AhiDrawRopSet(appi->ahi.context, AHIROP3(AHIROP_PATCOPY));
 	status |= AhiDrawSpans(appi->ahi.context, &appi->ahi.update_params.rect, 1, 0);
@@ -692,19 +688,139 @@ static UINT32 ATI_Driver_Flush(APPLICATION_T *app) {
 	return RESULT_OK;
 }
 
-static UINT32 GFX_Draw_Start(APPLICATION_T *app) {
+static entity_t* box;
+
+static void behaviour(entity_t* const e)
+{
+#if 0
+  if (KEY_LEFT)
+  {
+    e->tt -= (12 << 16);
+    e->r -= 800000;
+  }
+  if (KEY_RIGHT)
+  {
+    e->tt += (12 << 16);
+    e->r += 800000;
+  }
+
+  if (KEY_UP)
+  {
+    e->xx += fixsin16(e->t >> 16) >> 5;
+    e->yy += fixcos16(e->t >> 16) >> 5;
+  }
+  if (KEY_DOWN)
+  {
+    e->xx -= fixsin16(e->t >> 16) >> 5;
+    e->yy -= fixcos16(e->t >> 16) >> 5;
+  }
+#endif
+  e->xx -= ((e->xx + (e->xx < 0 ? -15 : 15)) >> 4);
+  e->yy -= ((e->yy + (e->yy < 0 ? -15 : 15)) >> 4);
+  e->tt -= ((e->tt + (e->tt < 0 ? - 3 :  3)) >> 2);
+
+  e->r  -= ((e->r  + (e->r  < 0 ? -7 : 7)) >> 3);
+
+  e->x += e->xx; e->y += e->yy; e->z += e->zz;
+  e->r += e->rr; e->t += e->tt; e->p += e->pp;
+
+  entity_to_world_collision(e, 0x8000);
+}
+
+static void world_create(APPLICATION_T *app, world_t* world)
+{
 	APP_INSTANCE_T *appi;
 
 	appi = (APP_INSTANCE_T *) app;
 
-	appi->y_coord = START_Y_COORD;
-	appi->p_fire = (UINT8 *) appi->ahi.bitmap.image;
+  world->screen = NULL;
+  world->buffer = (viewport_t*) appi->p_bitmap;
 
-	/* Fill all screen to RGB(0x07, 0x07, 0x07) except last line. */
-	memset(appi->p_fire, 0, appi->bmp_width * (appi->bmp_height - 1));
+  camera = entity_create(0, 0, 0);
 
-	/* Fill last line to RGB(0xFF, 0xFF, 0xFF) except last line. */
-	memset((UINT8 *) (appi->p_fire + (appi->bmp_height - 1) * appi->bmp_width), 36, appi->bmp_width);
+  camera->x = MAP_SIZE << 15;
+  camera->y = MAP_SIZE << 15;
+  camera->z = 3 << 15;
+  camera->p = 100 << 16;
+}
+
+static UINT32 GFX_Draw_Start(APPLICATION_T *app) {
+	int x, y;
+	APP_INSTANCE_T *appi;
+
+	appi = (APP_INSTANCE_T *) app;
+
+	appi->p_bitmap = (UINT8 *) appi->ahi.bitmap.image;
+
+	world_create(app, &world);
+	box = entity_create(33 << 16, 35 << 16, 1 << 16);
+	entity_create(33 << 16, 33 << 16, 1 << 16);
+
+	for (y = 0; y < MAP_SIZE; y++)
+	{
+	  for (x = 0; x < MAP_SIZE; x++)
+	  {
+		world.cells[y][x].l   = 0;
+		world.cells[y][x].bot = 0;
+		world.cells[y][x].top = 4;
+		world.cells[y][x].wtx = 0;
+		world.cells[y][x].btx = 2;
+		world.cells[y][x].ttx = 1;
+
+		if (x == 0 || y == 0 || x == (MAP_SIZE - 1) || y == (MAP_SIZE - 1))
+		{
+		  world.cells[y][x].top = 0;
+		  world.cells[y][x].bot = 0;
+		}
+	  }
+	}
+
+	for (x = 1; x < MAP_SIZE - 1; x++)
+	{
+	  for (y = 1; y < MAP_SIZE - 1; y += 10)
+	  {
+		if (rand() % 10)
+		{
+		  world.cells[y][x].top = 0;
+		  world.cells[y][x].bot = 0;
+		  world.cells[x][y].top = 0;
+		  world.cells[x][y].bot = 0;
+
+		  world.cells[y][x].wtx = 0;
+		  world.cells[x][y].wtx = 0;
+		}
+		else
+		{
+		  world.cells[y][x].top--;
+		}
+	  }
+	}
+	for (x = 0; x < 400; x++)
+	{
+	  cell_t* cell = &world.cells[rand() % MAP_SIZE][rand() % MAP_SIZE];
+
+	  cell->bot += 2;
+	  cell->wtx = 3;
+	  cell->btx = 3;
+	}
+
+	for (y = 0; y < MAP_SIZE; y += 1)
+	{
+	  for (x = 0; x < MAP_SIZE; x += 1)
+	  {
+		world.cells[y][x].l = 0;
+	  }
+	}
+
+	for (y = 1; y < MAP_SIZE; y += 5)
+	{
+	  for (x = 1; x < MAP_SIZE; x += 5)
+	  {
+		draw_light((x << 16) + 0x8000, (y << 16) + 0x8000, 900);
+		world.cells[y][x].ttx = 5;
+		world.cells[y][x].btx = 6;
+	  }
+	}
 
 	return RESULT_OK;
 }
@@ -714,73 +830,24 @@ static UINT32 GFX_Draw_Stop(APPLICATION_T *app) {
 
 	appi = (APP_INSTANCE_T *) app;
 
-	if (appi->p_fire) {
-		suFreeMem(appi->p_fire);
-		appi->p_fire = NULL;
+	if (appi->p_bitmap) {
+		suFreeMem(appi->p_bitmap);
+		appi->p_bitmap = NULL;
 	}
 
 	return RESULT_OK;
 }
 
 static UINT32 GFX_Draw_Step(APPLICATION_T *app) {
-	UINT16 x;
-	UINT16 y;
-	UINT16 start;
-	UINT16 stop;
 	APP_INSTANCE_T *appi;
 
 	appi = (APP_INSTANCE_T *) app;
 
-	if (appi->flag_restart_demo) {
-		GFX_Draw_Start(app);
-		appi->flag_restart_demo = FALSE;
-	}
-
-	for (x = 0; x < appi->bmp_width; ++x) {
-		for (y = 1; y < appi->bmp_height; ++y) {
-			const UINT8 pixel = appi->p_fire[y * appi->bmp_width + x];
-			if (pixel == 0) {
-				appi->p_fire[(y * appi->bmp_width + x) - appi->bmp_width] = 0;
-			} else {
-				const UINT8 rand_idx = rand() % 4;
-				const UINT16 destination = (y * appi->bmp_width + x) - rand_idx + 1;
-				appi->p_fire[destination - appi->bmp_width] = pixel - (rand_idx & 1);
-			}
-		}
-	}
-
-	start = appi->bmp_height - 1;
-	stop = appi->bmp_height - 8;
-
-	if (appi->y_coord != appi->bmp_height / 4) {
-		appi->y_coord -= 2;
-	} else {
-		for(y = start; y > stop; --y) {
-			for(x = 0; x < appi->bmp_width; ++x) {
-				if (appi->p_fire[y * appi->bmp_width + x] > 0) {
-					appi->p_fire[y * appi->bmp_width + x] -= ((rand() % 2) & 3);
-				}
-			}
-		}
-		appi->flag_restart_demo = Fire_Demo_Is_Screen_Empty(app);
-	}
+	behaviour(camera);
+	box->t += 50 << 16;
+	box->r += 40 << 16;
+	box->p += 30 << 16;
+	draw_world();
 
 	return RESULT_OK;
-}
-
-static BOOL Fire_Demo_Is_Screen_Empty(APPLICATION_T *app) {
-	UINT16 i;
-	UINT16 stop;
-	APP_INSTANCE_T *appi;
-
-	appi = (APP_INSTANCE_T *) app;
-
-	stop = appi->bmp_width * appi->bmp_height;
-	for (i = 0; i < stop; ++i) {
-		if (appi->p_fire[i]) {
-			return FALSE;
-		}
-	}
-
-	return TRUE;
 }

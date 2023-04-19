@@ -8,6 +8,10 @@
 
 #include "yeti.h"
 
+#if defined(__P2K__)
+#include <utilities.h>
+#endif
+
 #define NO_LIGHTING
 
 #define RAY_COUNT 40

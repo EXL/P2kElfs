@@ -9,15 +9,16 @@
 #ifndef __YETI3D_H__
 #define __YETI3D_H__
 
+#if defined(__P2K__)
+#define inline __inline
+#include <mem.h>
+#else
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <assert.h>
 #include <string.h>
 #include <limits.h>
-
-#if defined(__P2K__)
-#define inline __inline
 #endif
 
 #define RGB_SET(r,g,b) (((b)<<10)+((g)<<5)+(r))
@@ -165,9 +166,9 @@ inline void matrix_identity(matrix_t dst)
 inline void matrix_position(matrix_t dst, int x, int y, int z)
 {
   matrix_identity(dst);
-  dst[0][3] = x;
-  dst[1][3] = y;
-  dst[2][3] = z;
+  dst[0][2] = x;
+  dst[1][2] = y;
+  dst[2][2] = z;
 }
 
 /*
