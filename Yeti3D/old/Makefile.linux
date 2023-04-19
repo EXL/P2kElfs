@@ -1,0 +1,8 @@
+all: linux
+
+linux:
+	g++ -O2 -DPLATFORM_SDL data.c draw.c main.c yeti.c -o yeti3d.elf -lSDL
+
+clean:
+	-rm -Rf *.o
+	-rm -Rf *.elf

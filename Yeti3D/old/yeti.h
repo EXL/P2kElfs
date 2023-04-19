@@ -103,8 +103,9 @@ struct vec2_t
   int x, y;
 };
 
-struct vec3_t : vec2_t
+struct vec3_t
 {
+  int x, y;
   int z;
 };
 
