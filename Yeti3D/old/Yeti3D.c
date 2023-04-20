@@ -35,8 +35,6 @@
 #define TIMER_FAST_UPDATE_MS              (1000 / 30) /* ~30 FPS. */
 #endif
 #define KEYPAD_BUTTONS                    (8)
-#define BITMAP_WIDTH                      (128)
-#define BITMAP_HEIGHT                     (160)
 
 typedef enum {
 	APP_STATE_ANY,
@@ -218,8 +216,8 @@ static UINT32 ApplicationStart(EVENT_STACK_T *ev_st, REG_ID_T reg_id, void *reg_
 			reg_id, 0, 0, 1, 1, 1, 0);
 
 		app_instance->ahi.info_driver = NULL;
-		app_instance->bmp_width = BITMAP_WIDTH;
-		app_instance->bmp_height = BITMAP_HEIGHT;
+		app_instance->bmp_width = VIEWPORT_WIDTH;
+		app_instance->bmp_height = VIEWPORT_HEIGHT;
 		app_instance->p_bitmap = NULL;
 		app_instance->timer_handle = 0;
 		app_instance->keys.pressed = 0;

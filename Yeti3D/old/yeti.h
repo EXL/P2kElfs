@@ -86,7 +86,11 @@ inline int isqrt(int value)
 
 #define SINTABLE_SIZE (4)
 #define SINTABLE_MAX (2048)
+#if defined(PLATFORM_GBA)
+extern const int sintable[];
+#else
 extern int *sintable;
+#endif
 
 #define fixsin16(A) sintable[(A)&2047]
 #define fixcos16(A) sintable[((A)+512)&2047]
@@ -385,6 +389,9 @@ void CODE_IN_IWRAM draw_texture(
   int n,
   texture_t texture);
 
+#if defined(PLATFORM_GBA)
+#include "data.h"
+#else
 extern texture_t *textures;
 
 #define RECIPROCAL_SIZE (4)
@@ -392,5 +399,6 @@ extern texture_t *textures;
 extern int *reciprocal;
 
 extern unsigned short (*lua)[LUA_HEIGHT];
+#endif
 
 #endif

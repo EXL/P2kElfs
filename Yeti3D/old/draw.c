@@ -80,7 +80,7 @@ inline int polygon_clip(vertex_t* dst, vertex_t* src, int n)
 ** Name: draw_texture
 ** Desc: Renders a texture to a screen. The texture is DDA mapped to the given polygon.
 */
-void draw_texture(
+void CODE_IN_IWRAM draw_texture(
   viewport_t* const dst,
   vertex_t* const src,
   int n,
