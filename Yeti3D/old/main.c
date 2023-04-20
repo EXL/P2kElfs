@@ -15,12 +15,12 @@ static SDL_Surface *video;
 static SDL_Surface *surface;
 static int quit_loop = 0;
 static const int SCREEN_FPS = 35;
-#endif
 
 texture_t *textures = NULL;
 int *sintable = NULL;
-//lua_t *lua = NULL;
-//int *reciprocal = NULL;
+unsigned short (*lua)[LUA_HEIGHT] = NULL;
+int *reciprocal = NULL;
+#endif
 
 void behaviour(entity_t* const e)
 {    
@@ -110,7 +110,6 @@ int main(int argc, char *argv[])
   SDL_Event event;
   SDL_Init(SDL_INIT_VIDEO);
   video = SDL_SetVideoMode(VIEWPORT_WIDTH, VIEWPORT_HEIGHT, 16, SDL_HWSURFACE);
-#endif
 
   textures = (texture_t*) malloc(TEXTURE_WIDTH * TEXTURE_HEIGHT * TEXTURE_MAX);
   FILE *res_file = fopen("Yeti3D.tex", "rb");
@@ -121,15 +120,15 @@ int main(int argc, char *argv[])
   res_file = fopen("Yeti3D.sin", "rb");
   readen = fread(sintable, SINTABLE_SIZE * SINTABLE_MAX, 1, res_file);
   fclose(res_file);
-#if 0
+
   reciprocal = (int *) malloc(RECIPROCAL_SIZE * RECIPROCAL_MAX);
   res_file = fopen("Yeti3D.rec", "rb");
   readen = fread(reciprocal, RECIPROCAL_SIZE * RECIPROCAL_MAX, 1, res_file);
   fclose(res_file);
 
-  lua = (lua_t *) malloc(LUA_WIDTH * LUA_HEIGHT * LUA_SIZE);
+  lua = (unsigned short (*)[LUA_HEIGHT]) malloc(sizeof(lua_t));
   res_file = fopen("Yeti3D.lua", "rb");
-  readen = fread(lua, LUA_WIDTH * LUA_HEIGHT * LUA_SIZE, 1, res_file);
+  readen = fread(lua, sizeof(lua_t), 1, res_file);
   fclose(res_file);
 #endif
   world_create(&world);
@@ -234,6 +233,11 @@ int main(int argc, char *argv[])
       SDL_Flip(video);
       SDL_Delay(1000 / SCREEN_FPS);
     }
+
+  free(textures);
+  free(sintable);
+  free(reciprocal);
+  free(lua);
 
   SDL_FreeSurface(surface);
   SDL_FreeSurface(video);

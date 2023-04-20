@@ -635,6 +635,11 @@ static UINT32 ATI_Driver_Stop(APPLICATION_T *app) {
 	status = RESULT_OK;
 	app_instance = (APP_INSTANCE_T *) app;
 
+	if (app_instance->p_bitmap) {
+		suFreeMem(app_instance->p_bitmap);
+		app_instance->p_bitmap = NULL;
+	}
+
 	status |= AhiDevClose(app_instance->ahi.context);
 	if (app_instance->ahi.info_driver) {
 		suFreeMem(app_instance->ahi.info_driver);
@@ -678,9 +683,9 @@ static UINT32 ATI_Driver_Flush(APPLICATION_T *app) {
 static entity_t* box;
 
 texture_t *textures = NULL;
-//lua_t lua;// = NULL;
+unsigned short (*lua)[LUA_HEIGHT] = NULL;
 int *sintable = NULL;
-//int *reciprocal = NULL;
+int *reciprocal = NULL;
 
 static void behaviour(entity_t* const e)
 {
@@ -822,11 +827,6 @@ static UINT32 GFX_Draw_Stop(APPLICATION_T *app) {
 
 	appi = (APP_INSTANCE_T *) app;
 
-	if (appi->p_bitmap) {
-		suFreeMem(appi->p_bitmap);
-		appi->p_bitmap = NULL;
-	}
-
 	FreeResourses();
 
 	return RESULT_OK;
@@ -859,56 +859,41 @@ static void SetPathsToFiles(void) {
 
 static UINT32 InitResourses(void) {
 	UINT32 readen;
-	FILE_HANDLE_T file_tex;
-	FILE_HANDLE_T file_sin;
+	FILE_HANDLE_T file_handle;
 
 	readen = 0;
 
-	PFprintf("%d %d\n", sizeof(int), sizeof(int *));
-	UtilLogStringData("%d %d\n", sizeof(int), sizeof(int *));
+	textures = (texture_t *) suAllocMem(TEXTURE_WIDTH * TEXTURE_HEIGHT * TEXTURE_MAX, NULL);
+	file_handle = DL_FsOpenFile(g_tex_file_path, FILE_READ_MODE, 0);
+	DL_FsReadFile(textures, TEXTURE_WIDTH * TEXTURE_HEIGHT * TEXTURE_MAX, 1, file_handle, &readen);
+	DL_FsCloseFile(file_handle);
+	if (readen == 0) {
+		return RESULT_FAIL;
+	}
 
-	textures = (texture_t *) uisAllocateMemory(TEXTURE_WIDTH * TEXTURE_HEIGHT * TEXTURE_MAX, NULL);
-	file_tex = DL_FsOpenFile(g_tex_file_path, FILE_READ_MODE, 0);
-	DL_FsReadFile(textures, TEXTURE_WIDTH * TEXTURE_HEIGHT * TEXTURE_MAX, 1, file_tex, &readen);
-	DL_FsCloseFile(file_tex);
-//	if (readen == 0) {
-//		return RESULT_FAIL;
-//	}
+	sintable = (int *) suAllocMem(SINTABLE_SIZE * SINTABLE_MAX, NULL);
+	file_handle = DL_FsOpenFile(g_sin_file_path, FILE_READ_MODE, 0);
+	DL_FsReadFile(sintable, SINTABLE_SIZE * SINTABLE_MAX, 1, file_handle, &readen);
+	DL_FsCloseFile(file_handle);
+	if (readen == 0) {
+		return RESULT_FAIL;
+	}
 
-	PFprintf("1\n");
-	UtilLogStringData("1\n");
+	lua = suAllocMem(sizeof(lua_t), NULL);
+	file_handle = DL_FsOpenFile(g_lua_file_path, FILE_READ_MODE, 0);
+	DL_FsReadFile(lua, sizeof(lua_t), 1, file_handle, &readen);
+	DL_FsCloseFile(file_handle);
+	if (readen == 0) {
+		return RESULT_FAIL;
+	}
 
-	sintable = (int *) uisAllocateMemory(SINTABLE_SIZE * SINTABLE_MAX, NULL);
-	PFprintf("2\n");
-	UtilLogStringData("2\n");
-	file_sin = DL_FsOpenFile(g_sin_file_path, FILE_READ_MODE, 0);
-	PFprintf("3\n");
-	UtilLogStringData("3\n");
-	DL_FsReadFile(sintable, SINTABLE_SIZE * SINTABLE_MAX, 1, file_sin, &readen);
-	PFprintf("4\n");
-	UtilLogStringData("4\n");
-	DL_FsCloseFile(file_sin);
-	PFprintf("5\n");
-	UtilLogStringData("5\n");
-//	if (readen == 0) {
-//		return RESULT_FAIL;
-//	}
-
-////	lua = (lua_t *) malloc(LUA_WIDTH * LUA_HEIGHT * LUA_SIZE);
-//	file_handle = DL_FsOpenFile(g_lua_file_path, FILE_READ_MODE, 0);
-//	DL_FsReadFile(&lua, LUA_WIDTH * LUA_HEIGHT * LUA_SIZE, 1, file_handle, &readen);
-//	DL_FsCloseFile(file_handle);
-//	if (readen == 0) {
-//		return RESULT_FAIL;
-//	}
-
-//	reciprocal = (int *) malloc(RECIPROCAL_SIZE * RECIPROCAL_MAX);
-//	file_handle = DL_FsOpenFile(g_rec_file_path, FILE_READ_MODE, 0);
-//	DL_FsReadFile(reciprocal, RECIPROCAL_SIZE * RECIPROCAL_MAX, 1, file_handle, &readen);
-//	DL_FsCloseFile(file_handle);
-//	if (readen == 0) {
-//		return RESULT_FAIL;
-//	}
+	reciprocal = (int *) suAllocMem(RECIPROCAL_SIZE * RECIPROCAL_MAX, NULL);
+	file_handle = DL_FsOpenFile(g_rec_file_path, FILE_READ_MODE, 0);
+	DL_FsReadFile(reciprocal, RECIPROCAL_SIZE * RECIPROCAL_MAX, 1, file_handle, &readen);
+	DL_FsCloseFile(file_handle);
+	if (readen == 0) {
+		return RESULT_FAIL;
+	}
 
 	return RESULT_OK;
 }
@@ -922,12 +907,12 @@ static void FreeResourses(void) {
 		suFreeMem(sintable);
 		sintable = NULL;
 	}
-//	if (lua) {
-//		suFreeMem(lua);
-//		lua = NULL;
-//	}
-//	if (reciprocal) {
-//		suFreeMem(reciprocal);
-//		reciprocal = NULL;
-//	}
+	if (lua) {
+		suFreeMem(lua);
+		lua = NULL;
+	}
+	if (reciprocal) {
+		suFreeMem(reciprocal);
+		reciprocal = NULL;
+	}
 }

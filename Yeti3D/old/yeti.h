@@ -389,8 +389,8 @@ extern texture_t *textures;
 
 #define RECIPROCAL_SIZE (4)
 #define RECIPROCAL_MAX (301)
-extern const int reciprocal[];
+extern int *reciprocal;
 
-extern const lua_t lua;
+extern unsigned short (*lua)[LUA_HEIGHT];
 
 #endif
