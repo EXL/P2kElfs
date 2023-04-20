@@ -84,7 +84,7 @@ void draw_texture(
   viewport_t* const dst,
   vertex_t* const src,
   int n,
-  const texture_t texture)
+  texture_t texture)
 {
   polygon_t tm1, tm2;
   int i;
@@ -188,7 +188,7 @@ CASE( 8) CASE( 7) CASE( 6) CASE( 5) CASE( 4) CASE( 3) CASE( 2) CASE( 1) \
   }
 }
 
-void CODE_IN_IWRAM draw_square(const texture_t texture, polygon_t p, const int light_offset)
+void CODE_IN_IWRAM draw_square(texture_t texture, polygon_t p, const int light_offset)
 { 
   int i;
   polygon_t pp;

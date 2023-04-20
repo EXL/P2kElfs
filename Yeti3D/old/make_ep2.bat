@@ -32,18 +32,18 @@ set OPTIM=-O2
 set ELF_NAME=Yeti3D
 
 :: Compiling step.
-%ARM_PATH%\bin\arm-eabi-gcc -c -Wall -mbig-endian -mthumb -mthumb-interwork -nostdlib ^
+%ARM_PATH%\bin\arm-eabi-gcc -c -mbig-endian -mthumb -mthumb-interwork -nostdlib ^
 	-fshort-wchar -fshort-enums -fpack-struct=4 -fno-builtin -fvisibility=hidden ^
 	-I%SDK_PATH% %INCLUDES% %DEFINES% %OPTIM% draw.c -o draw.o
-%ARM_PATH%\bin\arm-eabi-gcc -c -Wall -mbig-endian -mthumb -mthumb-interwork -nostdlib ^
+%ARM_PATH%\bin\arm-eabi-gcc -c -mbig-endian -mthumb -mthumb-interwork -nostdlib ^
 	-fshort-wchar -fshort-enums -fpack-struct=4 -fno-builtin -fvisibility=hidden ^
 	-I%SDK_PATH% %INCLUDES% %DEFINES% %OPTIM% yeti.c -o yeti.o
-%ARM_PATH%\bin\arm-eabi-gcc -c -Wall -mbig-endian -mthumb -mthumb-interwork -nostdlib ^
+%ARM_PATH%\bin\arm-eabi-gcc -c -mbig-endian -mthumb -mthumb-interwork -nostdlib ^
 	-fshort-wchar -fshort-enums -fpack-struct=4 -fno-builtin -fvisibility=hidden ^
 	-I%SDK_PATH% %INCLUDES% %DEFINES% %OPTIM% %ELF_NAME%.c -o %ELF_NAME%.o
 
 :: Linking step.
-%ARM_PATH%\bin\arm-eabi-ld -pie -EB %OPTIM% -nostdlib draw.o yeti.o %ELF_NAME%.o ^
+%ARM_PATH%\bin\arm-eabi-ld -pie -EB %OPTIM% -nostdlib -allow-multiple-definition draw.o yeti.o %ELF_NAME%.o ^
 	%LIB_PATH%\%LIB_MAIN% %LIB_PATH%\%LIB_LIBC% -o %ELF_NAME%_p.elf
 
 :: Post linking step.

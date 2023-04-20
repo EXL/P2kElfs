@@ -383,7 +383,7 @@ void CODE_IN_IWRAM draw_texture(
   viewport_t* const dst,
   vertex_t* const src,
   int n,
-  const texture_t texture);
+  texture_t texture);
 
 extern texture_t *textures;
 
