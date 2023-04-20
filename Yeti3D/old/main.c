@@ -19,8 +19,8 @@ static const int SCREEN_FPS = 35;
 
 texture_t *textures = NULL;
 int *sintable = NULL;
-lua_t *lua = NULL;
-int *reciprocal = NULL;
+//lua_t *lua = NULL;
+//int *reciprocal = NULL;
 
 void behaviour(entity_t* const e)
 {    
@@ -90,7 +90,11 @@ int ReadShortInt(FILE *fptr,short int *n)
    return 1;
 }
 
+#if defined(PLATFORM_GBA)
 int main(void)
+#else
+int main(int argc, char *argv[])
+#endif
 {
   int x, y;
 
@@ -117,7 +121,7 @@ int main(void)
   res_file = fopen("Yeti3D.sin", "rb");
   readen = fread(sintable, SINTABLE_SIZE * SINTABLE_MAX, 1, res_file);
   fclose(res_file);
-
+#if 0
   reciprocal = (int *) malloc(RECIPROCAL_SIZE * RECIPROCAL_MAX);
   res_file = fopen("Yeti3D.rec", "rb");
   readen = fread(reciprocal, RECIPROCAL_SIZE * RECIPROCAL_MAX, 1, res_file);
@@ -127,7 +131,7 @@ int main(void)
   res_file = fopen("Yeti3D.lua", "rb");
   readen = fread(lua, LUA_WIDTH * LUA_HEIGHT * LUA_SIZE, 1, res_file);
   fclose(res_file);
-
+#endif
   world_create(&world);
 
   entity_t* box = entity_create(33 << 16, 35 << 16, 1 << 16);
