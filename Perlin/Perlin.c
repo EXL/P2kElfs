@@ -540,7 +540,7 @@ static UINT32 ATI_Driver_Start(APPLICATION_T *app) {
 		LOG_ATI("ATI External Memory Largest Block: result=%d, size=%d, size=%d KiB, align=%d\n",
 				result, size, size / 1024, align);
 
-		LOG_ATI("ATI Display Mode: size=%dx%d, pixel_format=%d, frequency=%d, rotation=%d, mirror=%d",
+		LOG_ATI("ATI Display Mode: size=%dx%d, pixel_format=%d, frequency=%d, rotation=%d, mirror=%d\n",
 				display_mode.size.x, display_mode.size.y,
 				display_mode.pixel_format, display_mode.frequency, display_mode.rotation, display_mode.mirror);
 
