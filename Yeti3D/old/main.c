@@ -18,6 +18,9 @@ static const int SCREEN_FPS = 35;
 #endif
 
 texture_t *textures = NULL;
+int *sintable = NULL;
+lua_t *lua = NULL;
+int *reciprocal = NULL;
 
 void behaviour(entity_t* const e)
 {    
@@ -60,7 +63,7 @@ void world_create(world_t* world)
   world->screen = (viewport_t*) 0x06000000;
   world->buffer = (viewport_t*) 0x0600A000;
 #elif defined(PLATFORM_SDL)
-  surface = SDL_CreateRGBSurface(SDL_HWPALETTE, VIEWPORT_WIDTH, VIEWPORT_HEIGHT, 16, 0x7C00, 0x03E0, 0x001F, 0x0000);
+  surface = SDL_CreateRGBSurface(SDL_HWPALETTE, VIEWPORT_WIDTH, VIEWPORT_HEIGHT, 16, 0, 0, 0, 0);
   world->screen = NULL;
   world->buffer = (viewport_t*) surface->pixels;
 #endif
@@ -71,6 +74,20 @@ void world_create(world_t* world)
   camera->y = MAP_SIZE << 15;
   camera->z = 3 << 15;
   camera->p = 100 << 16;
+}
+
+int ReadShortInt(FILE *fptr,short int *n)
+{
+   unsigned char *cptr,tmp;
+
+   if (fread(n,2,1,fptr) != 1)
+      return 0;
+   cptr = (unsigned char *)n;
+   tmp = cptr[1];
+   cptr[1] = cptr[0];
+   cptr[0] =tmp;
+
+   return 1;
 }
 
 int main(void)
@@ -91,10 +108,25 @@ int main(void)
   video = SDL_SetVideoMode(VIEWPORT_WIDTH, VIEWPORT_HEIGHT, 16, SDL_HWSURFACE);
 #endif
 
-  textures = (texture_t*) malloc(TEXTURE_WIDTH * TEXTURE_HEIGHT * POLYGON_MAX);
-  FILE *f1 = fopen("textu.res", "rb");
-  fread(textures, TEXTURE_WIDTH * TEXTURE_HEIGHT * POLYGON_MAX, 1, f1);
-  fclose(f1);
+  textures = (texture_t*) malloc(TEXTURE_WIDTH * TEXTURE_HEIGHT * TEXTURE_MAX);
+  FILE *res_file = fopen("Yeti3D.tex", "rb");
+  size_t readen = fread(textures, TEXTURE_WIDTH * TEXTURE_HEIGHT * TEXTURE_MAX, 1, res_file);
+  fclose(res_file);
+
+  sintable = (int *) malloc(SINTABLE_SIZE * SINTABLE_MAX);
+  res_file = fopen("Yeti3D.sin", "rb");
+  readen = fread(sintable, SINTABLE_SIZE * SINTABLE_MAX, 1, res_file);
+  fclose(res_file);
+
+  reciprocal = (int *) malloc(RECIPROCAL_SIZE * RECIPROCAL_MAX);
+  res_file = fopen("Yeti3D.rec", "rb");
+  readen = fread(reciprocal, RECIPROCAL_SIZE * RECIPROCAL_MAX, 1, res_file);
+  fclose(res_file);
+
+  lua = (lua_t *) malloc(LUA_WIDTH * LUA_HEIGHT * LUA_SIZE);
+  res_file = fopen("Yeti3D.lua", "rb");
+  readen = fread(lua, LUA_WIDTH * LUA_HEIGHT * LUA_SIZE, 1, res_file);
+  fclose(res_file);
 
   world_create(&world);
 

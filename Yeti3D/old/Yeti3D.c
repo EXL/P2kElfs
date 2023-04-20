@@ -115,6 +115,10 @@ static UINT32 GFX_Draw_Start(APPLICATION_T *app);
 static UINT32 GFX_Draw_Stop(APPLICATION_T *app);
 static UINT32 GFX_Draw_Step(APPLICATION_T *app);
 
+static void SetPathsToFiles(void);
+static UINT32 InitResourses(void);
+static void FreeResourses(void);
+
 static const char g_app_name[APP_NAME_LEN] = "FireEffect";
 
 #if defined(EP2)
@@ -122,6 +126,11 @@ static ldrElf g_app_elf;
 #endif
 
 static int m_KEY_UP, m_KEY_DOWN, m_KEY_LEFT, m_KEY_RIGHT = 0;
+
+static WCHAR g_tex_file_path[FS_MAX_URI_NAME_LENGTH / 4];
+static WCHAR g_sin_file_path[FS_MAX_URI_NAME_LENGTH / 4];
+static WCHAR g_lua_file_path[FS_MAX_URI_NAME_LENGTH / 4];
+static WCHAR g_rec_file_path[FS_MAX_URI_NAME_LENGTH / 4];
 
 static EVENT_HANDLER_ENTRY_T g_state_any_hdls[] = {
 	{ EV_REVOKE_TOKEN, APP_HandleUITokenRevoked },
@@ -155,6 +164,12 @@ UINT32 Register(const char *elf_path_uri, const char *args, UINT32 ev_code) {
 
 	status = APP_Register(&ev_code_base, 1, g_state_table_hdls, APP_STATE_MAX, (void *) ApplicationStart);
 
+	u_atou(elf_path_uri, g_tex_file_path);
+	u_atou(elf_path_uri, g_sin_file_path);
+	u_atou(elf_path_uri, g_lua_file_path);
+	u_atou(elf_path_uri, g_rec_file_path);
+	SetPathsToFiles();
+
 	LdrStartApp(ev_code_base);
 
 	return status;
@@ -178,6 +193,12 @@ ldrElf *_start(WCHAR *uri, WCHAR *arguments) {
 	reserve = ldrInitEventHandlersTbl(g_state_main_hdls, reserve);
 
 	status |= APP_Register(&ev_code_base, 1, g_state_table_hdls, APP_STATE_MAX, (void *) ApplicationStart);
+
+	u_strcpy(g_tex_file_path, uri);
+	u_strcpy(g_sin_file_path, uri);
+	u_strcpy(g_lua_file_path, uri);
+	u_strcpy(g_rec_file_path, uri);
+	SetPathsToFiles();
 
 	status |= ldrSendEvent(ev_code_base);
 	g_app_elf.name = (char *) g_app_name;
@@ -655,7 +676,11 @@ static UINT32 ATI_Driver_Flush(APPLICATION_T *app) {
 }
 
 static entity_t* box;
-texture_t *textures;
+
+texture_t *textures = NULL;
+//lua_t lua;// = NULL;
+int *sintable = NULL;
+//int *reciprocal = NULL;
 
 static void behaviour(entity_t* const e)
 {
@@ -712,18 +737,12 @@ static void world_create(APPLICATION_T *app, world_t* world)
 static UINT32 GFX_Draw_Start(APPLICATION_T *app) {
 	int x, y;
 	APP_INSTANCE_T *appi;
-	UINT32 readen;
-	FILE_HANDLE_T file_handle;
 
 	appi = (APP_INSTANCE_T *) app;
 
 	appi->p_bitmap = (UINT8 *) appi->ahi.bitmap.image;
 
-	textures = (texture_t *) malloc(TEXTURE_WIDTH * TEXTURE_HEIGHT * POLYGON_MAX);
-
-	file_handle = DL_FsOpenFile(L"/c/Elf/textu.res", FILE_READ_MODE, 0);
-	DL_FsReadFile(textures, TEXTURE_WIDTH * TEXTURE_HEIGHT * POLYGON_MAX, 1, file_handle, &readen);
-	DL_FsCloseFile(file_handle);
+	InitResourses();
 
 	world_create(app, &world);
 	box = entity_create(33 << 16, 35 << 16, 1 << 16);
@@ -808,10 +827,7 @@ static UINT32 GFX_Draw_Stop(APPLICATION_T *app) {
 		appi->p_bitmap = NULL;
 	}
 
-	if (textures) {
-		suFreeMem(textures);
-		textures = NULL;
-	}
+	FreeResourses();
 
 	return RESULT_OK;
 }
@@ -828,4 +844,90 @@ static UINT32 GFX_Draw_Step(APPLICATION_T *app) {
 	draw_world();
 
 	return RESULT_OK;
+}
+
+static void SetPathsToFiles(void) {
+	g_tex_file_path[u_strlen(g_tex_file_path) - 3] = '\0';
+	g_sin_file_path[u_strlen(g_sin_file_path) - 3] = '\0';
+	g_lua_file_path[u_strlen(g_lua_file_path) - 3] = '\0';
+	g_rec_file_path[u_strlen(g_rec_file_path) - 3] = '\0';
+	u_strcat(g_tex_file_path, L"tex");
+	u_strcat(g_sin_file_path, L"sin");
+	u_strcat(g_lua_file_path, L"lua");
+	u_strcat(g_rec_file_path, L"rec");
+}
+
+static UINT32 InitResourses(void) {
+	UINT32 readen;
+	FILE_HANDLE_T file_tex;
+	FILE_HANDLE_T file_sin;
+
+	readen = 0;
+
+	PFprintf("%d %d\n", sizeof(int), sizeof(int *));
+	UtilLogStringData("%d %d\n", sizeof(int), sizeof(int *));
+
+	textures = (texture_t *) uisAllocateMemory(TEXTURE_WIDTH * TEXTURE_HEIGHT * TEXTURE_MAX, NULL);
+	file_tex = DL_FsOpenFile(g_tex_file_path, FILE_READ_MODE, 0);
+	DL_FsReadFile(textures, TEXTURE_WIDTH * TEXTURE_HEIGHT * TEXTURE_MAX, 1, file_tex, &readen);
+	DL_FsCloseFile(file_tex);
+//	if (readen == 0) {
+//		return RESULT_FAIL;
+//	}
+
+	PFprintf("1\n");
+	UtilLogStringData("1\n");
+
+	sintable = (int *) uisAllocateMemory(SINTABLE_SIZE * SINTABLE_MAX, NULL);
+	PFprintf("2\n");
+	UtilLogStringData("2\n");
+	file_sin = DL_FsOpenFile(g_sin_file_path, FILE_READ_MODE, 0);
+	PFprintf("3\n");
+	UtilLogStringData("3\n");
+	DL_FsReadFile(sintable, SINTABLE_SIZE * SINTABLE_MAX, 1, file_sin, &readen);
+	PFprintf("4\n");
+	UtilLogStringData("4\n");
+	DL_FsCloseFile(file_sin);
+	PFprintf("5\n");
+	UtilLogStringData("5\n");
+//	if (readen == 0) {
+//		return RESULT_FAIL;
+//	}
+
+////	lua = (lua_t *) malloc(LUA_WIDTH * LUA_HEIGHT * LUA_SIZE);
+//	file_handle = DL_FsOpenFile(g_lua_file_path, FILE_READ_MODE, 0);
+//	DL_FsReadFile(&lua, LUA_WIDTH * LUA_HEIGHT * LUA_SIZE, 1, file_handle, &readen);
+//	DL_FsCloseFile(file_handle);
+//	if (readen == 0) {
+//		return RESULT_FAIL;
+//	}
+
+//	reciprocal = (int *) malloc(RECIPROCAL_SIZE * RECIPROCAL_MAX);
+//	file_handle = DL_FsOpenFile(g_rec_file_path, FILE_READ_MODE, 0);
+//	DL_FsReadFile(reciprocal, RECIPROCAL_SIZE * RECIPROCAL_MAX, 1, file_handle, &readen);
+//	DL_FsCloseFile(file_handle);
+//	if (readen == 0) {
+//		return RESULT_FAIL;
+//	}
+
+	return RESULT_OK;
+}
+
+static void FreeResourses(void) {
+	if (textures) {
+		suFreeMem(textures);
+		textures = NULL;
+	}
+	if (sintable) {
+		suFreeMem(sintable);
+		sintable = NULL;
+	}
+//	if (lua) {
+//		suFreeMem(lua);
+//		lua = NULL;
+//	}
+//	if (reciprocal) {
+//		suFreeMem(reciprocal);
+//		reciprocal = NULL;
+//	}
 }

@@ -84,7 +84,9 @@ inline int isqrt(int value)
 #define fixceil(A) f2i((A)+0xFF)
 #define fixinv(A) fixdiv(FIXED_ONE,(A))
 
-extern const int sintable[2048];
+#define SINTABLE_SIZE (4)
+#define SINTABLE_MAX (2048)
+extern int *sintable;
 
 #define fixsin16(A) sintable[(A)&2047]
 #define fixcos16(A) sintable[((A)+512)&2047]
@@ -286,10 +288,15 @@ typedef struct
 
 #define TEXTURE_WIDTH 64
 #define TEXTURE_HEIGHT 64
+#define TEXTURE_MAX 8
 
 typedef unsigned char texture_t[TEXTURE_HEIGHT][TEXTURE_WIDTH];
 
-typedef unsigned short lua_t[64][256];
+#define LUA_WIDTH 64
+#define LUA_HEIGHT 256
+#define LUA_SIZE 2
+
+typedef unsigned short lua_t[LUA_WIDTH][LUA_HEIGHT];
 
 // Type definition of a polygon vertex
 typedef struct
@@ -378,8 +385,12 @@ void CODE_IN_IWRAM draw_texture(
   int n,
   const texture_t texture);
 
-#include "data.h"
+extern texture_t *textures;
+
+#define RECIPROCAL_SIZE (4)
+#define RECIPROCAL_MAX (301)
+extern const int reciprocal[];
+
+extern const lua_t lua;
 
 #endif
-
-
