@@ -23,6 +23,7 @@
 #include <apps.h>
 #include <dl.h>
 #include <dal.h>
+#include <filesystem.h>
 #include <uis.h>
 #include <mem.h>
 #include <time_date.h>
@@ -564,7 +565,7 @@ static UINT32 ATI_Driver_Start(APPLICATION_T *app) {
 		LOG_ATI("ATI External Memory Largest Block: result=%d, size=%d, size=%d KiB, align=%d\n",
 			result, size, size / 1024, align);
 
-		LOG_ATI("ATI Display Mode: size=%dx%d, pixel_format=%d, frequency=%d, rotation=%d, mirror=%d",
+		LOG_ATI("ATI Display Mode: size=%dx%d, pixel_format=%d, frequency=%d, rotation=%d, mirror=%d\n",
 			display_mode.size.x, display_mode.size.y,
 			display_mode.pixel_format, display_mode.frequency, display_mode.rotation, display_mode.mirror);
 
@@ -593,8 +594,8 @@ static UINT32 ATI_Driver_Start(APPLICATION_T *app) {
 	appi->ahi.bitmap.height = appi->bmp_height;
 	appi->ahi.bitmap.stride = appi->bmp_width * 2; /* (width * bpp) */
 	appi->ahi.bitmap.format = AHIFMT_16BPP_565;
-	appi->ahi.bitmap.image = suAllocMem(appi->bmp_width * appi->bmp_height, &result);
-	if (result) {
+	appi->ahi.bitmap.image = suAllocMem(appi->bmp_width * appi->bmp_height * 2, &result);
+	if (result != RESULT_OK) {
 		return RESULT_FAIL;
 	}
 	appi->ahi.rect_bitmap.x1 = 0;
