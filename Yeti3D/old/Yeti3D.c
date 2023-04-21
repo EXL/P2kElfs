@@ -29,6 +29,8 @@
 #include <time_date.h>
 #include <utilities.h>
 
+#define LOG(format, ...) UtilLogStringData(format, ##__VA_ARGS__); PFprintf(format, ##__VA_ARGS__)
+
 #define TIMER_FAST_TRIGGER_MS             (1)
 #if defined(FPS_15)
 #define TIMER_FAST_UPDATE_MS              (1000 / 15) /* ~15 FPS. */
@@ -513,52 +515,50 @@ static UINT32 ATI_Driver_Start(APPLICATION_T *app) {
 
 	status |= AhiSurfInfo(appi->ahi.context, appi->ahi.screen, &appi->ahi.info_surface);
 
-#define LOG_ATI(format, ...) UtilLogStringData(format, ##__VA_ARGS__); PFprintf(format, ##__VA_ARGS__)
 	{
 		UINT32 result;
 		UINT32 size;
 		UINT32 align;
 
-		LOG_ATI("ATI Driver Name: %s\n", appi->ahi.info_driver->drvName);
-		LOG_ATI("ATI Driver Version: %s\n", appi->ahi.info_driver->drvVer);
-		LOG_ATI("ATI S/W Revision: %d (0x%08X)\n",
+		LOG("ATI Driver Name: %s\n", appi->ahi.info_driver->drvName);
+		LOG("ATI Driver Version: %s\n", appi->ahi.info_driver->drvVer);
+		LOG("ATI S/W Revision: %d (0x%08X)\n",
 			appi->ahi.info_driver->swRevision, appi->ahi.info_driver->swRevision);
-		LOG_ATI("ATI Chip ID: %d (0x%08X)\n",
+		LOG("ATI Chip ID: %d (0x%08X)\n",
 			appi->ahi.info_driver->chipId, appi->ahi.info_driver->chipId);
-		LOG_ATI("ATI Revision ID: %d (0x%08X)\n",
+		LOG("ATI Revision ID: %d (0x%08X)\n",
 			appi->ahi.info_driver->revisionId, appi->ahi.info_driver->revisionId);
-		LOG_ATI("ATI CPU Bus Interface Mode: %d (0x%08X)\n",
+		LOG("ATI CPU Bus Interface Mode: %d (0x%08X)\n",
 			appi->ahi.info_driver->cpuBusInterfaceMode, appi->ahi.info_driver->cpuBusInterfaceMode);
-		LOG_ATI("ATI Total Memory: %d (%d KiB)\n",
+		LOG("ATI Total Memory: %d (%d KiB)\n",
 			appi->ahi.info_driver->totalMemory, appi->ahi.info_driver->totalMemory / 1024);
-		LOG_ATI("ATI Internal Memory: %d (%d KiB)\n",
+		LOG("ATI Internal Memory: %d (%d KiB)\n",
 			appi->ahi.info_driver->internalMemSize, appi->ahi.info_driver->internalMemSize / 1024);
-		LOG_ATI("ATI External Memory: %d (%d KiB)\n",
+		LOG("ATI External Memory: %d (%d KiB)\n",
 			appi->ahi.info_driver->externalMemSize, appi->ahi.info_driver->externalMemSize / 1024);
-		LOG_ATI("ATI CAPS 1: %d (0x%08X)\n", appi->ahi.info_driver->caps1, appi->ahi.info_driver->caps1);
-		LOG_ATI("ATI CAPS 2: %d (0x%08X)\n", appi->ahi.info_driver->caps2, appi->ahi.info_driver->caps2);
+		LOG("ATI CAPS 1: %d (0x%08X)\n", appi->ahi.info_driver->caps1, appi->ahi.info_driver->caps1);
+		LOG("ATI CAPS 2: %d (0x%08X)\n", appi->ahi.info_driver->caps2, appi->ahi.info_driver->caps2);
 
 		result = AhiSurfGetLargestFreeBlockSize(appi->ahi.context, AHIFMT_16BPP_565,
 			&size, &align, AHIFLAG_INTMEMORY);
-		LOG_ATI("ATI Internal Memory Largest Block: result=%d, size=%d, size=%d KiB, align=%d\n",
+		LOG("ATI Internal Memory Largest Block: result=%d, size=%d, size=%d KiB, align=%d\n",
 			result, size, size / 1024, align);
 
 		result = AhiSurfGetLargestFreeBlockSize(appi->ahi.context, AHIFMT_16BPP_565,
 			&size, &align, AHIFLAG_EXTMEMORY);
-		LOG_ATI("ATI External Memory Largest Block: result=%d, size=%d, size=%d KiB, align=%d\n",
+		LOG("ATI External Memory Largest Block: result=%d, size=%d, size=%d KiB, align=%d\n",
 			result, size, size / 1024, align);
 
-		LOG_ATI("ATI Display Mode: size=%dx%d, pixel_format=%d, frequency=%d, rotation=%d, mirror=%d\n",
+		LOG("ATI Display Mode: size=%dx%d, pixel_format=%d, frequency=%d, rotation=%d, mirror=%d\n",
 			display_mode.size.x, display_mode.size.y,
 			display_mode.pixel_format, display_mode.frequency, display_mode.rotation, display_mode.mirror);
 
-		LOG_ATI("ATI Surface Info: width=%d, height=%d, pixFormat=%d, byteSize=%d, byteSize=%d KiB\n",
+		LOG("ATI Surface Info: width=%d, height=%d, pixFormat=%d, byteSize=%d, byteSize=%d KiB\n",
 			appi->ahi.info_surface.width, appi->ahi.info_surface.height, appi->ahi.info_surface.pixFormat,
 			appi->ahi.info_surface.byteSize, appi->ahi.info_surface.byteSize / 1024);
-		LOG_ATI("ATI Surface Info: offset=%d, stride=%d, numPlanes=%d\n",
+		LOG("ATI Surface Info: offset=%d, stride=%d, numPlanes=%d\n",
 			appi->ahi.info_surface.offset, appi->ahi.info_surface.stride, appi->ahi.info_surface.numPlanes);
 	}
-#undef LOG_ATI
 
 	appi->width = appi->ahi.info_surface.width;
 	appi->height = appi->ahi.info_surface.height;
@@ -618,12 +618,14 @@ static UINT32 ATI_Driver_Stop(APPLICATION_T *app) {
 	app_instance = (APP_INSTANCE_T *) app;
 
 	if (app_instance->p_bitmap) {
+		LOG("%s\n", "Free: ATI Bitmap memory.");
 		suFreeMem(app_instance->p_bitmap);
 		app_instance->p_bitmap = NULL;
 	}
 
 	status |= AhiDevClose(app_instance->ahi.context);
 	if (app_instance->ahi.info_driver) {
+		LOG("%s\n", "Free: ATI Driver Info memory.");
 		suFreeMem(app_instance->ahi.info_driver);
 	}
 
@@ -834,25 +836,35 @@ static void SetPathsToFiles(void) {
 }
 
 static UINT32 InitResourses(void) {
+	INT32 status;
 	UINT32 readen;
 	FILE_HANDLE_T file_handle;
 
 	readen = 0;
+	status = RESULT_OK;
 
-	textures = (texture_t *) suAllocMem(TEXTURE_WIDTH * TEXTURE_HEIGHT * TEXTURE_MAX, NULL);
+	LOG("Trying to allocate texture %d bytes.\n", TEXTURE_WIDTH * TEXTURE_HEIGHT * TEXTURE_MAX);
+	textures = (texture_t *) suAllocMem(TEXTURE_WIDTH * TEXTURE_HEIGHT * TEXTURE_MAX, &status);
 	file_handle = DL_FsOpenFile(g_tex_file_path, FILE_READ_MODE, 0);
 	DL_FsReadFile(textures, TEXTURE_WIDTH * TEXTURE_HEIGHT * TEXTURE_MAX, 1, file_handle, &readen);
 	DL_FsCloseFile(file_handle);
+	if (status != RESULT_OK) {
+		LOG("%s\n", "Error: Cannot allocate textures array.");
+	}
 	if (readen == 0) {
-		return RESULT_FAIL;
+		LOG("%s\n", "Error: Cannot read textures file.");
 	}
 
-	lua = suAllocMem(sizeof(lua_t), NULL);
+	LOG("Trying to allocate LUA %d bytes.\n", sizeof(lua_t));
+	lua = suAllocMem(sizeof(lua_t), &status);
 	file_handle = DL_FsOpenFile(g_lua_file_path, FILE_READ_MODE, 0);
 	DL_FsReadFile(lua, sizeof(lua_t), 1, file_handle, &readen);
 	DL_FsCloseFile(file_handle);
+	if (status != RESULT_OK) {
+		LOG("%s\n", "Error: Cannot allocate LUA array!");
+	}
 	if (readen == 0) {
-		return RESULT_FAIL;
+		LOG("%s\n", "Error: Cannot read LUA file.");
 	}
 
 	return RESULT_OK;
@@ -860,11 +872,15 @@ static UINT32 InitResourses(void) {
 
 static void FreeResourses(void) {
 	if (textures) {
+		LOG("%s\n", "Free: Textures memory.");
 		suFreeMem(textures);
 		textures = NULL;
 	}
 	if (lua) {
+		LOG("%s\n", "Free: LUA memory.");
 		suFreeMem(lua);
 		lua = NULL;
 	}
 }
+
+#undef LOG
