@@ -23,7 +23,7 @@
 
 #define RGB_SET(r,g,b) (((b)<<10)+((g)<<5)+(r))
 
-#if 0 /* EXL: Dublicate function? */
+#if 0 /* EXL: Duplicate function? */
 inline int abs(const int a)
 {
   return a < 0 ? -a : a;
