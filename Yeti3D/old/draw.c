@@ -122,8 +122,8 @@ void CODE_IN_IWRAM draw_texture(
 
     for (i = n; i--;)
     {
-      u = (i2f( 82) >> 1) * tm2[i].y / tm2[i].z + (i2f(VIEWPORT_WIDTH ) >> 1);
-      v = (i2f(122) >> 1) * tm2[i].x / tm2[i].z + (i2f(VIEWPORT_HEIGHT) >> 1);
+      u = (i2f(VIEWPORT_WIDTH) >> 1) * tm2[i].y / tm2[i].z + (i2f(VIEWPORT_WIDTH ) >> 1);
+      v = (i2f(VIEWPORT_HEIGHT) >> 1) * tm2[i].x / tm2[i].z + (i2f(VIEWPORT_HEIGHT) >> 1);
       tm2[i].x = u;
       tm2[i].y = v;
       tm2[i].d = fixceil(tm2[i].y);
@@ -131,8 +131,8 @@ void CODE_IN_IWRAM draw_texture(
       if (tm2[i].y < y1) {y1 = tm2[i].y; lt_i = rt_i = i;}
       if (tm2[i].y > y2) {y2 = tm2[i].y;}
     }
-    y1 = fixceil(y1);
-    y2 = fixceil(y2);
+    if ((y1 = fixceil(y1)) < VIEWPORT_Y1) y1 = VIEWPORT_Y1;
+    if ((y2 = fixceil(y2)) > VIEWPORT_Y2) y2 = VIEWPORT_Y2;
 
     for (; y1 < y2; y1++)
     {
@@ -168,8 +168,8 @@ void CODE_IN_IWRAM draw_texture(
         rt_vv = ((tm2[rt_i].v - (rt_v = tm2[i].v)) * j) >> 16;
         rt_ll = ((tm2[rt_i].l - (rt_l = tm2[i].l)) * j) >> 16;
       }
-	x1 = fixceil(lt_x);
-      x2 = fixceil(rt_x);
+      if ((x1 = fixceil(lt_x)) < VIEWPORT_X1) x1 = VIEWPORT_X1;
+      if ((x2 = fixceil(rt_x)) > VIEWPORT_X2) x2 = VIEWPORT_X2;
 
       if ((i = x2 - x1) > 0)
       {
