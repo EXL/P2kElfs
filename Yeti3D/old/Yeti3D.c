@@ -129,6 +129,7 @@ static int m_KEY_UP, m_KEY_DOWN, m_KEY_LEFT, m_KEY_RIGHT = 0;
 
 static WCHAR g_tex_file_path[FS_MAX_URI_NAME_LENGTH / 4];
 static WCHAR g_lua_file_path[FS_MAX_URI_NAME_LENGTH / 4];
+static WCHAR g_sin_file_path[FS_MAX_URI_NAME_LENGTH / 4];
 
 static EVENT_HANDLER_ENTRY_T g_state_any_hdls[] = {
 	{ EV_REVOKE_TOKEN, APP_HandleUITokenRevoked },
@@ -164,6 +165,7 @@ UINT32 Register(const char *elf_path_uri, const char *args, UINT32 ev_code) {
 
 	u_atou(elf_path_uri, g_tex_file_path);
 	u_atou(elf_path_uri, g_lua_file_path);
+	u_atou(elf_path_uri, g_sin_file_path);
 	SetPathsToFiles();
 
 	LdrStartApp(ev_code_base);
@@ -192,6 +194,7 @@ ldrElf *_start(WCHAR *uri, WCHAR *arguments) {
 
 	u_strcpy(g_tex_file_path, uri);
 	u_strcpy(g_lua_file_path, uri);
+	u_strcpy(g_sin_file_path, uri);
 	SetPathsToFiles();
 
 	status |= ldrSendEvent(ev_code_base);
@@ -667,6 +670,7 @@ static entity_t* box;
 
 texture_t *textures = NULL;
 unsigned short (*lua)[LUA_HEIGHT] = NULL;
+int *sintable = NULL;
 
 static void behaviour(entity_t* const e)
 {
@@ -830,8 +834,10 @@ static UINT32 GFX_Draw_Step(APPLICATION_T *app) {
 static void SetPathsToFiles(void) {
 	g_tex_file_path[u_strlen(g_tex_file_path) - 3] = '\0';
 	g_lua_file_path[u_strlen(g_lua_file_path) - 3] = '\0';
+	g_sin_file_path[u_strlen(g_sin_file_path) - 3] = '\0';
 	u_strcat(g_tex_file_path, L"tex");
 	u_strcat(g_lua_file_path, L"lua");
+	u_strcat(g_sin_file_path, L"sin");
 }
 
 static UINT32 InitResourses(void) {
@@ -866,6 +872,18 @@ static UINT32 InitResourses(void) {
 		LOG("%s\n", "Error: Cannot read LUA file.");
 	}
 
+	LOG("Trying to allocate sintable %d bytes.\n", SINTABLE_SIZE * SINTABLE_MAX);
+	sintable = (int *) suAllocMem(SINTABLE_SIZE * SINTABLE_MAX, NULL);
+	file_handle = DL_FsOpenFile(g_sin_file_path, FILE_READ_MODE, 0);
+	DL_FsReadFile(sintable, SINTABLE_SIZE * SINTABLE_MAX, 1, file_handle, &readen);
+	DL_FsCloseFile(file_handle);
+	if (status != RESULT_OK) {
+		LOG("%s\n", "Error: Cannot allocate sintable array!");
+	}
+	if (readen == 0) {
+		LOG("%s\n", "Error: Cannot read sintable file.");
+	}
+
 	return RESULT_OK;
 }
 
@@ -879,6 +897,11 @@ static void FreeResourses(void) {
 		LOG("%s\n", "Free: LUA memory.");
 		suFreeMem(lua);
 		lua = NULL;
+	}
+	if (sintable) {
+		LOG("%s\n", "Free: sintable memory.");
+		suFreeMem(sintable);
+		sintable = NULL;
 	}
 }
 

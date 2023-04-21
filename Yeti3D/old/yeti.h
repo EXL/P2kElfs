@@ -86,8 +86,11 @@ inline int isqrt(int value)
 
 #define SINTABLE_SIZE (4)
 #define SINTABLE_MAX (2048)
-
+#if defined(PLATFORM_GBA)
 extern const int sintable[];
+#else
+extern int *sintable;
+#endif
 
 #define fixsin16(A) sintable[(A)&2047]
 #define fixcos16(A) sintable[((A)+512)&2047]

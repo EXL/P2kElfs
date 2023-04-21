@@ -18,6 +18,7 @@ static const int SCREEN_FPS = 35;
 
 texture_t *textures = NULL;
 unsigned short (*lua)[LUA_HEIGHT] = NULL;
+int *sintable = NULL;
 #endif
 
 void behaviour(entity_t* const e)
@@ -105,6 +106,11 @@ int main(int argc, char *argv[])
   lua = (unsigned short (*)[LUA_HEIGHT]) malloc(sizeof(lua_t));
   res_file = fopen("Yeti3D.lua", "rb");
   readen = fread(lua, sizeof(lua_t), 1, res_file);
+  fclose(res_file);
+
+  sintable = (int *) malloc(SINTABLE_SIZE * SINTABLE_MAX);
+  res_file = fopen("Yeti3D.sin", "rb");
+  readen = fread(sintable, SINTABLE_SIZE * SINTABLE_MAX, 1, res_file);
   fclose(res_file);
 #endif
   world_create(&world);
@@ -211,6 +217,7 @@ int main(int argc, char *argv[])
     }
 
   free(textures);
+  free(sintable);
   free(lua);
 
   SDL_FreeSurface(surface);
