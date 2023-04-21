@@ -63,7 +63,9 @@ void world_create(world_t* world)
   world->screen = (viewport_t*) 0x06000000;
   world->buffer = (viewport_t*) 0x0600A000;
 #elif defined(PLATFORM_SDL)
-  surface = SDL_CreateRGBSurface(SDL_HWPALETTE, VIEWPORT_WIDTH, VIEWPORT_HEIGHT, 16, 0, 0, 0, 0);
+  surface = SDL_CreateRGBSurface(SDL_HWPALETTE, VIEWPORT_WIDTH, VIEWPORT_HEIGHT, 16, 0xF800, 0x07E0, 0x001F, 0x0000); // RGB565
+//  surface = SDL_CreateRGBSurface(SDL_HWPALETTE, VIEWPORT_WIDTH, VIEWPORT_HEIGHT, 16, 0x7C00, 0x03E0, 0x001F, 0x0000); // RGB555
+//  surface = SDL_CreateRGBSurface(SDL_HWPALETTE, VIEWPORT_WIDTH, VIEWPORT_HEIGHT, 16, 0x001F, 0x03E0, 0x7C00, 0x0000); // BGR555
   world->screen = NULL;
   world->buffer = (viewport_t*) surface->pixels;
 #endif
@@ -74,20 +76,6 @@ void world_create(world_t* world)
   camera->y = MAP_SIZE << 15;
   camera->z = 3 << 15;
   camera->p = 100 << 16;
-}
-
-int ReadShortInt(FILE *fptr,short int *n)
-{
-   unsigned char *cptr,tmp;
-
-   if (fread(n,2,1,fptr) != 1)
-      return 0;
-   cptr = (unsigned char *)n;
-   tmp = cptr[1];
-   cptr[1] = cptr[0];
-   cptr[0] =tmp;
-
-   return 1;
 }
 
 #if defined(PLATFORM_GBA)

@@ -76,6 +76,22 @@ inline int polygon_clip(vertex_t* dst, vertex_t* src, int n)
   return dst - start;
 }
 
+#define RGB_RED(A)   (((A)>> 0)&31)
+#define RGB_GREEN(A) (((A)>> 5)&31)
+#define RGB_BLUE(A)  (((A)>>10)&31)
+
+/*
+** Name: rgb_convert
+** Desc: Converts a rgb color to another format.
+*/
+int rgb_convert(int color, int rmask, int gmask, int bmask)
+{
+  return
+	((RGB_RED  (color) * rmask / 31) & rmask) |
+	((RGB_GREEN(color) * gmask / 31) & gmask) |
+	((RGB_BLUE (color) * bmask / 31) & bmask) ;
+}
+
 /*
 ** Name: draw_texture
 ** Desc: Renders a texture to a screen. The texture is DDA mapped to the given polygon.
@@ -178,7 +194,7 @@ CASE(16) CASE(15) CASE(14) CASE(13) CASE(12) CASE(11) CASE(10) CASE( 9) \
 CASE( 8) CASE( 7) CASE( 6) CASE( 5) CASE( 4) CASE( 3) CASE( 2) CASE( 1) \
 }
 
-#define AFFINE(I) fb[I] = lua[f2i(l)][texture[f2i(u)][f2i(v)]]; u+=uu; v+=vv; l+=ll;
+#define AFFINE(I) fb[I] = rgb_convert(lua[f2i(l)][texture[f2i(u)][f2i(v)]], 0xf800, 0x07e0, 0x001F); u+=uu; v+=vv; l+=ll;
         INNER_LOOP;
 #undef  AFFINE        
       }
