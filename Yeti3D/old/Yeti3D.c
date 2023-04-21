@@ -1,16 +1,15 @@
 /*
  * About:
- *   The "Fire Effect" demo is a port of Doom PSX fire splash screen implemented as ELF application.
+ *   The "Yeti3D Old" is a port of old 3D engine demo from GBA to Motorola P2K ELF application.
  *
  * Author:
- *   EXL
+ *   Derek J. Evans, EXL
  *
  * License:
  *   MIT
  *
  * Additional information:
- *   https://fabiensanglard.net/doom_fire_psx
- *   https://github.com/EXL/Stuff/tree/master/Sandbox/SDL/doom_fire_demo
+ *   https://www.gbadev.org/demos.php?showinfo=568
  *
  * Application type:
  *   GUI + ATI
@@ -581,6 +580,7 @@ static UINT32 ATI_Driver_Start(APPLICATION_T *app) {
 	appi->ahi.bitmap.format = AHIFMT_16BPP_565;
 	appi->ahi.bitmap.image = suAllocMem(appi->bmp_width * appi->bmp_height * 2, &result);
 	if (result != RESULT_OK) {
+		LOG("%s\n", "Error: Cannot allocate screen buffer memory.");
 		return RESULT_FAIL;
 	}
 	appi->ahi.rect_bitmap.x1 = 0;
@@ -648,9 +648,6 @@ static UINT32 ATI_Driver_Flush(APPLICATION_T *app) {
 	AhiDrawSurfDstSet(appi->ahi.context, appi->ahi.draw, 0);
 	AhiDrawBitmapBlt(appi->ahi.context,
 		&appi->ahi.rect_bitmap, &appi->ahi.point_bitmap, &appi->ahi.bitmap, NULL, 0);
-
-//	AhiDrawRotateBlt(appi->ahi.context,
-//		&appi->ahi.rect_draw, &appi->ahi.point_bitmap, AHIROT_90, AHIMIRR_NO, 0);
 
 	AhiDrawSurfSrcSet(appi->ahi.context, appi->ahi.draw, 0);
 	AhiDrawSurfDstSet(appi->ahi.context, appi->ahi.screen, 0);

@@ -1,11 +1,3 @@
-/*
-** Name: Yeti3D
-** Desc: Portable GameBoy Advanced 3D Engine
-** Auth: Derek J. Evans
-**
-** Copyright (C) 2003 Derek J. Evans. All Rights Reserved.
-*/
-
 The Yeti 3D Engine - Wednesday August 13th, 2003
 ================================================
 
