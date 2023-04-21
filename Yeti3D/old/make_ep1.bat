@@ -34,6 +34,6 @@ set ELF_NAME=Yeti3D
 	%LIB_PATH%\%LIB_MAIN% -o %ELF_NAME%.elf
 
 if /I "%1"=="clean" (
-	del %ELF_NAME%.o
+	del *.o
 	del %ELF_NAME%.elf
 )

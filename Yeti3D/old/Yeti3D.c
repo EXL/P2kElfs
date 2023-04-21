@@ -832,12 +832,12 @@ static UINT32 GFX_Draw_Step(APPLICATION_T *app) {
 }
 
 static void SetPathsToFiles(void) {
-	g_tex_file_path[u_strlen(g_tex_file_path) - 3] = '\0';
-	g_lua_file_path[u_strlen(g_lua_file_path) - 3] = '\0';
-	g_sin_file_path[u_strlen(g_sin_file_path) - 3] = '\0';
-	u_strcat(g_tex_file_path, L"tex");
-	u_strcat(g_lua_file_path, L"lua");
-	u_strcat(g_sin_file_path, L"sin");
+	*(u_strrchr(g_tex_file_path, L'/') + 1) = '\0';
+	*(u_strrchr(g_lua_file_path, L'/') + 1) = '\0';
+	*(u_strrchr(g_sin_file_path, L'/') + 1) = '\0';
+	u_strcat(g_tex_file_path, L"Yeti3D.tex");
+	u_strcat(g_lua_file_path, L"Yeti3D.lua");
+	u_strcat(g_sin_file_path, L"Yeti3D.sin");
 }
 
 static UINT32 InitResourses(void) {
