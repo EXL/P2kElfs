@@ -1,5 +1,9 @@
 #!/usr/bin/env python
 
+"""
+Convert data files from GBA little-endian format to P2K big-endian format.
+"""
+
 import sys
 
 def swap_bytes(filename, base):
