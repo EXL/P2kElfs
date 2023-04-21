@@ -378,25 +378,14 @@ static UINT32 CheckKeyboard(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
 }
 
 static UINT32 ProcessKeyboard(EVENT_STACK_T *ev_st, APPLICATION_T *app, UINT32 key, BOOL pressed) {
-	#if defined(ROT_90)
-		#define KK_2 MULTIKEY_4
-		#define KK_UP MULTIKEY_LEFT
-		#define KK_4 MULTIKEY_8
-		#define KK_LEFT MULTIKEY_DOWN
-		#define KK_6 MULTIKEY_2
-		#define KK_RIGHT MULTIKEY_UP
-		#define KK_8 MULTIKEY_6
-		#define KK_DOWN MULTIKEY_RIGHT
-	#elif defined(ROT_0)
-		#define KK_2 MULTIKEY_6
-		#define KK_UP MULTIKEY_RIGHT
-		#define KK_4 MULTIKEY_2
-		#define KK_LEFT MULTIKEY_UP
-		#define KK_6 MULTIKEY_8
-		#define KK_RIGHT MULTIKEY_DOWN
-		#define KK_8 MULTIKEY_4
-		#define KK_DOWN MULTIKEY_LEFT
-	#endif
+	#define KK_2 MULTIKEY_6
+	#define KK_UP MULTIKEY_RIGHT
+	#define KK_4 MULTIKEY_2
+	#define KK_LEFT MULTIKEY_UP
+	#define KK_6 MULTIKEY_8
+	#define KK_RIGHT MULTIKEY_DOWN
+	#define KK_8 MULTIKEY_4
+	#define KK_DOWN MULTIKEY_LEFT
 
 	switch (key) {
 		case MULTIKEY_0:
@@ -605,9 +594,9 @@ static UINT32 ATI_Driver_Start(APPLICATION_T *app) {
 
 #if defined(ROT_90)
 	appi->ahi.rect_draw.x1 = 0;
-	appi->ahi.rect_draw.y1 = appi->bmp_height + 1;
-	appi->ahi.rect_draw.x2 = 0 + appi->bmp_height;
-	appi->ahi.rect_draw.y2 = appi->bmp_height + 1 + appi->bmp_width;
+	appi->ahi.rect_draw.y1 = 0;
+	appi->ahi.rect_draw.x2 = 0 + appi->bmp_width;
+	appi->ahi.rect_draw.y2 = 0 + appi->bmp_height;
 #elif defined(ROT_0)
 	appi->ahi.rect_draw.x1 = appi->width / 2 - appi->bmp_width / 2;
 	appi->ahi.rect_draw.y1 = appi->height / 2 - appi->bmp_height / 2;
@@ -616,7 +605,7 @@ static UINT32 ATI_Driver_Start(APPLICATION_T *app) {
 
 	status |= AhiDrawSurfDstSet(appi->ahi.context, appi->ahi.screen, 0);
 
-	status |= AhiDrawBrushFgColorSet(appi->ahi.context, ATI_565RGB(0x00, 0xFF, 0x00));
+	status |= AhiDrawBrushFgColorSet(appi->ahi.context, ATI_565RGB(0x88, 0x88, 0x88));
 	status |= AhiDrawBrushSet(appi->ahi.context, NULL, NULL, 0, AHIFLAG_BRUSH_SOLID);
 	status |= AhiDrawRopSet(appi->ahi.context, AHIROP3(AHIROP_PATCOPY));
 	status |= AhiDrawSpans(appi->ahi.context, &appi->ahi.update_params.rect, 1, 0);
@@ -662,8 +651,8 @@ static UINT32 ATI_Driver_Flush(APPLICATION_T *app) {
 	AhiDrawBitmapBlt(appi->ahi.context,
 		&appi->ahi.rect_bitmap, &appi->ahi.point_bitmap, &appi->ahi.bitmap, NULL, 0);
 
-	AhiDrawRotateBlt(appi->ahi.context,
-		&appi->ahi.rect_draw, &appi->ahi.point_bitmap, AHIROT_90, AHIMIRR_NO, 0);
+//	AhiDrawRotateBlt(appi->ahi.context,
+//		&appi->ahi.rect_draw, &appi->ahi.point_bitmap, AHIROT_90, AHIMIRR_NO, 0);
 
 	AhiDrawSurfSrcSet(appi->ahi.context, appi->ahi.draw, 0);
 	AhiDrawSurfDstSet(appi->ahi.context, appi->ahi.screen, 0);

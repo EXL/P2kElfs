@@ -278,8 +278,8 @@ inline void matrix_rotate_object(matrix_t m, int alp, int bet, int gam)
   m[2][2] =  fixmul(cosbet,cosgam);
 }
 
-#define VIEWPORT_WIDTH 128
-#define VIEWPORT_HEIGHT 160
+#define VIEWPORT_WIDTH 82
+#define VIEWPORT_HEIGHT 122
 #define VIEWPORT_X1 0
 #define VIEWPORT_Y1 0
 #define VIEWPORT_X2 (VIEWPORT_WIDTH - 0)
