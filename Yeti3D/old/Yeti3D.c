@@ -285,7 +285,9 @@ static UINT32 HandleStateEnter(EVENT_STACK_T *ev_st, APPLICATION_T *app, ENTER_S
 
 			DL_KeyKjavaGetKeyState(); /* Reset Keys. */
 
-			GFX_Draw_Start(app);
+			if (state == ENTER_STATE_ENTER) {
+				GFX_Draw_Start(app);
+			}
 
 			SetLoopTimer(app, TIMER_FAST_UPDATE_MS);
 
