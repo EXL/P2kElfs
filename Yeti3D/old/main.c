@@ -17,9 +17,7 @@ static int quit_loop = 0;
 static const int SCREEN_FPS = 35;
 
 texture_t *textures = NULL;
-int *sintable = NULL;
 unsigned short (*lua)[LUA_HEIGHT] = NULL;
-int *reciprocal = NULL;
 #endif
 
 void behaviour(entity_t* const e)
@@ -102,16 +100,6 @@ int main(int argc, char *argv[])
   textures = (texture_t*) malloc(TEXTURE_WIDTH * TEXTURE_HEIGHT * TEXTURE_MAX);
   FILE *res_file = fopen("Yeti3D.tex", "rb");
   size_t readen = fread(textures, TEXTURE_WIDTH * TEXTURE_HEIGHT * TEXTURE_MAX, 1, res_file);
-  fclose(res_file);
-
-  sintable = (int *) malloc(SINTABLE_SIZE * SINTABLE_MAX);
-  res_file = fopen("Yeti3D.sin", "rb");
-  readen = fread(sintable, SINTABLE_SIZE * SINTABLE_MAX, 1, res_file);
-  fclose(res_file);
-
-  reciprocal = (int *) malloc(RECIPROCAL_SIZE * RECIPROCAL_MAX);
-  res_file = fopen("Yeti3D.rec", "rb");
-  readen = fread(reciprocal, RECIPROCAL_SIZE * RECIPROCAL_MAX, 1, res_file);
   fclose(res_file);
 
   lua = (unsigned short (*)[LUA_HEIGHT]) malloc(sizeof(lua_t));
@@ -223,8 +211,6 @@ int main(int argc, char *argv[])
     }
 
   free(textures);
-  free(sintable);
-  free(reciprocal);
   free(lua);
 
   SDL_FreeSurface(surface);
