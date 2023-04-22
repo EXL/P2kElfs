@@ -488,6 +488,7 @@ void CODE_IN_IWRAM draw_clipped_poly(yeti_t* yeti, polyclip_t src, int n, int ti
 void CODE_IN_IWRAM draw_texture(yeti_t* yeti, polyclip_t p, int n, int tid)
 {
   int i;
+  polyclip_t a, b;
 
   for (i = n; i--;)
   {
@@ -497,7 +498,6 @@ void CODE_IN_IWRAM draw_texture(yeti_t* yeti, polyclip_t p, int n, int tid)
        (p[i]->y + p[i]->z) < 0 ||
        (p[i]->z - p[i]->y) < 0 )
     {
-      polyclip_t a, b;
 
       for (i = n; i--; p[i]->d = p[i]->x + p[i]->z); n = polygon_clip(yeti, a, p, n); // Left
       for (i = n; i--; a[i]->d = a[i]->z - a[i]->x); n = polygon_clip(yeti, b, a, n); // Right

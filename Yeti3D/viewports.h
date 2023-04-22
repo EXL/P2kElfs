@@ -225,7 +225,7 @@ Prepared for public release: 10/24/2003 - Derek J. Evans <derek@theteahouse.com.
 
 /******************************************************************************/
 
-#ifdef __WIN32__
+#if defined(__WIN32__) && !defined(__SDL__)
 
 #define YETI_RGB555
 #define YETI_ROM 
