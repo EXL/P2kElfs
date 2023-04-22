@@ -40,6 +40,8 @@ Prepared for public release: 10/24/2003 - Derek J. Evans <derek@theteahouse.com.
 #include "yeti.h"
 #include "game.h"
 
+#include <stdio.h>
+
 #include <SDL/SDL.h>
 
 static SDL_Surface *video;
@@ -53,9 +55,9 @@ void sdl_init(void) {
 #define h YETI_VIEWPORT_HEIGHT
 	SDL_Init(SDL_INIT_VIDEO);
 	video = SDL_SetVideoMode(w, h, 16, SDL_HWSURFACE);
-//	surface = SDL_CreateRGBSurface(SDL_HWPALETTE, w, h, 16, 0xF800, 0x07E0, 0x001F, 0x0000); // RGB565
+	surface = SDL_CreateRGBSurface(SDL_HWPALETTE, w, h, 16, 0xF800, 0x07E0, 0x001F, 0x0000); // RGB565
 //	surface = SDL_CreateRGBSurface(SDL_HWPALETTE, w, h, 16, 0x7C00, 0x03E0, 0x001F, 0x0000); // RGB555
-	surface = SDL_CreateRGBSurface(SDL_HWPALETTE, w, h, 16, 0x001F, 0x03E0, 0x7C00, 0x0000); // BGR555
+//	surface = SDL_CreateRGBSurface(SDL_HWPALETTE, w, h, 16, 0x001F, 0x03E0, 0x7C00, 0x0000); // BGR555
 #undef h
 #undef w
 }
@@ -74,7 +76,20 @@ void check_keys(void) {
 }
 
 int main(int argc, char *argv[]) {
+	FILE *res_file;
+	int readen;
 	SDL_Event event;
+	rgb555_t (*res_lua)[256];
+
+	readen = 0;
+
+	res_lua = (rgb555_t (*)[256]) malloc(sizeof(lua_t));
+	res_file = fopen("Yeti3D.lua", "rb");
+	readen = fread(res_lua, sizeof(lua_t), 1, res_file);
+	fclose(res_file);
+	if (readen == 0) {
+		fprintf(stderr, "Error: cannot read Yeti3D.lua resource file.");
+	}
 
 	sdl_init();
 
@@ -84,7 +99,7 @@ int main(int argc, char *argv[]) {
 		(framebuffer_t*) surface->pixels,
 		textures,
 		NULL,
-		(rgb555_t (*)[256]) lua
+		res_lua
 	);
 	game_init(&yeti);
 
@@ -109,6 +124,8 @@ int main(int argc, char *argv[]) {
 		SDL_Flip(video);
 		SDL_Delay(1000 / YETI_VIEWPORT_INTERVAL);
 	}
+
+	free(res_lua);
 
 	SDL_FreeSurface(surface);
 	SDL_FreeSurface(video);
