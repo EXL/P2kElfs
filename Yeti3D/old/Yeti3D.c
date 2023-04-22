@@ -115,7 +115,6 @@ static UINT32 GFX_Draw_Start(APPLICATION_T *app);
 static UINT32 GFX_Draw_Stop(APPLICATION_T *app);
 static UINT32 GFX_Draw_Step(APPLICATION_T *app);
 
-static void SetPathsToFiles(void);
 static UINT32 InitResourses(void);
 static void FreeResourses(void);
 
@@ -127,9 +126,7 @@ static ldrElf g_app_elf;
 
 static int m_KEY_UP, m_KEY_DOWN, m_KEY_LEFT, m_KEY_RIGHT = 0;
 
-static WCHAR g_tex_file_path[FS_MAX_URI_NAME_LENGTH / 4];
-static WCHAR g_lua_file_path[FS_MAX_URI_NAME_LENGTH / 4];
-static WCHAR g_sin_file_path[FS_MAX_URI_NAME_LENGTH / 4];
+static WCHAR g_res_file_path[FS_MAX_URI_NAME_LENGTH];
 
 static EVENT_HANDLER_ENTRY_T g_state_any_hdls[] = {
 	{ EV_REVOKE_TOKEN, APP_HandleUITokenRevoked },
@@ -163,10 +160,7 @@ UINT32 Register(const char *elf_path_uri, const char *args, UINT32 ev_code) {
 
 	status = APP_Register(&ev_code_base, 1, g_state_table_hdls, APP_STATE_MAX, (void *) ApplicationStart);
 
-	u_atou(elf_path_uri, g_tex_file_path);
-	u_atou(elf_path_uri, g_lua_file_path);
-	u_atou(elf_path_uri, g_sin_file_path);
-	SetPathsToFiles();
+	u_atou(elf_path_uri, g_res_file_path);
 
 	LdrStartApp(ev_code_base);
 
@@ -192,10 +186,7 @@ ldrElf *_start(WCHAR *uri, WCHAR *arguments) {
 
 	status |= APP_Register(&ev_code_base, 1, g_state_table_hdls, APP_STATE_MAX, (void *) ApplicationStart);
 
-	u_strcpy(g_tex_file_path, uri);
-	u_strcpy(g_lua_file_path, uri);
-	u_strcpy(g_sin_file_path, uri);
-	SetPathsToFiles();
+	u_strcpy(g_res_file_path, uri);
 
 	status |= ldrSendEvent(ev_code_base);
 	g_app_elf.name = (char *) g_app_name;
@@ -831,15 +822,6 @@ static UINT32 GFX_Draw_Step(APPLICATION_T *app) {
 	return RESULT_OK;
 }
 
-static void SetPathsToFiles(void) {
-	*(u_strrchr(g_tex_file_path, L'/') + 1) = '\0';
-	*(u_strrchr(g_lua_file_path, L'/') + 1) = '\0';
-	*(u_strrchr(g_sin_file_path, L'/') + 1) = '\0';
-	u_strcat(g_tex_file_path, L"Yeti3D.tex");
-	u_strcat(g_lua_file_path, L"Yeti3D.lua");
-	u_strcat(g_sin_file_path, L"Yeti3D.sin");
-}
-
 static UINT32 InitResourses(void) {
 	INT32 status;
 	UINT32 readen;
@@ -850,38 +832,44 @@ static UINT32 InitResourses(void) {
 
 	LOG("Trying to allocate texture %d bytes.\n", TEXTURE_WIDTH * TEXTURE_HEIGHT * TEXTURE_MAX);
 	textures = (texture_t *) suAllocMem(TEXTURE_WIDTH * TEXTURE_HEIGHT * TEXTURE_MAX, &status);
-	file_handle = DL_FsOpenFile(g_tex_file_path, FILE_READ_MODE, 0);
+	*(u_strrchr(g_res_file_path, L'/') + 1) = '\0';
+	u_strcat(g_res_file_path, L"Yeti3D.tex");
+	file_handle = DL_FsOpenFile(g_res_file_path, FILE_READ_MODE, 0);
 	DL_FsReadFile(textures, TEXTURE_WIDTH * TEXTURE_HEIGHT * TEXTURE_MAX, 1, file_handle, &readen);
 	DL_FsCloseFile(file_handle);
 	if (status != RESULT_OK) {
 		LOG("%s\n", "Error: Cannot allocate textures array.");
 	}
 	if (readen == 0) {
-		LOG("%s\n", "Error: Cannot read textures file.");
+		LOG("%s\n", "Error: Cannot read 'Yeti3D.tex' file.");
 	}
 
 	LOG("Trying to allocate LUA %d bytes.\n", sizeof(lua_t));
 	lua = suAllocMem(sizeof(lua_t), &status);
-	file_handle = DL_FsOpenFile(g_lua_file_path, FILE_READ_MODE, 0);
+	*(u_strrchr(g_res_file_path, L'/') + 1) = '\0';
+	u_strcat(g_res_file_path, L"Yeti3D.tex");
+	file_handle = DL_FsOpenFile(g_res_file_path, FILE_READ_MODE, 0);
 	DL_FsReadFile(lua, sizeof(lua_t), 1, file_handle, &readen);
 	DL_FsCloseFile(file_handle);
 	if (status != RESULT_OK) {
 		LOG("%s\n", "Error: Cannot allocate LUA array!");
 	}
 	if (readen == 0) {
-		LOG("%s\n", "Error: Cannot read LUA file.");
+		LOG("%s\n", "Error: Cannot read 'Yeti3D.lua' file.");
 	}
 
 	LOG("Trying to allocate sintable %d bytes.\n", SINTABLE_SIZE * SINTABLE_MAX);
-	sintable = (int *) suAllocMem(SINTABLE_SIZE * SINTABLE_MAX, NULL);
-	file_handle = DL_FsOpenFile(g_sin_file_path, FILE_READ_MODE, 0);
+	sintable = (int *) suAllocMem(SINTABLE_SIZE * SINTABLE_MAX, &status);
+	*(u_strrchr(g_res_file_path, L'/') + 1) = '\0';
+	u_strcat(g_res_file_path, L"Yeti3D.sin");
+	file_handle = DL_FsOpenFile(g_res_file_path, FILE_READ_MODE, 0);
 	DL_FsReadFile(sintable, SINTABLE_SIZE * SINTABLE_MAX, 1, file_handle, &readen);
 	DL_FsCloseFile(file_handle);
 	if (status != RESULT_OK) {
 		LOG("%s\n", "Error: Cannot allocate sintable array!");
 	}
 	if (readen == 0) {
-		LOG("%s\n", "Error: Cannot read sintable file.");
+		LOG("%s\n", "Error: Cannot read 'Yeti3D.sin' file.");
 	}
 
 	return RESULT_OK;
