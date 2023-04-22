@@ -70,10 +70,10 @@ Prepared for public release: 10/24/2003 - Derek J. Evans <derek@theteahouse.com.
 
 #define YETI_VIEWPORT_X1 0
 #define YETI_VIEWPORT_Y1 0
-#define YETI_VIEWPORT_X2 320
-#define YETI_VIEWPORT_Y2 240
-#define YETI_VIEWPORT_WIDTH 320
-#define YETI_VIEWPORT_HEIGHT 240
+#define YETI_VIEWPORT_X2 128
+#define YETI_VIEWPORT_Y2 88
+#define YETI_VIEWPORT_WIDTH 128
+#define YETI_VIEWPORT_HEIGHT 88
 
 #define CODE_IN_IWRAM
 #define CODE_IN_ROM

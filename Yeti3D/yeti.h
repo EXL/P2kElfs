@@ -513,6 +513,7 @@ void CODE_IN_IWRAM matrix_rotate_world(matrix_t m, int alp, int bet, int gam);
 void CODE_IN_IWRAM matrix_rotate_object(matrix_t m, int alp, int bet, int gam);
 void CODE_IN_IWRAM vertex_project(vertex_t* v);
 
+#if !defined(__SDL__)
 /******************************************************************************/
 
 void* yeti_memcpy(void* d, void* s, unsigned n);
@@ -524,7 +525,6 @@ extern YETI_ROM rom_map_t e1m1;
 
 /******************************************************************************/
 
-#if !defined(__SDL__)
 extern YETI_ROM texture_t textures[YETI_TEXTURE_MAX];
 extern YETI_ROM palette_t palette;
 extern YETI_ROM lua_t lua;
@@ -545,6 +545,8 @@ extern u16 *spr_01;
 extern u16 *spr_02;
 extern u16 *spr_03;
 extern u16 *spr_ball1;
+
+extern rom_map_t *e1m1;
 #endif
 
 #ifdef __cplusplus

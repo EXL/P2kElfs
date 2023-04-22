@@ -259,7 +259,7 @@ void game_init(yeti_t* yeti)
   yeti->game.walking = 400;      // Walking height.
   yeti->game.ceiling = 200;      // Crouch distance.
 
-  yeti_load_map(yeti, (rom_map_t *) &e1m1);
+  yeti_load_map(yeti, e1m1);
 
   //yeti->overlay = spr_ball1;
   yeti->camera->ontick = camera_behaviour;

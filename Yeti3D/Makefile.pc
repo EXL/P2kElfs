@@ -14,9 +14,9 @@ endif
 
 all: $(EXECUTABLE)
 
-$(EXECUTABLE): draw.o game.o maps.o yeti.o main_sdl.o
+$(EXECUTABLE): draw.o game.o yeti.o main_sdl.o
 	$(CC) $(CFLAGS) \
-		draw.o game.o maps.o yeti.o main_sdl.o -o \
+		draw.o game.o yeti.o main_sdl.o -o \
 		$(EXECUTABLE) $(LFLAGS)
 	$(STRIP) -s $(EXECUTABLE)
 
@@ -30,9 +30,6 @@ draw.o: Makefile.pc draw.c yeti.h viewports.h
 
 game.o: Makefile.pc game.c game.h yeti.h viewports.h
 	$(CC) $(CFLAGS) -c game.c -o game.o
-
-maps.o: Makefile.pc maps.c yeti.h viewports.h
-	$(CC) $(CFLAGS) -c maps.c -o maps.o
 
 yeti.o: Makefile.pc yeti.c yeti.h viewports.h
 	$(CC) $(CFLAGS) -c yeti.c -o yeti.o

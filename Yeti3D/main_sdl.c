@@ -65,6 +65,8 @@ u16 *spr_ball1 = NULL;
 
 sprite_t sprites[YETI_SPRITE_MAX];
 
+rom_map_t *e1m1 = NULL;
+
 void read_resourse_files(void) {
 	FILE *res_file;
 	int readen;
@@ -123,6 +125,15 @@ void read_resourse_files(void) {
 	sprites[2] = spr_02;
 	sprites[3] = spr_03;
 	sprites[4] = spr_ball1;
+
+	e1m1 = (rom_map_t *) malloc(sizeof(rom_map_t) * 14);
+	res_file = fopen("Yeti3D.map", "rb");
+	readen = fread(e1m1, sizeof(rom_map_t), 1, res_file);
+	fclose(res_file);
+	if (readen == 0) {
+		fprintf(stderr, "Error: cannot read 'Yeti3D.map' resource file.\n");
+	}
+
 }
 
 void sdl_init(void) {
@@ -198,6 +209,7 @@ int main(int argc, char *argv[]) {
 	free(spr_02);
 	free(spr_03);
 	free(spr_ball1);
+	free(e1m1);
 
 	SDL_FreeSurface(surface);
 	SDL_FreeSurface(video);
