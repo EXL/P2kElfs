@@ -18,16 +18,16 @@ Port of the "Yeti3D Old" 3D engine demo by **Derek J. Evans** from [Nintendo Gam
 
 ## Screen resolutions and viewports
 
-| Phone   | Screen  | Flags | Viewport | FPS      | ELF filename             |
-| ---     | ---     | ---   | ---      | ---      |---                       |
-| SLVR L6 | 128x160 | ROT0  | 160x128  | Very Low | Yeti3D_EP1_176x220_N.elf |
-| SLVR L6 | 128x160 | ROT90 | 122x82   | Very Low | Yeti3D_EP1_122x82_S.elf  |
-| SLVR L6 | 128x160 | ROT90 | 96x64    | Low      | Yeti3D_EP1_96x64_S.elf   |
-| SLVR L6 | 128x160 | ROT90 | 72x48    | Normal   | Yeti3D_EP1_72x48_S.elf   |
-| ROKR E1 | 176x220 | ROT0  | 220x176  | Very Low | Yeti3D_EP1_128x160_N.elf |
-| ROKR E1 | 176x220 | ROT90 | 122x82   | Low      | Yeti3D_EP1_122x82_S.elf  |
-| ROKR E1 | 176x220 | ROT90 | 96x64    | Normal   | Yeti3D_EP1_96x64_S.elf   |
-| ROKR E1 | 176x220 | ROT90 | 72x48    | Normal   | Yeti3D_EP1_72x48_S.elf   |
+| Phone   | Screen  | Flags | Viewport | FPS      | ELF filename           |
+| ---     | ---     | ---   | ---      | ---      |---                     |
+| SLVR L6 | 128x160 | ROT0  | 160x128  | Very Low | Yeti3D_EN1_176x220.elf |
+| SLVR L6 | 128x160 | ROT90 | 122x82   | Very Low | Yeti3D_ES1_122x82.elf  |
+| SLVR L6 | 128x160 | ROT90 | 96x64    | Low      | Yeti3D_ES1_96x64.elf   |
+| SLVR L6 | 128x160 | ROT90 | 72x48    | Normal   | Yeti3D_ES1_72x48.elf   |
+| ROKR E1 | 176x220 | ROT0  | 220x176  | Very Low | Yeti3D_EN1_128x160.elf |
+| ROKR E1 | 176x220 | ROT90 | 122x82   | Low      | Yeti3D_ES1_122x82.elf  |
+| ROKR E1 | 176x220 | ROT90 | 96x64    | Normal   | Yeti3D_ES1_96x64.elf   |
+| ROKR E1 | 176x220 | ROT90 | 72x48    | Normal   | Yeti3D_ES1_72x48.elf   |
 
 Summary: 5 ELFs + EP2 ELFs = 10 ELFs.
 
