@@ -854,7 +854,7 @@ static UINT32 InitResourses(void) {
 	LOG("Trying to allocate LUA %d bytes.\n", sizeof(lua_t));
 	lua = suAllocMem(sizeof(lua_t), &status);
 	*(u_strrchr(g_res_file_path, L'/') + 1) = '\0';
-	u_strcat(g_res_file_path, L"Yeti3D.tex");
+	u_strcat(g_res_file_path, L"Yeti3D.lua");
 	file_handle = DL_FsOpenFile(g_res_file_path, FILE_READ_MODE, 0);
 	DL_FsReadFile(lua, sizeof(lua_t), 1, file_handle, &readen);
 	DL_FsCloseFile(file_handle);
