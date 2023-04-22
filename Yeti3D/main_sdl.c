@@ -55,6 +55,16 @@ static rgb555_t (*res_lua)[256] = NULL;
 int *reciprocal = NULL;
 int *sintable = NULL;
 
+#define SPRITE_0_SIZE 1430
+#define SPRITE_BALL_SIZE 32772
+u16 *spr_00 = NULL;
+u16 *spr_01 = NULL;
+u16 *spr_02 = NULL;
+u16 *spr_03 = NULL;
+u16 *spr_ball1 = NULL;
+
+sprite_t sprites[YETI_SPRITE_MAX];
+
 void read_resourse_files(void) {
 	FILE *res_file;
 	int readen;
@@ -92,6 +102,27 @@ void read_resourse_files(void) {
 	if (readen == 0) {
 		fprintf(stderr, "Error: cannot read 'Yeti3D.sin' resource file.\n");
 	}
+
+	spr_00 = (u16 *) malloc(SPRITE_0_SIZE);
+	spr_01 = (u16 *) malloc(SPRITE_0_SIZE);
+	spr_02 = (u16 *) malloc(SPRITE_0_SIZE);
+	spr_03 = (u16 *) malloc(SPRITE_0_SIZE);
+	spr_ball1 = (u16 *) malloc(SPRITE_BALL_SIZE);
+	res_file = fopen("Yeti3D.spr", "rb");
+	readen = fread(spr_00, SPRITE_0_SIZE, 1, res_file);
+	readen = fread(spr_01, SPRITE_0_SIZE, 1, res_file);
+	readen = fread(spr_02, SPRITE_0_SIZE, 1, res_file);
+	readen = fread(spr_03, SPRITE_0_SIZE, 1, res_file);
+	readen = fread(spr_ball1, SPRITE_BALL_SIZE, 1, res_file);
+	fclose(res_file);
+	if (readen == 0) {
+		fprintf(stderr, "Error: cannot read 'Yeti3D.spr' resource file.\n");
+	}
+	sprites[0] = spr_00;
+	sprites[1] = spr_01;
+	sprites[2] = spr_02;
+	sprites[3] = spr_03;
+	sprites[4] = spr_ball1;
 }
 
 void sdl_init(void) {
@@ -162,6 +193,11 @@ int main(int argc, char *argv[]) {
 	free(res_lua);
 	free(reciprocal);
 	free(sintable);
+	free(spr_00);
+	free(spr_01);
+	free(spr_02);
+	free(spr_03);
+	free(spr_ball1);
 
 	SDL_FreeSurface(surface);
 	SDL_FreeSurface(video);

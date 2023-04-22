@@ -526,14 +526,22 @@ extern YETI_ROM palette_t palette;
 extern YETI_ROM lua_t lua;
 extern YETI_ROM int reciprocal[YETI_RECIPROCAL_MAX];
 extern YETI_ROM int sintable[YETI_SINTABLE_MAX];
-#else
-extern int *reciprocal;
-extern int *sintable;
-#endif
 
 /******************************************************************************/
 
 #include "sprites.h"
+#else
+extern int *reciprocal;
+extern int *sintable;
+
+#define YETI_SPRITE_MAX 5
+extern sprite_t sprites[];
+extern u16 *spr_00;
+extern u16 *spr_01;
+extern u16 *spr_02;
+extern u16 *spr_03;
+extern u16 *spr_ball1;
+#endif
 
 #ifdef __cplusplus
 } // extern "C"
