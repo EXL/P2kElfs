@@ -5,11 +5,11 @@ Port of the "Yeti3D Old" 3D engine demo by **Derek J. Evans** from [Nintendo Gam
 
 ## Screenshots from Motorola SLVR L6
 
-![Screenshot of Yeti3D Old from Motorola L6 1](../images/Screenshot_Yeti3D_Old_L6_1.png) ![Screenshot of Yeti3D Old from Motorola L6 2](../images/Screenshot_Yeti3D_Old_L6_2.png) ![Screenshot of Yeti3D Old from Motorola L6 3](../images/Screenshot_Yeti3D_Old_L6_3.png)
+![Screenshot of Yeti3D Old from Motorola L6 1](../../images/Screenshot_Yeti3D_Old_L6_1.png) ![Screenshot of Yeti3D Old from Motorola L6 2](../../images/Screenshot_Yeti3D_Old_L6_2.png) ![Screenshot of Yeti3D Old from Motorola L6 3](../../images/Screenshot_Yeti3D_Old_L6_3.png)
 
 ## Screenshots from Motorola ROKR E1
 
-![Screenshot of Yeti3D Old from Motorola E1 1](../images/Screenshot_Yeti3D_Old_E1_1.png) ![Screenshot of Yeti3D Old from Motorola E1 2](../images/Screenshot_Yeti3D_Old_E1_2.png) ![Screenshot of Yeti3D Old from Motorola E1 3](../images/Screenshot_Yeti3D_Old_E1_3.png)
+![Screenshot of Yeti3D Old from Motorola E1 1](../../images/Screenshot_Yeti3D_Old_E1_1.png) ![Screenshot of Yeti3D Old from Motorola E1 2](../../images/Screenshot_Yeti3D_Old_E1_2.png) ![Screenshot of Yeti3D Old from Motorola E1 3](../../images/Screenshot_Yeti3D_Old_E1_3.png)
 
 ## Key controls
 
