@@ -136,9 +136,9 @@ typedef enum {
 	E_KEY_LOOK_DOWN,
 	E_KEY_MAX
 } GAME_KEYS_T;
-static BOOL g_keyboard[E_KEY_MAX];
+static BOOL g_keyboard[E_KEY_MAX] = { FALSE };
 
-static WCHAR g_res_file_path[FS_MAX_URI_NAME_LENGTH];
+static WCHAR g_res_file_path[FS_MAX_URI_NAME_LENGTH / 4];
 
 static EVENT_HANDLER_ENTRY_T g_state_any_hdls[] = {
 	{ EV_REVOKE_TOKEN, APP_HandleUITokenRevoked },
@@ -701,6 +701,8 @@ u16 *spr_ball1 = NULL;
 
 sprite_t sprites[YETI_SPRITE_MAX];
 
+rom_map_t *e1m1 = NULL;
+
 static void check_keys(void) {
 	yeti.keyboard.a      = g_keyboard[E_KEY_FIRE];
 	yeti.keyboard.b      = g_keyboard[E_KEY_JUMP];
@@ -859,6 +861,25 @@ static UINT32 InitResourses(void) {
 	if (readen == 0) {
 		LOG("%s\n", "Error: Cannot read 'Yeti3D.spr' file.");
 	}
+	sprites[0] = spr_00;
+	sprites[1] = spr_01;
+	sprites[2] = spr_02;
+	sprites[3] = spr_03;
+	sprites[4] = spr_ball1;
+
+	LOG("Trying to allocate map %d bytes.\n", sizeof(rom_map_t));
+	e1m1 = (rom_map_t *) suAllocMem(sizeof(rom_map_t), &status);
+	*(u_strrchr(g_res_file_path, L'/') + 1) = '\0';
+	u_strcat(g_res_file_path, L"Yeti3D.map");
+	file_handle = DL_FsOpenFile(g_res_file_path, FILE_READ_MODE, 0);
+	DL_FsReadFile(e1m1, sizeof(rom_map_t), 1, file_handle, &readen);
+	DL_FsCloseFile(file_handle);
+	if (status != RESULT_OK) {
+		LOG("%s\n", "Error: Cannot allocate map array!");
+	}
+	if (readen == 0) {
+		LOG("%s\n", "Error: Cannot read 'Yeti3D.map' file.");
+	}
 
 	return RESULT_OK;
 }
@@ -883,6 +904,31 @@ static void FreeResourses(void) {
 		LOG("%s\n", "Free: sintable memory.");
 		suFreeMem(sintable);
 		sintable = NULL;
+	}
+	if (spr_00) {
+		LOG("%s\n", "Free: spr_00 memory.");
+		suFreeMem(spr_00);
+		sprites[0] = spr_00 = NULL;
+	}
+	if (spr_01) {
+		LOG("%s\n", "Free: spr_01 memory.");
+		suFreeMem(spr_01);
+		sprites[1] = spr_01 = NULL;
+	}
+	if (spr_02) {
+		LOG("%s\n", "Free: spr_02 memory.");
+		suFreeMem(spr_02);
+		sprites[2] = spr_02 = NULL;
+	}
+	if (spr_03) {
+		LOG("%s\n", "Free: spr_03 memory.");
+		suFreeMem(spr_03);
+		sprites[3] = spr_03 = NULL;
+	}
+	if (spr_ball1) {
+		LOG("%s\n", "Free: spr_ball1 memory.");
+		suFreeMem(spr_ball1);
+		sprites[4] = spr_ball1 = NULL;
 	}
 }
 

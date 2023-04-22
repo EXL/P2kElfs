@@ -126,14 +126,13 @@ void read_resourse_files(void) {
 	sprites[3] = spr_03;
 	sprites[4] = spr_ball1;
 
-	e1m1 = (rom_map_t *) malloc(sizeof(rom_map_t) * 14);
+	e1m1 = (rom_map_t *) malloc(sizeof(rom_map_t));
 	res_file = fopen("Yeti3D.map", "rb");
 	readen = fread(e1m1, sizeof(rom_map_t), 1, res_file);
 	fclose(res_file);
 	if (readen == 0) {
 		fprintf(stderr, "Error: cannot read 'Yeti3D.map' resource file.\n");
 	}
-
 }
 
 void sdl_init(void) {
