@@ -38,13 +38,13 @@ Prepared for public release: 10/24/2003 - Derek J. Evans <derek@theteahouse.com.
 */
 
 #include "yeti.h"
+#include "game.h"
 
 #include <SDL/SDL.h>
 
 static SDL_Surface *video;
 static SDL_Surface *surface;
 static int quit_loop = 0;
-static const int SCREEN_FPS = 60;
 
 IN_EWRAM yeti_t yeti;
 
@@ -78,7 +78,14 @@ int main(int argc, char *argv[]) {
 
 	sdl_init();
 
-	yeti_init(&yeti, NULL, (framebuffer_t*) surface->pixels, textures, palette, lua);
+	yeti_init(
+		&yeti,
+		NULL,
+		(framebuffer_t*) surface->pixels,
+		textures,
+		(u8 (*)[3]) palette,
+		(rgb555_t (*)[256]) lua
+	);
 	game_init(&yeti);
 
 	while (!quit_loop) {
@@ -100,7 +107,7 @@ int main(int argc, char *argv[]) {
 
 		SDL_BlitSurface(surface, NULL, video, NULL);
 		SDL_Flip(video);
-		SDL_Delay(1000 / SCREEN_FPS);
+		SDL_Delay(1000 / YETI_VIEWPORT_INTERVAL);
 	}
 
 	SDL_FreeSurface(surface);

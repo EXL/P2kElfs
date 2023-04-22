@@ -42,6 +42,7 @@ Prepared for public release: 10/24/2003 - Derek J. Evans <derek@theteahouse.com.
 
 void* yeti_load_file(char* filename)
 {
+  int size;
   void* r = 0;
   FILE* fp = fopen(filename, "rb");
 
@@ -53,10 +54,10 @@ void* yeti_load_file(char* filename)
       if ((r = malloc(n)) != 0)
       {
         fseek(fp, 0, SEEK_SET);
-        fread(r, 1, n, fp);
+        size = fread(r, 1, n, fp);
       }
     }
     fclose(fp);
   }
-  return r;
+  return (size != 0) ? r : NULL;
 }

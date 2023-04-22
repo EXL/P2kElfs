@@ -197,7 +197,7 @@ void shoot_bullet(entity_t* e)
   b->x  = e->x;
   b->y  = e->y;
   b->z  = e->z;
-  b->visual.data = spr_ball1;
+  b->visual.data = (u16 *) spr_ball1;
   b->visual.width = 1;
   b->visual.height = 1;
   b->visual.mode = 1;
@@ -257,7 +257,7 @@ void game_init(yeti_t* yeti)
   yeti->game.walking = 400;      // Walking height.
   yeti->game.ceiling = 200;      // Crouch distance.
 
-  yeti_load_map(yeti, &e1m1);
+  yeti_load_map(yeti, (rom_map_t *) &e1m1);
 
   //yeti->overlay = spr_ball1;
   yeti->camera->ontick = camera_behaviour;

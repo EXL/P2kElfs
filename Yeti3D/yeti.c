@@ -292,7 +292,7 @@ void yeti_save_cell(cell_t* src, rom_cell_t* dst)
 
 void yeti_load_map(yeti_t* yeti, rom_map_t* src)
 {
-  int x, y, i;
+  int x, y;
 
   for (y = 0; y < YETI_MAP_HEIGHT; y++)
   {
@@ -405,7 +405,7 @@ void yeti_init(
   yeti_t* yeti,
   framebuffer_t* front,
   framebuffer_t* back,
-  texture_t* textures,
+  const texture_t* textures,
   palette_t palette,
   lua_t lua)
 {

@@ -444,7 +444,7 @@ typedef struct
   vec2_t vis[YETI_CELL_MAX];
   cell_t cells[YETI_MAP_HEIGHT][YETI_MAP_WIDTH];
 
-  texture_t* textures;
+  const texture_t* textures;
   color_t* palette;
   lut_t* lighting[4];
 } yeti_t;
@@ -491,7 +491,7 @@ extern void yeti_init_map(yeti_t* yeti);
 extern void yeti_init(yeti_t* yeti,
   framebuffer_t* front,
   framebuffer_t* back,
-  texture_t* textures,
+  const texture_t* textures,
   palette_t palette,
   lua_t lua);
 extern void yeti_tick(yeti_t* yeti);

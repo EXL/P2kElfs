@@ -58,6 +58,30 @@ Prepared for public release: 10/24/2003 - Derek J. Evans <derek@theteahouse.com.
 
 /******************************************************************************/
 
+#ifdef __SDL__
+
+#define YETI_RGB555
+#define YETI_LOW_QUALITY_WALLS
+
+#define YETI_ROM const
+
+#define YETI_VIEWPORT_INTERVAL 35
+#define YETI_VIEWPORT_INTERVAL_ERROR 7
+
+#define YETI_VIEWPORT_X1 0
+#define YETI_VIEWPORT_Y1 0
+#define YETI_VIEWPORT_X2 320
+#define YETI_VIEWPORT_Y2 240
+#define YETI_VIEWPORT_WIDTH 320
+#define YETI_VIEWPORT_HEIGHT 240
+
+#define CODE_IN_IWRAM
+#define CODE_IN_ROM
+#define IN_IWRAM
+#define IN_EWRAM
+
+#endif
+
 #ifdef __GBA__
 
 #define YETI_RGB555
@@ -70,24 +94,17 @@ Prepared for public release: 10/24/2003 - Derek J. Evans <derek@theteahouse.com.
 
 #define YETI_VIEWPORT_X1 0
 #define YETI_VIEWPORT_Y1 0
-#define YETI_VIEWPORT_X2 320
-#define YETI_VIEWPORT_Y2 240
-#define YETI_VIEWPORT_WIDTH 320
-#define YETI_VIEWPORT_HEIGHT 240
+#define YETI_VIEWPORT_X2 160
+#define YETI_VIEWPORT_Y2 128
+#define YETI_VIEWPORT_WIDTH 160
+#define YETI_VIEWPORT_HEIGHT 128
 
 //#define __PATCH_DRAW_POLY__
 
-#if !defined(PLATFORM_SDL)
 #define CODE_IN_IWRAM __attribute__ ((section (".iwram"), long_call))
 #define CODE_IN_ROM __attribute__ ((section (".text"), long_call))
 #define IN_IWRAM __attribute__ ((section (".iwram")))
 #define IN_EWRAM __attribute__ ((section (".ewram")))
-#else
-#define CODE_IN_IWRAM
-#define CODE_IN_ROM
-#define IN_IWRAM
-#define IN_EWRAM
-#endif
 
 #endif
 

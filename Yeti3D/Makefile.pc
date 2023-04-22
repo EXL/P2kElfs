@@ -1,0 +1,56 @@
+# This Makefile was created by EXL, 23-Apr-2023.
+# Default platform is Linux, Ubuntu 22.04 LTS.
+
+CC=gcc
+STRIP=strip
+CFLAGS=`sdl-config --cflags` -O2 -D__SDL__ -Wall -pedantic -Wno-maybe-uninitialized -Wno-misleading-indentation
+LFLAGS=`sdl-config --libs`
+NAME=yeti3d
+ifeq ($(OS), Windows_NT)
+	EXECUTABLE=$(NAME).exe
+else
+	EXECUTABLE=$(NAME).elf
+endif
+
+all: $(EXECUTABLE)
+
+$(EXECUTABLE): data.o draw.o extra.o font.o game.o maps.o model.o sprites.o yeti.o main_sdl.o
+	$(CC) $(CFLAGS) \
+		data.o draw.o extra.o font.o game.o maps.o model.o sprites.o yeti.o main_sdl.o -o \
+		$(EXECUTABLE) $(LFLAGS)
+	$(STRIP) -s $(EXECUTABLE)
+
+clean:
+	-rm -f *.o
+	-rm -f *.elf
+	-rm -f *.exe
+
+data.o: Makefile.pc data.c data.h yeti.h viewports.h
+	$(CC) $(CFLAGS) -c data.c -o data.o
+
+draw.o: Makefile.pc draw.c yeti.h viewports.h
+	$(CC) $(CFLAGS) -c draw.c -o draw.o
+
+extra.o: Makefile.pc extra.c extra.h yeti.h viewports.h
+	$(CC) $(CFLAGS) -c extra.c -o extra.o
+
+font.o: Makefile.pc font.c font.h
+	$(CC) $(CFLAGS) -c font.c -o font.o
+
+game.o: Makefile.pc game.c game.h yeti.h viewports.h
+	$(CC) $(CFLAGS) -c game.c -o game.o
+
+maps.o: Makefile.pc maps.c yeti.h viewports.h
+	$(CC) $(CFLAGS) -c maps.c -o maps.o
+
+model.o: Makefile.pc model.c model.h yeti.h viewports.h
+	$(CC) $(CFLAGS) -c model.c -o model.o
+
+sprites.o: Makefile.pc sprites.c sprites.h yeti.h viewports.h
+	$(CC) $(CFLAGS) -c sprites.c -o sprites.o
+
+yeti.o: Makefile.pc yeti.c yeti.h viewports.h
+	$(CC) $(CFLAGS) -c yeti.c -o yeti.o
+
+main_sdl.o: Makefile.pc main_sdl.c game.h yeti.h viewports.h
+	$(CC) $(CFLAGS) -c main_sdl.c -o main_sdl.o
