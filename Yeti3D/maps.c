@@ -38,6 +38,4 @@ Prepared for public release: 10/24/2003 - Derek J. Evans <derek@theteahouse.com.
 
 #include "yeti.h"
 
-#include "maps/e1m1.c"
-
-
+#include "e1m1.c"

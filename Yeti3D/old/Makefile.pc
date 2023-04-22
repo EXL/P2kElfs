@@ -7,6 +7,6 @@ windows:
 	gcc -O2 -DPLATFORM_SDL data.c draw.c main.c yeti.c -o yeti3d.exe `sdl-config --cflags --libs`
 
 clean:
-	-rm -Rf *.o
-	-rm -Rf *.elf
-	-rm -Rf *.exe
+	-rm -f *.o
+	-rm -f *.elf
+	-rm -f *.exe

@@ -594,7 +594,7 @@ void CODE_IN_IWRAM texcoord_fixup(polyclip_t p, int n)
 **       mapping mode and texture id. The mapping mode changes depending
 **       of if this is a north-south wall, east-west wall or ceiling/floor.
 */
-void CODE_IN_IWRAM draw_quad(yeti_t* yeti, int tid, quad_t quad, int texgen)
+void CODE_IN_IWRAM draw_quad(yeti_t* yeti, int tid, yeti_quad_t quad, int texgen)
 {
   int u, uu, v, vv;
   polyclip_t p;
@@ -653,7 +653,7 @@ void CODE_IN_IWRAM draw_quad(yeti_t* yeti, int tid, quad_t quad, int texgen)
   draw_texture(yeti, p, 4, tid);
 }
 
-void CODE_IN_IWRAM draw_wall(yeti_t* yeti, int tid, quad_t quad, int top, int bot, int texgen)
+void CODE_IN_IWRAM draw_wall(yeti_t* yeti, int tid, yeti_quad_t quad, int top, int bot, int texgen)
 {
   if (bot < top)
   {
@@ -740,7 +740,7 @@ void CODE_IN_IWRAM draw_entity_as_model(entity_t* entity)
 void CODE_IN_IWRAM yeti_draw(yeti_t* yeti)
 {
   cell_t* cell;
-  quad_t p;
+  yeti_quad_t p;
   entity_t* e1;
   entity_t* e2;
   int i, nrays, ncells, rayangle, raywidth;

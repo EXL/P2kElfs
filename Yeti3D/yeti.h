@@ -199,7 +199,7 @@ typedef struct
 } vec3_t;
 
 typedef int matrix_t[3][3];
-typedef vec3_t quad_t[4];
+typedef vec3_t yeti_quad_t[4];
 
 /******************************************************************************/
 

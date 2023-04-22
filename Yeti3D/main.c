@@ -36,8 +36,8 @@ Prepared for public release: 10/24/2003 - Derek J. Evans <derek@theteahouse.com.
 **   YY   EEEEEE   TT   IIIIII 33333  DDDDD
 */
 
-#include "../../src/yeti.h"
-#include "../../src/font.h"
+#include "yeti.h"
+#include "font.h"
 #include "gba.h"
 
 IN_EWRAM yeti_t yeti;
