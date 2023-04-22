@@ -63,12 +63,16 @@ extern "C"{
 
 /******************************************************************************/
 
+#if !defined(__P2K__)
 #ifndef TRUE
 #define TRUE (1)
 #endif
 
 #ifndef FALSE
 #define FALSE (0)
+#endif
+#else
+#include <typedefs.h>
 #endif
 
 #define ABS(A) ((A)<0?-(A):(A))
