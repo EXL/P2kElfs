@@ -14,9 +14,9 @@ endif
 
 all: $(EXECUTABLE)
 
-$(EXECUTABLE): data.o draw.o extra.o font.o game.o maps.o model.o sprites.o yeti.o main_sdl.o
+$(EXECUTABLE): data.o draw.o game.o maps.o sprites.o yeti.o main_sdl.o
 	$(CC) $(CFLAGS) \
-		data.o draw.o extra.o font.o game.o maps.o model.o sprites.o yeti.o main_sdl.o -o \
+		data.o draw.o game.o maps.o sprites.o yeti.o main_sdl.o -o \
 		$(EXECUTABLE) $(LFLAGS)
 	$(STRIP) -s $(EXECUTABLE)
 
@@ -31,20 +31,11 @@ data.o: Makefile.pc data.c data.h yeti.h viewports.h
 draw.o: Makefile.pc draw.c yeti.h viewports.h
 	$(CC) $(CFLAGS) -c draw.c -o draw.o
 
-extra.o: Makefile.pc extra.c extra.h yeti.h viewports.h
-	$(CC) $(CFLAGS) -c extra.c -o extra.o
-
-font.o: Makefile.pc font.c font.h
-	$(CC) $(CFLAGS) -c font.c -o font.o
-
 game.o: Makefile.pc game.c game.h yeti.h viewports.h
 	$(CC) $(CFLAGS) -c game.c -o game.o
 
 maps.o: Makefile.pc maps.c yeti.h viewports.h
 	$(CC) $(CFLAGS) -c maps.c -o maps.o
-
-model.o: Makefile.pc model.c model.h yeti.h viewports.h
-	$(CC) $(CFLAGS) -c model.c -o model.o
 
 sprites.o: Makefile.pc sprites.c sprites.h yeti.h viewports.h
 	$(CC) $(CFLAGS) -c sprites.c -o sprites.o

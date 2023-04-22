@@ -83,7 +83,7 @@ int main(int argc, char *argv[]) {
 		NULL,
 		(framebuffer_t*) surface->pixels,
 		textures,
-		(u8 (*)[3]) palette,
+		NULL,
 		(rgb555_t (*)[256]) lua
 	);
 	game_init(&yeti);
@@ -100,8 +100,8 @@ int main(int argc, char *argv[]) {
 			}
 		}
 
-		game_tick(&yeti);
-		game_draw(&yeti);
+		yeti_tick(&yeti);
+		yeti_draw(&yeti);
 
 		check_keys();
 

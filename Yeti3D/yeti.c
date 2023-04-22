@@ -38,6 +38,8 @@ $**
 
 #include "yeti.h"
 
+#if !defined(__SDL__)
+
 /******************************************************************************/
 
 /*
@@ -108,7 +110,7 @@ void viewport_to_video(
   }
 }
 #endif
-
+#endif
 /******************************************************************************/
 
 /*
@@ -319,6 +321,7 @@ void yeti_load_map(yeti_t* yeti, rom_map_t* src)
   yeti->camera->p = i2f(256);
 }
 
+#if !defined(__SDL__)
 /*
 ** Name: yeti_save_map
 ** Desc: Saves the current map to a rom based map.
@@ -335,6 +338,7 @@ void yeti_save_map(yeti_t* yeti, rom_map_t* map)
     }
   }
 }
+#endif
 
 /*
 ** Name: yeti_init_map
@@ -364,6 +368,7 @@ void yeti_init_map(yeti_t* yeti)
 
 /******************************************************************************/
 
+#if !defined(__SDL__)
 /*
 ** Name: isqrt
 ** Desc: Integer square root. Take the square root of an integer.
@@ -394,6 +399,7 @@ int isqrt(int value)
 
   return root;
 }
+#endif
 
 /******************************************************************************/
 
@@ -520,6 +526,7 @@ void yeti_tick(yeti_t* yeti)
   yeti->surfaces[YETI_TEXTURE_WATER].ypan = fixcos(yeti->tick << 4) >> 2;
 }
 
+#if !defined(__SDL__)
 /*
 ** Name: yeti_ambient_lighting
 ** Desc: Setup a standard ambient lighting. Current lighting is removed.
@@ -563,7 +570,6 @@ void yeti_default_lighting(yeti_t* yeti)
     }
   }
 }
-
 /******************************************************************************/
 
 void* yeti_memcpy(void* d, void* s, unsigned n)
@@ -577,6 +583,6 @@ void* yeti_memset(void *s, int c, unsigned n)
   while (n--) ((u8*)s)[n] = c;
   return s;
 }
-
+#endif
 /******************************************************************************/
 

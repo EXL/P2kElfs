@@ -77,7 +77,12 @@ extern "C"{
 
 #define CLAMP(A,B,C) MIN(MAX(A, B), C)
 
+#if defined(__SDL__)
+#include <string.h>
+#define CLEARMEM(A) memset(A, 0, sizeof(*(A)))
+#else
 #define CLEARMEM(A) yeti_memset(A, 0, sizeof(*(A)))
+#endif
 
 /******************************************************************************/
 
