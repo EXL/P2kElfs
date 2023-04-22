@@ -43,25 +43,25 @@ Prepared for public release: 10/24/2003 - Derek J. Evans <derek@theteahouse.com.
 
 static SDL_Surface *video;
 static SDL_Surface *surface;
-static SDL_Surface *surface_back;
 static int quit_loop = 0;
-static const int SCREEN_FPS = 35;
+static const int SCREEN_FPS = 60;
 
 IN_EWRAM yeti_t yeti;
 
-void sdl_init(void)
-{
-  surface = SDL_CreateRGBSurface(SDL_HWPALETTE, YETI_VIEWPORT_WIDTH, YETI_VIEWPORT_HEIGHT, 16, 0xF800, 0x07E0, 0x001F, 0x0000); // RGB565
-  surface_back = SDL_CreateRGBSurface(SDL_HWPALETTE, YETI_VIEWPORT_WIDTH, YETI_VIEWPORT_HEIGHT, 16, 0xF800, 0x07E0, 0x001F, 0x0000); // RGB565
-
-//  surface = SDL_CreateRGBSurface(SDL_HWPALETTE, VIEWPORT_WIDTH, VIEWPORT_HEIGHT, 16, 0x7C00, 0x03E0, 0x001F, 0x0000); // RGB555
-//  surface = SDL_CreateRGBSurface(SDL_HWPALETTE, VIEWPORT_WIDTH, VIEWPORT_HEIGHT, 16, 0x001F, 0x03E0, 0x7C00, 0x0000); // BGR555
+void sdl_init(void) {
+#define w YETI_VIEWPORT_WIDTH
+#define h YETI_VIEWPORT_HEIGHT
+	SDL_Init(SDL_INIT_VIDEO);
+	video = SDL_SetVideoMode(w, h, 16, SDL_HWSURFACE);
+//	surface = SDL_CreateRGBSurface(SDL_HWPALETTE, w, h, 16, 0xF800, 0x07E0, 0x001F, 0x0000); // RGB565
+//	surface = SDL_CreateRGBSurface(SDL_HWPALETTE, w, h, 16, 0x7C00, 0x03E0, 0x001F, 0x0000); // RGB555
+	surface = SDL_CreateRGBSurface(SDL_HWPALETTE, w, h, 16, 0x001F, 0x03E0, 0x7C00, 0x0000); // BGR555
+#undef h
+#undef w
 }
 
-void sdl_flip(void) {
-//	framebuffer_t* temp;
+void check_keys(void) {
 	Uint8 * keyboard = SDL_GetKeyState(NULL);
-
 	yeti.keyboard.a      = keyboard[SDLK_z];
 	yeti.keyboard.b      = keyboard[SDLK_x];
 	yeti.keyboard.select = keyboard[SDLK_ESCAPE];
@@ -69,24 +69,16 @@ void sdl_flip(void) {
 	yeti.keyboard.left   = keyboard[SDLK_LEFT];
 	yeti.keyboard.up     = keyboard[SDLK_UP];
 	yeti.keyboard.down   = keyboard[SDLK_DOWN];
-
 	yeti.keyboard.l      = keyboard[SDLK_a];
 	yeti.keyboard.r      = keyboard[SDLK_s];
-
-//	temp = yeti.viewport.back;
-//	yeti.viewport.back = yeti.viewport.front;
-//	yeti.viewport.front = temp;
 }
 
-int main(int argc, char *argv[])
-{
+int main(int argc, char *argv[]) {
 	SDL_Event event;
-	SDL_Init(SDL_INIT_VIDEO);
-	video = SDL_SetVideoMode(YETI_VIEWPORT_WIDTH, YETI_VIEWPORT_HEIGHT, 16, SDL_HWSURFACE);
 
 	sdl_init();
 
-	yeti_init(&yeti, (framebuffer_t*) surface->pixels, (framebuffer_t*) surface_back->pixels, textures, palette, lua);
+	yeti_init(&yeti, NULL, (framebuffer_t*) surface->pixels, textures, palette, lua);
 	game_init(&yeti);
 
 	while (!quit_loop) {
@@ -94,22 +86,26 @@ int main(int argc, char *argv[])
 			quit_loop = 1;
 		}
 		while (SDL_PollEvent(&event)) {
-		  switch (event.type) {
+			switch (event.type) {
 			case SDL_QUIT:
-			  quit_loop = 1;
-			  break;
-		  }
+				quit_loop = 1;
+				break;
+			}
 		}
 
 		game_tick(&yeti);
 		game_draw(&yeti);
 
-		sdl_flip();
+		check_keys();
 
-		SDL_BlitSurface(surface_back, NULL, video, NULL);
+		SDL_BlitSurface(surface, NULL, video, NULL);
 		SDL_Flip(video);
 		SDL_Delay(1000 / SCREEN_FPS);
-	  }
+	}
+
+	SDL_FreeSurface(surface);
+	SDL_FreeSurface(video);
+	SDL_Quit();
 
 	return 0;
 }
