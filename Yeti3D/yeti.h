@@ -449,7 +449,7 @@ typedef struct
   vec2_t vis[YETI_CELL_MAX];
   cell_t cells[YETI_MAP_HEIGHT][YETI_MAP_WIDTH];
 
-  const texture_t* textures;
+  texture_t* textures;
   color_t* palette;
   lut_t* lighting[4];
 } yeti_t;
@@ -465,7 +465,7 @@ extern void entity_motion(entity_t* e);
 
 extern void CODE_IN_IWRAM yeti_draw(yeti_t* yeti);
 extern void CODE_IN_IWRAM draw_texture(yeti_t* yeti, polyclip_t src, int n, int tid);
-extern void CODE_IN_IWRAM draw_poly(vertex_t* p, int n, YETI_ROM texture_t texture, framebuffer_t* dst, lua_t lua);
+extern void CODE_IN_IWRAM draw_poly(vertex_t* p, int n, texture_t texture, framebuffer_t* dst, lua_t lua);
 extern int CODE_IN_IWRAM polygon_clip(yeti_t* yeti, vertex_t** dst, vertex_t** src, int n);
 extern void CODE_IN_IWRAM draw_clipped_poly(yeti_t* yeti, polyclip_t src, int n, int tid);
 
@@ -496,7 +496,7 @@ extern void yeti_init_map(yeti_t* yeti);
 extern void yeti_init(yeti_t* yeti,
   framebuffer_t* front,
   framebuffer_t* back,
-  const texture_t* textures,
+  texture_t* textures,
   palette_t palette,
   lua_t lua);
 extern void yeti_tick(yeti_t* yeti);
@@ -520,11 +520,16 @@ extern YETI_ROM rom_map_t e1m1;
 
 /******************************************************************************/
 
+#if !defined(__SDL__)
 extern YETI_ROM texture_t textures[YETI_TEXTURE_MAX];
 extern YETI_ROM palette_t palette;
 extern YETI_ROM lua_t lua;
 extern YETI_ROM int reciprocal[YETI_RECIPROCAL_MAX];
 extern YETI_ROM int sintable[YETI_SINTABLE_MAX];
+#else
+extern int *reciprocal;
+extern int *sintable;
+#endif
 
 /******************************************************************************/
 

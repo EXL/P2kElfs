@@ -411,7 +411,7 @@ void yeti_init(
   yeti_t* yeti,
   framebuffer_t* front,
   framebuffer_t* back,
-  const texture_t* textures,
+  texture_t* textures,
   palette_t palette,
   lua_t lua)
 {

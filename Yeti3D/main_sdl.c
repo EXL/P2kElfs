@@ -48,7 +48,51 @@ static SDL_Surface *video;
 static SDL_Surface *surface;
 static int quit_loop = 0;
 
-IN_EWRAM yeti_t yeti;
+static IN_EWRAM yeti_t yeti;
+
+static texture_t *res_tex = NULL;
+static rgb555_t (*res_lua)[256] = NULL;
+int *reciprocal = NULL;
+int *sintable = NULL;
+
+void read_resourse_files(void) {
+	FILE *res_file;
+	int readen;
+
+	readen = 0;
+
+	res_tex = (texture_t *) malloc(sizeof(texture_t) * YETI_TEXTURE_MAX);
+	res_file = fopen("Yeti3D.tex", "rb");
+	readen = fread(res_tex, sizeof(texture_t) * YETI_TEXTURE_MAX, 1, res_file);
+	fclose(res_file);
+	if (readen == 0) {
+		fprintf(stderr, "Error: cannot read 'Yeti3D.tex' resource file.\n");
+	}
+
+	res_lua = (rgb555_t (*)[256]) malloc(sizeof(lua_t));
+	res_file = fopen("Yeti3D.lua", "rb");
+	readen = fread(res_lua, sizeof(lua_t), 1, res_file);
+	fclose(res_file);
+	if (readen == 0) {
+		fprintf(stderr, "Error: cannot read 'Yeti3D.lua' resource file.\n");
+	}
+
+	reciprocal = (int *) malloc(sizeof(int) * YETI_RECIPROCAL_MAX);
+	res_file = fopen("Yeti3D.rec", "rb");
+	readen = fread(reciprocal, sizeof(int) * YETI_RECIPROCAL_MAX, 1, res_file);
+	fclose(res_file);
+	if (readen == 0) {
+		fprintf(stderr, "Error: cannot read 'Yeti3D.rec' resource file.\n");
+	}
+
+	sintable = (int *) malloc(sizeof(int) * YETI_SINTABLE_MAX);
+	res_file = fopen("Yeti3D.sin", "rb");
+	readen = fread(sintable, sizeof(int) * YETI_SINTABLE_MAX, 1, res_file);
+	fclose(res_file);
+	if (readen == 0) {
+		fprintf(stderr, "Error: cannot read 'Yeti3D.sin' resource file.\n");
+	}
+}
 
 void sdl_init(void) {
 #define w YETI_VIEWPORT_WIDTH
@@ -76,28 +120,17 @@ void check_keys(void) {
 }
 
 int main(int argc, char *argv[]) {
-	FILE *res_file;
-	int readen;
 	SDL_Event event;
-	rgb555_t (*res_lua)[256];
 
-	readen = 0;
-
-	res_lua = (rgb555_t (*)[256]) malloc(sizeof(lua_t));
-	res_file = fopen("Yeti3D.lua", "rb");
-	readen = fread(res_lua, sizeof(lua_t), 1, res_file);
-	fclose(res_file);
-	if (readen == 0) {
-		fprintf(stderr, "Error: cannot read Yeti3D.lua resource file.");
-	}
+	read_resourse_files();
 
 	sdl_init();
 
 	yeti_init(
 		&yeti,
 		NULL,
-		(framebuffer_t*) surface->pixels,
-		textures,
+		(framebuffer_t *) surface->pixels,
+		res_tex,
 		NULL,
 		res_lua
 	);
@@ -125,7 +158,10 @@ int main(int argc, char *argv[]) {
 		SDL_Delay(1000 / YETI_VIEWPORT_INTERVAL);
 	}
 
+	free(res_tex);
 	free(res_lua);
+	free(reciprocal);
+	free(sintable);
 
 	SDL_FreeSurface(surface);
 	SDL_FreeSurface(video);

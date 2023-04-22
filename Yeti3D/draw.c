@@ -314,7 +314,7 @@ void CODE_IN_IWRAM draw_poly_flat(vertex_t* p, int n, framebuffer_t* dst)
 ** Note: This is the function that Greg replaced with his poly ARM asm code.
 */
 #ifndef __PATCH_DRAW_POLY__
-void CODE_IN_IWRAM draw_poly(vertex_t* p, int n, YETI_ROM texture_t texture, framebuffer_t* dst,
+void CODE_IN_IWRAM draw_poly(vertex_t* p, int n, texture_t texture, framebuffer_t* dst,
   lua_t lua)
 {
   int lt_i, lt_x, lt_xx, lt_u, lt_uu, lt_v, lt_vv, lt_l, lt_ll;
