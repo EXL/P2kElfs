@@ -124,7 +124,14 @@ static const char g_app_name[APP_NAME_LEN] = "FireEffect";
 static ldrElf g_app_elf;
 #endif
 
-static int m_KEY_UP, m_KEY_DOWN, m_KEY_LEFT, m_KEY_RIGHT = 0;
+typedef enum {
+	E_KEY_UP,
+	E_KEY_DOWN,
+	E_KEY_LEFT,
+	E_KEY_RIGHT,
+	E_KEY_MAX
+} GAME_KEY_T;
+static BOOL g_keyboard[E_KEY_MAX] = { FALSE };
 
 static WCHAR g_res_file_path[FS_MAX_URI_NAME_LENGTH];
 
@@ -387,26 +394,26 @@ static UINT32 ProcessKeyboard(EVENT_STACK_T *ev_st, APPLICATION_T *app, UINT32 k
 			break;
 		case KK_2:
 		case KK_UP:
-			m_KEY_UP = pressed;
+			g_keyboard[E_KEY_UP] = pressed;
 			break;
 		case MULTIKEY_3:
 			break;
 		case KK_4:
 		case KK_LEFT:
-			m_KEY_LEFT = pressed;
+			g_keyboard[E_KEY_LEFT] = pressed;
 			break;
 		case MULTIKEY_5:
 		case MULTIKEY_JOY_OK:
 			break;
 		case KK_6:
 		case KK_RIGHT:
-			m_KEY_RIGHT = pressed;
+			g_keyboard[E_KEY_RIGHT] = pressed;
 			break;
 		case MULTIKEY_7:
 			break;
 		case KK_8:
 		case KK_DOWN:
-			m_KEY_DOWN = pressed;
+			g_keyboard[E_KEY_DOWN] = pressed;
 			break;
 		case MULTIKEY_9:
 		case MULTIKEY_SOFT_RIGHT:
@@ -665,23 +672,23 @@ int *sintable = NULL;
 
 static void behaviour(entity_t* const e)
 {
-  if (m_KEY_LEFT)
+  if (g_keyboard[E_KEY_LEFT])
   {
     e->tt -= (12 << 16);
     e->r -= 800000;
   }
-  if (m_KEY_RIGHT)
+  if (g_keyboard[E_KEY_RIGHT])
   {
     e->tt += (12 << 16);
     e->r += 800000;
   }
 
-  if (m_KEY_UP)
+  if (g_keyboard[E_KEY_UP])
   {
     e->xx += fixsin16(e->t >> 16) >> 5;
     e->yy += fixcos16(e->t >> 16) >> 5;
   }
-  if (m_KEY_DOWN)
+  if (g_keyboard[E_KEY_DOWN])
   {
     e->xx -= fixsin16(e->t >> 16) >> 5;
     e->yy -= fixcos16(e->t >> 16) >> 5;
