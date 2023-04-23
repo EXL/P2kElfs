@@ -715,6 +715,61 @@ static void check_keys(void) {
 	yeti->keyboard.r      = g_keyboard[E_KEY_LOOK_DOWN];
 }
 
+#define MEMORY_TEST 0
+#if defined(MEMORY_TEST)
+#define ATTEMPTS (1024)
+static void *ptrs[ATTEMPTS];
+static void *address_start = NULL;
+static void *address_end = NULL;
+static void get_memory_free_blocks(int start_size) {
+	INT32 status;
+	int i, size, total;
+	void *p_min;
+	void *p_max;
+
+	status = RESULT_OK;
+	total = 0;
+	size = start_size;
+
+	for (i = 0; i < ATTEMPTS; ++i) {
+		ptrs[i] = NULL;
+	}
+	for (i = 0; i < ATTEMPTS; ++i) {
+		ptrs[i] = suAllocMem(size, &status);
+		if (status != RESULT_OK) {
+			LOG("C=%d E=%d T=%d\n", i+1, size, total);
+			size /= 2;
+			if (size < 2) {
+				break;
+			}
+		} else {
+			total += size;
+			LOG("C=%d A=%d T=%d P=0x%X\n", i+1, size, total, ptrs[i]);
+		}
+	}
+	p_max = ptrs[0];
+	for (i = 1; i < ATTEMPTS; ++i) {
+		p_max = (p_max > ptrs[i]) ? p_max : ptrs[i];
+	}
+	p_min = p_max;
+	for (i = 1; i < ATTEMPTS; ++i) {
+		if (ptrs[i]) {
+			p_min = (p_min < ptrs[i]) ? p_min : ptrs[i];
+		}
+	}
+	LOG("PMIN=0x%X PMAX=0x%X RGN=0x%X RGD=%d\n", p_min, p_max,
+		(unsigned int) p_max - (unsigned int) p_min, (unsigned int) p_max - (unsigned int) p_min);
+	address_start = p_min;
+	address_end = p_max;
+	for (i = 0; i < ATTEMPTS; ++i) {
+		if (ptrs[i]) {
+			suFreeMem(ptrs[i]);
+		}
+	}
+}
+#undef ATTEMPTS
+#endif
+
 static UINT32 GFX_Draw_Start(APPLICATION_T *app) {
 	INT32 status;
 	APP_INSTANCE_T *appi;
@@ -724,6 +779,10 @@ static UINT32 GFX_Draw_Start(APPLICATION_T *app) {
 
 	appi->p_bitmap = (UINT8 *) appi->ahi.bitmap.image;
 
+#if defined(MEMORY_TEST)
+	get_memory_free_blocks(131072);
+#endif
+
 	LOG("Trying to allocate yeti %d bytes.\n", sizeof(yeti_t));
 	yeti = (yeti_t *) suAllocMem(sizeof(yeti_t), &status);
 	if (status != RESULT_OK) {
@@ -732,15 +791,17 @@ static UINT32 GFX_Draw_Start(APPLICATION_T *app) {
 
 	InitResourses();
 
-	yeti_init(
-		yeti,
-		NULL,
-		(framebuffer_t *) appi->p_bitmap,
-		res_tex,
-		NULL,
-		res_lua
-	);
-	game_init(yeti);
+	if (yeti) {
+		yeti_init(
+			yeti,
+			NULL,
+			(framebuffer_t *) appi->p_bitmap,
+			res_tex,
+			NULL,
+			res_lua
+		);
+		game_init(yeti);
+	}
 
 	return RESULT_OK;
 }
@@ -760,10 +821,10 @@ static UINT32 GFX_Draw_Step(APPLICATION_T *app) {
 
 	appi = (APP_INSTANCE_T *) app;
 
-	yeti_tick(yeti);
-	yeti_draw(yeti);
+//	yeti_tick(yeti);
+//	yeti_draw(yeti);
 
-	check_keys();
+//	check_keys();
 
 	return RESULT_OK;
 }
@@ -852,7 +913,7 @@ static UINT32 InitResourses(void) {
 	if (status != RESULT_OK) {
 		LOG("%s\n", "Error: Cannot allocate spr_03 array!");
 	}
-	LOG("Trying to allocate spr_ball1 %d bytes.\n", SPRITE_0_SIZE);
+	LOG("Trying to allocate spr_ball1 %d bytes.\n", SPRITE_BALL_SIZE);
 	spr_ball1 = (u16 *) suAllocMem(SPRITE_BALL_SIZE, &status);
 	if (status != RESULT_OK) {
 		LOG("%s\n", "Error: Cannot allocate spr_ball1 array!");
