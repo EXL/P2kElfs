@@ -684,7 +684,7 @@ static UINT32 ATI_Driver_Flush(APPLICATION_T *app) {
 	return RESULT_OK;
 }
 
-static IN_EWRAM yeti_t yeti;
+static yeti_t *yeti = NULL;
 
 static texture_t *res_tex = NULL;
 static rgb555_t (*res_lua)[256] = NULL;
@@ -704,35 +704,43 @@ sprite_t sprites[YETI_SPRITE_MAX];
 rom_map_t *e1m1 = NULL;
 
 static void check_keys(void) {
-	yeti.keyboard.a      = g_keyboard[E_KEY_FIRE];
-	yeti.keyboard.b      = g_keyboard[E_KEY_JUMP];
-//	yeti.keyboard.select = g_keyboard[E_KEY_EXIT];
-	yeti.keyboard.right  = g_keyboard[E_KEY_RIGHT];
-	yeti.keyboard.left   = g_keyboard[E_KEY_LEFT];
-	yeti.keyboard.up     = g_keyboard[E_KEY_UP];
-	yeti.keyboard.down   = g_keyboard[E_KEY_DOWN];
-	yeti.keyboard.l      = g_keyboard[E_KEY_LOOK_UP];
-	yeti.keyboard.r      = g_keyboard[E_KEY_LOOK_DOWN];
+	yeti->keyboard.a      = g_keyboard[E_KEY_FIRE];
+	yeti->keyboard.b      = g_keyboard[E_KEY_JUMP];
+//	yeti->keyboard.select = g_keyboard[E_KEY_EXIT];
+	yeti->keyboard.right  = g_keyboard[E_KEY_RIGHT];
+	yeti->keyboard.left   = g_keyboard[E_KEY_LEFT];
+	yeti->keyboard.up     = g_keyboard[E_KEY_UP];
+	yeti->keyboard.down   = g_keyboard[E_KEY_DOWN];
+	yeti->keyboard.l      = g_keyboard[E_KEY_LOOK_UP];
+	yeti->keyboard.r      = g_keyboard[E_KEY_LOOK_DOWN];
 }
 
 static UINT32 GFX_Draw_Start(APPLICATION_T *app) {
+	INT32 status;
 	APP_INSTANCE_T *appi;
 
+	status = RESULT_OK;
 	appi = (APP_INSTANCE_T *) app;
 
 	appi->p_bitmap = (UINT8 *) appi->ahi.bitmap.image;
 
+	LOG("Trying to allocate yeti %d bytes.\n", sizeof(yeti_t));
+	yeti = (yeti_t *) suAllocMem(sizeof(yeti_t), &status);
+	if (status != RESULT_OK) {
+		LOG("%s\n", "Error: Cannot allocate yeti data.");
+	}
+
 	InitResourses();
 
 	yeti_init(
-		&yeti,
+		yeti,
 		NULL,
 		(framebuffer_t *) appi->p_bitmap,
 		res_tex,
 		NULL,
 		res_lua
 	);
-	game_init(&yeti);
+	game_init(yeti);
 
 	return RESULT_OK;
 }
@@ -752,8 +760,8 @@ static UINT32 GFX_Draw_Step(APPLICATION_T *app) {
 
 	appi = (APP_INSTANCE_T *) app;
 
-	yeti_tick(&yeti);
-	yeti_draw(&yeti);
+	yeti_tick(yeti);
+	yeti_draw(yeti);
 
 	check_keys();
 

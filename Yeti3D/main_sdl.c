@@ -41,6 +41,7 @@ Prepared for public release: 10/24/2003 - Derek J. Evans <derek@theteahouse.com.
 #include "game.h"
 
 #include <stdio.h>
+#include <stdlib.h>
 
 #include <SDL/SDL.h>
 
@@ -48,7 +49,7 @@ static SDL_Surface *video;
 static SDL_Surface *surface;
 static int quit_loop = 0;
 
-static IN_EWRAM yeti_t yeti;
+static yeti_t *yeti;
 
 static texture_t *res_tex = NULL;
 static rgb555_t (*res_lua)[256] = NULL;
@@ -149,15 +150,15 @@ void sdl_init(void) {
 
 void check_keys(void) {
 	Uint8 * keyboard = SDL_GetKeyState(NULL);
-	yeti.keyboard.a      = keyboard[SDLK_z];
-	yeti.keyboard.b      = keyboard[SDLK_x];
-	yeti.keyboard.select = keyboard[SDLK_ESCAPE];
-	yeti.keyboard.right  = keyboard[SDLK_RIGHT];
-	yeti.keyboard.left   = keyboard[SDLK_LEFT];
-	yeti.keyboard.up     = keyboard[SDLK_UP];
-	yeti.keyboard.down   = keyboard[SDLK_DOWN];
-	yeti.keyboard.l      = keyboard[SDLK_a];
-	yeti.keyboard.r      = keyboard[SDLK_s];
+	yeti->keyboard.a      = keyboard[SDLK_z];
+	yeti->keyboard.b      = keyboard[SDLK_x];
+	yeti->keyboard.select = keyboard[SDLK_ESCAPE];
+	yeti->keyboard.right  = keyboard[SDLK_RIGHT];
+	yeti->keyboard.left   = keyboard[SDLK_LEFT];
+	yeti->keyboard.up     = keyboard[SDLK_UP];
+	yeti->keyboard.down   = keyboard[SDLK_DOWN];
+	yeti->keyboard.l      = keyboard[SDLK_a];
+	yeti->keyboard.r      = keyboard[SDLK_s];
 }
 
 int main(int argc, char *argv[]) {
@@ -167,18 +168,20 @@ int main(int argc, char *argv[]) {
 
 	sdl_init();
 
+	yeti = (yeti_t *) malloc(sizeof(yeti_t));
+
 	yeti_init(
-		&yeti,
+		yeti,
 		NULL,
 		(framebuffer_t *) surface->pixels,
 		res_tex,
 		NULL,
 		res_lua
 	);
-	game_init(&yeti);
+	game_init(yeti);
 
 	while (!quit_loop) {
-		if (yeti.keyboard.select) {
+		if (yeti->keyboard.select) {
 			quit_loop = 1;
 		}
 		while (SDL_PollEvent(&event)) {
@@ -189,8 +192,8 @@ int main(int argc, char *argv[]) {
 			}
 		}
 
-		yeti_tick(&yeti);
-		yeti_draw(&yeti);
+		yeti_tick(yeti);
+		yeti_draw(yeti);
 
 		check_keys();
 
@@ -199,6 +202,7 @@ int main(int argc, char *argv[]) {
 		SDL_Delay(1000 / YETI_VIEWPORT_INTERVAL);
 	}
 
+	free(yeti);
 	free(res_tex);
 	free(res_lua);
 	free(reciprocal);
