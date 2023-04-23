@@ -138,7 +138,7 @@ typedef enum {
 } GAME_KEYS_T;
 static BOOL g_keyboard[E_KEY_MAX] = { FALSE };
 
-static WCHAR g_res_file_path[FS_MAX_URI_NAME_LENGTH / 4];
+static WCHAR g_res_file_path[FS_MAX_URI_NAME_LENGTH];
 
 static EVENT_HANDLER_ENTRY_T g_state_any_hdls[] = {
 	{ EV_REVOKE_TOKEN, APP_HandleUITokenRevoked },

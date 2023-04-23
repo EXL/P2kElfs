@@ -247,7 +247,7 @@ void CODE_IN_IWRAM draw_sprite_di(
   stretch_sprite_di(yeti, x1, y1, x2, y2, z, sprite, 0, 0, sprite[0], sprite[1], mode);
 }
 
-#if !defined(__SDL__)
+#if defined(__GBA__)
 /*
 ** Name: draw_poly_flat
 ** Desc: Clears a polygon to black. Might be used to render far polygons that
@@ -562,7 +562,7 @@ vertex_t* CODE_IN_IWRAM rotate_vector(yeti_t* yeti, vec3_t* v)
   return rv;
 }
 
-#if !defined(__SDL__)
+#if defined(__GBA__)
 /*
 ** Name: texcoord_fixup
 ** Desc: Fix up texture UV's so they are within optimal range. The PSONE
@@ -691,7 +691,7 @@ void CODE_IN_IWRAM draw_entity_as_sprite(entity_t* e)
     e->rz, sprite, e->visual.mode);
 }
 
-#if !defined(__SDL__)
+#if defined(__GBA__)
 /*
 ** Name: draw_entity_as_model
 ** Desc: Draws a entity 3D model at the given location.

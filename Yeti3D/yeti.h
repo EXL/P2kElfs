@@ -63,7 +63,9 @@ extern "C"{
 
 /******************************************************************************/
 
-#if !defined(__P2K__)
+#if defined(__P2K__)
+#include <typedefs.h>
+#else
 #ifndef TRUE
 #define TRUE (1)
 #endif
@@ -71,8 +73,6 @@ extern "C"{
 #ifndef FALSE
 #define FALSE (0)
 #endif
-#else
-#include <typedefs.h>
 #endif
 
 #define ABS(A) ((A)<0?-(A):(A))
@@ -82,6 +82,9 @@ extern "C"{
 #define CLAMP(A,B,C) MIN(MAX(A, B), C)
 
 #if defined(__SDL__)
+#include <string.h>
+#define CLEARMEM(A) memset(A, 0, sizeof(*(A)))
+#elif defined(__P2K__)
 #include <mem.h>
 #define CLEARMEM(A) memset(A, 0, sizeof(*(A)))
 #else
@@ -513,7 +516,7 @@ void CODE_IN_IWRAM matrix_rotate_world(matrix_t m, int alp, int bet, int gam);
 void CODE_IN_IWRAM matrix_rotate_object(matrix_t m, int alp, int bet, int gam);
 void CODE_IN_IWRAM vertex_project(vertex_t* v);
 
-#if !defined(__SDL__)
+#if defined(__GBA__)
 /******************************************************************************/
 
 void* yeti_memcpy(void* d, void* s, unsigned n);

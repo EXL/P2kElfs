@@ -15,7 +15,7 @@ LIB_PATH = $(ARM_PATH)/lib
 LIB_MAIN = Lib.o
 
 # Defines.
-DEFINES = -D__P2K__ -D__SDL__ -DEP1 -DROT_0 -DFPS_30
+DEFINES = -D__P2K__ -DEP1 -DROT_0 -DFPS_30
 
 # ELF name.
 ELF_NAME = Yeti3D

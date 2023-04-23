@@ -69,7 +69,7 @@ int friction(int a, int b)
   return a - f2i((b = a * b) < 0 ? b - FIXCEIL : b + FIXCEIL);
 }
 
-#if !defined(__SDL__)
+#if defined(__GBA__)
 void entity_fariction(entity_t* e, int amount)
 {
   e->xx = friction(e->xx, amount);
@@ -279,7 +279,7 @@ void game_init(yeti_t* yeti)
 #endif
 }
 
-#if !defined(__SDL__)
+#if defined(__GBA__)
 void game_draw_item(yeti_t* yeti, int x, int y, int u, int v)
 {
   /*
