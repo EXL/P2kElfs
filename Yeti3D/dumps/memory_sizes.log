@@ -1,0 +1,19 @@
+Vanilla Yeti3D:
+
+212944 - Yeti3D RAM
+131072 - Textures
+32768 - LUA
+65536 - Reciprocial
+8192 - Sintable
+1430 - Sprite 1
+1430 - Sprite 2
+1430 - Sprite 3
+1430 - Sprite 4
+32772 - Sprite Ball 1
+65664 - Map
+554668 - Total
+
+212944 + 131072 + 32768 + 65536 + 8192 + 1430 + 1430 + 1430 + 1430 + 32772 + 65664 + ELF CODE
+
+Phase 1 Optimize?
+~ 450512
