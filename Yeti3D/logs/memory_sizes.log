@@ -15,5 +15,18 @@ Vanilla Yeti3D:
 
 212944 + 131072 + 32768 + 65536 + 8192 + 1430 + 1430 + 1430 + 1430 + 32772 + 65664 + ELF CODE
 
-Phase 1 Optimize?
+Phase 0 Optimize: Done
+~ 554668
+
+Phase 1 Optimize: Done
 ~ 450512
+
+Phase 3 Optimize: Done
+88624 + 131072 + 32768 + 65536 + 8192 + 65664
+~ 391856
+
+Phase 5 Optimize: Progress
+88624 + 131072 + 32768 + 16384 + 4096
+~ 272944
+
+Looks like I found how to use Java Heap memory. Therefore, these optimizations are not needed.

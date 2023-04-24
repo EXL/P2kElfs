@@ -1,0 +1,147 @@
+ATI Driver Name: ATI Handheld Interface
+ATI Driver Version: 2.03.050408.40228
+ATI S/W Revision: 0 (0x00000000)
+ATI Chip ID: 1447563266 (0x56481002)
+ATI Revision ID: 17 (0x00000011)
+ATI CPU Bus Interface Mode: 4 (0x00000004)
+ATI Total Memory: 196608 (192 KiB)
+ATI Internal Memory: 196608 (192 KiB)
+ATI External Memory: 0 (0 KiB)
+ATI CAPS 1: 0 (0x00000000)
+ATI CAPS 2: 1 (0x00000001)
+ATI Internal Memory Largest Block: result=0, size=41280, size=40 KiB, align=8
+ATI External Memory Largest Block: result=2, size=41280, size=40 KiB, align=8
+ATI Display Mode: size=128x160, pixel_format=5, frequency=51, rotation=0, mirror=0
+ATI Surface Info: width=128, height=160, pixFormat=5, byteSize=40960, byteSize=40 KiB
+ATI Surface Info: offset=1064064, stride=256, numPlanes=1
+C=1 E=131072 T=0
+C=2 A=65536 T=65536 P=0x0
+C=3 A=65536 T=131072 P=0x0
+C=4 A=65536 T=196608 P=0x0
+C=5 A=65536 T=262144 P=0x0
+C=6 A=65536 T=327680 P=0x0
+C=7 A=65536 T=393216 P=0x0
+C=8 A=65536 T=458752 P=0x0
+C=9 A=65536 T=524288 P=0x0
+C=10 E=65536 T=524288
+C=11 A=32768 T=557056 P=0x0
+C=12 E=32768 T=557056
+C=13 A=16384 T=573440 P=0x0
+C=14 A=16384 T=589824 P=0x0
+C=15 A=16384 T=606208 P=0x0
+C=16 A=16384 T=622592 P=0x0
+C=17 E=16384 T=622592
+C=18 E=8192 T=622592
+C=19 A=4096 T=626688 P=0x0
+C=20 A=4096 T=630784 P=0x0
+C=21 A=4096 T=634880 P=0x0
+C=22 A=4096 T=638976 P=0x0
+C=23 A=4096 T=643072 P=0x0
+C=24 A=4096 T=647168 P=0x0
+C=25 A=4096 T=651264 P=0x0
+C=26 A=4096 T=655360 P=0x0
+C=27 A=4096 T=659456 P=0x0
+C=28 A=4096 T=663552 P=0x0
+C=29 A=4096 T=667648 P=0x0
+C=30 A=4096 T=671744 P=0x0
+C=31 A=4096 T=675840 P=0x0
+C=32 A=4096 T=679936 P=0x0
+C=33 A=4096 T=684032 P=0x0
+C=34 A=4096 T=688128 P=0x0
+C=35 A=4096 T=692224 P=0x0
+C=36 A=4096 T=696320 P=0x0
+C=37 A=4096 T=700416 P=0x0
+C=38 E=4096 T=700416
+
+
+=== MEMORY BLOCKS STATISTIC TABLE ===
+
+Memory Block #1: 65536 bytes, 64 KiB, 0x1246CDF8
+Memory Block #2: 65536 bytes, 64 KiB, 0x124899F8
+Memory Block #3: 65536 bytes, 64 KiB, 0x124A65F8
+Memory Block #4: 65536 bytes, 64 KiB, 0x124C31F8
+Memory Block #5: 65536 bytes, 64 KiB, 0x124DFDF8
+Memory Block #6: 65536 bytes, 64 KiB, 0x124FC9F8
+Memory Block #7: 65536 bytes, 64 KiB, 0x125195F8
+Memory Block #8: 65536 bytes, 64 KiB, 0x125361F8
+Memory Block #9: 32768 bytes, 32 KiB, 0x123A8E90
+Memory Block #10: 16384 bytes, 16 KiB, 0x12389178
+Memory Block #11: 16384 bytes, 16 KiB, 0x1238D8BC
+Memory Block #12: 16384 bytes, 16 KiB, 0x12392000
+Memory Block #13: 16384 bytes, 16 KiB, 0x12396744
+Memory Block #14: 4096 bytes, 4 KiB, 0x1235513C
+Memory Block #15: 4096 bytes, 4 KiB, 0x12356398
+Memory Block #16: 4096 bytes, 4 KiB, 0x123575F4
+Memory Block #17: 4096 bytes, 4 KiB, 0x12358850
+Memory Block #18: 4096 bytes, 4 KiB, 0x12359AAC
+Memory Block #19: 4096 bytes, 4 KiB, 0x1235AD08
+Memory Block #20: 4096 bytes, 4 KiB, 0x1235DB00
+Memory Block #21: 4096 bytes, 4 KiB, 0x1235F69C
+Memory Block #22: 4096 bytes, 4 KiB, 0x12361238
+Memory Block #23: 4096 bytes, 4 KiB, 0x12362DD4
+Memory Block #24: 4096 bytes, 4 KiB, 0x12364970
+Memory Block #25: 4096 bytes, 4 KiB, 0x1236650C
+Memory Block #26: 4096 bytes, 4 KiB, 0x12369F20
+Memory Block #27: 4096 bytes, 4 KiB, 0x1236BD98
+Memory Block #28: 4096 bytes, 4 KiB, 0x1236DC10
+Memory Block #29: 4096 bytes, 4 KiB, 0x1236FA88
+Memory Block #30: 4096 bytes, 4 KiB, 0x12371900
+Memory Block #31: 4096 bytes, 4 KiB, 0x12373778
+Memory Block #32: 4096 bytes, 4 KiB, 0x123755F0
+Total Memory: 700416 bytes, 684 KiB.
+Free Memory Block #1: 65536 bytes, 64 KiB, 0x1246CDF8
+Free Memory Block #2: 65536 bytes, 64 KiB, 0x124899F8
+Free Memory Block #3: 65536 bytes, 64 KiB, 0x124A65F8
+Free Memory Block #4: 65536 bytes, 64 KiB, 0x124C31F8
+Free Memory Block #5: 65536 bytes, 64 KiB, 0x124DFDF8
+Free Memory Block #6: 65536 bytes, 64 KiB, 0x124FC9F8
+Free Memory Block #7: 65536 bytes, 64 KiB, 0x125195F8
+Free Memory Block #8: 65536 bytes, 64 KiB, 0x125361F8
+Free Memory Block #9: 32768 bytes, 32 KiB, 0x123A8E90
+Free Memory Block #10: 16384 bytes, 16 KiB, 0x12389178
+Free Memory Block #11: 16384 bytes, 16 KiB, 0x1238D8BC
+Free Memory Block #12: 16384 bytes, 16 KiB, 0x12392000
+Free Memory Block #13: 16384 bytes, 16 KiB, 0x12396744
+Free Memory Block #14: 4096 bytes, 4 KiB, 0x1235513C
+Free Memory Block #15: 4096 bytes, 4 KiB, 0x12356398
+Free Memory Block #16: 4096 bytes, 4 KiB, 0x123575F4
+Free Memory Block #17: 4096 bytes, 4 KiB, 0x12358850
+Free Memory Block #18: 4096 bytes, 4 KiB, 0x12359AAC
+Free Memory Block #19: 4096 bytes, 4 KiB, 0x1235AD08
+Free Memory Block #20: 4096 bytes, 4 KiB, 0x1235DB00
+Free Memory Block #21: 4096 bytes, 4 KiB, 0x1235F69C
+Free Memory Block #22: 4096 bytes, 4 KiB, 0x12361238
+Free Memory Block #23: 4096 bytes, 4 KiB, 0x12362DD4
+Free Memory Block #24: 4096 bytes, 4 KiB, 0x12364970
+Free Memory Block #25: 4096 bytes, 4 KiB, 0x1236650C
+Free Memory Block #26: 4096 bytes, 4 KiB, 0x12369F20
+Free Memory Block #27: 4096 bytes, 4 KiB, 0x1236BD98
+Free Memory Block #28: 4096 bytes, 4 KiB, 0x1236DC10
+Free Memory Block #29: 4096 bytes, 4 KiB, 0x1236FA88
+Free Memory Block #30: 4096 bytes, 4 KiB, 0x12371900
+Free Memory Block #31: 4096 bytes, 4 KiB, 0x12373778
+Free Memory Block #32: 4096 bytes, 4 KiB, 0x123755F0
+1. Allocated 131072 bytes.
+2. Allocated 131072 bytes.
+3. Allocated 131072 bytes.
+4. Allocated 131072 bytes.
+5. Allocated 131072 bytes.
+6. Allocated 131072 bytes.
+7. Cannot allocate 131072 bytes.
+Trying to allocate texture 131072 bytes.
+Error: Cannot allocate textures array.
+Error: Cannot read 'Yeti3D.tex' file.
+Trying to allocate LUA 32768 bytes.
+Error: Cannot read 'Yeti3D.lua' file.
+Trying to allocate reciprocal 65536 bytes.
+Error: Cannot read 'Yeti3D.rec' file.
+Trying to allocate sintable 8192 bytes.
+Error: Cannot read 'Yeti3D.sin' file.
+Trying to allocate map 65664 bytes.
+Error: Cannot read 'Yeti3D.map' file.
+Free: LUA memory.
+Free: reciprocal memory.
+Free: sintable memory.
+Free: e1m1 memory.
+Free: ATI Bitmap memory.
+Free: ATI Driver Info memory.
