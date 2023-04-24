@@ -1,0 +1,40 @@
+ATI Driver Name: ATI Handheld Interface
+ATI Driver Version: 2.03.050408.40228
+ATI S/W Revision: 0 (0x00000000)
+ATI Chip ID: 1447563266 (0x56481002)
+ATI Revision ID: 17 (0x00000011)
+ATI CPU Bus Interface Mode: 4 (0x00000004)
+ATI Total Memory: 196608 (192 KiB)
+ATI Internal Memory: 196608 (192 KiB)
+ATI External Memory: 0 (0 KiB)
+ATI CAPS 1: 0 (0x00000000)
+ATI CAPS 2: 1 (0x00000001)
+ATI Internal Memory Largest Block: result=0, size=41280, size=40 KiB, align=8
+ATI External Memory Largest Block: result=2, size=41280, size=40 KiB, align=8
+ATI Display Mode: size=128x160, pixel_format=5, frequency=51, rotation=0, mirror=0
+ATI Surface Info: width=128, height=160, pixFormat=5, byteSize=40960, byteSize=40 KiB
+ATI Surface Info: offset=1064064, stride=256, numPlanes=1
+yeti: OK alloc 212944 bytes.
+Yeti3D.tex: OK alloc 131072 bytes.
+Yeti3D.lua: OK alloc 32768 bytes.
+Yeti3D.rec: OK alloc 65536 bytes.
+Yeti3D.sin: OK alloc 8192 bytes.
+Yeti3D.map: OK alloc 65664 bytes.
+Yeti3D.spr:spr_00: OK alloc 1430 bytes.
+Yeti3D.spr:spr_01: OK alloc 1430 bytes.
+Yeti3D.spr:spr_02: OK alloc 1430 bytes.
+Yeti3D.spr:spr_03: OK alloc 1430 bytes.
+Yeti3D.spr:spr_ball1: OK alloc 32772 bytes.
+Yeti3D.tex: freed 131072 bytes.
+Yeti3D.lua: freed 32768 bytes.
+Yeti3D.rec: freed 65536 bytes.
+Yeti3D.sin: freed 8192 bytes.
+Yeti3D.map: freed 65664 bytes.
+Yeti3D.spr:spr_00: freed 1430 bytes.
+Yeti3D.spr:spr_01: freed 1430 bytes.
+Yeti3D.spr:spr_02: freed 1430 bytes.
+Yeti3D.spr:spr_03: freed 1430 bytes.
+Yeti3D.spr:spr_ball1: freed 32772 bytes.
+yeti: freed 212944 bytes.
+Free: ATI Bitmap memory.
+Free: ATI Driver Info memory.

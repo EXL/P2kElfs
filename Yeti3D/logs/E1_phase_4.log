@@ -1,0 +1,30 @@
+ATI Driver Name: ATI Handheld Interface
+ATI Driver Version: 2.03.050408.40228
+ATI S/W Revision: 0 (0x00000000)
+ATI Chip ID: 1447366658 (0x56451002)
+ATI Revision ID: 1 (0x00000001)
+ATI CPU Bus Interface Mode: 4 (0x00000004)
+ATI Total Memory: 196608 (192 KiB)
+ATI Internal Memory: 196608 (192 KiB)
+ATI External Memory: 0 (0 KiB)
+ATI CAPS 1: 0 (0x00000000)
+ATI CAPS 2: 1 (0x00000001)
+ATI Internal Memory Largest Block: result=0, size=3320, size=3 KiB, align=8
+ATI External Memory Largest Block: result=2, size=3320, size=3 KiB, align=8
+ATI Display Mode: size=176x220, pixel_format=5, frequency=60, rotation=0, mirror=0
+ATI Surface Info: width=176, height=220, pixFormat=5, byteSize=77440, byteSize=75 KiB
+ATI Surface Info: offset=1064192, stride=352, numPlanes=1
+yeti: OK alloc 88624 bytes.
+Yeti3D.tex: OK alloc 131072 bytes.
+Yeti3D.lua: OK alloc 32768 bytes.
+Yeti3D.rec: OK alloc 65536 bytes.
+Yeti3D.sin: OK alloc 8192 bytes.
+Yeti3D.map: OK alloc 65664 bytes.
+Yeti3D.tex: freed 131072 bytes.
+Yeti3D.lua: freed 32768 bytes.
+Yeti3D.rec: freed 65536 bytes.
+Yeti3D.sin: freed 8192 bytes.
+Yeti3D.map: freed 65664 bytes.
+yeti: freed 88624 bytes.
+Free: ATI Bitmap memory.
+Free: ATI Driver Info memory.
