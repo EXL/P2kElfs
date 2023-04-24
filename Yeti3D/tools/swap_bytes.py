@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 """
-Convert data files from GBA little-endian format to P2K big-endian format.
+Convert simple data files from GBA little-endian format to P2K big-endian format.
 """
 
 import sys
