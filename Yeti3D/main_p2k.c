@@ -382,14 +382,14 @@ static UINT32 CheckKeyboard(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
 
 static UINT32 ProcessKeyboard(EVENT_STACK_T *ev_st, APPLICATION_T *app, UINT32 key, BOOL pressed) {
 #if defined(ROT_90)
-	#define KK_2 MULTIKEY_4
-	#define KK_UP MULTIKEY_LEFT
-	#define KK_4 MULTIKEY_8
-	#define KK_LEFT MULTIKEY_DOWN
-	#define KK_6 MULTIKEY_2
-	#define KK_RIGHT MULTIKEY_UP
-	#define KK_8 MULTIKEY_6
-	#define KK_DOWN MULTIKEY_RIGHT
+	#define KK_2 MULTIKEY_6
+	#define KK_UP MULTIKEY_RIGHT
+	#define KK_4 MULTIKEY_2
+	#define KK_LEFT MULTIKEY_UP
+	#define KK_6 MULTIKEY_8
+	#define KK_RIGHT MULTIKEY_DOWN
+	#define KK_8 MULTIKEY_4
+	#define KK_DOWN MULTIKEY_LEFT
 #elif defined(ROT_0)
 	#define KK_2 MULTIKEY_2
 	#define KK_UP MULTIKEY_UP
@@ -407,14 +407,14 @@ static UINT32 ProcessKeyboard(EVENT_STACK_T *ev_st, APPLICATION_T *app, UINT32 k
 			app->exit_status = TRUE;
 			break;
 		case MULTIKEY_1:
-			g_keyboard[E_KEY_LOOK_UP] = pressed;
+			g_keyboard[E_KEY_LOOK_DOWN] = pressed;
 			break;
 		case KK_2:
 		case KK_UP:
 			g_keyboard[E_KEY_UP] = pressed;
 			break;
 		case MULTIKEY_3:
-			g_keyboard[E_KEY_LOOK_DOWN] = pressed;
+			g_keyboard[E_KEY_LOOK_UP] = pressed;
 			break;
 		case KK_4:
 		case KK_LEFT:
@@ -429,13 +429,13 @@ static UINT32 ProcessKeyboard(EVENT_STACK_T *ev_st, APPLICATION_T *app, UINT32 k
 			g_keyboard[E_KEY_RIGHT] = pressed;
 			break;
 		case MULTIKEY_7:
+		case MULTIKEY_9:
 			g_keyboard[E_KEY_JUMP] = pressed;
 			break;
 		case KK_8:
 		case KK_DOWN:
 			g_keyboard[E_KEY_DOWN] = pressed;
 			break;
-		case MULTIKEY_9:
 		case MULTIKEY_SOFT_RIGHT:
 			break;
 		default:
@@ -611,9 +611,9 @@ static UINT32 ATI_Driver_Start(APPLICATION_T *app) {
 
 #if defined(ROT_90)
 	appi->ahi.rect_draw.x1 = 0;
-	appi->ahi.rect_draw.y1 = 0;
-	appi->ahi.rect_draw.x2 = 0 + appi->bmp_width;
-	appi->ahi.rect_draw.y2 = 0 + appi->bmp_height;
+	appi->ahi.rect_draw.y1 = appi->bmp_height + 1;
+	appi->ahi.rect_draw.x2 = 0 + appi->bmp_height;
+	appi->ahi.rect_draw.y2 = appi->bmp_height + 1 + appi->bmp_width;
 #elif defined(ROT_0)
 	appi->ahi.rect_draw.x1 = appi->width / 2 - appi->bmp_width / 2;
 	appi->ahi.rect_draw.y1 = appi->height / 2 - appi->bmp_height / 2;
@@ -670,6 +670,9 @@ static UINT32 ATI_Driver_Flush(APPLICATION_T *app) {
 	AhiDrawBitmapBlt(appi->ahi.context,
 		&appi->ahi.rect_bitmap, &appi->ahi.point_bitmap, &appi->ahi.bitmap, NULL, 0);
 
+	AhiDrawRotateBlt(appi->ahi.context,
+		&appi->ahi.rect_draw, &appi->ahi.point_bitmap, AHIROT_90, AHIMIRR_NO, 0);
+
 	AhiDrawSurfSrcSet(appi->ahi.context, appi->ahi.draw, 0);
 	AhiDrawSurfDstSet(appi->ahi.context, appi->ahi.screen, 0);
 
@@ -684,15 +687,17 @@ static UINT32 ATI_Driver_Flush(APPLICATION_T *app) {
 	return RESULT_OK;
 }
 
-static yeti_t *yeti = NULL;
+yeti_t *yeti = NULL;
 
 static texture_t *res_tex = NULL;
 static rgb555_t (*res_lua)[256] = NULL;
 int *reciprocal = NULL;
 int *sintable = NULL;
 
+rom_map_t *e1m1 = NULL;
+
 #define SPRITE_0_SIZE 1430
-#define SPRITE_BALL_SIZE 32772
+#define SPRITE_BALL_1_SIZE 32772
 u16 *spr_00 = NULL;
 u16 *spr_01 = NULL;
 u16 *spr_02 = NULL;
@@ -700,8 +705,6 @@ u16 *spr_03 = NULL;
 u16 *spr_ball1 = NULL;
 
 sprite_t sprites[YETI_SPRITE_MAX];
-
-rom_map_t *e1m1 = NULL;
 
 static void check_keys(void) {
 	yeti->keyboard.a      = g_keyboard[E_KEY_FIRE];
@@ -715,78 +718,87 @@ static void check_keys(void) {
 	yeti->keyboard.r      = g_keyboard[E_KEY_LOOK_DOWN];
 }
 
-#define MEMORY_TEST 0
-#if defined(MEMORY_TEST)
-#define ATTEMPTS (1024)
-static void *ptrs[ATTEMPTS];
-static void *address_start = NULL;
-static void *address_end = NULL;
-static void get_memory_free_blocks(int start_size) {
+//#define MEMORY_MANUAL_ALLOCATION
+#if defined(MEMORY_MANUAL_ALLOCATION)
+#define MEMORY_ATTEMPTS (64)
+#define MEMORY_END_BLOCK_SIZE (4096)
+typedef struct {
+	void *ptr;
+	UINT32 size;
+} MEMORY_BLOCK_ALLOCATED;
+static MEMORY_BLOCK_ALLOCATED mem_blocks[MEMORY_ATTEMPTS];
+static int mem_total_size;
+static int mem_block_count;
+static void Allocate_Memory_Blocks(int start_size) {
 	INT32 status;
-	int i, size, total;
-	void *p_min;
-	void *p_max;
+	int i, size, block_idx;
 
 	status = RESULT_OK;
-	total = 0;
+	mem_total_size = 0;
+	mem_block_count = 0;
+	block_idx = 0;
 	size = start_size;
 
-	for (i = 0; i < ATTEMPTS; ++i) {
-		ptrs[i] = NULL;
+	for (i = 0; i < MEMORY_ATTEMPTS; ++i) {
+		mem_blocks[i].ptr = NULL;
+		mem_blocks[i].size = 0;
 	}
-	for (i = 0; i < ATTEMPTS; ++i) {
-		ptrs[i] = suAllocMem(size, &status);
+	for (i = 0; i < MEMORY_ATTEMPTS; ++i) {
+		mem_blocks[block_idx].ptr = suAllocMem(size, &status);
 		if (status != RESULT_OK) {
-			LOG("C=%d E=%d T=%d\n", i+1, size, total);
+			LOG("C=%d E=%d T=%d\n", i+1, size, mem_total_size);
 			size /= 2;
-			if (size < 2) {
+			if (size < MEMORY_END_BLOCK_SIZE) {
 				break;
 			}
 		} else {
-			total += size;
-			LOG("C=%d A=%d T=%d P=0x%X\n", i+1, size, total, ptrs[i]);
+			mem_total_size += size;
+			mem_blocks[block_idx].size = size;
+			block_idx++;
+			LOG("C=%d A=%d T=%d P=0x%X\n", i+1, size, mem_total_size, mem_blocks[block_idx]);
 		}
 	}
-	p_max = ptrs[0];
-	for (i = 1; i < ATTEMPTS; ++i) {
-		p_max = (p_max > ptrs[i]) ? p_max : ptrs[i];
+
+	LOG("\n\n%s\n\n", "=== MEMORY BLOCKS STATISTIC TABLE ===");
+	for (i = 0; i < block_idx; ++i) {
+		LOG("Memory Block #%d: %d bytes, %d KiB, 0x%X\n",
+			i+1, mem_blocks[i].size, mem_blocks[i].size / 1024, mem_blocks[i].ptr);
 	}
-	p_min = p_max;
-	for (i = 1; i < ATTEMPTS; ++i) {
-		if (ptrs[i]) {
-			p_min = (p_min < ptrs[i]) ? p_min : ptrs[i];
-		}
-	}
-	LOG("PMIN=0x%X PMAX=0x%X RGN=0x%X RGD=%d\n", p_min, p_max,
-		(unsigned int) p_max - (unsigned int) p_min, (unsigned int) p_max - (unsigned int) p_min);
-	address_start = p_min;
-	address_end = p_max;
-	for (i = 0; i < ATTEMPTS; ++i) {
-		if (ptrs[i]) {
-			suFreeMem(ptrs[i]);
+	LOG("Total Memory: %d bytes, %d KiB.\n\n", mem_total_size, mem_total_size / 1024);
+
+	mem_block_count = block_idx + 1;
+}
+
+static void Free_Memory_Blocks(void) {
+	int i;
+
+	for (i = 0; i < mem_block_count - 1; ++i) {
+		if (mem_blocks[i].ptr) {
+			LOG("Free Memory Block #%d: %d bytes, %d KiB, 0x%X\n",
+				i+1, mem_blocks[i].size, mem_blocks[i].size / 1024, mem_blocks[i].ptr);
+			suFreeMem(mem_blocks[i].ptr);
 		}
 	}
 }
-#undef ATTEMPTS
 #endif
 
 static UINT32 GFX_Draw_Start(APPLICATION_T *app) {
-	INT32 status;
 	APP_INSTANCE_T *appi;
 
-	status = RESULT_OK;
 	appi = (APP_INSTANCE_T *) app;
 
 	appi->p_bitmap = (UINT8 *) appi->ahi.bitmap.image;
 
-#if defined(MEMORY_TEST)
-	get_memory_free_blocks(131072);
+#if defined(MEMORY_MANUAL_ALLOCATION)
+	Allocate_Memory_Blocks(131072);
+	Free_Memory_Blocks();
 #endif
 
-	LOG("Trying to allocate yeti %d bytes.\n", sizeof(yeti_t));
-	yeti = (yeti_t *) suAllocMem(sizeof(yeti_t), &status);
-	if (status != RESULT_OK) {
-		LOG("%s\n", "Error: Cannot allocate yeti data.");
+	yeti = (yeti_t *) AmMemAllocPointer(sizeof(yeti_t));
+	if (!yeti) {
+		LOG("yeti: Error alloc %d bytes.\n", sizeof(yeti_t));
+	} else {
+		LOG("yeti: OK alloc %d bytes.\n", sizeof(yeti_t));
 	}
 
 	InitResourses();
@@ -821,102 +833,124 @@ static UINT32 GFX_Draw_Step(APPLICATION_T *app) {
 
 	appi = (APP_INSTANCE_T *) app;
 
-//	yeti_tick(yeti);
-//	yeti_draw(yeti);
+	yeti_tick(yeti);
+	yeti_draw(yeti);
 
-//	check_keys();
+	check_keys();
 
 	return RESULT_OK;
 }
 
 static UINT32 InitResourses(void) {
-	INT32 status;
 	UINT32 readen;
 	FILE_HANDLE_T file_handle;
 
 	readen = 0;
-	status = RESULT_OK;
 
-	LOG("Trying to allocate texture %d bytes.\n", sizeof(texture_t) * YETI_TEXTURE_MAX);
-	res_tex = (texture_t *) suAllocMem(sizeof(texture_t) * YETI_TEXTURE_MAX, &status);
+	res_tex = (texture_t *) AmMemAllocPointer(sizeof(texture_t) * YETI_TEXTURE_MAX);
 	*(u_strrchr(g_res_file_path, L'/') + 1) = '\0';
 	u_strcat(g_res_file_path, L"Yeti3D.tex");
 	file_handle = DL_FsOpenFile(g_res_file_path, FILE_READ_MODE, 0);
 	DL_FsReadFile(res_tex, sizeof(texture_t) * YETI_TEXTURE_MAX, 1, file_handle, &readen);
 	DL_FsCloseFile(file_handle);
-	if (status != RESULT_OK) {
-		LOG("%s\n", "Error: Cannot allocate textures array.");
+	if (!res_tex) {
+		LOG("Yeti3D.tex: Error alloc %d bytes.\n", sizeof(texture_t) * YETI_TEXTURE_MAX);
+	} else {
+		LOG("Yeti3D.tex: OK alloc %d bytes.\n", sizeof(texture_t) * YETI_TEXTURE_MAX);
 	}
 	if (readen == 0) {
-		LOG("%s\n", "Error: Cannot read 'Yeti3D.tex' file.");
+		LOG("%s\n", "Yeti3D.tex: Error reading file.");
 	}
 
-	LOG("Trying to allocate LUA %d bytes.\n", sizeof(lua_t));
-	res_lua = (rgb555_t (*)[256]) suAllocMem(sizeof(lua_t), &status);
+	res_lua = (rgb555_t (*)[256]) AmMemAllocPointer(sizeof(lua_t));
 	*(u_strrchr(g_res_file_path, L'/') + 1) = '\0';
 	u_strcat(g_res_file_path, L"Yeti3D.lua");
 	file_handle = DL_FsOpenFile(g_res_file_path, FILE_READ_MODE, 0);
 	DL_FsReadFile(res_lua, sizeof(lua_t), 1, file_handle, &readen);
 	DL_FsCloseFile(file_handle);
-	if (status != RESULT_OK) {
-		LOG("%s\n", "Error: Cannot allocate LUA array!");
+	if (!res_lua) {
+		LOG("Yeti3D.lua: Error alloc %d bytes.\n", sizeof(lua_t));
+	} else {
+		LOG("Yeti3D.lua: OK alloc %d bytes.\n", sizeof(lua_t));
 	}
 	if (readen == 0) {
-		LOG("%s\n", "Error: Cannot read 'Yeti3D.lua' file.");
+		LOG("%s\n", "Yeti3D.lua: Error reading file.");
 	}
 
-	LOG("Trying to allocate reciprocal %d bytes.\n", sizeof(int) * YETI_RECIPROCAL_MAX);
-	reciprocal = (int *) suAllocMem(sizeof(int) * YETI_RECIPROCAL_MAX, &status);
+	reciprocal = (int *) AmMemAllocPointer(sizeof(int) * YETI_RECIPROCAL_MAX);
 	*(u_strrchr(g_res_file_path, L'/') + 1) = '\0';
 	u_strcat(g_res_file_path, L"Yeti3D.rec");
 	file_handle = DL_FsOpenFile(g_res_file_path, FILE_READ_MODE, 0);
 	DL_FsReadFile(reciprocal, sizeof(int) * YETI_RECIPROCAL_MAX, 1, file_handle, &readen);
 	DL_FsCloseFile(file_handle);
-	if (status != RESULT_OK) {
-		LOG("%s\n", "Error: Cannot allocate reciprocal array!");
+	if (!reciprocal) {
+		LOG("Yeti3D.rec: Error alloc %d bytes.\n", sizeof(int) * YETI_RECIPROCAL_MAX);
+	} else {
+		LOG("Yeti3D.rec: OK alloc %d bytes.\n", sizeof(int) * YETI_RECIPROCAL_MAX);
 	}
 	if (readen == 0) {
-		LOG("%s\n", "Error: Cannot read 'Yeti3D.rec' file.");
+		LOG("%s\n", "Yeti3D.rec: Error reading file.");
 	}
 
-	LOG("Trying to allocate sintable %d bytes.\n", sizeof(int) * YETI_SINTABLE_MAX);
-	sintable = (int *) suAllocMem(sizeof(int) * YETI_SINTABLE_MAX, &status);
+	sintable = (int *) AmMemAllocPointer(sizeof(int) * YETI_SINTABLE_MAX);
 	*(u_strrchr(g_res_file_path, L'/') + 1) = '\0';
 	u_strcat(g_res_file_path, L"Yeti3D.sin");
 	file_handle = DL_FsOpenFile(g_res_file_path, FILE_READ_MODE, 0);
 	DL_FsReadFile(sintable, sizeof(int) * YETI_SINTABLE_MAX, 1, file_handle, &readen);
 	DL_FsCloseFile(file_handle);
-	if (status != RESULT_OK) {
-		LOG("%s\n", "Error: Cannot allocate sintable array!");
+	if (!sintable) {
+		LOG("Yeti3D.sin: Error alloc %d bytes.\n", sizeof(int) * YETI_SINTABLE_MAX);
+	} else {
+		LOG("Yeti3D.sin: OK alloc %d bytes.\n", sizeof(int) * YETI_SINTABLE_MAX);
 	}
 	if (readen == 0) {
-		LOG("%s\n", "Error: Cannot read 'Yeti3D.sin' file.");
+		LOG("%s\n", "Yeti3D.sin: Error reading file.");
 	}
 
-	LOG("Trying to allocate spr_00 %d bytes.\n", SPRITE_0_SIZE);
-	spr_00 = (u16 *) suAllocMem(SPRITE_0_SIZE, &status);
-	if (status != RESULT_OK) {
-		LOG("%s\n", "Error: Cannot allocate spr_00 array!");
+	e1m1 = (rom_map_t *) AmMemAllocPointer(sizeof(rom_map_t));
+	*(u_strrchr(g_res_file_path, L'/') + 1) = '\0';
+	u_strcat(g_res_file_path, L"Yeti3D.map");
+	file_handle = DL_FsOpenFile(g_res_file_path, FILE_READ_MODE, 0);
+	DL_FsReadFile(e1m1, sizeof(rom_map_t), 1, file_handle, &readen);
+	DL_FsCloseFile(file_handle);
+	if (!e1m1) {
+		LOG("Yeti3D.map: Error alloc %d bytes.\n", sizeof(rom_map_t));
+	} else {
+		LOG("Yeti3D.map: OK alloc %d bytes.\n", sizeof(rom_map_t));
 	}
-	LOG("Trying to allocate spr_01 %d bytes.\n", SPRITE_0_SIZE);
-	spr_01 = (u16 *) suAllocMem(SPRITE_0_SIZE, &status);
-	if (status != RESULT_OK) {
-		LOG("%s\n", "Error: Cannot allocate spr_01 array!");
+	if (readen == 0) {
+		LOG("%s\n", "Yeti3D.map: Error reading file.");
 	}
-	LOG("Trying to allocate spr_02 %d bytes.\n", SPRITE_0_SIZE);
-	spr_02 = (u16 *) suAllocMem(SPRITE_0_SIZE, &status);
-	if (status != RESULT_OK) {
-		LOG("%s\n", "Error: Cannot allocate spr_02 array!");
+
+	spr_00 = (u16 *) AmMemAllocPointer(SPRITE_0_SIZE);
+	if (!spr_00) {
+		LOG("Yeti3D.spr:spr_00: Error alloc %d bytes.\n", SPRITE_0_SIZE);
+	} else {
+		LOG("Yeti3D.spr:spr_00: OK alloc %d bytes.\n", SPRITE_0_SIZE);
 	}
-	LOG("Trying to allocate spr_03 %d bytes.\n", SPRITE_0_SIZE);
-	spr_03 = (u16 *) suAllocMem(SPRITE_0_SIZE, &status);
-	if (status != RESULT_OK) {
-		LOG("%s\n", "Error: Cannot allocate spr_03 array!");
+	spr_01 = (u16 *) AmMemAllocPointer(SPRITE_0_SIZE);
+	if (!spr_01) {
+		LOG("Yeti3D.spr:spr_01: Error alloc %d bytes.\n", SPRITE_0_SIZE);
+	} else {
+		LOG("Yeti3D.spr:spr_01: OK alloc %d bytes.\n", SPRITE_0_SIZE);
 	}
-	LOG("Trying to allocate spr_ball1 %d bytes.\n", SPRITE_BALL_SIZE);
-	spr_ball1 = (u16 *) suAllocMem(SPRITE_BALL_SIZE, &status);
-	if (status != RESULT_OK) {
-		LOG("%s\n", "Error: Cannot allocate spr_ball1 array!");
+	spr_02 = (u16 *) AmMemAllocPointer(SPRITE_0_SIZE);
+	if (!spr_02) {
+		LOG("Yeti3D.spr:spr_02: Error alloc %d bytes.\n", SPRITE_0_SIZE);
+	} else {
+		LOG("Yeti3D.spr:spr_02: OK alloc %d bytes.\n", SPRITE_0_SIZE);
+	}
+	spr_03 = (u16 *) AmMemAllocPointer(SPRITE_0_SIZE);
+	if (!spr_03) {
+		LOG("Yeti3D.spr:spr_03: Error alloc %d bytes.\n", SPRITE_0_SIZE);
+	} else {
+		LOG("Yeti3D.spr:spr_03: OK alloc %d bytes.\n", SPRITE_0_SIZE);
+	}
+	spr_ball1 = (u16 *) AmMemAllocPointer(SPRITE_BALL_1_SIZE);
+	if (!spr_ball1) {
+		LOG("Yeti3D.spr:spr_ball1: Error alloc %d bytes.\n", SPRITE_BALL_1_SIZE);
+	} else {
+		LOG("Yeti3D.spr:spr_ball1: OK alloc %d bytes.\n", SPRITE_BALL_1_SIZE);
 	}
 	*(u_strrchr(g_res_file_path, L'/') + 1) = '\0';
 	u_strcat(g_res_file_path, L"Yeti3D.spr");
@@ -925,10 +959,10 @@ static UINT32 InitResourses(void) {
 	DL_FsReadFile(spr_01, SPRITE_0_SIZE, 1, file_handle, &readen);
 	DL_FsReadFile(spr_02, SPRITE_0_SIZE, 1, file_handle, &readen);
 	DL_FsReadFile(spr_03, SPRITE_0_SIZE, 1, file_handle, &readen);
-	DL_FsReadFile(spr_ball1, SPRITE_BALL_SIZE, 1, file_handle, &readen);
+	DL_FsReadFile(spr_ball1, SPRITE_BALL_1_SIZE, 1, file_handle, &readen);
 	DL_FsCloseFile(file_handle);
 	if (readen == 0) {
-		LOG("%s\n", "Error: Cannot read 'Yeti3D.spr' file.");
+		LOG("%s\n", "Yeti3D.spr: Error reading file.");
 	}
 	sprites[0] = spr_00;
 	sprites[1] = spr_01;
@@ -936,69 +970,64 @@ static UINT32 InitResourses(void) {
 	sprites[3] = spr_03;
 	sprites[4] = spr_ball1;
 
-	LOG("Trying to allocate map %d bytes.\n", sizeof(rom_map_t));
-	e1m1 = (rom_map_t *) suAllocMem(sizeof(rom_map_t), &status);
-	*(u_strrchr(g_res_file_path, L'/') + 1) = '\0';
-	u_strcat(g_res_file_path, L"Yeti3D.map");
-	file_handle = DL_FsOpenFile(g_res_file_path, FILE_READ_MODE, 0);
-	DL_FsReadFile(e1m1, sizeof(rom_map_t), 1, file_handle, &readen);
-	DL_FsCloseFile(file_handle);
-	if (status != RESULT_OK) {
-		LOG("%s\n", "Error: Cannot allocate map array!");
-	}
-	if (readen == 0) {
-		LOG("%s\n", "Error: Cannot read 'Yeti3D.map' file.");
-	}
-
 	return RESULT_OK;
 }
 
 static void FreeResourses(void) {
 	if (res_tex) {
-		LOG("%s\n", "Free: Textures memory.");
-		suFreeMem(res_tex);
+		LOG("Yeti3D.tex: freed %d bytes.\n", sizeof(texture_t) * YETI_TEXTURE_MAX);
+		AmMemFreePointer(res_tex);
 		res_tex = NULL;
 	}
 	if (res_lua) {
-		LOG("%s\n", "Free: LUA memory.");
-		suFreeMem(res_lua);
+		LOG("Yeti3D.lua: freed %d bytes.\n", sizeof(lua_t));
+		AmMemFreePointer(res_lua);
 		res_lua = NULL;
 	}
 	if (reciprocal) {
-		LOG("%s\n", "Free: reciprocal memory.");
-		suFreeMem(reciprocal);
+		LOG("Yeti3D.rec: freed %d bytes.\n", sizeof(int) * YETI_RECIPROCAL_MAX);
+		AmMemFreePointer(reciprocal);
 		reciprocal = NULL;
 	}
 	if (sintable) {
-		LOG("%s\n", "Free: sintable memory.");
-		suFreeMem(sintable);
+		LOG("Yeti3D.sin: freed %d bytes.\n", sizeof(int) * YETI_SINTABLE_MAX);
+		AmMemFreePointer(sintable);
 		sintable = NULL;
 	}
+	if (e1m1) {
+		LOG("Yeti3D.map: freed %d bytes.\n", sizeof(rom_map_t));
+		AmMemFreePointer(e1m1);
+		e1m1 = NULL;
+	}
 	if (spr_00) {
-		LOG("%s\n", "Free: spr_00 memory.");
-		suFreeMem(spr_00);
+		LOG("Yeti3D.spr:spr_00: freed %d bytes.\n", SPRITE_0_SIZE);
+		AmMemFreePointer(spr_00);
 		sprites[0] = spr_00 = NULL;
 	}
 	if (spr_01) {
-		LOG("%s\n", "Free: spr_01 memory.");
-		suFreeMem(spr_01);
+		LOG("Yeti3D.spr:spr_01: freed %d bytes.\n", SPRITE_0_SIZE);
+		AmMemFreePointer(spr_01);
 		sprites[1] = spr_01 = NULL;
 	}
 	if (spr_02) {
-		LOG("%s\n", "Free: spr_02 memory.");
-		suFreeMem(spr_02);
+		LOG("Yeti3D.spr:spr_02: freed %d bytes.\n", SPRITE_0_SIZE);
+		AmMemFreePointer(spr_02);
 		sprites[2] = spr_02 = NULL;
 	}
 	if (spr_03) {
-		LOG("%s\n", "Free: spr_03 memory.");
-		suFreeMem(spr_03);
+		LOG("Yeti3D.spr:spr_03: freed %d bytes.\n", SPRITE_0_SIZE);
+		AmMemFreePointer(spr_03);
 		sprites[3] = spr_03 = NULL;
 	}
 	if (spr_ball1) {
-		LOG("%s\n", "Free: spr_ball1 memory.");
-		suFreeMem(spr_ball1);
+		LOG("Yeti3D.spr:spr_ball1: freed %d bytes.\n", SPRITE_BALL_1_SIZE);
+		AmMemFreePointer(spr_ball1);
 		sprites[4] = spr_ball1 = NULL;
 	}
+	if (yeti) {
+		LOG("yeti: freed %d bytes.\n", sizeof(yeti_t));
+		AmMemFreePointer(yeti);
+		yeti = NULL;
+	}
 }
-
 #undef LOG
