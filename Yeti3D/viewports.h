@@ -60,7 +60,7 @@ Prepared for public release: 10/24/2003 - Derek J. Evans <derek@theteahouse.com.
 
 #ifdef __P2K__
 
-#define YETI_RGB555
+#define YETI_RGB565
 #define YETI_LOW_QUALITY_WALLS
 
 #define YETI_ROM const
@@ -92,7 +92,7 @@ Prepared for public release: 10/24/2003 - Derek J. Evans <derek@theteahouse.com.
 
 #ifdef __SDL__
 
-#define YETI_RGB555
+#define YETI_RGB565
 #define YETI_LOW_QUALITY_WALLS
 
 #define YETI_ROM const

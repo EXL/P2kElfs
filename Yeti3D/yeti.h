@@ -145,6 +145,15 @@ extern "C"{
 #define YETI_VCACHE_MAX 8
 #endif
 
+#ifdef YETI_RGB565
+#define RGB_SET(R,G,B) (((B)<<11)|((G)<<5)|(R))
+#define RGB_BLEND_MASK 0xF7DE
+#define RGB_BLEND(A,B) ((((A) & RGB_BLEND_MASK) + ((B) & RGB_BLEND_MASK)) >> 1)
+#define RGB_RED(A)   (((A)>> 0)&31)
+#define RGB_GREEN(A) (((A)>> 5)&31)
+#define RGB_BLUE(A)  (((A)>>11)&31)
+#endif
+
 #ifdef YETI_RGB555
 #define RGB_SET(R,G,B) (((B)<<10)|((G)<<5)|(R))
 #define RGB_BLEND_MASK 0x7BDE
