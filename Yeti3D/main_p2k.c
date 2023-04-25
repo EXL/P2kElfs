@@ -381,7 +381,6 @@ static UINT32 CheckKeyboard(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
 }
 
 static UINT32 ProcessKeyboard(EVENT_STACK_T *ev_st, APPLICATION_T *app, UINT32 key, BOOL pressed) {
-#if defined(ROT_90)
 	#define KK_2 MULTIKEY_6
 	#define KK_UP MULTIKEY_RIGHT
 	#define KK_4 MULTIKEY_2
@@ -390,16 +389,6 @@ static UINT32 ProcessKeyboard(EVENT_STACK_T *ev_st, APPLICATION_T *app, UINT32 k
 	#define KK_RIGHT MULTIKEY_DOWN
 	#define KK_8 MULTIKEY_4
 	#define KK_DOWN MULTIKEY_LEFT
-#elif defined(ROT_0)
-	#define KK_2 MULTIKEY_2
-	#define KK_UP MULTIKEY_UP
-	#define KK_4 MULTIKEY_4
-	#define KK_LEFT MULTIKEY_LEFT
-	#define KK_6 MULTIKEY_6
-	#define KK_RIGHT MULTIKEY_RIGHT
-	#define KK_8 MULTIKEY_8
-	#define KK_DOWN MULTIKEY_DOWN
-#endif
 
 	switch (key) {
 		case MULTIKEY_0:
@@ -503,6 +492,144 @@ static void FPS_Meter(void) {
 #endif
 }
 
+#define NO_STRETCH
+#if defined(NO_STRETCH)
+extern UINT8 *Class_dal;
+
+#define GFX_DAL_SEARCH_REGION (0x100)
+
+#if defined(EP2)
+#define AmMemAllocPointer(x) suAllocMem(x, NULL)
+#define AmMemFreePointer(x) suFreeMem(x)
+#endif
+
+static UINT32 ATI_Driver_Set_Display_Mode(APPLICATION_T *app, AHIROTATE_T mode) {
+	UINT32 status;
+	APP_INSTANCE_T *appi;
+	AHIPOINT_T size_landscape;
+	AHIPOINT_T size_portrait;
+	AHIDEVCONTEXT_T device_context;
+	UINT32 *ptr_dal;
+	UINT32 *ptr_dal_disp_surface;
+	UINT32 *ptr_dal_draw_surface;
+	AHIDISPMODE_T display_mode;
+	UINT32 surface_block_offset;
+
+	status = RESULT_OK;
+	appi = (APP_INSTANCE_T *) app;
+	surface_block_offset = 0;
+
+	device_context = DAL_GetDeviceContext(DISPLAY_MAIN);
+
+	status |= AhiDispModeGet(appi->ahi.context, &display_mode);
+
+	size_landscape.x = display_mode.size.y;
+	size_landscape.y = display_mode.size.x;
+	size_portrait.x = display_mode.size.x;
+	size_portrait.y = display_mode.size.y;
+
+	ptr_dal = (UINT32 *) (Class_dal);
+	while (surface_block_offset < GFX_DAL_SEARCH_REGION) {
+		/*
+		 * Find the block of:
+		 * o-4: ...
+		 * o  : curDrawSurf
+		 * o+4: curDispSurf
+		 * o+8: ...
+		*/
+
+		if(*ptr_dal == (UINT32) (appi->ahi.screen)) {
+			if(*(ptr_dal + 1) == (UINT32) (appi->ahi.draw)) {
+				break;
+			}
+		}
+
+		ptr_dal++;
+		surface_block_offset += 4;
+	}
+	if (surface_block_offset >= GFX_DAL_SEARCH_REGION) {
+		/* Not Found? */
+		surface_block_offset = 0;
+	}
+
+//	surface_block_offset = 64;
+
+//	ptr_dal_disp_surface = (UINT32 *) (Class_dal + surface_block_offset + 0x00);
+//	ptr_dal_draw_surface = (UINT32 *) (Class_dal + surface_block_offset + 0x04);
+
+	ptr_dal_disp_surface = (UINT32 *) 0x1241c254;
+	ptr_dal_draw_surface = (UINT32 *) 0x1241c258;
+
+	LOG("ATI_Driver_Set_Display_Mode:\n\t"
+		"Class_dal=0x%08X 0x%08X 0x%08X\n\t"
+		"ptr_dal=0x%08X 0x%08X 0x%08X\n\t"
+		"ptr_dal_disp_surface=0x%08X\n\t"
+		"ptr_dal_draw_surface=0x%08X\n\t"
+		"surface_block_offset (hex)=0x%08X\n"
+		"surface_block_offset (dec)=%d\n",
+		*Class_dal, *ptr_dal, &Class_dal, &ptr_dal, Class_dal, ptr_dal,
+		ptr_dal_disp_surface, ptr_dal_draw_surface, surface_block_offset, surface_block_offset);
+
+	if (mode == AHIROT_90) {
+		status |= AhiSurfFree(device_context, (AHISURFACE_T) (*ptr_dal_disp_surface));
+		status |= AhiSurfFree(device_context, (AHISURFACE_T) (*ptr_dal_draw_surface));
+
+		status = AhiSurfAlloc(appi->ahi.context,
+			&appi->ahi.screen, &size_landscape, AHIFMT_16BPP_565, AHIFLAG_INTMEMORY);
+		if (status != RESULT_OK) {
+			LOG("ATI_Driver_Set_Display_Mode: Cannot allocate display (landscape) surface, status = %d\n", status);
+			return RESULT_FAIL;
+		}
+		status = AhiSurfAlloc(appi->ahi.context,
+			&appi->ahi.draw, &size_landscape, AHIFMT_16BPP_565, 0);
+		if (status != RESULT_OK) {
+			LOG("ATI_Driver_Set_Display_Mode: Cannot allocate drawing (landscape) surface, status = %d\n", status);
+			status |= AhiSurfFree(device_context, appi->ahi.screen);
+			appi->ahi.screen = NULL;
+			return RESULT_FAIL;
+		}
+	} else {
+		if (appi->ahi.screen != NULL) {
+			status |= AhiSurfFree(appi->ahi.context, appi->ahi.screen);
+		}
+		if (appi->ahi.draw != NULL) {
+			status |= AhiSurfFree(appi->ahi.context, appi->ahi.draw);
+		}
+
+		status = AhiSurfAlloc(device_context,
+			&appi->ahi.screen, &size_portrait, AHIFMT_16BPP_565, AHIFLAG_INTMEMORY);
+		if (status != RESULT_OK) {
+			LOG("ATI_Driver_Set_Display_Mode: Cannot allocate display (portrait) surface, status = %d\n", status);
+			return RESULT_FAIL;
+		}
+		status = AhiSurfAlloc(device_context,
+			&appi->ahi.draw, &size_portrait, AHIFMT_16BPP_565, 0);
+		if (status != RESULT_OK) {
+			LOG("ATI_Driver_Set_Display_Mode: Cannot allocate drawing (portrait) surface, status = %d\n", status);
+			status |= AhiSurfFree(device_context, appi->ahi.screen);
+			appi->ahi.screen = NULL;
+			return RESULT_FAIL;
+		}
+
+		*ptr_dal_disp_surface = (UINT32) appi->ahi.screen;
+		*ptr_dal_draw_surface = (UINT32) appi->ahi.draw;
+	}
+
+	status |= AhiDispModeGet(appi->ahi.context, &display_mode);
+	status |= AhiDispState(appi->ahi.context, DISPLAY_OFF, 0);
+	display_mode.rotation = mode;
+	status = AhiDispModeSet(appi->ahi.context, &display_mode, 0);
+	if (status != RESULT_OK) {
+		LOG("ATI_Driver_Set_Display_Mode: Cannot change display mode, status = %d\n", status);
+		return RESULT_FAIL;
+	}
+	status |= AhiDispSurfSet(appi->ahi.context, appi->ahi.screen, 0);
+	status |= AhiDispState(appi->ahi.context, DISPLAY_ON, 0);
+
+	return status;
+}
+#endif
+
 static UINT32 ATI_Driver_Start(APPLICATION_T *app) {
 	UINT32 status;
 	INT32 result;
@@ -527,10 +654,12 @@ static UINT32 ATI_Driver_Start(APPLICATION_T *app) {
 		return RESULT_FAIL;
 	}
 
-	status |= AhiDispModeGet(appi->ahi.context, &display_mode);
-
 	status |= AhiDispSurfGet(appi->ahi.context, &appi->ahi.screen);
 	appi->ahi.draw = DAL_GetDrawingSurface(DISPLAY_MAIN);
+
+#if defined(NO_STRETCH)
+	status |= ATI_Driver_Set_Display_Mode(app, AHIROT_90);
+#endif
 
 	status |= AhiDrawClipDstSet(appi->ahi.context, NULL);
 	status |= AhiDrawClipSrcSet(appi->ahi.context, NULL);
@@ -639,6 +768,10 @@ static UINT32 ATI_Driver_Stop(APPLICATION_T *app) {
 
 	status = RESULT_OK;
 	app_instance = (APP_INSTANCE_T *) app;
+
+#if defined(NO_STRETCH)
+	status |= ATI_Driver_Set_Display_Mode(app, AHIROT_0);
+#endif
 
 	if (app_instance->p_bitmap) {
 		LOG("%s\n", "Free: ATI Bitmap memory.");

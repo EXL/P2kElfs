@@ -18,7 +18,7 @@ set LIB_PATH=%ARM_PATH%\lib
 set LIB_MAIN=Lib.o
 
 :: Defines.
-set DEFINES=-D__P2K__ -DEP1 -DROT_90 -DFPS_30
+set DEFINES=-D__P2K__ -DEP1 -DROT_0 -DFPS_30
 
 :: ELF name.
 set ELF_NAME=Yeti3D
