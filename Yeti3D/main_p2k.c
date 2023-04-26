@@ -552,22 +552,17 @@ static UINT32 ATI_Driver_Set_Display_Mode(APPLICATION_T *app, AHIROTATE_T mode) 
 		surface_block_offset = 0;
 	}
 
-//	surface_block_offset = 64;
-
-//	ptr_dal_disp_surface = (UINT32 *) (Class_dal + surface_block_offset + 0x00);
-//	ptr_dal_draw_surface = (UINT32 *) (Class_dal + surface_block_offset + 0x04);
-
-	ptr_dal_disp_surface = (UINT32 *) 0x1241c254;
-	ptr_dal_draw_surface = (UINT32 *) 0x1241c258;
+	ptr_dal_disp_surface = (UINT32 *) (Class_dal + surface_block_offset + 0x00);
+	ptr_dal_draw_surface = (UINT32 *) (Class_dal + surface_block_offset + 0x04);
 
 	LOG("ATI_Driver_Set_Display_Mode:\n\t"
 		"Class_dal=0x%08X 0x%08X 0x%08X\n\t"
 		"ptr_dal=0x%08X 0x%08X 0x%08X\n\t"
 		"ptr_dal_disp_surface=0x%08X\n\t"
 		"ptr_dal_draw_surface=0x%08X\n\t"
-		"surface_block_offset (hex)=0x%08X\n"
+		"surface_block_offset (hex)=0x%08X\n\t"
 		"surface_block_offset (dec)=%d\n",
-		*Class_dal, *ptr_dal, &Class_dal, &ptr_dal, Class_dal, ptr_dal,
+		*Class_dal, &Class_dal, Class_dal, *ptr_dal, &ptr_dal, ptr_dal,
 		ptr_dal_disp_surface, ptr_dal_draw_surface, surface_block_offset, surface_block_offset);
 
 	if (mode == AHIROT_90) {
