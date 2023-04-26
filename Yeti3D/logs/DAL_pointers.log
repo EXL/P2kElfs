@@ -1,0 +1,76 @@
+ROKR E1, Yeti3D EP1 ELF, FBrowser:
+
+	ATI_Driver_Set_Display_Mode:
+		Class_dal=0x00000012 0x1248E6A8 0x1232D714
+		ptr_dal=0x00000000 0x03FFD3E0 0x1232D814
+		ptr_dal_disp_surface=0x1241C254
+		ptr_dal_draw_surface=0x1241C258
+		surface_block_offset (hex)=0x00000000
+		surface_block_offset (dec)=0
+
+ROKR E1, Yeti3D EP1 ELF, MotoCMD2:
+
+	ATI_Driver_Set_Display_Mode:
+		Class_dal=0x00000012 0x124A1564 0x1232D714
+		ptr_dal=0x00000000 0x03FFD3E0 0x1232D814
+		ptr_dal_disp_surface=0x1241C254
+		ptr_dal_draw_surface=0x1241C258
+		surface_block_offset (hex)=0x00000000
+		surface_block_offset (dec)=0
+
+ROKR E1, Yeti3D EP2 ELF, MotoCMD2:
+
+	ATI_Driver_Set_Display_Mode:
+		Class_dal=0x00000010 0x1232D714 0x1241C214
+		ptr_dal=0x1270EC94 0x03FFD3E8 0x1241C254
+		ptr_dal_disp_surface=0x1241C254
+		ptr_dal_draw_surface=0x1241C258
+		surface_block_offset (hex)=0x00000040
+		surface_block_offset (dec)=64
+
+ROKR E1, Ugh! EP2 ELF, MotoCMD2:
+
+	ATI_Driver_Set_Display_Mode:
+		Class_dal=0x00000010 0x1232D714 0x1241C214
+		ptr_dal=0x1053FB00 0x00000000 0x1241C214
+		ptr_dal_disp_surface=0x1241C254
+		ptr_dal_draw_surface=0x1241C258
+		surface_block_offset (hex)=0x00000040
+		surface_block_offset (dec)=64
+
+ROKR E1, Yeti3D EP1 ELF Fixed Class_dal address?, FBrowser:
+
+	ATI_Driver_Set_Display_Mode:
+		Class_dal=0x00000010 0x1248E6A8 0x1241C214
+		ptr_dal=0x1270EC94 0x03FFD3E0 0x1241C254
+		ptr_dal_disp_surface=0x1241C254
+		ptr_dal_draw_surface=0x1241C258
+		surface_block_offset (hex)=0x00000040
+		surface_block_offset (dec)=64
+
+SLVR L6, Yeti3D EP1 Broken, FBrowser:
+
+	ATI Display Mode Dumps 1:
+		Class_dal=0x00000000 0x12473A34 0x12473CA0
+		ptr_dal=0x12592878 0x03FF6A68 0x12300D78
+		ptr_dal_disp_surface=0x12474A18
+		ptr_dal_draw_surface=0x12474A1C
+		surface_block_offset (hex)=0x00000D78
+		surface_block_offset (dec)=3448
+	ATI Display Mode Dumps 2:
+		appi->ahi.screen=0x12592878 0x122FD560
+		appi->ahi.draw=0x125928D0 0x122FD564
+
+SLVR L6, Yeti3D EP1 Works, FBrowser:
+
+	ATI Display Mode Dumps 1:
+		Class_dal=0x00000072 0x1247400C 0x12473CA0
+		start_addr=0x00000000 0x03FF6A40 0x12300000
+		surface_disp_addr=0x12300D78
+		surface_draw_addr=0x12300D7C
+		surface_block_offset (hex)=0x00000D78
+		surface_block_offset (dec)=3448
+	ATI Display Mode Dumps 2:
+		display_source_buffer=0x12200254 0x12474010
+		appi->ahi.screen=0x12592878 0x122FE0A0
+		appi->ahi.draw=0x125928D0 0x122FE0A4

@@ -1,0 +1,212 @@
+ATI Driver Start Initialization.
+ATI Display Mode Dumps 1:
+	Class_dal=0x00000010 0x1248EA88 0x1241C214
+	start_addr=0x1053FB00 0x03FFD3CC 0x1241C214
+	search_region=0x00000100
+	surface_disp_addr=0x1241C254
+	surface_draw_addr=0x1241C258
+	surface_block_offset=0x00000040
+ATI Display Mode Dumps 2:
+	display_source_buffer=0x1232D71C 0x1248EA8C
+	appi->ahi.screen=0x1270EC94 0x12410F34
+	appi->ahi.draw=0x1270ECEC 0x12410F38
+ATI Memory Dump.
+	ATI Internal Memory Largest Block: status=0, pixel_format=2, size=161520, size=157 KiB, align=16
+	ATI External Memory Largest Block: status=2, pixel_format=2, size=0, size=0 KiB, align=16
+	ATI System Memory Largest Block: status=2, pixel_format=2, size=0, size=0 KiB, align=16
+ATI Memory Dump.
+	ATI Internal Memory Largest Block: status=0, pixel_format=2, size=3824, size=3 KiB, align=16
+	ATI External Memory Largest Block: status=2, pixel_format=2, size=0, size=0 KiB, align=16
+	ATI System Memory Largest Block: status=2, pixel_format=2, size=0, size=0 KiB, align=16
+ATI Driver Dump.
+ATI Driver Name: ATI Handheld Interface
+ATI Driver Version: 2.03.050408.40228
+ATI S/W Revision: 0 (0x00000000)
+ATI Chip ID: 1447366658 (0x56451002)
+ATI Revision ID: 1 (0x00000001)
+ATI CPU Bus Interface Mode: 4 (0x00000004)
+ATI Total Memory: 196608 (192 KiB)
+ATI Internal Memory: 196608 (192 KiB)
+ATI External Memory: 0 (0 KiB)
+ATI CAPS 1: 0 (0x00000000)
+ATI CAPS 2: 1 (0x00000001)
+ATI Surface Screen Info: width=220, height=176, pixFormat=5, byteSize=78848, byteSize=77 KiB
+ATI Surface Screen Info: offset=1146864, stride=448, numPlanes=1
+ATI Surface Draw Info: width=220, height=176, pixFormat=5, byteSize=78848, byteSize=77 KiB
+ATI Surface Draw Info: offset=1068016, stride=448, numPlanes=1
+ATI Memory Dump.
+	ATI Internal Memory Largest Block: status=0, pixel_format=5, size=1912, size=1 KiB, align=8
+	ATI External Memory Largest Block: status=2, pixel_format=5, size=0, size=0 KiB, align=8
+	ATI System Memory Largest Block: status=2, pixel_format=5, size=0, size=0 KiB, align=8
+yeti: OK alloc 212944 bytes.
+Yeti3D.tex: OK alloc 131072 bytes.
+Yeti3D.lua: OK alloc 32768 bytes.
+Yeti3D.rec: OK alloc 65536 bytes.
+Yeti3D.sin: OK alloc 8192 bytes.
+Yeti3D.map: OK alloc 65664 bytes.
+Yeti3D.spr:spr_00: OK alloc 1430 bytes.
+Yeti3D.spr:spr_01: OK alloc 1430 bytes.
+Yeti3D.spr:spr_02: OK alloc 1430 bytes.
+Yeti3D.spr:spr_03: OK alloc 1430 bytes.
+Yeti3D.spr:spr_ball1: OK alloc 32772 bytes.
+Yeti3D.tex: freed 131072 bytes.
+Yeti3D.lua: freed 32768 bytes.
+Yeti3D.rec: freed 65536 bytes.
+Yeti3D.sin: freed 8192 bytes.
+Yeti3D.map: freed 65664 bytes.
+Yeti3D.spr:spr_00: freed 1430 bytes.
+Yeti3D.spr:spr_01: freed 1430 bytes.
+Yeti3D.spr:spr_02: freed 1430 bytes.
+Yeti3D.spr:spr_03: freed 1430 bytes.
+Yeti3D.spr:spr_ball1: freed 32772 bytes.
+yeti: freed 212944 bytes.
+ATI Display Mode Dumps 1:
+	Class_dal=0x00000010 0x1248EA88 0x1241C214
+	start_addr=0x1053FB00 0x03FFD424 0x1241C214
+	search_region=0x00000100
+	surface_disp_addr=0x1241C254
+	surface_draw_addr=0x1241C258
+	surface_block_offset=0x00000040
+ATI Display Mode Dumps 2:
+	display_source_buffer=0x1232D71C 0x1248EA8C
+	appi->ahi.screen=0x1270EC94 0x12410F34
+	appi->ahi.draw=0x1270ECEC 0x12410F38
+ATI Memory Dump.
+	ATI Internal Memory Largest Block: status=0, pixel_format=2, size=161520, size=157 KiB, align=16
+	ATI External Memory Largest Block: status=2, pixel_format=2, size=0, size=0 KiB, align=16
+	ATI System Memory Largest Block: status=2, pixel_format=2, size=0, size=0 KiB, align=16
+ATI Memory Dump.
+	ATI Internal Memory Largest Block: status=0, pixel_format=2, size=6640, size=6 KiB, align=16
+	ATI External Memory Largest Block: status=2, pixel_format=2, size=0, size=0 KiB, align=16
+	ATI System Memory Largest Block: status=2, pixel_format=2, size=0, size=0 KiB, align=16
+Free: ATI Bitmap memory.
+Free: ATI Driver Info memory.
+DATAFLOW ERROR: 20, 64
+EP2> ActionFastRunElf: long FAST_ACCESS key pressed, fastrun elf
+EP2> loadElf: enter, uri = 'file://c/Elf2/MotoCMD2/MotoCMD2.elf', stack=3ffd24c
+EP2> prepareElf: enter, 0x3ffd224
+EP2> readElf: enter, 0x3ffd1f8
+EP2> checkElf: e_flags=5000002, eabi=5000000
+EP2> readElf: alloc physBase=0x124877e8
+EP2> readElf: alloc dynSegment=0x12445ea4
+EP2> readElf: exit, 0x0
+EP2> prepareDynSegment: enter, 0x3ffd208
+EP2> prepareDynSegment: exit, 0x0
+EP2> relocatePLT: enter, 0x3ffd1f4
+EP2> relocatePLT: exit, 0x0
+EP2> relocateDyn: enter, 0x3ffd20c
+EP2> relocateDyn: exit, 0x0
+EP2> prepareElf: exit, 0x0
+EP2> registerElf: enter, 0x3ffd228
+EP2> registerElf: starting ELF at 0x1248A955
+EP2> registerElf: ELF returned with 0x1248DDF4
+EP2> registerElf: exit, 0x0
+EP2> loadElf: exit, 0x0
+EP2> clearElf: free dynSegment=0x12445EA4
+EP2> ldrLoadElf: status = 0
+EP2> loadElf: enter, uri = 'file://c/Elf/Y3D/Yeti3D_EP2.elf', stack=3ffd154
+EP2> prepareElf: enter, 0x3ffd12c
+EP2> readElf: enter, 0x3ffd100
+EP2> checkElf: e_flags=5000002, eabi=5000000
+EP2> readElf: alloc physBase=0x1249a6a4
+EP2> readElf: alloc dynSegment=0x12441e50
+EP2> readElf: exit, 0x0
+EP2> prepareDynSegment: enter, 0x3ffd110
+EP2> prepareDynSegment: exit, 0x0
+EP2> relocatePLT: enter, 0x3ffd0fc
+EP2> relocatePLT: exit, 0x0
+EP2> relocateDyn: enter, 0x3ffd114
+EP2> relocateDyn: exit, 0x0
+EP2> prepareElf: exit, 0x0
+EP2> registerElf: enter, 0x3ffd130
+EP2> registerElf: starting ELF at 0x1249E0D5
+EP2> registerElf: ELF returned with 0x124A09B8
+EP2> registerElf: exit, 0x0
+EP2> loadElf: exit, 0x0
+EP2> clearElf: free dynSegment=0x12441E50
+EP2> ldrLoadElf: status = 0
+ATI Driver Start Initialization.
+ATI Display Mode Dumps 1:
+	Class_dal=0x00000010 0x1232D714 0x1241C214
+	start_addr=0x1053FB00 0x03FFD3C8 0x1241C214
+	search_region=0x00000100
+	surface_disp_addr=0x1241C254
+	surface_draw_addr=0x1241C258
+	surface_block_offset=0x00000040
+ATI Display Mode Dumps 2:
+	display_source_buffer=0x00000000 0x1232D71C
+	appi->ahi.screen=0x1270EC94 0x12410F34
+	appi->ahi.draw=0x1270ECEC 0x12410F38
+ATI Memory Dump.
+	ATI Internal Memory Largest Block: status=0, pixel_format=2, size=161520, size=157 KiB, align=16
+	ATI External Memory Largest Block: status=2, pixel_format=2, size=0, size=0 KiB, align=16
+	ATI System Memory Largest Block: status=2, pixel_format=2, size=0, size=0 KiB, align=16
+ATI Memory Dump.
+	ATI Internal Memory Largest Block: status=0, pixel_format=2, size=3824, size=3 KiB, align=16
+	ATI External Memory Largest Block: status=2, pixel_format=2, size=0, size=0 KiB, align=16
+	ATI System Memory Largest Block: status=2, pixel_format=2, size=0, size=0 KiB, align=16
+ATI Driver Dump.
+ATI Driver Name: ATI Handheld Interface
+ATI Driver Version: 2.03.050408.40228
+ATI S/W Revision: 0 (0x00000000)
+ATI Chip ID: 1447366658 (0x56451002)
+ATI Revision ID: 1 (0x00000001)
+ATI CPU Bus Interface Mode: 4 (0x00000004)
+ATI Total Memory: 196608 (192 KiB)
+ATI Internal Memory: 196608 (192 KiB)
+ATI External Memory: 0 (0 KiB)
+ATI CAPS 1: 0 (0x00000000)
+ATI CAPS 2: 1 (0x00000001)
+ATI Surface Screen Info: width=220, height=176, pixFormat=5, byteSize=78848, byteSize=77 KiB
+ATI Surface Screen Info: offset=1146864, stride=448, numPlanes=1
+ATI Surface Draw Info: width=220, height=176, pixFormat=5, byteSize=78848, byteSize=77 KiB
+ATI Surface Draw Info: offset=1068016, stride=448, numPlanes=1
+ATI Memory Dump.
+	ATI Internal Memory Largest Block: status=0, pixel_format=5, size=1912, size=1 KiB, align=8
+	ATI External Memory Largest Block: status=2, pixel_format=5, size=0, size=0 KiB, align=8
+	ATI System Memory Largest Block: status=2, pixel_format=5, size=0, size=0 KiB, align=8
+yeti: OK alloc 212944 bytes.
+Yeti3D.tex: OK alloc 131072 bytes.
+Yeti3D.lua: OK alloc 32768 bytes.
+Yeti3D.rec: OK alloc 65536 bytes.
+Yeti3D.sin: OK alloc 8192 bytes.
+Yeti3D.map: OK alloc 65664 bytes.
+Yeti3D.spr:spr_00: OK alloc 1430 bytes.
+Yeti3D.spr:spr_01: OK alloc 1430 bytes.
+Yeti3D.spr:spr_02: OK alloc 1430 bytes.
+Yeti3D.spr:spr_03: OK alloc 1430 bytes.
+Yeti3D.spr:spr_ball1: OK alloc 32772 bytes.
+Yeti3D.tex: freed 131072 bytes.
+Yeti3D.lua: freed 32768 bytes.
+Yeti3D.rec: freed 65536 bytes.
+Yeti3D.sin: freed 8192 bytes.
+Yeti3D.map: freed 65664 bytes.
+Yeti3D.spr:spr_00: freed 1430 bytes.
+Yeti3D.spr:spr_01: freed 1430 bytes.
+Yeti3D.spr:spr_02: freed 1430 bytes.
+Yeti3D.spr:spr_03: freed 1430 bytes.
+Yeti3D.spr:spr_ball1: freed 32772 bytes.
+yeti: freed 212944 bytes.
+ATI Display Mode Dumps 1:
+	Class_dal=0x00000010 0x1232D714 0x1241C214
+	start_addr=0x1053FB00 0x03FFD448 0x1241C214
+	search_region=0x00000100
+	surface_disp_addr=0x1241C254
+	surface_draw_addr=0x1241C258
+	surface_block_offset=0x00000040
+ATI Display Mode Dumps 2:
+	display_source_buffer=0x00000000 0x1232D71C
+	appi->ahi.screen=0x1270EC94 0x12410F34
+	appi->ahi.draw=0x1270ECEC 0x12410F38
+ATI Memory Dump.
+	ATI Internal Memory Largest Block: status=0, pixel_format=2, size=161520, size=157 KiB, align=16
+	ATI External Memory Largest Block: status=2, pixel_format=2, size=0, size=0 KiB, align=16
+	ATI System Memory Largest Block: status=2, pixel_format=2, size=0, size=0 KiB, align=16
+ATI Memory Dump.
+	ATI Internal Memory Largest Block: status=0, pixel_format=2, size=6640, size=6 KiB, align=16
+	ATI External Memory Largest Block: status=2, pixel_format=2, size=0, size=0 KiB, align=16
+	ATI System Memory Largest Block: status=2, pixel_format=2, size=0, size=0 KiB, align=16
+Free: ATI Bitmap memory.
+Free: ATI Driver Info memory.
+EP2> unloadElf: enter, addr=0x1249ED61
+EP2> freeElf: free elf=0x1249A6A4

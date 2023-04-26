@@ -1,0 +1,187 @@
+EP2> ActionFastRunElf: long FAST_ACCESS key pressed, fastrun elf
+EP2> loadElf: enter, uri = 'file://c/Elf2/MotoCMD2/MotoCMD2.elf', stack=3ffd24c
+EP2> prepareElf: enter, 0x3ffd224
+EP2> readElf: enter, 0x3ffd1f8
+EP2> checkElf: e_flags=5000002, eabi=5000000
+EP2> readElf: alloc physBase=0x1249a6a4
+EP2> readElf: alloc dynSegment=0x12445ea4
+EP2> readElf: exit, 0x0
+EP2> prepareDynSegment: enter, 0x3ffd208
+EP2> prepareDynSegment: exit, 0x0
+EP2> relocatePLT: enter, 0x3ffd1f4
+EP2> relocatePLT: exit, 0x0
+EP2> relocateDyn: enter, 0x3ffd20c
+EP2> relocateDyn: exit, 0x0
+EP2> prepareElf: exit, 0x0
+EP2> registerElf: enter, 0x3ffd228
+EP2> registerElf: starting ELF at 0x1249D811
+EP2> registerElf: ELF returned with 0x124A0CB0
+EP2> registerElf: exit, 0x0
+EP2> loadElf: exit, 0x0
+EP2> clearElf: free dynSegment=0x12445EA4
+EP2> ldrLoadElf: status = 0
+EP2> loadElf: enter, uri = 'file://c/Elf/Ugh/telf3.elf', stack=3ffd154
+EP2> prepareElf: enter, 0x3ffd12c
+EP2> readElf: enter, 0x3ffd100
+EP2> checkElf: e_flags=5000002, eabi=5000000
+EP2> readElf: alloc physBase=0x124877e8
+EP2> readElf: alloc dynSegment=0x1247520c
+EP2> readElf: exit, 0x0
+EP2> prepareDynSegment: enter, 0x3ffd110
+EP2> prepareDynSegment: exit, 0x0
+EP2> relocatePLT: enter, 0x3ffd0fc
+EP2> relocatePLT: exit, 0x0
+EP2> relocateDyn: enter, 0x3ffd114
+EP2> relocateDyn: exit, 0x0
+EP2> prepareElf: exit, 0x0
+EP2> registerElf: enter, 0x3ffd130
+EP2> registerElf: starting ELF at 0x124877E9
+EP2> registerElf: ELF returned with 0x12492E60
+EP2> registerElf: exit, 0x0
+EP2> loadElf: exit, 0x0
+EP2> clearElf: free dynSegment=0x1247520C
+EP2> ldrLoadElf: status = 0
+EP2> unloadElf: enter, addr=0x1249D3CD
+EP2> freeElf: free elf=0x1249A6A4
+HandleUITokenGranted!
+HandleUITokenGranted: our
+MainStateEnter type = 0
+MainStateEnter type = 1
+Initial keystate: 0x0
+gCtx = 0x12714924
+Trying to detect memory configuration...
+Initial intmem free: 6640
+Initial extmem free: 0
+DAL Cache size: 120 x 64
+DAL Cached surface: 0x1270ECEC
+DAL_GetDrawingSurface returned: 0x1270EC3C
+Current display surface: 0x1270EBE4
+Found the surfs block at offset 0x40
+Found the cache block at offset 0x4C
+Delta is 0xC
+DAL Class dump start
+ 0x00: 1053FB00
+ 0x04: 02000000
+ 0x08: 123CD0BC
+ 0x0C: 22220000
+ 0x10: 00000000
+ 0x14: 00000002
+ 0x18: 00030000
+ 0x1C: 00000000
+ 0x20: 00000000
+ 0x24: 01000100
+ 0x28: 00000000
+ 0x2C: 00000000
+ 0x30: 01000000
+ 0x34: 12714334
+ 0x38: 127144B0
+ 0x3C: 1270EB8C
+ 0x40: 1270EBE4
+ 0x44: 1270EC3C
+ 0x48: 00000000
+ 0x4C: 1270EC94
+ 0x50: 00000078
+ 0x54: 00000040
+ 0x58: 1270ECEC
+ 0x5C: 00000078
+ 0x60: 00000040
+ 0x64: 00000000
+ 0x68: 000005D1
+ 0x6C: 00000000
+ 0x70: 00000821
+ 0x74: 00000003
+ 0x78: 00000000
+ 0x7C: 005E00AF
+ 0x80: 007D01A0
+ 0x84: 00000000
+ 0x88: 00000000
+ 0x8C: 00000101
+ 0x90: 01010100
+ 0x94: 00000000
+ 0x98: 00000000
+ 0x9C: 00000000
+ 0xA0: 00000000
+ 0xA4: 00000000
+ 0xA8: 00000000
+ 0xAC: 00000000
+ 0xB0: 00000000
+ 0xB4: 00000000
+ 0xB8: 00000000
+ 0xBC: 00000000
+ 0xC0: 00000000
+ 0xC4: 00000000
+ 0xC8: 00000000
+ 0xCC: 00000000
+ 0xD0: 00000000
+ 0xD4: 00000000
+ 0xD8: 00000000
+ 0xDC: 00000000
+ 0xE0: 00000000
+ 0xE4: 00000000
+ 0xE8: 00000000
+ 0xEC: 00000000
+ 0xF0: 00000000
+ 0xF4: 00000000
+ 0xF8: 00000000
+ 0xFC: 00000000
+DAL Class dump end
+The configuration requires surfaces reallocation
+Cache will be cleared
+Deallocating DAL cache
+Free wo/cache:
+VMEM I 22000 E 0
+Switching to display mode 1
+DAL context: 0x12714334
+ATI_Driver_Set_Display_Mode:
+	Class_dal=0x00000010 0x1232D714 0x1241C214
+	ptr_dal=0x1053FB00 0x00000000 0x1241C214
+	ptr_dal_disp_surface=0x1241C254
+	ptr_dal_draw_surface=0x1241C258
+	surface_block_offset (hex)=0x00000040
+	surface_block_offset (dec)=64
+
+OOOOOOOOOOOFSET: 64 1241c254 1241c258
+
+SURFACES: 0x00000000 0x00000000
+
+Empty mode:
+VMEM I 176880 E 0
+gDispSurf = 0x1270EBE4, status = 0
+gDrawSurf = 0x1270EC3C, status = 0
+Landscape mode:
+VMEM I 19184 E 0
+=> EXL: 0
+
+ATI Display Mode: size=176x220, pixel_format=5, frequency=60, rotation=1, mirror=0
+
+Done switching to display mode 1
+Image loaded: 1914x11, 42108 B
+Image loaded: 72x9, 1296 B
+VMEM I 18896 E 0
+Image loaded: 125x56, 14000 B
+VMEM I 18896 E 0
+VMEM I 15024 E 0
+Switching to display mode 0
+DAL context: 0x12714334
+gDispSurf = 0x1270EBE4, gDrawSurf = 0x1270EC3C
+Empty mode:
+VMEM I 176880 E 0
+gDispSurf = 0x1270EBE4, status = 0
+gDrawSurf = 0x1270EC3C, status = 0
+Portrait mode:
+VMEM I 22000 E 0
+=> EXL: 0
+
+ATI Display Mode: size=176x220, pixel_format=5, frequency=60, rotation=0, mirror=0
+
+Done switching to display mode 0
+VRAM free in reset mode: 22000
+mainTaskTerminate
+appTerminate!
+mainTaskTerminate: release!
+EP2> cprint: str = 'Dummy: Exit
+'
+MainStateExit type = 0
+EP2> unloadElf: enter, addr=0x12487981
+EP2> freeElf: free elf=0x124877E8
+DATAFLOW ERROR: 20, 64

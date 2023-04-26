@@ -1,0 +1,237 @@
+AMS: AMS_STATE_CHANGED_TR, 1
+AMS: AMS_STATE_CHANGED_TR, 2
+SJAL : Timer expired.
+AMS: AMS_INVNET_READY
+AMS: AMS_STATE_CHANGED_TR, 5
+JSA: JsaSuitesList_AgentEnter: suites_list_size=9 sortType=0 haveExtStorage=0 currentStorage=0x10235df0
+JSA: DL_DbInetGetAllAppRecords unsuccess: res=  0, count = 0
+JSA: DL_DbInetGetAllAppRecords success: count=0
+AMS_RunApplication
+cmd_StartUserVM()
+AMS: AMS_HEAP_CAPTURED_TR
+Checking validity...
+SECMGR_verifyJADSecurity
+SECMGR_verifyJADSecurity: duration = 1, allocated memory = 0
+SECMGR_verifyMidletSecurity: suiteId = 262400, suiteToUpdateId = 0
+memSize = 49152
+SJ_IsCoreletDI: Synerj signature not found into the JAD file
+SECMGR_verifyMidletSecurity: Untrusted domain
+SM_getDomainPermissions: Domain name: Untrusted_Domain
+SM_getDomainPermissionGroup: Domain name: Untrusted_Domain, Requested group: 3
+SM_getDomainPermissionGroup: Search in hardcoded untrusted domain...
+SM_getDomainPermissionGroup: Domain name: Untrusted_Domain, Requested group: 3
+SM_getDomainPermissionGroup: Search in hardcoded untrusted domain...
+SM_getDomainPermissionGroup: Domain name: Untrusted_Domain, Requested group: 4
+SM_getDomainPermissionGroup: Search in hardcoded untrusted domain...
+SM_getDomainPermissionGroup: Domain name: Untrusted_Domain, Requested group: 4
+SM_getDomainPermissionGroup: Search in hardcoded untrusted domain...
+SM_getDomainPermissionGroup: Domain name: Untrusted_Domain, Requested group: 4
+SM_getDomainPermissionGroup: Search in hardcoded untrusted domain...
+SM_getDomainPermissionGroup: Domain name: Untrusted_Domain, Requested group: 4
+SM_getDomainPermissionGroup: Search in hardcoded untrusted domain...
+SM_getDomainPermissionGroup: Domain name: Untrusted_Domain, Requested group: 4
+SM_getDomainPermissionGroup: Search in hardcoded untrusted domain...
+SM_getDomainPermissionGroup: Domain name: Untrusted_Domain, Requested group: 5
+SM_getDomainPermissionGroup: Search in hardcoded untrusted domain...
+SM_getDomainPermissionGroup: Domain name: Untrusted_Domain, Requested group: 3
+SM_getDomainPermissionGroup: Search in hardcoded untrusted domain...
+SM_getDomainPermissionGroup: Domain name: Untrusted_Domain, Requested group: 3
+SM_getDomainPermissionGroup: Search in hardcoded untrusted domain...
+SM_getDomainPermissionGroup: Domain name: Untrusted_Domain, Requested group: 3
+SM_getDomainPermissionGroup: Search in hardcoded untrusted domain...
+SM_getDomainPermissionGroup: Domain name: Untrusted_Domain, Requested group: 3
+SM_getDomainPermissionGroup: Search in hardcoded untrusted domain...
+SM_getDomainPermissionGroup: Domain name: Untrusted_Domain, Requested group: 3
+SM_getDomainPermissionGroup: Search in hardcoded untrusted domain...
+SM_getDomainPermissionGroup: Domain name: Untrusted_Domain, Requested group: 6
+SM_getDomainPermissionGroup: Search in hardcoded untrusted domain...
+SM_getDomainPermissionGroup: Domain name: Untrusted_Domain, Requested group: 7
+SM_getDomainPermissionGroup: Search in hardcoded untrusted domain...
+SM_getDomainPermissionGroup: Domain name: Untrusted_Domain, Requested group: 7
+SM_getDomainPermissionGroup: Search in hardcoded untrusted domain...
+SM_getDomainPermissionGroup: Domain name: Untrusted_Domain, Requested group: 6
+SM_getDomainPermissionGroup: Search in hardcoded untrusted domain...
+SM_getDomainPermissionGroup: Domain name: Untrusted_Domain, Requested group: 6
+SM_getDomainPermissionGroup: Search in hardcoded untrusted domain...
+SM_getDomainPermissionGroup: Domain name: Untrusted_Domain, Requested group: 6
+SM_getDomainPermissionGroup: Search in hardcoded untrusted domain...
+SM_getDomainPermissionGroup: Domain name: Untrusted_Domain, Requested group: 6
+SM_getDomainPermissionGroup: Search in hardcoded untrusted domain...
+SM_getDomainPermissionGroup: Domain name: Untrusted_Domain, Requested group: 6
+SM_getDomainPermissionGroup: Search in hardcoded untrusted domain...
+SM_getDomainPermissionGroup: Domain name: Untrusted_Domain, Requested group: 4
+SM_getDomainPermissionGroup: Search in hardcoded untrusted domain...
+SM_getDomainPermissionGroup: Domain name: Untrusted_Domain, Requested group: 4
+SM_getDomainPermissionGroup: Search in hardcoded untrusted domain...
+SM_getDomainPermissionGroup: Domain name: Untrusted_Domain, Requested group: 4
+SM_getDomainPermissionGroup: Search in hardcoded untrusted domain...
+SECMGR_verifyMidletSecurity: duration = 410, allocated memory = 5920
+SM_ReadPermissionAccessTable: retVal = 0
+
+SECURITY_MANAGER FINAL CODE: 0. DATE: 04-03-2023  01:25:03 (6191)
+
+THE FOLLOWING FEATURES ARE ACTIVE IN THIS BUILD: JSR120 JSR205 JSR82 JSR179
+
+SECMGR_checkCertValidity: duration = 551, allocated memory = 224 
+Starting java app...
+==>>KDWP_GetKdwpOption(): s_kdwpOption = 0x1
+[VMproxyStart] proxyId: 0xffffffff
+VB: VMproxyDisableIM()
+[VMproxyGainFocus]: proxyId = 0xffffffff
+AMS: VM_START_APPLICATION_TR
+AMS: AMS_STATE_CHANGED_TR, 0
+AMS: VM_APPLICATION_STATE_CHANGED, 25
+VB: Backlight in JavaSettings is ON.
+VB: Duration will be not limited.
+VB: Vibration is enabled.
+[VBLT_Init] s_isBkltOn: 1, s_bkltDuration: 0
+[VBLT_Init] s_vibeEnabled: 1
+[BKLT_Restore] s_isBkltOn: 1, s_bkltDuration: 0
+[VBLT_SetBacklightFor] turn_on: 1, duration: 0
+VB: VMproxyBkltTurnOn()
+PUSHREGISTRY: PR_MIDletStarted. midlet_id = 262401
+PUSHREGISTRY: pr_ResheduleTimers. Nearest alarm index = -1
+AMS: VM_CALL_VM
+jbVmVmStartMIDP(vmId=1,heapSize=1423920,heapAddr=0x12035180)
+
+jbVmVmInitialize(vmId=1,heapSize=1423920,heapAddr=0x12035180
+
+section bss  address: 3fdb850 size 4052
+
+section data address: 3fdb84c size 4
+
+section bss  address: 126e5a3c size 58564
+
+section data address: 126cff8c size 88752
+
+section size data 88756 bss 62616
+
+section save size data 29662 bss 62616
+
+all class blocks      1169
+
+instance class blocks 1134
+
+array class blocks    35
+
+sizoef class blocks   69440
+
+newHeapAddr=0x1204ba50, newHeapSize=1331552
+
+JBlend[micro] Copyright 2000-2004 Aplix Corporation. All rights reserved.
+
+ build date : 2006-08-31_11:55
+
+VM variable initialization.
+
+  type: 1
+
+  bssAddress: 0x03fdb850 bssSize: 0xfd4
+
+  dataAddress: 0x03fdb84c dataSize: 0x4
+
+  initDataAddress: 0x10ceda50
+
+ -jam  address     0x126e5a54 : 0x126e5a78
+
+  type: 2
+
+  bssAddress: 0x126e5a3c bssSize: 0xe4c4
+
+  dataAddress: 0x126cff8c dataSize: 0x15ab0
+
+  initDataAddress: 0x10cd0098
+
+ -jam  address     0x126e5a54 : 0x126e5a78
+
+              126e5a3c : 126e5a54
+
+              126e5a78 : 126f3f00
+
+===> jbVmStartMIDP
+
+vmId:1
+
+heapAddr:0x1204ba50
+
+heapSize:1331552
+
+EventHandler:1027ab11
+
+vmParamCount:0
+
+vmParams:0x0
+
+vmParamLens:0x0
+
+===> JKT_MIDP_Application
+
+jarAddr:0x0
+
+jarSize:112774
+
+jarRead:0x1027b615
+
+className:303734581
+
+classNameLen:6
+
+jadAddr:0x0
+
+AMSSERV : WARNING in AmsServPreprocessRegister : the handler(0x1029F4E5) for such event 532605 is already registered .
+jadSize:311
+
+AMSSERV : WARNING in AmsServPreprocessRegister : the handler(0x102A6785) for such event 1928 is already registered .
+jadRead:0x1027b5f9
+
+trusted:0
+
+ExtLib: disable
+
+VM heap 0x1204ba58 0x145158
+
+ROMIZE byteCode Size ROM:367744 RAM:49
+
+GCF Extension: Scheme:datagram
+
+GCF Extension: Scheme:socket
+
+GCF Extension: Scheme:ssl
+
+GCF Extension: Scheme:file
+
+GCF Extension: Scheme:comm
+
+GCF Extension: Scheme:wappush
+
+GCF Extension: Scheme:drm
+
+----- JB_VMEVENT_VM_STARTED callback begin.
+
+AMS: VM_APPLICATION_STATE_CHANGED, 1
+[ProxyMan]AcquireMutex mutex created
+----- JB_VMEVENT_VM_STARTED callback end.
+
+----- VM JK_VMEVENT_VMPAINTREADY callback begin.
+
+AMS: VM_APPLICATION_STATE_CHANGED, 10
+----- VM JK_VMEVENT_VMPAINTREADY callback end.
+
+Can't open image 'thornado' !
+
+Can't open image 'firefly' !
+
+Can't open image 'juggernaut' !
+
+Can't open image '' !
+
+Can't open image 'logo' !
+
+Rebels@d590dbc 100
+
+----- APP JK_VMEVENT_APPSTARTED callback begin.
+
+AMS: VM_APPLICATION_STATE_CHANGED, 20
+AMS: User App started handle
+----- APP JK_VMEVENT_APPSTARTED callback end.
+
