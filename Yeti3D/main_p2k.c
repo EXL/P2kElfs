@@ -425,6 +425,10 @@ static UINT32 ProcessKeyboard(EVENT_STACK_T *ev_st, APPLICATION_T *app, UINT32 k
 		case KK_DOWN:
 			g_keyboard[E_KEY_DOWN] = pressed;
 			break;
+		case MULTIKEY_STAR:
+			break;
+		case MULTIKEY_POUND:
+			break;
 		case MULTIKEY_SOFT_RIGHT:
 			break;
 		default:
@@ -496,7 +500,7 @@ static void FPS_Meter(void) {
 #if defined(NO_STRETCH)
 extern UINT8 *Class_dal;
 
-#define GFX_DAL_SEARCH_REGION (0x100)
+#define GFX_DAL_SEARCH_REGION (0x1000000)
 
 #if defined(EP2)
 #define AmMemAllocPointer(x) suAllocMem(x, NULL)
@@ -515,6 +519,8 @@ static UINT32 ATI_Driver_Set_Display_Mode(APPLICATION_T *app, AHIROTATE_T mode) 
 	AHIDISPMODE_T display_mode;
 	UINT32 surface_block_offset;
 
+	UINT32 start_addr = 0x12300000;
+
 	status = RESULT_OK;
 	appi = (APP_INSTANCE_T *) app;
 	surface_block_offset = 0;
@@ -528,7 +534,9 @@ static UINT32 ATI_Driver_Set_Display_Mode(APPLICATION_T *app, AHIROTATE_T mode) 
 	size_portrait.x = display_mode.size.x;
 	size_portrait.y = display_mode.size.y;
 
-	ptr_dal = (UINT32 *) (Class_dal);
+	ptr_dal = (UINT32 *) (start_addr);
+//	ptr_dal = (UINT32 *) (Class_dal);
+//	ptr_dal = (UINT32 *) (display_source_buffer - 0x08);
 	while (surface_block_offset < GFX_DAL_SEARCH_REGION) {
 		/*
 		 * Find the block of:
@@ -552,10 +560,10 @@ static UINT32 ATI_Driver_Set_Display_Mode(APPLICATION_T *app, AHIROTATE_T mode) 
 		surface_block_offset = 0;
 	}
 
-	ptr_dal_disp_surface = (UINT32 *) (Class_dal + surface_block_offset + 0x00);
-	ptr_dal_draw_surface = (UINT32 *) (Class_dal + surface_block_offset + 0x04);
+	ptr_dal_disp_surface = (UINT32 *) (start_addr + surface_block_offset + 0x00);
+	ptr_dal_draw_surface = (UINT32 *) (start_addr + surface_block_offset + 0x04);
 
-	LOG("ATI_Driver_Set_Display_Mode:\n\t"
+	LOG("ATI Display Mode Dumps 1:\n\t"
 		"Class_dal=0x%08X 0x%08X 0x%08X\n\t"
 		"ptr_dal=0x%08X 0x%08X 0x%08X\n\t"
 		"ptr_dal_disp_surface=0x%08X\n\t"
@@ -565,7 +573,15 @@ static UINT32 ATI_Driver_Set_Display_Mode(APPLICATION_T *app, AHIROTATE_T mode) 
 		*Class_dal, &Class_dal, Class_dal, *ptr_dal, &ptr_dal, ptr_dal,
 		ptr_dal_disp_surface, ptr_dal_draw_surface, surface_block_offset, surface_block_offset);
 
-	if (mode == AHIROT_90) {
+	LOG("ATI Display Mode Dumps 2:\n\t"
+		"display_source_buffer=0x%08X 0x%08X\n\t"
+		"appi->ahi.screen=0x%08X 0x%08X\n\t"
+		"appi->ahi.draw=0x%08X 0x%08X\n",
+		display_source_buffer, &display_source_buffer,
+		(UINT32) (appi->ahi.screen), &appi->ahi.screen,
+		(UINT32) (appi->ahi.draw), &appi->ahi.draw);
+
+	if (mode == AHIROT_90 || mode == AHIROT_270) {
 		status |= AhiSurfFree(device_context, (AHISURFACE_T) (*ptr_dal_disp_surface));
 		status |= AhiSurfFree(device_context, (AHISURFACE_T) (*ptr_dal_draw_surface));
 
@@ -649,11 +665,21 @@ static UINT32 ATI_Driver_Start(APPLICATION_T *app) {
 		return RESULT_FAIL;
 	}
 
+	status |= AhiDispModeGet(appi->ahi.context, &display_mode);
+
 	status |= AhiDispSurfGet(appi->ahi.context, &appi->ahi.screen);
 	appi->ahi.draw = DAL_GetDrawingSurface(DISPLAY_MAIN);
 
+	/*
+	 * Motorola ROKR E1: 176x220
+	 * Motorola SLVR L6: 128x160
+	 */
+	appi->is_CSTN_display =
+			(display_mode.size.x < DISPLAY_WIDTH) ||
+			(display_mode.size.y < DISPLAY_HEIGHT);
+
 #if defined(NO_STRETCH)
-	status |= ATI_Driver_Set_Display_Mode(app, AHIROT_90);
+	status |= ATI_Driver_Set_Display_Mode(app, (appi->is_CSTN_display) ? AHIROT_270 : AHIROT_90);
 #endif
 
 	status |= AhiDrawClipDstSet(appi->ahi.context, NULL);
@@ -713,11 +739,10 @@ static UINT32 ATI_Driver_Start(APPLICATION_T *app) {
 	appi->ahi.update_params.sync = FALSE;
 	appi->ahi.update_params.rect.x1 = 0;
 	appi->ahi.update_params.rect.y1 = 0;
-	appi->ahi.update_params.rect.x2 = 0 + appi->width;
-	appi->ahi.update_params.rect.y2 = 0 + appi->height;
+	appi->ahi.update_params.rect.x2 = 0 + display_mode.size.x;
+	appi->ahi.update_params.rect.y2 = 0 + display_mode.size.y;
 	appi->ahi.point_bitmap.x = 0;
 	appi->ahi.point_bitmap.y = 0;
-	appi->is_CSTN_display = (appi->width < DISPLAY_WIDTH) || (appi->height < DISPLAY_HEIGHT); /* Motorola L6 */
 
 	appi->ahi.bitmap.width = appi->bmp_width;
 	appi->ahi.bitmap.height = appi->bmp_height;
@@ -765,7 +790,7 @@ static UINT32 ATI_Driver_Stop(APPLICATION_T *app) {
 	app_instance = (APP_INSTANCE_T *) app;
 
 #if defined(NO_STRETCH)
-	status |= ATI_Driver_Set_Display_Mode(app, AHIROT_0);
+	status |= ATI_Driver_Set_Display_Mode(app, (app_instance->is_CSTN_display) ? AHIROT_180 : AHIROT_0);
 #endif
 
 	if (app_instance->p_bitmap) {
