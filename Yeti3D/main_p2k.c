@@ -578,7 +578,7 @@ static UINT32 ATI_Driver_Log_Memory(APPLICATION_T *app, AHIPIXFMT_T pixel_format
 	return status[INTERNAL_MEMORY] && status[EXTERNAL_MEMORY] && status[SYSTEM_MEMORY];
 }
 
-#define NO_STRETCH
+//#define NO_STRETCH
 #if defined(NO_STRETCH)
 static UINT32 Find_Surface_Addresses_In_RAM(APPLICATION_T *app, UINT32 start_address, UINT32 size_search_region) {
 	APP_INSTANCE_T *appi;
