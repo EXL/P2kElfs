@@ -6,13 +6,15 @@
  *   Derek J. Evans, EXL
  *
  * License:
- *   MIT
+ *   GPLv2
  *
  * Additional information:
- *   https://www.gbadev.org/demos.php?showinfo=568
+ *   https://web.archive.org/web/20031204145215/http://www.theteahouse.com.au:80/gba/index.html
+ *   https://sourceforge.net/projects/yeti3dpro/
+ *   https://forum.motofan.ru/index.php?s=&showtopic=170514&view=findpost&p=1459600
  *
  * Application type:
- *   GUI + ATI
+ *   GUI + ATI + Java Heap + Videomode
  */
 
 #include "yeti.h"

@@ -18,18 +18,27 @@ Port of the "Yeti3D Old" 3D engine demo by **Derek J. Evans** from [Nintendo Gam
 
 ## Screen resolutions and viewports
 
-| Phone   | Screen  | Flags | Viewport | FPS      | ELF filename           |
-| ---     | ---     | ---   | ---      | ---      |---                     |
-| SLVR L6 | 128x160 | ROT0  | 160x128  | Very Low | Yeti3D_EN1_176x220.elf |
-| SLVR L6 | 128x160 | ROT90 | 122x82   | Very Low | Yeti3D_ES1_122x82.elf  |
-| SLVR L6 | 128x160 | ROT90 | 96x64    | Low      | Yeti3D_ES1_96x64.elf   |
-| SLVR L6 | 128x160 | ROT90 | 72x48    | Normal   | Yeti3D_ES1_72x48.elf   |
-| ROKR E1 | 176x220 | ROT0  | 220x176  | Very Low | Yeti3D_EN1_128x160.elf |
-| ROKR E1 | 176x220 | ROT90 | 122x82   | Low      | Yeti3D_ES1_122x82.elf  |
-| ROKR E1 | 176x220 | ROT90 | 96x64    | Normal   | Yeti3D_ES1_96x64.elf   |
-| ROKR E1 | 176x220 | ROT90 | 72x48    | Normal   | Yeti3D_ES1_72x48.elf   |
+| Phone   | Screen  | Flags | Viewport           | FPS  | ELF filename        |
+| ---     | ---     | ---   | ---                | ---  |---                  |
+| SLVR L6 | 128x160 | ROT0  | 160x128 (original) | 0.0  | Y3DO_O1_128x160.elf |
+| SLVR L6 | 128x160 | ROT90 | 122x82 (zoom)      | 0.0  | Y3DO_Z1_122x82.elf  |
+| SLVR L6 | 128x160 | ROT90 | 96x64 (zoom)       | 0.0  | Y3DO_Z1_96x64.elf   |
+| SLVR L6 | 128x160 | ROT90 | 72x48 (zoom)       | 0.0  | Y3DO_Z1_72x48.elf   |
+| ROKR E1 | 176x220 | ROT0  | 220x176 (original) | 0.0  | Y3DO_O1_176x220.elf |
+| ROKR E1 | 176x220 | ROT90 | 122x82 (zoom)      | 0.0  | Y3DO_Z1_122x82.elf  |
+| ROKR E1 | 176x220 | ROT90 | 96x64 (zoom)       | 0.0  | Y3DO_Z1_96x64.elf   |
+| ROKR E1 | 176x220 | ROT90 | 72x48 (zoom)       | 0.0  | Y3DO_Z1_72x48.elf   |
 
-Summary: 5 ELFs + EP2 ELFs = 10 ELFs.
+### Legend
+
+* O (1st) - Original screens resolution without any transformations.
+* Z (1st) - ATI hardware rootation or zoom surface e.g. 122x82 => 176x220, 96x64 => 128x160, etc.
+* 1 (3rd) - Elf for ElfPack 1.0, tested with.
+* 2 (3rd) - Elf for ElfPack 2.0, tested with.
+
+### Summary
+
+* 5 ELFs + ElfPack 2.0 ELFs = 10 ELFs.
 
 ## Additional information
 
