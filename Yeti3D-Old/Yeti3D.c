@@ -6,7 +6,7 @@
  *   Derek J. Evans, EXL
  *
  * License:
- *   MIT
+ *   GPLv2
  *
  * Additional information:
  *   https://www.gbadev.org/demos.php?showinfo=568
