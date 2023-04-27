@@ -24,14 +24,14 @@ set DEFINES=-D__P2K__ -DEP1 -DROT_0 -DFPS_30
 set ELF_NAME=Yeti3D
 
 :: Compiling step.
-%ARM_PATH%\armcc -I%SDK_PATH% %DEFINES% -bigend -apcs /interwork -O2 -c draw.c -o draw.o
-%ARM_PATH%\armcc -I%SDK_PATH% %DEFINES% -bigend -apcs /interwork -O2 -c game.c -o game.o
-%ARM_PATH%\armcc -I%SDK_PATH% %DEFINES% -bigend -apcs /interwork -O2 -c yeti.c -o yeti.o
-%ARM_PATH%\armcc -I%SDK_PATH% %DEFINES% -bigend -apcs /interwork -O2 -c main_p2k.c -o main_p2k.o
+%ARM_PATH%\tcc -I%SDK_PATH% %DEFINES% -bigend -apcs /interwork -O2 -c draw.c -o draw.o
+%ARM_PATH%\tcc -I%SDK_PATH% %DEFINES% -bigend -apcs /interwork -O2 -c game.c -o game.o
+%ARM_PATH%\tcc -I%SDK_PATH% %DEFINES% -bigend -apcs /interwork -O2 -c yeti.c -o yeti.o
+%ARM_PATH%\tcc -I%SDK_PATH% %DEFINES% -bigend -apcs /interwork -O2 -c main_p2k.c -o main_p2k.o
 
 :: Linking step.
 %ARM_PATH%\armlink -nolocals -reloc -first %LIB_MAIN%(Lib) draw.o game.o yeti.o main_p2k.o ^
-	%LIB_PATH%\%LIB_MAIN% -o %ELF_NAME%.elf
+	%LIB_PATH%\%LIB_MAIN% %LIB_PATH%\armlib\armlib.o -o %ELF_NAME%.elf
 
 if /I "%1"=="clean" (
 	del *.o
