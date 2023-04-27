@@ -19,7 +19,7 @@ Port of the "Perlin" plasma and fire demo by [@BOOtak](https://github.com/BOOtak
 
 ## ELF files
 
-* Perlin_EP1.elf (ELF for ElfPack 1.0)
+* Perlin.elf (ELF for ElfPack 1.0)
 * Perlin_EP2.elf (ELF for ElfPack 2.0)
 
 ## Additional information

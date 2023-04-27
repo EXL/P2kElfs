@@ -17,8 +17,8 @@ Port of the Doom PSX fire effect demo splash screen to the Motorola P2K phones p
 
 ## ELF files
 
-* Fire_Effect_EP1.elf (ELF for ElfPack 1.0)
-* Fire_Effect_EP2.elf (ELF for ElfPack 2.0)
+* FireEffect.elf (ELF for ElfPack 1.0)
+* FireEffect_EP2.elf (ELF for ElfPack 2.0)
 
 ## Additional information
 

@@ -31,7 +31,7 @@ Port of the heavy optimized "Yeti3D" 3D engine demo by **Derek J. Evans** from [
 | SLVR L6 | 128x160 | ROT90 | 96x64 (rotozoom)    | No        | 0.0  | Y3D_RN1_96x64.elf   |
 | SLVR L6 | 128x160 | ROT90 | 96x64 (rotozoom)    | Yes       | 0.0  | Y3D_RO1_96x64.elf   |
 | ROKR E1 | 176x220 | ROT0  | 220x176 (videomode) | No        | 0.0  | Y3D_VN1_176x220.elf |
-| ROKR E1 | 176x220 | ROT0  | 220x176 (videomode) | Yes       | 0.0  | Y3D_VN1_176x220.elf |
+| ROKR E1 | 176x220 | ROT0  | 220x176 (videomode) | Yes       | 0.0  | Y3D_VO1_176x220.elf |
 | ROKR E1 | 176x220 | ROT90 | 120x80 (rotozoom)   | No        | 0.0  | Y3D_RN1_120x80.elf  |
 | ROKR E1 | 176x220 | ROT90 | 120x80 (rotozoom)   | Yes       | 0.0  | Y3D_RO1_120x80.elf  |
 | ROKR E1 | 176x220 | ROT90 | 96x64 (rotozoom)    | No        | 0.0  | Y3D_RN1_96x64.elf   |
@@ -48,7 +48,7 @@ Port of the heavy optimized "Yeti3D" 3D engine demo by **Derek J. Evans** from [
 
 ### Summary
 
-* 6 ELFs + ElfPack 2.0 ELFs = 12 ELFs.
+* 8 ELFs + ElfPack 2.0 ELFs = 16 ELFs.
 * TODO: Task main loop ELFs?
 
 ## Additional information
