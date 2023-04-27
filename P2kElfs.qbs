@@ -7,6 +7,7 @@ Project {
 		"Screenshot/Screenshot.qbs",
 		"Spout/Spout.qbs",
 		"VibroHaptic/VibroHaptic.qbs",
-		"Yeti3D/old/Yeti3D_OLD.qbs"
+		"Yeti3D-Old/Yeti3D-Old.qbs",
+		"Yeti3D/Yeti3D.qbs"
 	]
 }
