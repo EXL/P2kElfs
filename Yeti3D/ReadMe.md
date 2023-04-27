@@ -20,7 +20,7 @@ Port of the heavy optimized "Yeti3D" 3D engine demo by **Derek J. Evans** from [
 * Center, 5 - Fire (not available in optimized version).
 * Left Soft Key, End Key, 0 - Quit.
 
-## Screen resolutions and viewports
+## ELF files
 
 | Phone   | Screen  | Flags | Viewport            | Optimized | FPS  | ELF filename        |
 | ---     | ---     | ---   | ---                 | ---       | ---  |---                  |
@@ -32,10 +32,10 @@ Port of the heavy optimized "Yeti3D" 3D engine demo by **Derek J. Evans** from [
 | SLVR L6 | 128x160 | ROT90 | 96x64 (rotozoom)    | Yes       | 0.0  | Y3D_RO1_96x64.elf   |
 | ROKR E1 | 176x220 | ROT0  | 220x176 (videomode) | No        | 0.0  | Y3D_VN1_176x220.elf |
 | ROKR E1 | 176x220 | ROT0  | 220x176 (videomode) | Yes       | 0.0  | Y3D_VN1_176x220.elf |
-| ROKR E1 | 128x160 | ROT90 | 120x80 (rotozoom)   | No        | 0.0  | Y3D_RN1_120x80.elf  |
-| ROKR E1 | 128x160 | ROT90 | 120x80 (rotozoom)   | Yes       | 0.0  | Y3D_RO1_120x80.elf  |
-| ROKR E1 | 128x160 | ROT90 | 96x64 (rotozoom)    | No        | 0.0  | Y3D_RN1_96x64.elf   |
-| ROKR E1 | 128x160 | ROT90 | 96x64 (rotozoom)    | Yes       | 0.0  | Y3D_RO1_96x64.elf   |
+| ROKR E1 | 176x220 | ROT90 | 120x80 (rotozoom)   | No        | 0.0  | Y3D_RN1_120x80.elf  |
+| ROKR E1 | 176x220 | ROT90 | 120x80 (rotozoom)   | Yes       | 0.0  | Y3D_RO1_120x80.elf  |
+| ROKR E1 | 176x220 | ROT90 | 96x64 (rotozoom)    | No        | 0.0  | Y3D_RN1_96x64.elf   |
+| ROKR E1 | 176x220 | ROT90 | 96x64 (rotozoom)    | Yes       | 0.0  | Y3D_RO1_96x64.elf   |
 
 ### Legend
 

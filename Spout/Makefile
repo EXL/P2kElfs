@@ -31,7 +31,7 @@ rot90_fps30:
 	$(ARM_PATH)/bin/armlink -nolocals -reloc -first $(LIB_MAIN)\(Lib\) $(ELF_NAME).o $(PCS_NAME).o \
 		$(LIB_PATH)/$(LIB_MAIN) -o $(ELF_NAME).elf
 	-rm -f *.o
-	-mv $(ELF_NAME).elf $(ELF_NAME)_EP1_D90_F30.elf
+	-mv $(ELF_NAME).elf $(ELF_NAME)_RH1.elf
 
 rot90_fps15:
 	$(ARM_PATH)/bin/tcc -I$(SDK_PATH) $(DEFINES) -DROT_90 -DFPS_15 -bigend -apcs /interwork -O2 -c \
@@ -41,7 +41,7 @@ rot90_fps15:
 	$(ARM_PATH)/bin/armlink -nolocals -reloc -first $(LIB_MAIN)\(Lib\) $(ELF_NAME).o $(PCS_NAME).o \
 		$(LIB_PATH)/$(LIB_MAIN) -o $(ELF_NAME).elf
 	-rm -f *.o
-	-mv $(ELF_NAME).elf $(ELF_NAME)_EP1_D90_F15.elf
+	-mv $(ELF_NAME).elf $(ELF_NAME)_RL1.elf
 
 rot0_fps30:
 	$(ARM_PATH)/bin/tcc -I$(SDK_PATH) $(DEFINES) -DROT_0 -DFPS_30 -bigend -apcs /interwork -O2 -c \
@@ -51,7 +51,7 @@ rot0_fps30:
 	$(ARM_PATH)/bin/armlink -nolocals -reloc -first $(LIB_MAIN)\(Lib\) $(ELF_NAME).o $(PCS_NAME).o \
 		$(LIB_PATH)/$(LIB_MAIN) -o $(ELF_NAME).elf
 	-rm -f *.o
-	-mv $(ELF_NAME).elf $(ELF_NAME)_EP1_D0_F30.elf
+	-mv $(ELF_NAME).elf $(ELF_NAME)_OH1.elf
 
 rot0_fps15:
 	$(ARM_PATH)/bin/tcc -I$(SDK_PATH) $(DEFINES) -DROT_0 -DFPS_15 -bigend -apcs /interwork -O2 -c \
@@ -61,7 +61,7 @@ rot0_fps15:
 	$(ARM_PATH)/bin/armlink -nolocals -reloc -first $(LIB_MAIN)\(Lib\) $(ELF_NAME).o $(PCS_NAME).o \
 		$(LIB_PATH)/$(LIB_MAIN) -o $(ELF_NAME).elf
 	-rm -f *.o
-	-mv $(ELF_NAME).elf $(ELF_NAME)_EP1_D0_F15.elf
+	-mv $(ELF_NAME).elf $(ELF_NAME)_OL1.elf
 
 clean:
 	-rm -f *.o

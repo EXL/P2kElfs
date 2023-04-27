@@ -11,6 +11,10 @@ The "Screenshot" ELF daemon utility with GUI to fast take screenshots.
 
 ![Screenshot of Screenshot from Motorola E1](../images/Screenshot_Screenshot_E1_1.png)
 
+## ELF files
+
+* Screenshot.elf (ELF for ElfPack 1.0)
+
 ## Additional information
 
 The ELF-application has been tested on the following phones and firmware:

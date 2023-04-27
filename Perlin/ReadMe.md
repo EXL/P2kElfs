@@ -17,6 +17,11 @@ Port of the "Perlin" plasma and fire demo by [@BOOtak](https://github.com/BOOtak
 * 5 - Enable or disable fire demo (slow!).
 * Left Soft Key, End Key, 0 - Quit.
 
+## ELF files
+
+* Perlin_EP1.elf (ELF for ElfPack 1.0)
+* Perlin_EP2.elf (ELF for ElfPack 2.0)
+
 ## Additional information
 
 The ELF-application has been tested on the following phones and firmware:

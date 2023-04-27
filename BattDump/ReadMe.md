@@ -11,6 +11,10 @@ The "Batt Dump" ELF utility for dumping battery ROM by 1-Wire interface.
 
 ![Screenshot 1 of Batt Dump from Motorola E1](../images/Screenshot_BattDump_E1_1.png) ![Screenshot 2 of Batt Dump from Motorola E1](../images/Screenshot_BattDump_E1_2.png)
 
+## ELF files
+
+* BattDump.elf (ELF for ElfPack 1.0)
+
 ## Additional information
 
 The ELF-application has been tested on the following phones and firmware:

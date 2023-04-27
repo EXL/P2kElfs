@@ -34,7 +34,7 @@ set PCS_NAME=Piece
 	-o %ELF_NAME%.elf
 :: Renaming step.
 del *.o
-move /y %ELF_NAME%.elf %ELF_NAME%_EP1_R90_F30.elf
+move /y %ELF_NAME%.elf %ELF_NAME%_RH1.elf
 
 :: Compiling step.
 %ARM_PATH%\tcc -I%SDK_PATH% %DEFINES% -DROT_90 -DFPS_15 -bigend -apcs /interwork -O2 -c %ELF_NAME%.c ^
@@ -46,7 +46,7 @@ move /y %ELF_NAME%.elf %ELF_NAME%_EP1_R90_F30.elf
 	-o %ELF_NAME%.elf
 :: Renaming step.
 del *.o
-move /y %ELF_NAME%.elf %ELF_NAME%_EP1_R90_F15.elf
+move /y %ELF_NAME%.elf %ELF_NAME%_RL1.elf
 
 :: Compiling step.
 %ARM_PATH%\tcc -I%SDK_PATH% %DEFINES% -DROT_0 -DFPS_30 -bigend -apcs /interwork -O2 -c %ELF_NAME%.c ^
@@ -58,7 +58,7 @@ move /y %ELF_NAME%.elf %ELF_NAME%_EP1_R90_F15.elf
 	-o %ELF_NAME%.elf
 :: Renaming step.
 del *.o
-move /y %ELF_NAME%.elf %ELF_NAME%_EP1_R0_F30.elf
+move /y %ELF_NAME%.elf %ELF_NAME%_OH1.elf
 
 :: Compiling step.
 %ARM_PATH%\tcc -I%SDK_PATH% %DEFINES% -DROT_0 -DFPS_15 -bigend -apcs /interwork -O2 -c %ELF_NAME%.c ^
@@ -70,7 +70,7 @@ move /y %ELF_NAME%.elf %ELF_NAME%_EP1_R0_F30.elf
 	-o %ELF_NAME%.elf
 :: Renaming step.
 del *.o
-move /y %ELF_NAME%.elf %ELF_NAME%_EP1_R0_F15.elf
+move /y %ELF_NAME%.elf %ELF_NAME%_OL1.elf
 
 if /I "%1"=="clean" (
 	del *.o

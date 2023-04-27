@@ -9,6 +9,10 @@ The "Vibro Haptic" ELF daemon utility with GUI settings for vibration feedback l
 
 ![Screenshot 5 of Vibro Haptic from Motorola L6](../images/Screenshot_VibroHaptic_L6_5.png) ![Screenshot 6 of Vibro Haptic from Motorola L6](../images/Screenshot_VibroHaptic_L6_6.png) ![Screenshot 7 of Vibro Haptic from Motorola L6](../images/Screenshot_VibroHaptic_L6_7.png) ![Screenshot 8 of Vibro Haptic from Motorola L6](../images/Screenshot_VibroHaptic_L6_8.png)
 
+## ELF files
+
+* VibroHaptic.elf (ELF for ElfPack 1.0)
+
 ## Additional information
 
 The ELF-application has been tested on the following phones and firmware:

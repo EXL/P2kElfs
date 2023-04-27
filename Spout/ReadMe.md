@@ -19,6 +19,28 @@ Port of the "Spout" game by kuni to the Motorola P2K phones platform.
 * Right Soft Key, 9 - Pause.
 * Left Soft Key, End Key, 0 - Quit.
 
+## ELF files
+
+| Phone   | Screen  | Flags | Viewport            | Fixed FPS  | ELF filename  |
+| ---     | ---     | ---   | ---                 | ---        |---            |
+| SLVR L6 | 128x160 | ROT90 | 128x88 (rotozoom)   | 15.0       | Spout_RL1.elf |
+| SLVR L6 | 128x160 | ROT0  | 128x88 (original)   | 15.0       | Spout_OL1.elf |
+| ROKR E1 | 176x220 | ROT90 | 128x88 (rotozoom)   | 30.0       | Spout_RH1.elf |
+| ROKR E1 | 176x220 | ROT0  | 128x88 (original)   | 30.0       | Spout_OH1.elf |
+
+### Legend
+
+* R (1st) - ATI hardware rootation and zoom surface e.g. 128x88 => 176x220, 128x88 => 128x160, etc.
+* O (1st) - Original screens resolution without any transformations.
+* L (2nd) - Low, 15 FPS timer ticks.
+* H (2nd) - High, 30 FPS timer ticks.
+* 1 (3rd) - Elf for ElfPack 1.0, tested with.
+* 2 (3rd) - Elf for ElfPack 2.0, tested with.
+
+### Summary
+
+* 4 ELFs + ElfPack 2.0 ELFs = 8 ELFs.
+
 ## Additional information
 
 The ELF-application has been tested on the following phones and firmware:

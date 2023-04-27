@@ -15,6 +15,11 @@ Port of the Doom PSX fire effect demo splash screen to the Motorola P2K phones p
 
 * Left Soft Key, End Key, 0 - Quit.
 
+## ELF files
+
+* Fire_Effect_EP1.elf (ELF for ElfPack 1.0)
+* Fire_Effect_EP2.elf (ELF for ElfPack 2.0)
+
 ## Additional information
 
 The ELF-application has been tested on the following phones and firmware:
