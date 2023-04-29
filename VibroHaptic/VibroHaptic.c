@@ -23,8 +23,8 @@
 
 #define MAX_NUMBER_LENGTH           (6)
 #define MAX_NUMBER_VALUE            (999999)
-#define KEY_LONG_PRESS_START_MS     (500)
-#define KEY_LONG_PRESS_STOP_MS      (1500)
+#define KEY_LONG_PRESS_START_MS     (3000)
+#define KEY_LONG_PRESS_STOP_MS      (5000)
 
 typedef enum {
 	APP_STATE_ANY,
