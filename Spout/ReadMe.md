@@ -21,12 +21,16 @@ Port of the "Spout" game by kuni to the Motorola P2K phones platform.
 
 ## ELF files
 
-| Phone   | Screen  | Flags | Viewport            | Fixed FPS  | ELF filename  |
-| ---     | ---     | ---   | ---                 | ---        |---            |
-| SLVR L6 | 128x160 | ROT90 | 128x88 (rotozoom)   | 15.0       | Spout_RL1.elf |
-| SLVR L6 | 128x160 | ROT0  | 128x88 (original)   | 15.0       | Spout_OL1.elf |
-| ROKR E1 | 176x220 | ROT90 | 128x88 (rotozoom)   | 30.0       | Spout_RH1.elf |
-| ROKR E1 | 176x220 | ROT0  | 128x88 (original)   | 30.0       | Spout_OH1.elf |
+| Phone   | Screen  | Flags | Viewport            | Fixed FPS  | FPS (avg, min-max) | ELF filename  |
+| ---     | ---     | ---   | ---                 | ---        | ---                |---            |
+| SLVR L6 | 128x160 | ROT90 | 128x88 (rotozoom)   | 15.0       | 15.38, 14.9-16.9   | Spout_RL1.elf |
+| SLVR L6 | 128x160 | ROT0  | 128x88 (original)   | 15.0       | 15.29, 14.7-15.8   | Spout_OL1.elf |
+| ROKR E1 | 176x220 | ROT90 | 128x88 (rotozoom)   | 15.0       | 15.20, 15.1-15.3   | Spout_RL1.elf |
+| ROKR E1 | 176x220 | ROT0  | 128x88 (original)   | 15.0       | 15.18, 15.1-15.3   | Spout_OL1.elf |
+| SLVR L6 | 128x160 | ROT90 | 128x88 (rotozoom)   | 30.0       | 16.80, 16.9-17.2   | Spout_RH1.elf |
+| SLVR L6 | 128x160 | ROT0  | 128x88 (original)   | 30.0       | 21.69, 19.6-24.3   | Spout_OH1.elf |
+| ROKR E1 | 176x220 | ROT90 | 128x88 (rotozoom)   | 30.0       | 27.91, 19.2-30.3   | Spout_RH1.elf |
+| ROKR E1 | 176x220 | ROT0  | 128x88 (original)   | 30.0       | 28.56, 18.8-30.3   | Spout_OH1.elf |
 
 ### Legend
 

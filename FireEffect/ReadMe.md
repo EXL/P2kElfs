@@ -17,6 +17,11 @@ Port of the Doom PSX fire effect demo splash screen to the Motorola P2K phones p
 
 ## ELF files
 
+| Phone   | Screen  | Flags | Viewport            | Fixed FPS  | FPS (avg, min-max) | ELF filename   |
+| ---     | ---     | ---   | ---                 | ---        | ---                |---             |
+| SLVR L6 | 128x160 | ROT90 | 64x48 (rotozoom)    | 30.0       | 15.94, 12.8-22.7   | FireEffect.elf |
+| ROKR E1 | 176x220 | ROT90 | 64x48 (rotozoom)    | 30.0       | 18.29, 15.1-30.3   | FireEffect.elf |
+
 * FireEffect.elf (ELF for ElfPack 1.0)
 * FireEffect_EP2.elf (ELF for ElfPack 2.0)
 

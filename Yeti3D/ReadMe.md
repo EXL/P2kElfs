@@ -22,20 +22,20 @@ Port of the heavy optimized "Yeti3D" 3D engine demo by **Derek J. Evans** from [
 
 ## ELF files
 
-| Phone   | Screen  | Flags | Viewport            | Optimized | FPS  | ELF filename        |
-| ---     | ---     | ---   | ---                 | ---       | ---  |---                  |
-| SLVR L6 | 128x160 | ROT0  | 160x128 (videomode) | No        | 0.0  | Y3D_VN1_128x160.elf |
-| SLVR L6 | 128x160 | ROT0  | 160x128 (videomode) | Yes       | 0.0  | Y3D_VO1_128x160.elf |
-| SLVR L6 | 128x160 | ROT90 | 120x80 (rotozoom)   | No        | 0.0  | Y3D_RN1_120x80.elf  |
-| SLVR L6 | 128x160 | ROT90 | 120x80 (rotozoom)   | Yes       | 0.0  | Y3D_RO1_120x80.elf  |
-| SLVR L6 | 128x160 | ROT90 | 96x64 (rotozoom)    | No        | 0.0  | Y3D_RN1_96x64.elf   |
-| SLVR L6 | 128x160 | ROT90 | 96x64 (rotozoom)    | Yes       | 0.0  | Y3D_RO1_96x64.elf   |
-| ROKR E1 | 176x220 | ROT0  | 220x176 (videomode) | No        | 0.0  | Y3D_VN1_176x220.elf |
-| ROKR E1 | 176x220 | ROT0  | 220x176 (videomode) | Yes       | 0.0  | Y3D_VO1_176x220.elf |
-| ROKR E1 | 176x220 | ROT90 | 120x80 (rotozoom)   | No        | 0.0  | Y3D_RN1_120x80.elf  |
-| ROKR E1 | 176x220 | ROT90 | 120x80 (rotozoom)   | Yes       | 0.0  | Y3D_RO1_120x80.elf  |
-| ROKR E1 | 176x220 | ROT90 | 96x64 (rotozoom)    | No        | 0.0  | Y3D_RN1_96x64.elf   |
-| ROKR E1 | 176x220 | ROT90 | 96x64 (rotozoom)    | Yes       | 0.0  | Y3D_RO1_96x64.elf   |
+| Phone   | Screen  | Flags | Viewport            | Optimized | Fixed FPS  | FPS (avg, min-max) | ELF filename        |
+| ---     | ---     | ---   | ---                 | ---       | ---        | ---                | ---                 |
+| SLVR L6 | 128x160 | ROT0  | 160x128 (videomode) | No        | 30.0       | 5.58, 5.4-5.7      | Y3D_VN1_128x160.elf |
+| SLVR L6 | 128x160 | ROT0  | 160x128 (videomode) | Yes       | 30.0       | 5.64, 5.5-5.7      | Y3D_VO1_128x160.elf |
+| SLVR L6 | 128x160 | ROT90 | 120x80 (rotozoom)   | No        | 30.0       | 8.20, 7.8-8.5      | Y3D_RN1_120x80.elf  |
+| SLVR L6 | 128x160 | ROT90 | 120x80 (rotozoom)   | Yes       | 30.0       | 8.23, 7.8-8.6      | Y3D_RO1_120x80.elf  |
+| SLVR L6 | 128x160 | ROT90 | 96x64 (rotozoom)    | No        | 30.0       | 10.15, 9.9-10.4    | Y3D_RN1_96x64.elf   |
+| SLVR L6 | 128x160 | ROT90 | 96x64 (rotozoom)    | Yes       | 30.0       | 10.18, 9.3-10.5    | Y3D_RO1_96x64.elf   |
+| ROKR E1 | 176x220 | ROT0  | 220x176 (videomode) | No        | 30.0       | 3.74, 3.4-4.0      | Y3D_VN1_176x220.elf |
+| ROKR E1 | 176x220 | ROT0  | 220x176 (videomode) | Yes       | 30.0       | 3.91  3.7-4.0      | Y3D_VO1_176x220.elf |
+| ROKR E1 | 176x220 | ROT90 | 120x80 (rotozoom)   | No        | 30.0       | 8.40, 7.4-8.6      | Y3D_RN1_120x80.elf  |
+| ROKR E1 | 176x220 | ROT90 | 120x80 (rotozoom)   | Yes       | 30.0       | 8.40, 7.0-8.6      | Y3D_RO1_120x80.elf  |
+| ROKR E1 | 176x220 | ROT90 | 96x64 (rotozoom)    | No        | 30.0       | 9.90, 8.5-10.1     | Y3D_RN1_96x64.elf   |
+| ROKR E1 | 176x220 | ROT90 | 96x64 (rotozoom)    | Yes       | 30.0       | 11.15, 8.6-12.0    | Y3D_RO1_96x64.elf   |
 
 ### Legend
 

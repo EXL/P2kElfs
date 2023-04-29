@@ -19,6 +19,13 @@ Port of the "Perlin" plasma and fire demo by [@BOOtak](https://github.com/BOOtak
 
 ## ELF files
 
+| Phone   | Screen  | Flags | Viewport            | Demo   | Fixed FPS  | FPS (avg, min-max) | ELF filename |
+| ---     | ---     | ---   | ---                 | ---    | ---        | ---                |---           |
+| SLVR L6 | 128x160 | ROT90 | 84x48 (rotozoom)    | Plasma | 15.0       | 12.13, 11.4-12.8   | Perlin.elf   |
+| ROKR E1 | 176x220 | ROT90 | 84x48 (rotozoom)    | Plasma | 15.0       | 13.72, 12.6-15.1   | Perlin.elf   |
+| SLVR L6 | 128x160 | ROT90 | 84x48 (rotozoom)    | Fire   | 15.0       | 1.88, 1.8-1.9      | Perlin.elf   |
+| ROKR E1 | 176x220 | ROT90 | 84x48 (rotozoom)    | Fire   | 15.0       | 1.93, 1.7-2.0      | Perlin.elf   |
+
 * Perlin.elf (ELF for ElfPack 1.0)
 * Perlin_EP2.elf (ELF for ElfPack 2.0)
 

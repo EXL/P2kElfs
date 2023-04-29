@@ -18,16 +18,16 @@ Port of the "Yeti3D Old" 3D engine demo by **Derek J. Evans** from [Nintendo Gam
 
 ## Screen resolutions and viewports
 
-| Phone   | Screen  | Flags | Viewport           | FPS  | ELF filename        |
-| ---     | ---     | ---   | ---                | ---  |---                  |
-| SLVR L6 | 128x160 | ROT0  | 160x128 (original) | 0.0  | Y3DO_O1_128x160.elf |
-| SLVR L6 | 128x160 | ROT90 | 122x82 (zoom)      | 0.0  | Y3DO_Z1_122x82.elf  |
-| SLVR L6 | 128x160 | ROT90 | 96x64 (zoom)       | 0.0  | Y3DO_Z1_96x64.elf   |
-| SLVR L6 | 128x160 | ROT90 | 72x48 (zoom)       | 0.0  | Y3DO_Z1_72x48.elf   |
-| ROKR E1 | 176x220 | ROT0  | 220x176 (original) | 0.0  | Y3DO_O1_176x220.elf |
-| ROKR E1 | 176x220 | ROT90 | 122x82 (zoom)      | 0.0  | Y3DO_Z1_122x82.elf  |
-| ROKR E1 | 176x220 | ROT90 | 96x64 (zoom)       | 0.0  | Y3DO_Z1_96x64.elf   |
-| ROKR E1 | 176x220 | ROT90 | 72x48 (zoom)       | 0.0  | Y3DO_Z1_72x48.elf   |
+| Phone   | Screen  | Flags | Viewport           | Fixed FPS  | FPS (avg, min-max) | ELF filename        |
+| ---     | ---     | ---   | ---                | ---        | ---                |---                  |
+| SLVR L6 | 128x160 | ROT0  | 160x128 (original) | 30.0       | 3.18, 3.1-3.6      | Y3DO_O1_128x160.elf |
+| SLVR L6 | 128x160 | ROT90 | 122x82 (zoom)      | 30.0       | 4.21, 3.9-4.6      | Y3DO_Z1_122x82.elf  |
+| SLVR L6 | 128x160 | ROT90 | 96x64 (zoom)       | 30.0       | 4.49, 4.2-4.7      | Y3DO_Z1_96x64.elf   |
+| SLVR L6 | 128x160 | ROT90 | 72x48 (zoom)       | 30.0       | 5.53, 4.6-6.2      | Y3DO_Z1_72x48.elf   |
+| ROKR E1 | 176x220 | ROT0  | 220x176 (original) | 30.0       | 2.31, 2.1-2.7      | Y3DO_O1_176x220.elf |
+| ROKR E1 | 176x220 | ROT90 | 122x82 (zoom)      | 30.0       | 4.86, 4.6-5.3      | Y3DO_Z1_122x82.elf  |
+| ROKR E1 | 176x220 | ROT90 | 96x64 (zoom)       | 30.0       | 4.99, 4.8-5.9      | Y3DO_Z1_96x64.elf   |
+| ROKR E1 | 176x220 | ROT90 | 72x48 (zoom)       | 30.0       | 6.14, 5.7-6.7      | Y3DO_Z1_72x48.elf   |
 
 ### Legend
 
