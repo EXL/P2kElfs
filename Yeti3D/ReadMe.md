@@ -49,7 +49,6 @@ Port of the heavy optimized "Yeti3D" 3D engine demo by **Derek J. Evans** from [
 ### Summary
 
 * 8 ELFs + ElfPack 2.0 ELFs = 16 ELFs.
-* TODO: Task main loop ELFs?
 
 ## Additional information
 
