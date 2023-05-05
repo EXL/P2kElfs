@@ -1,0 +1,27 @@
+# This Makefile was created by EXL, 05-May-2023.
+# Default platform is Web, Emscripten & WASM.
+
+all:
+	emcc -O2 -DPLATFORM_SDL2 \
+		-Wall -pedantic -Wno-empty-body -Wno-incompatible-pointer-types-discards-qualifiers \
+		data.c draw.c main_sdl2.c yeti.c \
+		-s USE_SDL=2 \
+		-o Yeti3D.html
+	emstrip -s Yeti3D.wasm
+
+linux:
+	gcc -O2 -DPLATFORM_SDL2 \
+		-Wall -Wno-strict-aliasing -Wno-misleading-indentation -Wno-maybe-uninitialized \
+		-Wno-discarded-array-qualifiers \
+		data.c draw.c main_sdl2.c yeti.c \
+		-o Yeti3D.elf -lSDL2
+
+clean:
+	-rm -f Yeti3D
+	-rm -f Yeti3D.o
+	-rm -f Yeti3D.obj
+	-rm -f Yeti3D.exe
+	-rm -f Yeti3D.data
+	-rm -f Yeti3D.html
+	-rm -f Yeti3D.wasm
+	-rm -f Yeti3D.js

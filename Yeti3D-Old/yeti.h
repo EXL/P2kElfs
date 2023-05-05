@@ -86,7 +86,7 @@ inline int isqrt(int value)
 
 #define SINTABLE_SIZE (4)
 #define SINTABLE_MAX (2048)
-#if defined(PLATFORM_GBA)
+#if defined(PLATFORM_GBA) || defined(PLATFORM_SDL2)
 extern const int sintable[];
 #else
 extern int *sintable;
@@ -278,8 +278,14 @@ inline void matrix_rotate_object(matrix_t m, int alp, int bet, int gam)
   m[2][2] =  fixmul(cosbet,cosgam);
 }
 
+#if defined(PLATFORM_SDL2)
+#define VIEWPORT_WIDTH 176
+#define VIEWPORT_HEIGHT 220
+#else
 #define VIEWPORT_WIDTH 82
 #define VIEWPORT_HEIGHT 122
+#endif
+
 #define VIEWPORT_X1 0
 #define VIEWPORT_Y1 0
 #define VIEWPORT_X2 (VIEWPORT_WIDTH - 0)
@@ -375,6 +381,14 @@ extern entity_t* camera;
 #define KEY_LEFT (KEY_STATE[SDLK_LEFT])
 #define KEY_UP (KEY_STATE[SDLK_UP])
 #define KEY_DOWN (KEY_STATE[SDLK_DOWN])
+#elif defined(PLATFORM_SDL2)
+#define KEY_STATE (SDL_GetKeyboardState(NULL))
+
+#define KEY_SELECT (KEY_STATE[SDL_SCANCODE_ESCAPE])
+#define KEY_RIGHT ((KEY_STATE[SDL_SCANCODE_RIGHT]) || (KEY_STATE[SDL_SCANCODE_D]))
+#define KEY_LEFT ((KEY_STATE[SDL_SCANCODE_LEFT]) || (KEY_STATE[SDL_SCANCODE_A]))
+#define KEY_UP ((KEY_STATE[SDL_SCANCODE_UP]) || (KEY_STATE[SDL_SCANCODE_W]))
+#define KEY_DOWN ((KEY_STATE[SDL_SCANCODE_DOWN]) || (KEY_STATE[SDL_SCANCODE_S]))
 #endif
 
 void entity_to_world_collision(entity_t* const e, int const radius);
