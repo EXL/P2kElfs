@@ -122,6 +122,31 @@ Prepared for public release: 10/24/2003 - Derek J. Evans <derek@theteahouse.com.
 
 #endif
 
+#ifdef __SDL2__
+
+#define YETI_RGB555
+//#define YETI_LOW_QUALITY_WALLS
+
+#define YETI_ROM const
+
+#define YETI_VIEWPORT_INTERVAL 35
+#define YETI_VIEWPORT_INTERVAL_ERROR 7
+
+#define YETI_VIEWPORT_X1 0
+#define YETI_VIEWPORT_Y1 0
+#define YETI_VIEWPORT_X2 320
+#define YETI_VIEWPORT_Y2 240
+#define YETI_VIEWPORT_WIDTH 320
+#define YETI_VIEWPORT_HEIGHT 240
+
+#define CODE_IN_IWRAM
+#define CODE_IN_ROM
+#define IN_IWRAM
+#define IN_EWRAM
+
+#endif
+
+
 #ifdef __GBA__
 
 #define YETI_RGB555

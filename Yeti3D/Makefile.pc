@@ -5,7 +5,7 @@ CC=gcc
 STRIP=strip
 CFLAGS=`sdl-config --cflags` -O2 -D__SDL__ -Wall -pedantic -Wno-maybe-uninitialized -Wno-misleading-indentation
 LFLAGS=`sdl-config --libs`
-NAME=yeti3d
+NAME=Yeti3D
 ifeq ($(OS), Windows_NT)
 	EXECUTABLE=$(NAME).exe
 else

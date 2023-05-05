@@ -12,24 +12,24 @@
 
 #include <SDL2/SDL.h>
 
+#define SDL_VIEWPORT_WIDTH  (240)
+#define SDL_VIEWPORT_HEIGHT (320)
+#define SCREEN_FPS          (35)
+
 #if defined(__EMSCRIPTEN__)
 #include <emscripten.h>
 
 typedef struct {
 	entity_t* box;
 } CONTEXT_EMSCRIPTEN_T;
+#else
+static int quit_loop = 0;
 #endif
-
-#define SDL_VIEWPORT_WIDTH  (240)
-#define SDL_VIEWPORT_HEIGHT (320)
-#define SCREEN_FPS          (35)
 
 static SDL_Surface *video;
 static SDL_Surface *surface;
 static SDL_Renderer *render;
 static SDL_Texture *texture;
-
-static int quit_loop = 0;
 
 void behaviour(entity_t* const e)
 {    
@@ -83,9 +83,11 @@ static void main_loop_step(entity_t* box) {
 	SDL_Rect dst;
 	SDL_Event event;
 
+#if !defined(__EMSCRIPTEN__)
 	if (KEY_SELECT) {
 		quit_loop = 1;
 	}
+#endif
 	while (SDL_PollEvent(&event)) {
 		switch (event.type) {
 			case SDL_QUIT:
