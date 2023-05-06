@@ -11,6 +11,10 @@ Port of the "Perlin" plasma and fire demo by [@BOOtak](https://github.com/BOOtak
 
 ![Screenshot of Perlin from Motorola E1 1](../images/Screenshot_Perlin_E1_1.png) ![Screenshot of Perlin from Motorola E1 2](../images/Screenshot_Perlin_E1_2.png) ![Screenshot of Perlin from Motorola E1 3](../images/Screenshot_Perlin_E1_3.png)
 
+## Photos
+
+![Photo of Perlin on Motorola L6 and Motorola E1 1](../images/Photo_Perlin_L6_E1_1.jpg)
+
 ## Key controls
 
 * 1, 2, 3 - Change palette.
