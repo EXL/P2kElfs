@@ -259,8 +259,9 @@ static UINT32 DumpBatteryRom(void) {
 	 *    4 bytes = Battery status.
 	 *    6 bytes = Battery id.
 	 *  128 bytes = Battery ROM.
+	 *  138 bytes = Total.
 	 */
-	status |= DL_FsWriteFile((void *) &battery_status, sizeof(HAPI_BATTERY_ROM_T), 1, rom, &written);
+	status |= DL_FsWriteFile((void *) &battery_status, sizeof(UINT32), 1, rom, &written);
 	status |= DL_FsWriteFile((void *) &battery_id, HAPI_BATTERY_ROM_UNIQUE_ID_SIZE, 1, rom, &written);
 	status |= DL_FsWriteFile((void *) &battery_rom, HAPI_BATTERY_ROM_BYTE_SIZE, 1, rom, &written);
 
