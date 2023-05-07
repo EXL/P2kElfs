@@ -15,6 +15,11 @@ Port of the "Spout" game by kuni to the Motorola P2K phones platform.
 
 ![Photo of Spout on Motorola L6 and Motorola E1 1](../images/Photo_Spout_L6_E1_1.jpg)
 
+## Videos
+
+See [Some ELF demos/games on Motorola P2K phones using ATI Imageon W2240/W2250 videochip
+](https://www.youtube.com/watch?v=DsYLWXPgmsU) video on YouTube.
+
 ## Key controls
 
 * D-Pad, 2, 4, 6, 8 - Movement.
@@ -22,6 +27,10 @@ Port of the "Spout" game by kuni to the Motorola P2K phones platform.
 * 3 - Enable autofire.
 * Right Soft Key, 9 - Pause.
 * Left Soft Key, End Key, 0 - Quit.
+
+## Other versions
+
+* Version with long sight tail. See [spout_feature_long_tail](https://github.com/EXL/P2kElfs/tree/spout_feature_long_tail) branch in this repository.
 
 ## ELF files
 

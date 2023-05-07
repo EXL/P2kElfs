@@ -15,9 +15,18 @@ Port of the Doom PSX fire effect demo splash screen to the Motorola P2K phones p
 
 ![Photo of Fire Effect on Motorola L6 and Motorola E1 1](../images/Photo_FireEffect_L6_E1_1.jpg)
 
+## Videos
+
+See [Some ELF demos/games on Motorola P2K phones using ATI Imageon W2240/W2250 videochip
+](https://www.youtube.com/watch?v=DsYLWXPgmsU&t=180s) video on YouTube.
+
 ## Key controls
 
 * Left Soft Key, End Key, 0 - Quit.
+
+## Other versions
+
+* Simple unfinished black-and-white version. See [fire_effect_bw](https://github.com/EXL/P2kElfs/tree/fire_effect_bw) branch in this repository.
 
 ## ELF files
 

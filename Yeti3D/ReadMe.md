@@ -15,6 +15,10 @@ Port of the heavy optimized "Yeti3D" 3D engine demo by **Derek J. Evans** from [
 
 ![Photo of Yeti3D on Motorola L6 and Motorola E1](../images/Photo_Yeti3D_L6_E1_1.jpg)
 
+## Videos
+
+See [TODO](https://TODO) video on YouTube.
+
 ## Key controls
 
 * D-Pad, 2, 4, 6, 8 - Movement.
@@ -24,22 +28,30 @@ Port of the heavy optimized "Yeti3D" 3D engine demo by **Derek J. Evans** from [
 * Center, 5 - Fire (not available in optimized version).
 * Left Soft Key, End Key, 0 - Quit.
 
+## Other versions
+
+* Slightly optimized version without sprites, enemy logic code and with reduced draw distance. See [yeti3d_memory_optimize](https://github.com/EXL/P2kElfs/tree/yeti3d_memory_optimize) branch in this repository.
+
 ## ELF files
 
-| Phone   | Screen  | Flags | Viewport            | Optimized | Fixed FPS  | FPS (avg, min-max) | ELF filename        |
-| ---     | ---     | ---   | ---                 | ---       | ---        | ---                | ---                 |
-| SLVR L6 | 128x160 | ROT0  | 160x128 (videomode) | No        | 30.0       | 5.58, 5.4-5.7      | Y3D_VN1_128x160.elf |
-| SLVR L6 | 128x160 | ROT0  | 160x128 (videomode) | Yes       | 30.0       | 5.64, 5.5-5.7      | Y3D_VO1_128x160.elf |
-| SLVR L6 | 128x160 | ROT90 | 120x80 (rotozoom)   | No        | 30.0       | 8.20, 7.8-8.5      | Y3D_RN1_120x80.elf  |
-| SLVR L6 | 128x160 | ROT90 | 120x80 (rotozoom)   | Yes       | 30.0       | 8.23, 7.8-8.6      | Y3D_RO1_120x80.elf  |
-| SLVR L6 | 128x160 | ROT90 | 96x64 (rotozoom)    | No        | 30.0       | 10.15, 9.9-10.4    | Y3D_RN1_96x64.elf   |
-| SLVR L6 | 128x160 | ROT90 | 96x64 (rotozoom)    | Yes       | 30.0       | 10.18, 9.3-10.5    | Y3D_RO1_96x64.elf   |
-| ROKR E1 | 176x220 | ROT0  | 220x176 (videomode) | No        | 30.0       | 3.74, 3.4-4.0      | Y3D_VN1_176x220.elf |
-| ROKR E1 | 176x220 | ROT0  | 220x176 (videomode) | Yes       | 30.0       | 3.91  3.7-4.0      | Y3D_VO1_176x220.elf |
-| ROKR E1 | 176x220 | ROT90 | 120x80 (rotozoom)   | No        | 30.0       | 8.40, 7.4-8.6      | Y3D_RN1_120x80.elf  |
-| ROKR E1 | 176x220 | ROT90 | 120x80 (rotozoom)   | Yes       | 30.0       | 8.40, 7.0-8.6      | Y3D_RO1_120x80.elf  |
-| ROKR E1 | 176x220 | ROT90 | 96x64 (rotozoom)    | No        | 30.0       | 9.90, 8.5-10.1     | Y3D_RN1_96x64.elf   |
-| ROKR E1 | 176x220 | ROT90 | 96x64 (rotozoom)    | Yes       | 30.0       | 11.15, 8.6-12.0    | Y3D_RO1_96x64.elf   |
+| Phone   | Screen  | Flags | Viewport            | Optimized | Tasks/Semaphores | Fixed FPS  | FPS (avg, min-max) | ELF filename         |
+| ---     | ---     | ---   | ---                 | ---       | ---              | ---        | ---                | ---                  |
+| SLVR L6 | 128x160 | ROT0  | 160x128 (videomode) | No        | No               | 30.0       | 5.58, 5.4-5.7      | Y3D_VN1_128x160.elf  |
+| SLVR L6 | 128x160 | ROT0  | 160x128 (videomode) | Yes       | No               | 30.0       | 5.64, 5.5-5.7      | Y3D_VO1_128x160.elf  |
+| SLVR L6 | 128x160 | ROT90 | 120x80 (rotozoom)   | No        | No               | 30.0       | 8.20, 7.8-8.5      | Y3D_RN1_120x80.elf   |
+| SLVR L6 | 128x160 | ROT90 | 120x80 (rotozoom)   | Yes       | No               | 30.0       | 8.23, 7.8-8.6      | Y3D_RO1_120x80.elf   |
+| SLVR L6 | 128x160 | ROT90 | 96x64 (rotozoom)    | No        | No               | 30.0       | 10.15, 9.9-10.4    | Y3D_RN1_96x64.elf    |
+| SLVR L6 | 128x160 | ROT90 | 96x64 (rotozoom)    | Yes       | No               | 30.0       | 10.18, 9.3-10.5    | Y3D_RO1_96x64.elf    |
+| ROKR E1 | 176x220 | ROT0  | 220x176 (videomode) | No        | No               | 30.0       | 3.74, 3.4-4.0      | Y3D_VN1_176x220.elf  |
+| ROKR E1 | 176x220 | ROT0  | 220x176 (videomode) | Yes       | No               | 30.0       | 3.91  3.7-4.0      | Y3D_VO1_176x220.elf  |
+| ROKR E1 | 176x220 | ROT0  | 220x176 (videomode) | No        | Yes              |            |                    | Y3D_VO2T_176x220.elf |
+| ROKR E1 | 176x220 | ROT0  | 220x176 (videomode) | Yes       | Yes              |            |                    | Y3D_VO2T_176x220.elf |
+| ROKR E1 | 176x220 | ROT90 | 120x80 (rotozoom)   | No        | No               | 30.0       | 8.40, 7.4-8.6      | Y3D_RN1_120x80.elf   |
+| ROKR E1 | 176x220 | ROT90 | 120x80 (rotozoom)   | Yes       | No               | 30.0       | 8.40, 7.0-8.6      | Y3D_RO1_120x80.elf   |
+| ROKR E1 | 176x220 | ROT90 | 96x64 (rotozoom)    | No        | No               | 30.0       | 9.90, 8.5-10.1     | Y3D_RN1_96x64.elf    |
+| ROKR E1 | 176x220 | ROT90 | 96x64 (rotozoom)    | Yes       | No               | 30.0       | 11.15, 8.6-12.0    | Y3D_RO1_96x64.elf    |
+| ROKR E1 | 176x220 | ROT90 | 96x64 (rotozoom)    | No        | Yes              |            |                    | Y3D_RN2T_96x64.elf    |
+| ROKR E1 | 176x220 | ROT90 | 96x64 (rotozoom)    | Yes       | Yes              |            |                    | Y3D_RO2T_96x64.elf    |
 
 ### Legend
 
@@ -49,10 +61,11 @@ Port of the heavy optimized "Yeti3D" 3D engine demo by **Derek J. Evans** from [
 * O (2nd) - Optimized version with no sprites and entities logic.
 * 1 (3rd) - Elf for ElfPack 1.0, tested with.
 * 2 (3rd) - Elf for ElfPack 2.0, tested with.
+* T (4th) - Elf for ElfPack 2.0, with using Tasks and Semaphores.
 
 ### Summary
 
-* 8 ELFs + ElfPack 2.0 ELFs = 16 ELFs.
+* 8 ELFs + ElfPack 2.0 ELFs + 4 Task and Semaphores ELFs = 20 ELFs.
 
 ## Additional information
 

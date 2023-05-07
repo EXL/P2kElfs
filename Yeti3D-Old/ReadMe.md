@@ -15,12 +15,16 @@ Port of the "Yeti3D Old" 3D engine demo by **Derek J. Evans** from [Nintendo Gam
 
 ![Photo of Yeti3D Old on Motorola L6 and Motorola E1 1](../images/Photo_Yeti3D_Old_L6_E1_1.jpg)
 
+## Videos
+
+See [TODO](https://TODO) video on YouTube.
+
 ## Key controls
 
 * D-Pad, 2, 4, 6, 8 - Movement.
 * Left Soft Key, End Key, 0 - Quit.
 
-## Screen resolutions and viewports
+## ELF files
 
 | Phone   | Screen  | Flags | Viewport           | Fixed FPS  | FPS (avg, min-max) | ELF filename        |
 | ---     | ---     | ---   | ---                | ---        | ---                |---                  |
