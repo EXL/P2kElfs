@@ -525,7 +525,7 @@ void CODE_IN_IWRAM matrix_rotate_world(matrix_t m, int alp, int bet, int gam);
 void CODE_IN_IWRAM matrix_rotate_object(matrix_t m, int alp, int bet, int gam);
 void CODE_IN_IWRAM vertex_project(vertex_t* v);
 
-#if defined(__GBA__)
+#if defined(__GBA__) || defined(__SDL2__)
 /******************************************************************************/
 
 void* yeti_memcpy(void* d, void* s, unsigned n);

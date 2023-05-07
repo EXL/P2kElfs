@@ -11,6 +11,10 @@ Port of the heavy optimized "Yeti3D" 3D engine demo by **Derek J. Evans** from [
 
 ![Screenshot of Yeti3D from Motorola E1 1](../images/Screenshot_Yeti3D_E1_1.png) ![Screenshot of Yeti3D from Motorola E1 2](../images/Screenshot_Yeti3D_E1_2.png) ![Screenshot of Yeti3D from Motorola E1 3](../images/Screenshot_Yeti3D_E1_3.png)
 
+## Photos
+
+![Photo of Yeti3D on Motorola L6 and Motorola E1](../images/Photo_Yeti3D_L6_E1_1.jpg)
+
 ## Key controls
 
 * D-Pad, 2, 4, 6, 8 - Movement.

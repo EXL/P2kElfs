@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8">
+		<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+		<title>Yeti3D</title>
+	</head>
+	<body>
+		<table style="margin: 10px">
+			<tbody>
+				<tr>
+					<td>
+						<canvas id="canvas" oncontextmenu="event.preventDefault()" width="320" height="240"></canvas>
+					</td>
+					<td style="padding-left: 25px">
+						<h3>Yeti3D</h3>
+						<p>Port of the heavy optimized "Yeti3D" 3D engine techno demo by <strong>Derek J. Evans</strong> from <a href="https://en.wikipedia.org/wiki/Game_Boy_Advance" title="The Game Boy Advance (GBA) is a 32-bit handheld game console developed, manufactured and marketed by Nintendo as the successor to the Game Boy Color." target="_blank">Nintendo Game Boy Advance (GBA)</a> to <a href="https://www.libsdl.org/" title="Simple DirectMedia Layer is a cross-platform development library designed to provide low level access to audio, keyboard, mouse, joystick, and graphics hardware via OpenGL and Direct3D." target="_blank">SDL2</a> and <a href="https://emscripten.org/" title="Emscripten is a complete compiler toolchain to WebAssembly, using LLVM, with a special focus on speed, size, and the Web platform." target="_blank">Emscripten</a>.</p>
+						<p>Technical Information: 35 FPS, 320x240 (viewport) => 320x240 (screen).</p>
+						<p><strong>Controls:</strong></p>
+						<ul>
+							<li>Arrows and W, A, S, D &ndash; Movement.</li>
+							<li>C, V and Page Up, Page Down &ndash; Look up, Look down.</li>
+							<li>X and Space &ndash; Jump.</li>
+							<li>Z and Left Ctrl and Enter &ndash; Fire.</li>
+						</ul>
+						<p><strong>Source code:</strong></p>
+						<ul>
+							<li>Web version: <a href="https://github.com/EXL/P2kElfs/tree/master/Yeti3D" title="Yeti3D Web GitHub Repository." target="_blank">https://github.com/EXL/P2kElfs/tree/master/Yeti3D</a></li>
+							<li>Motorola P2K version: <a href="https://github.com/EXL/P2kElfs/tree/master/Yeti3D" title="Yeti3D Motorola P2K GitHub Repository." target="_blank">https://github.com/EXL/P2kElfs/tree/master/Yeti3D-Old</a></li>
+						</ul>
+						<p><strong><em>&#169; Derek J. Evans, <a href="https://github.com/EXL" title="@EXL" target="_blank">EXL</a> on 06-May-2023.</strong></em></p>
+					</td>
+				</tr>
+			</tbody>
+		</table>
+		<script type='text/javascript'>
+			var Module = {
+				canvas: (function() { return document.getElementById('canvas'); })()
+			};
+		</script>
+		<script src="Yeti3D.js"></script>
+	</body>
+</html>

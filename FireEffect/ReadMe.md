@@ -11,6 +11,10 @@ Port of the Doom PSX fire effect demo splash screen to the Motorola P2K phones p
 
 ![Screenshot of Fire Effect from Motorola E1 1](../images/Screenshot_FireEffect_E1_1.png) ![Screenshot of Fire Effect from Motorola E1 2](../images/Screenshot_FireEffect_E1_2.png)
 
+## Photos
+
+![Photo of Fire Effect on Motorola L6 and Motorola E1 1](../images/Photo_FireEffect_L6_E1_1.jpg)
+
 ## Key controls
 
 * Left Soft Key, End Key, 0 - Quit.

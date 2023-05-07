@@ -526,7 +526,7 @@ void yeti_tick(yeti_t* yeti)
   yeti->surfaces[YETI_TEXTURE_WATER].ypan = fixcos(yeti->tick << 4) >> 2;
 }
 
-#if defined(__GBA__)
+#if defined(__GBA__) || defined(__SDL2__)
 /*
 ** Name: yeti_ambient_lighting
 ** Desc: Setup a standard ambient lighting. Current lighting is removed.

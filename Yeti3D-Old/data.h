@@ -1,7 +1,7 @@
 #ifndef __DATA_H__
 #define __DATA_H__
 #include "yeti.h"
-#if defined(PLATFORM_GBA)
+#if defined(PLATFORM_GBA) || defined(PLATFORM_SDL2)
 extern const texture_t textures[];
 extern const lua_t lua;
 #else

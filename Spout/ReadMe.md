@@ -11,6 +11,10 @@ Port of the "Spout" game by kuni to the Motorola P2K phones platform.
 
 ![Screenshot of Spout from Motorola E1 1](../images/Screenshot_Spout_E1_1.png) ![Screenshot of Spout from Motorola E1 2](../images/Screenshot_Spout_E1_2.png) ![Screenshot of Spout from Motorola E1 3](../images/Screenshot_Spout_E1_3.png)
 
+## Photos
+
+![Photo of Spout on Motorola L6 and Motorola E1 1](../images/Photo_Spout_L6_E1_1.jpg)
+
 ## Key controls
 
 * D-Pad, 2, 4, 6, 8 - Movement.
