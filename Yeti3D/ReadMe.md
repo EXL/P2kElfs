@@ -44,14 +44,14 @@ See [TODO](https://TODO) video on YouTube.
 | SLVR L6 | 128x160 | ROT90 | 96x64 (rotozoom)    | Yes       | No               | 30.0       | 10.18, 9.3-10.5    | Y3D_RO1_96x64.elf    |
 | ROKR E1 | 176x220 | ROT0  | 220x176 (videomode) | No        | No               | 30.0       | 3.74, 3.4-4.0      | Y3D_VN1_176x220.elf  |
 | ROKR E1 | 176x220 | ROT0  | 220x176 (videomode) | Yes       | No               | 30.0       | 3.91  3.7-4.0      | Y3D_VO1_176x220.elf  |
-| ROKR E1 | 176x220 | ROT0  | 220x176 (videomode) | No        | Yes              |            | 2.83, 3.0-2.7      | Y3D_VN2T_176x220.elf |
-| ROKR E1 | 176x220 | ROT0  | 220x176 (videomode) | Yes       | Yes              |            | 2.83, 3.0-2.8      | Y3D_VO2T_176x220.elf |
+| ROKR E1 | 176x220 | ROT0  | 220x176 (videomode) | No        | Yes              | 1000.0     | 2.83, 3.0-2.7      | Y3D_VN2T_176x220.elf |
+| ROKR E1 | 176x220 | ROT0  | 220x176 (videomode) | Yes       | Yes              | 1000.0     | 2.83, 3.0-2.8      | Y3D_VO2T_176x220.elf |
 | ROKR E1 | 176x220 | ROT90 | 120x80 (rotozoom)   | No        | No               | 30.0       | 8.40, 7.4-8.6      | Y3D_RN1_120x80.elf   |
 | ROKR E1 | 176x220 | ROT90 | 120x80 (rotozoom)   | Yes       | No               | 30.0       | 8.40, 7.0-8.6      | Y3D_RO1_120x80.elf   |
 | ROKR E1 | 176x220 | ROT90 | 96x64 (rotozoom)    | No        | No               | 30.0       | 9.90, 8.5-10.1     | Y3D_RN1_96x64.elf    |
 | ROKR E1 | 176x220 | ROT90 | 96x64 (rotozoom)    | Yes       | No               | 30.0       | 11.15, 8.6-12.0    | Y3D_RO1_96x64.elf    |
-| ROKR E1 | 176x220 | ROT90 | 96x64 (rotozoom)    | No        | Yes              |            | 8.04, 7.5-8.6      | Y3D_RN2T_96x64.elf   |
-| ROKR E1 | 176x220 | ROT90 | 96x64 (rotozoom)    | Yes       | Yes              |            | 8.12, 7.5-8.6      | Y3D_RO2T_96x64.elf   |
+| ROKR E1 | 176x220 | ROT90 | 96x64 (rotozoom)    | No        | Yes              | 1000.0     | 8.04, 7.5-8.6      | Y3D_RN2T_96x64.elf   |
+| ROKR E1 | 176x220 | ROT90 | 96x64 (rotozoom)    | Yes       | Yes              | 1000.0     | 8.12, 7.5-8.6      | Y3D_RO2T_96x64.elf   |
 
 ### Legend
 
