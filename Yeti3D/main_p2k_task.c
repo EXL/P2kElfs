@@ -35,11 +35,6 @@
 #define LOG(format, ...) UtilLogStringData(format, ##__VA_ARGS__); PFprintf(format, ##__VA_ARGS__)
 
 #define TIMER_FAST_TRIGGER_MS             (1)
-#if defined(FPS_15)
-#define TIMER_FAST_UPDATE_MS              (1000 / 15) /* ~15 FPS. */
-#elif defined(FPS_30)
-#define TIMER_FAST_UPDATE_MS              (1000 / 30) /* ~30 FPS. */
-#endif
 #define KEYPAD_BUTTONS                    (8)
 #define TASK_STACK_SIZE                   (0x5000)
 #define	TASK_PRIORITY                     (0x18)
@@ -383,9 +378,11 @@ static UINT32 HandleStateExit(EVENT_STACK_T *ev_st, APPLICATION_T *app, EXIT_STA
 		}
 		g_app = NULL;
 		return RESULT_OK;
+	} else {
+		app->exit_status = TRUE;
 	}
 
-	return RESULT_FAIL;
+	return RESULT_OK;
 }
 
 static UINT32 DeleteDialog(APPLICATION_T *app) {
@@ -1028,8 +1025,8 @@ static void Allocate_Memory_Blocks(int start_size) {
 		} else {
 			mem_total_size += size;
 			mem_blocks[block_idx].size = size;
-			block_idx++;
 			LOG("C=%d A=%d T=%d P=0x%X\n", i+1, size, mem_total_size, mem_blocks[block_idx]);
+			block_idx++;
 		}
 	}
 

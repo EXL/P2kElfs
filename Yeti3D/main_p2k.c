@@ -964,8 +964,8 @@ static void Allocate_Memory_Blocks(int start_size) {
 		} else {
 			mem_total_size += size;
 			mem_blocks[block_idx].size = size;
-			block_idx++;
 			LOG("C=%d A=%d T=%d P=0x%X\n", i+1, size, mem_total_size, mem_blocks[block_idx]);
+			block_idx++;
 		}
 	}
 
