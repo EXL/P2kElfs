@@ -1,6 +1,7 @@
 Project {
 	references: [
 		"BattDump/BattDump.qbs",
+		"Benchmark/Benchmark.qbs",
 		"FireEffect/FireEffect.qbs",
 		"Perlin/Perlin.qbs",
 		"PowerAlert/PowerAlert.qbs",
