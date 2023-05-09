@@ -53,10 +53,11 @@ See [Some ELF demos/games on Motorola P2K phones using ATI Imageon W2240/W2250 v
 * H (2nd) - High, 30 FPS timer ticks.
 * 1 (3rd) - Elf for ElfPack 1.0, tested with.
 * 2 (3rd) - Elf for ElfPack 2.0, tested with.
+* J (4th) - Use Java Heap instead of System Heap for phones with small amount of RAM (needs suspended Java application before ELF launch).
 
 ### Summary
 
-* 4 ELFs + ElfPack 2.0 ELFs = 8 ELFs.
+* 4 ELFs + ElfPack 2.0 ELFs + 8 Java Heap ELFs = 16 ELFs.
 
 ## Additional information
 

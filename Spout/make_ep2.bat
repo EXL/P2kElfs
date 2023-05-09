@@ -21,6 +21,7 @@ set LIB_LIBC=libc.a
 
 :: Defines.
 set DEFINES=-D__P2K__ -DEP2
+:: set DEFINES=-D__P2K__ -DEP2 -DJAVA_HEAP
 
 :: Includes.
 set INCLUDES=-I..\src\

@@ -72,16 +72,32 @@ static GRAIN *freeGrain(GRAIN *current);
 
 void pceAppInit(void)
 {
+#if defined(JAVA_HEAP)
+	vbuff = AmMemAllocPointer(128 * 88 * 1);
+#else
 	vbuff = suAllocMem(128 * 88 * 1, NULL);
+#endif
 	memset(vbuff, 0, 128 * 88);
 
+#if defined(JAVA_HEAP)
+	vbuff2 = AmMemAllocPointer(128 * 128 * 1);
+#else
 	vbuff2 = suAllocMem(128 * 128 * 1, NULL);
+#endif
 	memset(vbuff2, 0, 128 * 128);
 
+#if defined(JAVA_HEAP)
+	v2g = AmMemAllocPointer(128 * 128 * sizeof(GRAIN *));
+#else
 	v2g = suAllocMem(128 * 128 * sizeof(GRAIN *), NULL);
+#endif
 	memset(v2g, 0, 128 * 128 * sizeof(GRAIN *));
 
+#if defined(JAVA_HEAP)
+	grain = AmMemAllocPointer(MAX_GRAIN * sizeof(GRAIN));
+#else
 	grain = suAllocMem(MAX_GRAIN * sizeof(GRAIN), NULL);
+#endif
 	memset(grain, 0, MAX_GRAIN * sizeof(GRAIN));
 
 	pceLCDDispStop();
@@ -731,11 +747,17 @@ void pceAppProc(int cnt)
 
 void pceAppExit( void )
 {
+#if defined(JAVA_HEAP)
+	AmMemFreePointer(grain);
+	AmMemFreePointer(v2g);
+	AmMemFreePointer(vbuff2);
+	AmMemFreePointer(vbuff);
+#else
 	mfree(grain);
 	mfree(v2g);
 	mfree(vbuff2);
 	mfree(vbuff);
-
+#endif
 	//pceCPUSetSpeed(CPU_SPEED_NORMAL);
 }
 
