@@ -384,9 +384,9 @@ static UINT32 PaintAll(EVENT_STACK_T *ev_st, APPLICATION_T *app, BENCHMARK_STATE
 			color.green = 0x00;
 			color.blue = 0x00;
 			color.transparent = 0x00;
-			UIS_CanvasSetBackgroundColor(color);
-			color.transparent = 0xFF;
 			UIS_CanvasSetForegroundColor(color);
+			color.transparent = 0xFF;
+			UIS_CanvasSetBackgroundColor(color);
 			point.x = 10;
 			point.y = 10;
 			text = L"Benchmark P2K";
