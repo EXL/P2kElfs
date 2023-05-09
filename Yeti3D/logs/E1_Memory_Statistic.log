@@ -1,0 +1,81 @@
+C=1 E=131072 T=0
+C=2 A=65536 T=65536 P=0x124AD560
+C=3 A=65536 T=131072 P=0x124C041C
+C=4 E=65536 T=131072
+C=5 E=32768 T=131072
+C=6 A=16384 T=147456 P=0x12470AC8
+C=7 A=16384 T=163840 P=0x1247520C
+C=8 A=16384 T=180224 P=0x12479950
+C=9 A=16384 T=196608 P=0x1247E094
+C=10 A=16384 T=212992 P=0x124827D8
+C=11 E=16384 T=212992
+C=12 E=8192 T=212992
+C=13 A=4096 T=217088 P=0x12440BF4
+C=14 A=4096 T=221184 P=0x12441E50
+C=15 A=4096 T=225280 P=0x124430AC
+C=16 A=4096 T=229376 P=0x12445EA4
+C=17 A=4096 T=233472 P=0x124495DC
+C=18 A=4096 T=237568 P=0x1244B178
+C=19 A=4096 T=241664 P=0x1244CD14
+C=20 A=4096 T=245760 P=0x1244E8B0
+C=21 A=4096 T=249856 P=0x1245413C
+C=22 A=4096 T=253952 P=0x12455FB4
+C=23 A=4096 T=258048 P=0x12457E2C
+C=24 A=4096 T=262144 P=0x12459CA4
+C=25 A=4096 T=266240 P=0x1245BB1C
+C=26 A=4096 T=270336 P=0x1245D994
+C=27 A=4096 T=274432 P=0x1245F80C
+C=28 A=4096 T=278528 P=0x12461684
+C=29 E=4096 T=278528
+
+
+=== MEMORY BLOCKS STATISTIC TABLE ===
+
+Memory Block #1: 65536 bytes, 64 KiB, 0x124AD560
+Memory Block #2: 65536 bytes, 64 KiB, 0x124C041C
+Memory Block #3: 16384 bytes, 16 KiB, 0x12470AC8
+Memory Block #4: 16384 bytes, 16 KiB, 0x1247520C
+Memory Block #5: 16384 bytes, 16 KiB, 0x12479950
+Memory Block #6: 16384 bytes, 16 KiB, 0x1247E094
+Memory Block #7: 16384 bytes, 16 KiB, 0x124827D8
+Memory Block #8: 4096 bytes, 4 KiB, 0x12440BF4
+Memory Block #9: 4096 bytes, 4 KiB, 0x12441E50
+Memory Block #10: 4096 bytes, 4 KiB, 0x124430AC
+Memory Block #11: 4096 bytes, 4 KiB, 0x12445EA4
+Memory Block #12: 4096 bytes, 4 KiB, 0x124495DC
+Memory Block #13: 4096 bytes, 4 KiB, 0x1244B178
+Memory Block #14: 4096 bytes, 4 KiB, 0x1244CD14
+Memory Block #15: 4096 bytes, 4 KiB, 0x1244E8B0
+Memory Block #16: 4096 bytes, 4 KiB, 0x1245413C
+Memory Block #17: 4096 bytes, 4 KiB, 0x12455FB4
+Memory Block #18: 4096 bytes, 4 KiB, 0x12457E2C
+Memory Block #19: 4096 bytes, 4 KiB, 0x12459CA4
+Memory Block #20: 4096 bytes, 4 KiB, 0x1245BB1C
+Memory Block #21: 4096 bytes, 4 KiB, 0x1245D994
+Memory Block #22: 4096 bytes, 4 KiB, 0x1245F80C
+Memory Block #23: 4096 bytes, 4 KiB, 0x12461684
+Total Memory: 278528 bytes, 272 KiB.
+
+Free Memory Block #1: 65536 bytes, 64 KiB, 0x124AD560
+Free Memory Block #2: 65536 bytes, 64 KiB, 0x124C041C
+Free Memory Block #3: 16384 bytes, 16 KiB, 0x12470AC8
+Free Memory Block #4: 16384 bytes, 16 KiB, 0x1247520C
+Free Memory Block #5: 16384 bytes, 16 KiB, 0x12479950
+Free Memory Block #6: 16384 bytes, 16 KiB, 0x1247E094
+Free Memory Block #7: 16384 bytes, 16 KiB, 0x124827D8
+Free Memory Block #8: 4096 bytes, 4 KiB, 0x12440BF4
+Free Memory Block #9: 4096 bytes, 4 KiB, 0x12441E50
+Free Memory Block #10: 4096 bytes, 4 KiB, 0x124430AC
+Free Memory Block #11: 4096 bytes, 4 KiB, 0x12445EA4
+Free Memory Block #12: 4096 bytes, 4 KiB, 0x124495DC
+Free Memory Block #13: 4096 bytes, 4 KiB, 0x1244B178
+Free Memory Block #14: 4096 bytes, 4 KiB, 0x1244CD14
+Free Memory Block #15: 4096 bytes, 4 KiB, 0x1244E8B0
+Free Memory Block #16: 4096 bytes, 4 KiB, 0x1245413C
+Free Memory Block #17: 4096 bytes, 4 KiB, 0x12455FB4
+Free Memory Block #18: 4096 bytes, 4 KiB, 0x12457E2C
+Free Memory Block #19: 4096 bytes, 4 KiB, 0x12459CA4
+Free Memory Block #20: 4096 bytes, 4 KiB, 0x1245BB1C
+Free Memory Block #21: 4096 bytes, 4 KiB, 0x1245D994
+Free Memory Block #22: 4096 bytes, 4 KiB, 0x1245F80C
+Free Memory Block #23: 4096 bytes, 4 KiB, 0x12461684
