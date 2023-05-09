@@ -190,7 +190,7 @@ ldrElf *_start(WCHAR *uri, WCHAR *arguments) {
 	UINT32 reserve;
 
 	if (ldrIsLoaded(g_app_name)) {
-		cprint("Spout: Error! Application has already been loaded!\n");
+		cprint("Yeti3D: Error! Application has already been loaded!\n");
 		return NULL;
 	}
 
