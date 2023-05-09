@@ -65,8 +65,6 @@ static UINT32 HandleEventKeyPress(EVENT_STACK_T *ev_st, APPLICATION_T *app);
 static UINT32 HandleEventKeyRelease(EVENT_STACK_T *ev_st, APPLICATION_T *app);
 static UINT32 HandleEventTimerExpired(EVENT_STACK_T *ev_st, APPLICATION_T *app);
 
-static UINT32 SetWorikingArea(GRAPHIC_REGION_T *working_area);
-
 static UINT32 PaintAll(EVENT_STACK_T *ev_st, APPLICATION_T *app, BENCHMARK_STATE_T state);
 
 static const char g_app_name[APP_NAME_LEN] = "Benchmark";
@@ -252,8 +250,13 @@ static UINT32 HandleStateEnter(EVENT_STACK_T *ev_st, APPLICATION_T *app, ENTER_S
 			buffer.w = point.x + 1;
 			buffer.h = point.y + 1;
 			buffer.buf = NULL;
-			SetWorikingArea(&app_instance->area);
-			dialog = UIS_CreateColorCanvasWithWallpaper(&port, &buffer, FALSE, TRUE);
+
+			app_instance->area.ulc.x = 0;
+			app_instance->area.ulc.y = 0;
+			app_instance->area.lrc.x = buffer.w;
+			app_instance->area.lrc.y = buffer.h;
+
+			dialog = UIS_CreateColorCanvas(&port, &buffer, TRUE);
 			break;
 		default:
 			break;
@@ -365,32 +368,6 @@ static UINT32 HandleEventTimerExpired(EVENT_STACK_T *ev_st, APPLICATION_T *app) 
 	return RESULT_OK;
 }
 
-static UINT32 SetWorikingArea(GRAPHIC_REGION_T *working_area) {
-	UINT32 status;
-	GRAPHIC_REGION_T rect;
-	UINT8 count_lines;
-	UINT8 chars_on_line;
-	UINT8 height_title_bar_end;
-	UINT8 height_soft_keys_start;
-
-	status = RESULT_OK;
-
-	UIS_CanvasGetWorkingArea(&rect, &count_lines, &chars_on_line, TITLE_BAR_AREA, TRUE, 1);
-	height_title_bar_end = rect.lrc.y + 1;
-
-	UIS_CanvasGetWorkingArea(&rect, &count_lines, &chars_on_line, SOFTKEY_AREA, TRUE, 1);
-	height_soft_keys_start = rect.ulc.y - 1;
-
-	rect.ulc.y = height_title_bar_end;
-	/* rect.lrc.x -= 1; */
-	rect.lrc.y = height_soft_keys_start;
-	/* rect.lrc.y += 1; */
-
-	memcpy(working_area, &rect, sizeof(GRAPHIC_REGION_T));
-
-	return status;
-}
-
 static UINT32 PaintAll(EVENT_STACK_T *ev_st, APPLICATION_T *app, BENCHMARK_STATE_T state) {
 	APP_INSTANCE_T *app_instance;
 	GRAPHIC_POINT_T point;
@@ -402,6 +379,7 @@ static UINT32 PaintAll(EVENT_STACK_T *ev_st, APPLICATION_T *app, BENCHMARK_STATE
 	switch (state) {
 		case BENCHMARK_MAIN_SCREEN:
 			UIS_CanvasSetFillColor(g_color_background);
+			UIS_CanvasFillRect(app_instance->area, app->dialog);
 			color.red = 0x00;
 			color.green = 0x00;
 			color.blue = 0x00;
@@ -409,14 +387,13 @@ static UINT32 PaintAll(EVENT_STACK_T *ev_st, APPLICATION_T *app, BENCHMARK_STATE
 			UIS_CanvasSetBackgroundColor(color);
 			color.transparent = 0xFF;
 			UIS_CanvasSetForegroundColor(color);
-			UIS_CanvasFillRect(app_instance->area, app->dialog);
 			point.x = 10;
 			point.y = 10;
-			text = L"Benchmark for Motorola P2K";
+			text = L"Benchmark P2K";
 			UIS_CanvasDrawColorText(text, 0, u_strlen(text), point, 0, app->dialog);
 			point.x = 10;
-			point.y = 25;
-			text = L"Press some button...";
+			point.y = 35;
+			text = L"Press some button!";
 			UIS_CanvasDrawColorText(text, 0, u_strlen(text), point, 0, app->dialog);
 			break;
 		default:
