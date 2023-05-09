@@ -17,7 +17,7 @@ Port of the "Yeti3D Old" 3D engine demo by **Derek J. Evans** from [Nintendo Gam
 
 ## Videos
 
-See [TODO](https://TODO) video on YouTube.
+See [Yeti3D Engine (old version) port to ELF for Motorola P2K phones](https://www.youtube.com/watch?v=qHC2QYrFZlk) video on YouTube.
 
 ## Key controls
 

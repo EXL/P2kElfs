@@ -17,7 +17,7 @@ Port of the heavy optimized "Yeti3D" 3D engine demo by **Derek J. Evans** from [
 
 ## Videos
 
-See [TODO](https://TODO) video on YouTube.
+See [Yeti3D Engine port to ELF for Motorola P2K phones](https://www.youtube.com/watch?v=HqgMxK00QFg) video on YouTube.
 
 ## Key controls
 
