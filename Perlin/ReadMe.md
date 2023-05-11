@@ -20,6 +20,13 @@ Port of the "Perlin" plasma and fire demo by [@BOOtak](https://github.com/BOOtak
 See [Some ELF demos/games on Motorola P2K phones using ATI Imageon W2240/W2250 videochip
 ](https://www.youtube.com/watch?v=DsYLWXPgmsU&t=110s) video on YouTube.
 
+## Web Demo
+
+* [Perlin Web](https://lab.exlmoto.ru/perlin/) page.
+* [Perlin Web](https://exlmotodev.github.io/perlin/) mirror page.
+* [Snake Pit Web](https://lab.exlmoto.ru/snake_pit/) page.
+* [Snake Pit Web](https://exlmotodev.github.io/snake_pit/) mirror page.
+
 ## Key controls
 
 * 1, 2, 3 - Change palette.

@@ -20,6 +20,11 @@ Port of the "Spout" game by kuni to the Motorola P2K phones platform.
 See [Some ELF demos/games on Motorola P2K phones using ATI Imageon W2240/W2250 videochip
 ](https://www.youtube.com/watch?v=DsYLWXPgmsU) video on YouTube.
 
+## Web Demo
+
+* [Spout Web](https://lab.exlmoto.ru/spout/) page.
+* [Spout Web](https://exlmotodev.github.io/spout/) mirror page.
+
 ## Key controls
 
 * D-Pad, 2, 4, 6, 8 - Movement.
