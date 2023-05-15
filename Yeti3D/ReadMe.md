@@ -57,6 +57,8 @@ See [Yeti3D Engine port to ELF for Motorola P2K phones](https://www.youtube.com/
 | ROKR E1 | 176x220 | ROT90 | 96x64 (rotozoom)    | Yes       | No               | 30.0       | 11.15, 8.6-12.0    | Y3D_RO1_96x64.elf    |
 | ROKR E1 | 176x220 | ROT90 | 96x64 (rotozoom)    | No        | Yes              | 1000.0     | 8.04, 7.5-8.6      | Y3D_RN2T_96x64.elf   |
 | ROKR E1 | 176x220 | ROT90 | 96x64 (rotozoom)    | Yes       | Yes              | 1000.0     | 8.12, 7.5-8.6      | Y3D_RO2T_96x64.elf   |
+| V360    | 176x220 | ROT90 | 96x64 (rotozoom)    | No        | No               | 30.0       | 9.98, 6.2-12.1     | Y3D_RN1_96x64.elf    |
+| V360    | 176x220 | ROT0  | 220x176 (videomode) | No        | No               | 30.0       | 3.64, 2.7-5.0      | Y3D_VN1E_176x220.elf |
 
 ### Legend
 
@@ -67,10 +69,11 @@ See [Yeti3D Engine port to ELF for Motorola P2K phones](https://www.youtube.com/
 * 1 (3rd) - Elf for ElfPack 1.0, tested with.
 * 2 (3rd) - Elf for ElfPack 2.0, tested with.
 * T (4th) - Elf for ElfPack 2.0, with using Tasks and Semaphores.
+* E (4th) - Exclusive test version with some unique patches like screen buffer in Java Heap and debug output. Without using `Class_dal` constant.
 
 ### Summary
 
-* 8 ELFs + ElfPack 2.0 ELFs + 4 Task and Semaphores ELFs = 20 ELFs.
+* 8 ELFs + ElfPack 2.0 ELFs + 4 Task and Semaphores ELFs + 1 Debug ELF = 21 ELFs.
 
 ## Additional information
 
