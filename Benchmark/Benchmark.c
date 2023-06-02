@@ -102,6 +102,75 @@ static const STATE_HANDLERS_ENTRY_T g_state_table_hdls[] = {
 	{ APP_STATE_MAIN, HandleStateEnter, NULL, g_state_main_hdls }
 };
 
+static __inline UINT64 getCycles(void) {
+	return suPalReadTime();
+}
+
+static __inline UINT64 getMillisecondCounter(void) {
+	return suPalTicksToMsec(suPalReadTime());
+}
+
+static __inline UINT64 getClockSpeed(void) {
+	UINT64 cycles_1;
+	UINT64 millis_1;
+	UINT64 cycles_2;
+	UINT64 millis_2;
+	UINT64 millis_e;
+	UINT64 result;
+
+	result = 0;
+	cycles_1 = getCycles();
+	millis_1 = getMillisecondCounter();
+
+	for (;;) {
+		int n = 1000000;
+		while (--n > 0) {}
+
+		millis_2 = getMillisecondCounter();
+		cycles_2 = getCycles();
+
+		millis_e = millis_2 - millis_1;
+
+		if (millis_e > 1000) {
+			PFprintf("1: cycles: %llu\n", cycles_1);
+			PFprintf("1: millis: %llu\n", millis_1);
+			PFprintf("2: cycles: %llu\n", cycles_2);
+			PFprintf("2: millis: %llu\n", millis_2);
+			PFprintf("e: millis: %llu\n", millis_e);
+			return result;
+		}
+	}
+}
+
+#pragma O0
+static __inline void BogoMIPS_Delay(int loops) {
+	int i;
+	for (i = loops; !!(i > 0); --i) {
+		;
+	}
+}
+#pragma no_O0
+
+static __inline INT32 BogoMIPS(void) {
+	UINT64 loops_per_sec = 1;
+	UINT64 ticks;
+
+
+	ticks = suPalReadTime();
+
+	while ((1)) {
+		BogoMIPS_Delay(1);
+		ticks = suPalReadTime() - ticks;
+		if (ticks >= 160000) {
+			UINT64 lps = loops_per_sec;
+			lps = (lps / ticks);
+			PFprintf("ok - %llu.%02llu BogoMips", lps/500000, (lps/5000) % 100);
+			return 1;
+		}
+	}
+	return 0;
+}
+
 #if defined(EP1)
 UINT32 Register(const char *elf_path_uri, const char *args, UINT32 ev_code) {
 	UINT32 status;
@@ -300,10 +369,15 @@ static UINT32 HandleEventKeyPress(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
 
 	switch (event->data.key_pressed) {
 		case KEY_1:
+			PFprintf("%d\n", *(UINT8 *) 0x3FC3600);
+//			PFprintf("%d\n", &hapi_clock_rate_mcu);
+//			PFprintf("%d\n", *((UINT8 *) hapi_clock_rate_mcu));
 			break;
 		case KEY_2:
+			PFprintf("%d\n", getClockSpeed());
 			break;
 		case KEY_3:
+			BogoMIPS();
 			break;
 		case KEY_4:
 			break;

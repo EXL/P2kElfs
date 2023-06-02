@@ -24,8 +24,8 @@ set DEFINES=-D__P2K__ -DEP1
 set ELF_NAME=Benchmark
 
 :: Compiling step.
-%ARM_PATH%\tcc -I%SDK_PATH% %DEFINES% -bigend -apcs /interwork -O2 -c %ELF_NAME%.c -o %ELF_NAME%.o
-%ARM_PATH%\tcc -I%SDK_PATH% %DEFINES% -bigend -apcs /interwork -O2 -c Phases.c -o Phases.o
+%ARM_PATH%\armcc -I%SDK_PATH% %DEFINES% -bigend -apcs /interwork -O0 -c %ELF_NAME%.c -o %ELF_NAME%.o
+%ARM_PATH%\armcc -I%SDK_PATH% %DEFINES% -bigend -apcs /interwork -O0 -c Phases.c -o Phases.o
 
 :: Linking step.
 %ARM_PATH%\armlink -nolocals -reloc -first %LIB_MAIN%(Lib) %ELF_NAME%.o Phases.o %LIB_PATH%\%LIB_MAIN% -o %ELF_NAME%.elf
