@@ -138,14 +138,15 @@ static const WCHAR g_str_menu_boot_hwcfg[] = L"Boot, hwcfg CG5";
 static const WCHAR g_str_menu_pds[] = L"PDS CG6";
 static const WCHAR g_str_menu_ram[] = L"RAM";
 static const WCHAR g_str_menu_battery_rom[] = L"Battery ROM";
-static const WCHAR g_str_menu_irom[] = L"iROM";
-static const WCHAR g_str_menu_iram[] = L"iRAM";
+static const WCHAR g_str_menu_irom[] = L"IROM";
+static const WCHAR g_str_menu_iram[] = L"IRAM";
 static const WCHAR g_str_menu_help[] = L"Help...";
 static const WCHAR g_str_menu_about[] = L"About...";
 static const WCHAR g_str_dump_ok[] = L"Memory region dumped to:";
 static const WCHAR g_str_dump_fail[] = L"Check free space. Cannot dump memory region to:";
 static const WCHAR g_str_view_help[] = L"Help";
-static const WCHAR g_str_help_content_p1[] = L"ELF utility for dumping various memory regions of Motorola P2K phones.";
+static const WCHAR g_str_help_content_p1[] = L"ELF utility for dumping various memory regions of Motorola P2K phones."
+	L" RAM and IROM dumps can take a long time, please be patient.";
 static const WCHAR g_str_about_content_p1[] = L"Version: 1.0";
 static const WCHAR g_str_about_content_p2[] = L"\x00A9 EXL, 02-Jun-2023.";
 static const WCHAR g_str_about_content_p3[] = L"https://github.com/EXL/P2kElfs/tree/master/Dumper";
@@ -777,11 +778,11 @@ static UINT32 DumpIROM(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
 	app_instance = (APP_INSTANCE_T *) app;
 
 	if (app_instance->phone_parameters.soc == SOC_LTE2 || app_instance->phone_parameters.soc == SOC_LTE2_EZX) {
-		return DumpMemoryRegionToFile(ev_st, app, 0x0, 0x20000, g_file_dump_irom, 8192);
+		return DumpMemoryRegionToFile(ev_st, app, 0x0, 0x20000, g_file_dump_irom, 0);
 	} else if (app_instance->phone_parameters.soc == SOC_LTE2_LAST) {
-		return DumpMemoryRegionToFile(ev_st, app, 0x0, 0x40000, g_file_dump_irom, 8192);
+		return DumpMemoryRegionToFile(ev_st, app, 0x0, 0x40000, g_file_dump_irom, 0);
 	} else {
-		return DumpMemoryRegionToFile(ev_st, app, 0x0, 0x1C0000, g_file_dump_irom, 8192);
+		return DumpMemoryRegionToFile(ev_st, app, 0x0, 0x1C0000, g_file_dump_irom, 0);
 	}
 }
 
