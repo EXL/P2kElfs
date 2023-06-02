@@ -1,6 +1,8 @@
 Dumper
 ======
 
+The "Dumper" ELF utility for dumping various memory regions of Motorola P2K phones.
+
 ## Additional information
 
 The ELF-application has been tested on the following phones and firmware:

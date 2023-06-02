@@ -1,6 +1,6 @@
 /*
  * About:
- *
+ * The "Dumper" ELF utility for dumping various memory regions of Motorola P2K phones.
  *
  * Author:
  *   EXL
@@ -145,10 +145,10 @@ static const WCHAR g_str_menu_about[] = L"About...";
 static const WCHAR g_str_dump_ok[] = L"Memory region dumped to:";
 static const WCHAR g_str_dump_fail[] = L"Check free space. Cannot dump memory region to:";
 static const WCHAR g_str_view_help[] = L"Help";
-static const WCHAR g_str_help_content_p1[] = L"Under Construction.";
+static const WCHAR g_str_help_content_p1[] = L"ELF utility for dumping various memory regions of Motorola P2K phones.";
 static const WCHAR g_str_about_content_p1[] = L"Version: 1.0";
-static const WCHAR g_str_about_content_p2[] = L"\x00A9 EXL, 15-Jan-2023.";
-static const WCHAR g_str_about_content_p3[] = L"https://github.com/EXL/P2kElfs";
+static const WCHAR g_str_about_content_p2[] = L"\x00A9 EXL, 02-Jun-2023.";
+static const WCHAR g_str_about_content_p3[] = L"https://github.com/EXL/P2kElfs/tree/master/Dumper";
 
 static const WCHAR g_file_dump_boot[]        = L"D_BOOT_HWCFG.bin";
 static const WCHAR g_file_dump_pds[]         = L"D_PDS.bin";
@@ -393,7 +393,8 @@ static UINT32 SetPhoneParameters(APP_INSTANCE_T *app_instance) {
 	if (!DL_FsGetVolumeDescr(disk_u, &volume_description)) {
 		return RESULT_FAIL;
 	}
-	PFprintf("Free Space: %d\n", volume_description.free);
+	app_instance->phone_parameters.free_size = volume_description.free;
+	PFprintf("Free Space: %d\n", app_instance->phone_parameters.free_size);
 
 	return RESULT_OK;
 }
@@ -776,11 +777,11 @@ static UINT32 DumpIROM(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
 	app_instance = (APP_INSTANCE_T *) app;
 
 	if (app_instance->phone_parameters.soc == SOC_LTE2 || app_instance->phone_parameters.soc == SOC_LTE2_EZX) {
-		return DumpMemoryRegionToFile(ev_st, app, 0x0, 0x20000, g_file_dump_iram, 8192);
+		return DumpMemoryRegionToFile(ev_st, app, 0x0, 0x20000, g_file_dump_irom, 8192);
 	} else if (app_instance->phone_parameters.soc == SOC_LTE2_LAST) {
-		return DumpMemoryRegionToFile(ev_st, app, 0x0, 0x40000, g_file_dump_iram, 8192);
+		return DumpMemoryRegionToFile(ev_st, app, 0x0, 0x40000, g_file_dump_irom, 8192);
 	} else {
-		return DumpMemoryRegionToFile(ev_st, app, 0x0, 0x1C0000, g_file_dump_iram, 8192);
+		return DumpMemoryRegionToFile(ev_st, app, 0x0, 0x1C0000, g_file_dump_irom, 8192);
 	}
 }
 
