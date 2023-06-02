@@ -23,6 +23,7 @@
 
 #define TIMER_FAST_TRIGGER_MS             (1)
 #define TIMER_POPUP_DELAY_MS            (100)
+#define DISK_DRIVER_NAME_SIZE             (8)
 
 typedef enum {
 	APP_STATE_ANY,
@@ -67,6 +68,19 @@ typedef enum {
 	APP_VIEW_ABOUT
 } APP_VIEW_T;
 
+typedef enum {
+	SOC_LTE,
+	SOC_LTE_OLD,
+	SOC_LTE2,
+	SOC_LTE2_LAST,
+	SOC_LTE2_EZX
+} PHONE_SOC_T;
+
+typedef struct {
+	UINT32 free_size;
+	PHONE_SOC_T soc;
+} PHONE_PARAMETERS_T;
+
 typedef struct {
 	APPLICATION_T app; /* Must be first. */
 
@@ -75,6 +89,8 @@ typedef struct {
 	APP_VIEW_T view;
 	APP_MENU_ITEM_T menu_current_item_index;
 	BOOL flag_from_select;
+
+	PHONE_PARAMETERS_T phone_parameters;
 } APP_INSTANCE_T;
 
 #if defined(EP1)
@@ -87,6 +103,7 @@ UINT32 ELF_Entry(ldrElf *elf, WCHAR *arguments);                             /* 
 
 static UINT32 ApplicationStart(EVENT_STACK_T *ev_st, REG_ID_T reg_id, void *reg_hdl);
 static UINT32 ApplicationStop(EVENT_STACK_T *ev_st, APPLICATION_T *app);
+static UINT32 SetPhoneParameters(APP_INSTANCE_T *app_instance);
 
 static UINT32 InitResourses(RESOURCE_ID *resources);
 static UINT32 FreeResourses(RESOURCE_ID *resources);
@@ -101,6 +118,19 @@ static UINT32 HandleEventBack(EVENT_STACK_T *ev_st, APPLICATION_T *app);
 
 static LIST_ENTRY_T *CreateList(EVENT_STACK_T *ev_st, APPLICATION_T *app, UINT32 start, UINT32 count);
 
+static UINT32 DumpBootAndHwcfg(EVENT_STACK_T *ev_st, APPLICATION_T *app);
+static UINT32 DumpPds(EVENT_STACK_T *ev_st, APPLICATION_T *app);
+static UINT32 DumpRam(EVENT_STACK_T *ev_st, APPLICATION_T *app);
+static UINT32 DumpBatteryRom(EVENT_STACK_T *ev_st, APPLICATION_T *app);
+static UINT32 DumpIROM(EVENT_STACK_T *ev_st, APPLICATION_T *app);
+static UINT32 DumpIRAM(EVENT_STACK_T *ev_st, APPLICATION_T *app);
+static UINT32 DumpMemoryRegionToFile(
+	EVENT_STACK_T *ev_st, APPLICATION_T *app,
+	UINT32 start, UINT32 size, const WCHAR *filename,
+	UINT32 chunk_size
+);
+static UINT32 ClearDataArrays(UINT8 *data_arr, UINT32 size);
+
 static const char g_app_name[APP_NAME_LEN] = "Dumper";
 
 static const WCHAR g_str_app_name[] = L"Dumper";
@@ -112,13 +142,23 @@ static const WCHAR g_str_menu_irom[] = L"iROM";
 static const WCHAR g_str_menu_iram[] = L"iRAM";
 static const WCHAR g_str_menu_help[] = L"Help...";
 static const WCHAR g_str_menu_about[] = L"About...";
+static const WCHAR g_str_dump_ok[] = L"Memory region dumped to:";
+static const WCHAR g_str_dump_fail[] = L"Check free space. Cannot dump memory region to:";
 static const WCHAR g_str_view_help[] = L"Help";
 static const WCHAR g_str_help_content_p1[] = L"Under Construction.";
 static const WCHAR g_str_about_content_p1[] = L"Version: 1.0";
 static const WCHAR g_str_about_content_p2[] = L"\x00A9 EXL, 15-Jan-2023.";
 static const WCHAR g_str_about_content_p3[] = L"https://github.com/EXL/P2kElfs";
 
+static const WCHAR g_file_dump_boot[]        = L"D_BOOT_HWCFG.bin";
+static const WCHAR g_file_dump_pds[]         = L"D_PDS.bin";
+static const WCHAR g_file_dump_ram[]         = L"D_RAM.bin";
+static const WCHAR g_file_dump_battery_rom[] = L"D_BATT_ROM.bin";
+static const WCHAR g_file_dump_irom[]        = L"D_IROM.bin";
+static const WCHAR g_file_dump_iram[]        = L"D_IRAM.bin";
+
 static WCHAR g_res_file_path[FS_MAX_URI_NAME_LENGTH];
+static WCHAR g_cur_file_path[FS_MAX_URI_NAME_LENGTH];
 
 #if defined(EP2)
 static ldrElf g_app_elf;
@@ -255,6 +295,7 @@ static UINT32 ApplicationStart(EVENT_STACK_T *ev_st, REG_ID_T reg_id, void *reg_
 		app_instance->popup = APP_POPUP_DUMP_OK;
 		app_instance->view = APP_VIEW_ABOUT;
 		app_instance->flag_from_select = FALSE;
+		SetPhoneParameters(app_instance);
 
 		status = APP_Start(ev_st, &app_instance->app, APP_STATE_MAIN,
 			g_state_table_hdls, ApplicationStop, g_app_name, 0);
@@ -291,6 +332,70 @@ static UINT32 ApplicationStop(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
 #endif
 
 	return status;
+}
+
+static UINT32 SetPhoneParameters(APP_INSTANCE_T *app_instance) {
+	char disk_a[DISK_DRIVER_NAME_SIZE]; /* /a/, /b/, /c/ */
+	WCHAR disk_u[DISK_DRIVER_NAME_SIZE]; /* /a/, /b/, /c/ */
+	VOLUME_DESCR_T volume_description;
+
+	if (strncmp("LTE", LdrGetPlatformName(), sizeof("LTE") - 1) == 0) {
+		if (strncmp("V300", LdrGetPhoneName(), sizeof("V300") - 1) == 0) {
+			app_instance->phone_parameters.soc = SOC_LTE_OLD;
+		} else if (strncmp("V500", LdrGetPhoneName(), sizeof("V500") - 1) == 0) {
+			app_instance->phone_parameters.soc = SOC_LTE_OLD;
+		} else if (strncmp("V600", LdrGetPhoneName(), sizeof("V600") - 1) == 0) {
+			app_instance->phone_parameters.soc = SOC_LTE_OLD;
+		} else if (strncmp("V80", LdrGetPhoneName(), sizeof("V80") - 1) == 0) {
+			app_instance->phone_parameters.soc = SOC_LTE_OLD;
+		} else if (strncmp("A630", LdrGetPhoneName(), sizeof("A630") - 1) == 0) {
+			app_instance->phone_parameters.soc = SOC_LTE_OLD;
+		} else if (strncmp("C650", LdrGetPhoneName(), sizeof("C650") - 1) == 0) {
+			app_instance->phone_parameters.soc = SOC_LTE_OLD;
+		} else {
+			app_instance->phone_parameters.soc = SOC_LTE;
+		}
+	} else if (strncmp("LTE2", LdrGetPlatformName(), sizeof("LTE2") - 1) == 0) {
+		if (strncmp("L7e", LdrGetPhoneName(), sizeof("L7e") - 1) == 0) {
+			app_instance->phone_parameters.soc = SOC_LTE2_LAST;
+		} else if (strncmp("K1", LdrGetPhoneName(), sizeof("K1") - 1) == 0) {
+			app_instance->phone_parameters.soc = SOC_LTE2_LAST;
+		} else if (strncmp("Z3", LdrGetPhoneName(), sizeof("Z3") - 1) == 0) {
+			app_instance->phone_parameters.soc = SOC_LTE2_LAST;
+		} else if (strncmp("L9", LdrGetPhoneName(), sizeof("L9") - 1) == 0) {
+			app_instance->phone_parameters.soc = SOC_LTE2_LAST;
+		} else if (strncmp("W490", LdrGetPhoneName(), sizeof("W490") - 1) == 0) {
+			app_instance->phone_parameters.soc = SOC_LTE2_LAST;
+		} else if (strncmp("W510", LdrGetPhoneName(), sizeof("W510") - 1) == 0) {
+			app_instance->phone_parameters.soc = SOC_LTE2_LAST;
+		} else if (strncmp("E2", LdrGetPhoneName(), sizeof("E2") - 1) == 0) {
+			app_instance->phone_parameters.soc = SOC_LTE2_EZX;
+		} else if (strncmp("E6", LdrGetPhoneName(), sizeof("E6") - 1) == 0) {
+			app_instance->phone_parameters.soc = SOC_LTE2_EZX;
+		} else if (strncmp("A1200", LdrGetPhoneName(), sizeof("A1200") - 1) == 0) {
+			app_instance->phone_parameters.soc = SOC_LTE2_EZX;
+		} else if (strncmp("A1600", LdrGetPhoneName(), sizeof("A1600") - 1) == 0) {
+			app_instance->phone_parameters.soc = SOC_LTE2_EZX;
+		} else if (strncmp("E895", LdrGetPhoneName(), sizeof("E895") - 1) == 0) {
+			app_instance->phone_parameters.soc = SOC_LTE2_EZX;
+		} else if (strncmp("A910", LdrGetPhoneName(), sizeof("A910") - 1) == 0) {
+			app_instance->phone_parameters.soc = SOC_LTE2_EZX;
+		} else {
+			app_instance->phone_parameters.soc = SOC_LTE2;
+		}
+	}
+	PFprintf("SoC: %d\n", app_instance->phone_parameters.soc);
+
+	u_strncpy(disk_u, g_res_file_path + 6, 3); /* file://c/... */
+	u_utoa(disk_u, disk_a);
+	PFprintf("Disk: %s\n", disk_a);
+
+	if (!DL_FsGetVolumeDescr(disk_u, &volume_description)) {
+		return RESULT_FAIL;
+	}
+	PFprintf("Free Space: %d\n", volume_description.free);
+
+	return RESULT_OK;
 }
 
 static UINT32 InitResourses(RESOURCE_ID *resources) {
@@ -368,9 +473,11 @@ static UINT32 HandleStateEnter(EVENT_STACK_T *ev_st, APPLICATION_T *app, ENTER_S
 				default:
 				case APP_POPUP_DUMP_OK:
 					notice_type = NOTICE_TYPE_OK;
+					UIS_MakeContentFromString("MCq0NMCq1", &content, g_str_dump_ok, g_cur_file_path);
 					break;
 				case APP_POPUP_DUMP_FAIL:
 					notice_type = NOTICE_TYPE_FAIL;
+					UIS_MakeContentFromString("MCq0NMCq1", &content, g_str_dump_fail, g_cur_file_path);
 					break;
 				case APP_POPUP_DUMP_WAIT:
 					notice_type = NOTICE_TYPE_WAIT;
@@ -457,15 +564,52 @@ static UINT32 HandleEventSelect(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
 
 	switch (app_instance->menu_current_item_index) {
 		case APP_MENU_ITEM_BOOT_HWCFG:
-			/*
-			if (SaveGame(app) == RESULT_OK) {
-				app_instance->popup = APP_POPUP_SAVE_OK;
-				APP_UtilStartTimer(TIMER_POPUP_DELAY_MS, APP_TIMER_SAVE, app);
+			if (DumpBootAndHwcfg(ev_st, app) == RESULT_OK) {
+				app_instance->popup = APP_POPUP_DUMP_OK;
 			} else {
-				app_instance->popup = APP_POPUP_SAVE_FAIL;
+				app_instance->popup = APP_POPUP_DUMP_FAIL;
 			}
 			status |= APP_UtilChangeState(APP_STATE_POPUP, ev_st, app);
-			*/
+			break;
+		case APP_MENU_ITEM_PDS:
+			if (DumpPds(ev_st, app) == RESULT_OK) {
+				app_instance->popup = APP_POPUP_DUMP_OK;
+			} else {
+				app_instance->popup = APP_POPUP_DUMP_FAIL;
+			}
+			status |= APP_UtilChangeState(APP_STATE_POPUP, ev_st, app);
+			break;
+		case APP_MENU_ITEM_RAM:
+			if (DumpRam(ev_st, app) == RESULT_OK) {
+				app_instance->popup = APP_POPUP_DUMP_OK;
+			} else {
+				app_instance->popup = APP_POPUP_DUMP_FAIL;
+			}
+			status |= APP_UtilChangeState(APP_STATE_POPUP, ev_st, app);
+			break;
+		case APP_MENU_ITEM_BATTERY_ROM:
+			if (DumpBatteryRom(ev_st, app) == RESULT_OK) {
+				app_instance->popup = APP_POPUP_DUMP_OK;
+			} else {
+				app_instance->popup = APP_POPUP_DUMP_FAIL;
+			}
+			status |= APP_UtilChangeState(APP_STATE_POPUP, ev_st, app);
+			break;
+		case APP_MENU_ITEM_IROM:
+			if (DumpIROM(ev_st, app) == RESULT_OK) {
+				app_instance->popup = APP_POPUP_DUMP_OK;
+			} else {
+				app_instance->popup = APP_POPUP_DUMP_FAIL;
+			}
+			status |= APP_UtilChangeState(APP_STATE_POPUP, ev_st, app);
+			break;
+		case APP_MENU_ITEM_IRAM:
+			if (DumpIRAM(ev_st, app) == RESULT_OK) {
+				app_instance->popup = APP_POPUP_DUMP_OK;
+			} else {
+				app_instance->popup = APP_POPUP_DUMP_FAIL;
+			}
+			status |= APP_UtilChangeState(APP_STATE_POPUP, ev_st, app);
 			break;
 		case APP_MENU_ITEM_HELP:
 			app_instance->view = APP_VIEW_HELP;
@@ -495,13 +639,11 @@ static UINT32 HandleEventBack(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
 static LIST_ENTRY_T *CreateList(EVENT_STACK_T *ev_st, APPLICATION_T *app, UINT32 start, UINT32 count) {
 	UINT32 status;
 	INT32 result;
-	APP_INSTANCE_T *app_instance;
 	UINT32 i;
 	LIST_ENTRY_T *list_elements;
 
 	status = RESULT_OK;
 	result = RESULT_OK;
-	app_instance = (APP_INSTANCE_T *) app;
 
 	if (count == 0) {
 		return NULL;
@@ -548,4 +690,181 @@ static LIST_ENTRY_T *CreateList(EVENT_STACK_T *ev_st, APPLICATION_T *app, UINT32
 	}
 
 	return list_elements;
+}
+
+static UINT32 DumpBootAndHwcfg(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
+	return DumpMemoryRegionToFile(ev_st, app, 0x10000000, 0x10000, g_file_dump_boot, 0);
+}
+
+static UINT32 DumpPds(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
+	APP_INSTANCE_T *app_instance;
+
+	app_instance = (APP_INSTANCE_T *) app;
+
+	if (app_instance->phone_parameters.soc != SOC_LTE2_EZX) {
+		return DumpMemoryRegionToFile(ev_st, app, 0x10010000, 0x10000, g_file_dump_pds, 0);
+	} else {
+		return DumpMemoryRegionToFile(ev_st, app, 0x10010000, 0x20000, g_file_dump_pds, 0);
+	}
+}
+
+static UINT32 DumpRam(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
+	APP_INSTANCE_T *app_instance;
+
+	app_instance = (APP_INSTANCE_T *) app;
+
+	if (app_instance->phone_parameters.soc == SOC_LTE_OLD) {
+		return DumpMemoryRegionToFile(ev_st, app, 0x12000000, 0x400000, g_file_dump_ram, 8192);
+	} else if (app_instance->phone_parameters.soc == SOC_LTE || app_instance->phone_parameters.soc == SOC_LTE2) {
+		return DumpMemoryRegionToFile(ev_st, app, 0x12000000, 0x800000, g_file_dump_ram, 8192);
+	} else if (app_instance->phone_parameters.soc == SOC_LTE2_LAST) {
+		return DumpMemoryRegionToFile(ev_st, app, 0x14000000, 0x1000000, g_file_dump_ram, 8192);
+	} else { /* Unknown?! Dump atleast 2MB. */
+		return DumpMemoryRegionToFile(ev_st, app, 0x12000000, 0x200000, g_file_dump_ram, 8192);
+	}
+}
+
+static UINT32 DumpBatteryRom(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
+	UINT32 status;
+	UINT32 written;
+	FILE rom;
+	UINT8 battery_id[HAPI_BATTERY_ROM_UNIQUE_ID_SIZE];
+	UINT8 battery_rom[HAPI_BATTERY_ROM_BYTE_SIZE];
+	HAPI_BATTERY_ROM_T battery_status;
+
+	status = RESULT_OK;
+
+	ClearDataArrays(battery_id, HAPI_BATTERY_ROM_UNIQUE_ID_SIZE);
+	ClearDataArrays(battery_rom, HAPI_BATTERY_ROM_BYTE_SIZE);
+
+	battery_status = HAPI_BATTERY_ROM_NONE;
+	HAPI_BATTERY_ROM_get_unique_id(battery_id);
+	battery_status = HAPI_BATTERY_ROM_read(battery_rom);
+
+	u_strcpy(g_cur_file_path, g_res_file_path);
+	g_cur_file_path[u_strlen(g_res_file_path) - 10] = '\0'; /* file://c/Elf/Dumper.elf */
+	u_strcat(g_cur_file_path, g_file_dump_battery_rom);
+
+	if (DL_FsFFileExist(g_cur_file_path)) {
+		status = DL_FsDeleteFile(g_cur_file_path, 0);
+		if (status != RESULT_OK) {
+			return RESULT_FAIL;
+		}
+	}
+
+	rom = DL_FsOpenFile(g_cur_file_path, FILE_WRITE_MODE, 0);
+
+	/*
+	 * Binary battery file format:
+	 *    4 bytes = Battery status.
+	 *    6 bytes = Battery id.
+	 *  128 bytes = Battery ROM.
+	 *  138 bytes = Total.
+	 */
+	status |= DL_FsWriteFile((void *) &battery_status, sizeof(UINT32), 1, rom, &written);
+	status |= DL_FsWriteFile((void *) &battery_id, HAPI_BATTERY_ROM_UNIQUE_ID_SIZE, 1, rom, &written);
+	status |= DL_FsWriteFile((void *) &battery_rom, HAPI_BATTERY_ROM_BYTE_SIZE, 1, rom, &written);
+
+	DL_FsCloseFile(rom);
+
+	return status;
+}
+
+static UINT32 DumpIROM(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
+	APP_INSTANCE_T *app_instance;
+
+	app_instance = (APP_INSTANCE_T *) app;
+
+	if (app_instance->phone_parameters.soc == SOC_LTE2 || app_instance->phone_parameters.soc == SOC_LTE2_EZX) {
+		return DumpMemoryRegionToFile(ev_st, app, 0x0, 0x20000, g_file_dump_iram, 8192);
+	} else if (app_instance->phone_parameters.soc == SOC_LTE2_LAST) {
+		return DumpMemoryRegionToFile(ev_st, app, 0x0, 0x40000, g_file_dump_iram, 8192);
+	} else {
+		return DumpMemoryRegionToFile(ev_st, app, 0x0, 0x1C0000, g_file_dump_iram, 8192);
+	}
+}
+
+static UINT32 DumpIRAM(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
+	APP_INSTANCE_T *app_instance;
+
+	app_instance = (APP_INSTANCE_T *) app;
+
+	if (app_instance->phone_parameters.soc == SOC_LTE) {
+		return DumpMemoryRegionToFile(ev_st, app, 0x03FC0000, 0x40000, g_file_dump_iram, 0);
+	} else {
+		return DumpMemoryRegionToFile(ev_st, app, 0x03F80000, 0x80000, g_file_dump_iram, 0);
+	}
+}
+
+static UINT32 DumpMemoryRegionToFile(
+	EVENT_STACK_T *ev_st, APPLICATION_T *app,
+	UINT32 start, UINT32 size, const WCHAR *filename,
+	UINT32 chunk_size
+) {
+	UINT32 status;
+	UINT32 written;
+	UINT32 real_start;
+	UINT32 real_size;
+	FILE_HANDLE_T file;
+	APP_INSTANCE_T *app_instance;
+
+	status = RESULT_OK;
+	written = 0;
+	app_instance = (APP_INSTANCE_T *) app;
+
+	u_strcpy(g_cur_file_path, g_res_file_path);
+	g_cur_file_path[u_strlen(g_res_file_path) - 10] = '\0'; /* file://c/Elf/Dumper.elf */
+	u_strcat(g_cur_file_path, filename);
+
+	if (app_instance->phone_parameters.free_size <= size) { /* 65536 bytes, 65 kB */
+		return RESULT_FAIL;
+	}
+
+	if (DL_FsFFileExist(g_cur_file_path)) {
+		status = DL_FsDeleteFile(g_cur_file_path, 0);
+		if (status != RESULT_OK) {
+			return RESULT_FAIL;
+		}
+	}
+
+	file = DL_FsOpenFile(g_cur_file_path, FILE_WRITE_MODE, NULL);
+
+	if (start == 0x0) { /* IROM dumping hack. */
+		UINT8 first_byte = 0xE5;
+		real_start = 0x01;
+		real_size = size - 1;
+		status |= DL_FsWriteFile((void *) &first_byte, sizeof(UINT8), 1, file, &written);
+		if (written == 0) {
+			status = RESULT_FAIL;
+		}
+	} else {
+		real_start = start;
+		real_size = size;
+	}
+
+	if (chunk_size != 0) {
+		int i;
+		for (i = real_start; i < real_start + real_size; i += chunk_size) {
+			status |= DL_FsWriteFile((void *) i, chunk_size, 1, file, &written);
+			if (written == 0) {
+				status = RESULT_FAIL;
+			}
+		}
+	} else {
+		status |= DL_FsWriteFile((void *) real_start, real_size, 1, file, &written);
+		if (written == 0) {
+			status = RESULT_FAIL;
+		}
+	}
+	status |= DL_FsCloseFile(file);
+
+	return status;
+}
+
+static UINT32 ClearDataArrays(UINT8 *data_arr, UINT32 size) {
+	UINT32 i;
+	for (i = 0; i < size; ++i) {
+		data_arr[i] = 0;
+	}
+	return RESULT_OK;
 }
