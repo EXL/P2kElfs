@@ -24,6 +24,7 @@
 #define TIMER_FAST_TRIGGER_MS             (1)
 #define TIMER_POPUP_DELAY_MS            (100)
 #define DISK_DRIVER_NAME_SIZE             (8)
+#define DEBUG_OUTPUT_MAX_LENGTH         (200)
 
 typedef enum {
 	APP_STATE_ANY,
@@ -69,11 +70,11 @@ typedef enum {
 } APP_VIEW_T;
 
 typedef enum {
-	SOC_LTE,
-	SOC_LTE_OLD,
-	SOC_LTE2,
-	SOC_LTE2_LAST,
-	SOC_LTE2_EZX
+	SOC_LTE,           /* E398, SLVR L6, ROKR E1, V3. */
+	SOC_LTE_OLD,       /* V300, V500, V600, V80, A630. */
+	SOC_LTE2,          /* V360, V235, SLVR L7. */
+	SOC_LTE2_LAST,     /* SLVR L7e, SLVR L9, RIZR Z3, KRZR K1. */
+	SOC_LTE2_EZX       /* ROKR E2 (BaseBand Processor), A1200 (BaseBand Processor). */
 } PHONE_SOC_T;
 
 typedef struct {
@@ -104,6 +105,7 @@ UINT32 ELF_Entry(ldrElf *elf, WCHAR *arguments);                             /* 
 static UINT32 ApplicationStart(EVENT_STACK_T *ev_st, REG_ID_T reg_id, void *reg_hdl);
 static UINT32 ApplicationStop(EVENT_STACK_T *ev_st, APPLICATION_T *app);
 static UINT32 SetPhoneParameters(APP_INSTANCE_T *app_instance);
+static const char *GetSoCName(PHONE_SOC_T SoC);
 
 static UINT32 InitResourses(RESOURCE_ID *resources);
 static UINT32 FreeResourses(RESOURCE_ID *resources);
@@ -145,7 +147,8 @@ static const WCHAR g_str_menu_about[] = L"About...";
 static const WCHAR g_str_dump_ok[] = L"Memory region dumped to:";
 static const WCHAR g_str_dump_fail[] = L"Check free space. Cannot dump memory region to:";
 static const WCHAR g_str_view_help[] = L"Help";
-static const WCHAR g_str_help_content_p1[] = L"ELF utility for dumping various memory regions of Motorola P2K phones."
+static WCHAR *g_str_help_content_p1 = NULL;
+static const WCHAR g_str_help_content_p2[] = L"ELF utility for dumping various memory regions of Motorola P2K phones."
 	L" RAM and IROM dumps can take a long time, please be patient.";
 static const WCHAR g_str_about_content_p1[] = L"Version: 1.0";
 static const WCHAR g_str_about_content_p2[] = L"\x00A9 EXL, 02-Jun-2023.";
@@ -336,9 +339,20 @@ static UINT32 ApplicationStop(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
 }
 
 static UINT32 SetPhoneParameters(APP_INSTANCE_T *app_instance) {
+	INT32 result;
+	char buffer_a[DEBUG_OUTPUT_MAX_LENGTH + 1];
+	WCHAR buffer_u[DEBUG_OUTPUT_MAX_LENGTH + 1];
 	char disk_a[DISK_DRIVER_NAME_SIZE]; /* /a/, /b/, /c/ */
 	WCHAR disk_u[DISK_DRIVER_NAME_SIZE]; /* /a/, /b/, /c/ */
 	VOLUME_DESCR_T volume_description;
+
+	result = RESULT_OK;
+
+	g_str_help_content_p1 = suAllocMem(sizeof(WCHAR) * (DEBUG_OUTPUT_MAX_LENGTH + 1), &result);
+	if (result != RESULT_OK) {
+		return RESULT_FAIL;
+	}
+	memclr(g_str_help_content_p1, sizeof(WCHAR) * (DEBUG_OUTPUT_MAX_LENGTH + 1));
 
 	if (strncmp("LTE", LdrGetPlatformName(), sizeof("LTE") - 1) == 0) {
 		if (strncmp("V300", LdrGetPhoneName(), sizeof("V300") - 1) == 0) {
@@ -386,18 +400,43 @@ static UINT32 SetPhoneParameters(APP_INSTANCE_T *app_instance) {
 		}
 	}
 	PFprintf("SoC: %d\n", app_instance->phone_parameters.soc);
+	sprintf(buffer_a, "SoC: %s\n", GetSoCName(app_instance->phone_parameters.soc));
+	u_atou(buffer_a, buffer_u);
+	u_strcat(g_str_help_content_p1, buffer_u);
 
 	u_strncpy(disk_u, g_res_file_path + 6, 3); /* file://c/... */
 	u_utoa(disk_u, disk_a);
 	PFprintf("Disk: %s\n", disk_a);
+	sprintf(buffer_a, "Disk: %s\n", disk_a);
+	u_atou(buffer_a, buffer_u);
+	u_strcat(g_str_help_content_p1, buffer_u);
 
 	if (!DL_FsGetVolumeDescr(disk_u, &volume_description)) {
 		return RESULT_FAIL;
 	}
 	app_instance->phone_parameters.free_size = volume_description.free;
-	PFprintf("Free Space: %d\n", app_instance->phone_parameters.free_size);
+	PFprintf("Free Space: %lu\n", app_instance->phone_parameters.free_size);
+	sprintf(buffer_a, "Free Space: %lu\n\n", app_instance->phone_parameters.free_size);
+	u_atou(buffer_a, buffer_u);
+	u_strcat(g_str_help_content_p1, buffer_u);
 
 	return RESULT_OK;
+}
+
+static const char *GetSoCName(PHONE_SOC_T SoC) {
+	switch (SoC) {
+		default:
+		case SOC_LTE:
+			return "LTE";
+		case SOC_LTE_OLD:
+			return "LTE (old)";
+		case SOC_LTE2:
+			return "LTE2";
+		case SOC_LTE2_EZX:
+			return "LTE2 (ezx)";
+		case SOC_LTE2_LAST:
+			return "LTE2 (last)";
+	}
 }
 
 static UINT32 InitResourses(RESOURCE_ID *resources) {
@@ -422,6 +461,8 @@ static UINT32 FreeResourses(RESOURCE_ID *resources) {
 			status |= DRM_ClearResource(resources[i]);
 		}
 	}
+
+	suFreeMem(g_str_help_content_p1);
 
 	return status;
 }
@@ -491,7 +532,8 @@ static UINT32 HandleStateEnter(EVENT_STACK_T *ev_st, APPLICATION_T *app, ENTER_S
 			switch (app_instance->view) {
 				default:
 				case APP_VIEW_HELP:
-					UIS_MakeContentFromString("q0Nq1", &content, g_str_view_help, g_str_help_content_p1);
+					UIS_MakeContentFromString("q0Nq1Nq2", &content, g_str_view_help,
+						g_str_help_content_p1, g_str_help_content_p2);
 					break;
 				case APP_VIEW_ABOUT:
 					UIS_MakeContentFromString("q0NMCq1NMCq2NMCq3", &content, g_str_app_name,
