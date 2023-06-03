@@ -354,23 +354,7 @@ static UINT32 SetPhoneParameters(APP_INSTANCE_T *app_instance) {
 	}
 	memclr(g_str_help_content_p1, sizeof(WCHAR) * (DEBUG_OUTPUT_MAX_LENGTH + 1));
 
-	if (strncmp("LTE", LdrGetPlatformName(), sizeof("LTE") - 1) == 0) {
-		if (strncmp("V300", LdrGetPhoneName(), sizeof("V300") - 1) == 0) {
-			app_instance->phone_parameters.soc = SOC_LTE_OLD;
-		} else if (strncmp("V500", LdrGetPhoneName(), sizeof("V500") - 1) == 0) {
-			app_instance->phone_parameters.soc = SOC_LTE_OLD;
-		} else if (strncmp("V600", LdrGetPhoneName(), sizeof("V600") - 1) == 0) {
-			app_instance->phone_parameters.soc = SOC_LTE_OLD;
-		} else if (strncmp("V80", LdrGetPhoneName(), sizeof("V80") - 1) == 0) {
-			app_instance->phone_parameters.soc = SOC_LTE_OLD;
-		} else if (strncmp("A630", LdrGetPhoneName(), sizeof("A630") - 1) == 0) {
-			app_instance->phone_parameters.soc = SOC_LTE_OLD;
-		} else if (strncmp("C650", LdrGetPhoneName(), sizeof("C650") - 1) == 0) {
-			app_instance->phone_parameters.soc = SOC_LTE_OLD;
-		} else {
-			app_instance->phone_parameters.soc = SOC_LTE;
-		}
-	} else if (strncmp("LTE2", LdrGetPlatformName(), sizeof("LTE2") - 1) == 0) {
+	if (strncmp("LTE2", LdrGetPlatformName(), sizeof("LTE2") - 1) == 0) {
 		if (strncmp("L7e", LdrGetPhoneName(), sizeof("L7e") - 1) == 0) {
 			app_instance->phone_parameters.soc = SOC_LTE2_LAST;
 		} else if (strncmp("K1", LdrGetPhoneName(), sizeof("K1") - 1) == 0) {
@@ -397,6 +381,22 @@ static UINT32 SetPhoneParameters(APP_INSTANCE_T *app_instance) {
 			app_instance->phone_parameters.soc = SOC_LTE2_EZX;
 		} else {
 			app_instance->phone_parameters.soc = SOC_LTE2;
+		}
+	} else if (strncmp("LTE", LdrGetPlatformName(), sizeof("LTE") - 1) == 0) {
+		if (strncmp("V300", LdrGetPhoneName(), sizeof("V300") - 1) == 0) {
+			app_instance->phone_parameters.soc = SOC_LTE_OLD;
+		} else if (strncmp("V500", LdrGetPhoneName(), sizeof("V500") - 1) == 0) {
+			app_instance->phone_parameters.soc = SOC_LTE_OLD;
+		} else if (strncmp("V600", LdrGetPhoneName(), sizeof("V600") - 1) == 0) {
+			app_instance->phone_parameters.soc = SOC_LTE_OLD;
+		} else if (strncmp("V80", LdrGetPhoneName(), sizeof("V80") - 1) == 0) {
+			app_instance->phone_parameters.soc = SOC_LTE_OLD;
+		} else if (strncmp("A630", LdrGetPhoneName(), sizeof("A630") - 1) == 0) {
+			app_instance->phone_parameters.soc = SOC_LTE_OLD;
+		} else if (strncmp("C650", LdrGetPhoneName(), sizeof("C650") - 1) == 0) {
+			app_instance->phone_parameters.soc = SOC_LTE_OLD;
+		} else {
+			app_instance->phone_parameters.soc = SOC_LTE;
 		}
 	}
 	PFprintf("SoC: %d\n", app_instance->phone_parameters.soc);
