@@ -51,8 +51,10 @@ typedef struct {
 UINT32 Register(const char *elf_path_uri, const char *args, UINT32 ev_code); /* ElfPack 1.x entry point. */
 #elif defined(EP2)
 ldrElf *_start(WCHAR *uri, WCHAR *arguments);                                /* ElfPack 2.x entry point. */
-#elif defined(EPMCORE)
-UINT32 ELF_Entry(ldrElf *elf, WCHAR *arguments);                             /* ElfPack M*CORE entry point. */
+#elif defined(EM1)
+int _main(ElfLoaderApp ela);                                                 /* ElfPack 1.x M*CORE entry point. */
+#elif defined(EM2)
+UINT32 ELF_Entry(ldrElf *elf, WCHAR *arguments);                             /* ElfPack 2.x M*CORE entry point. */
 #endif
 
 static UINT32 ApplicationStart(EVENT_STACK_T *ev_st, REG_ID_T reg_id, void *reg_hdl);
@@ -73,7 +75,9 @@ static const COLOR_T g_color_background   = { 0xBB, 0xAD, 0xA0, 0xFF };
 
 #if defined(EP2)
 static ldrElf g_app_elf;
-#elif defined(EPMCORE)
+#elif defined(EM1)
+static ElfLoaderApp g_app_elf = { 0 };
+#elif defined(EM2)
 static ldrElf *g_app_elf = NULL;
 #endif
 
@@ -209,7 +213,21 @@ ldrElf *_start(WCHAR *uri, WCHAR *arguments) {
 
 	return (status == RESULT_OK) ? &g_app_elf : NULL;
 }
-#elif defined(EPMCORE)
+#elif defined(EM1)
+int _main(ElfLoaderApp ela) {
+	UINT32 status;
+
+	status = RESULT_OK;
+
+	memcpy((void *) &g_app_elf, (void *) &ela, sizeof(ElfLoaderApp));
+
+	status = APP_Register(&g_app_elf.evcode, 1, g_state_table_hdls, APP_STATE_MAX, (void *) ApplicationStart);
+
+	LoaderShowApp(&g_app_elf);
+
+	return RESULT_FAIL;
+}
+#elif defined(EM2)
 UINT32 ELF_Entry(ldrElf *elf, WCHAR *arguments) {
 	UINT32 status;
 	UINT32 reserve;
@@ -256,7 +274,7 @@ static UINT32 ApplicationStart(EVENT_STACK_T *ev_st, REG_ID_T reg_id, void *reg_
 
 #if defined(EP2)
 		g_app_elf.app = (APPLICATION_T *) app_instance;
-#elif defined(EPMCORE)
+#elif defined(EM2)
 		g_app_elf->app = &app_instance->app;
 #endif
 	}
@@ -277,7 +295,9 @@ static UINT32 ApplicationStop(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
 	LdrUnloadELF(&Lib);
 #elif defined(EP2)
 	ldrUnloadElf();
-#elif defined(EPMCORE)
+#elif defined(EM1)
+	LoaderEndApp(&g_app_elf);
+#elif defined(EM2)
 	ldrUnloadElf(g_app_elf);
 #endif
 
@@ -311,7 +331,7 @@ static UINT32 HandleStateEnter(EVENT_STACK_T *ev_st, APPLICATION_T *app, ENTER_S
 
 	switch (app_state) {
 		case APP_STATE_MAIN:
-#if defined(EPMCORE)
+#if defined(EM2)
 			UIS_CanvasGetDisplaySize(&point);
 #else
 			point = UIS_CanvasGetDisplaySize();
