@@ -55,6 +55,10 @@ typedef enum {
 	APP_MENU_ITEM_IRAM,
 	APP_MENU_ITEM_HELP,
 	APP_MENU_ITEM_ABOUT,
+	APP_MENU_ITEM_ABOUT2,
+	APP_MENU_ITEM_ABOUT3,
+	APP_MENU_ITEM_ABOUT4,
+	APP_MENU_ITEM_ABOUT5,
 	APP_MENU_ITEM_MAX
 } APP_MENU_ITEM_T;
 
@@ -134,6 +138,7 @@ static UINT32 DumpMemoryRegionToFile(
 static UINT32 ClearDataArrays(UINT8 *data_arr, UINT32 size);
 
 static const char g_app_name[APP_NAME_LEN] = "ElfBox";
+static const UINT32 g_ev_code_base = 0x00000FF1;
 
 static const WCHAR g_str_app_name[] = L"ElfBox";
 static const WCHAR g_str_menu_boot_hwcfg[] = L"Boot, hwcfg CG5";
@@ -202,87 +207,21 @@ static const STATE_HANDLERS_ENTRY_T g_state_table_hdls[] = {
 	{ APP_STATE_VIEW, HandleStateEnter, HandleStateExit, g_state_popup_hdls } /* Same as popups. */
 };
 
-#if defined(EP1)
 UINT32 Register(const char *elf_path_uri, const char *args, UINT32 ev_code) {
 	UINT32 status;
-	UINT32 ev_code_base;
 
-	ev_code_base = ev_code;
+	PFprintf("ElfBox: %s: %d\n", __func__, __LINE__);
 
-	status = APP_Register(&ev_code_base, 1, g_state_table_hdls, APP_STATE_MAX, (void *) ApplicationStart);
+	status = APP_Register(&g_ev_code_base, 1, g_state_table_hdls, APP_STATE_MAX, (void *) ApplicationStart);
+
+	PFprintf("ElfBox: %s: %d\n", __func__, __LINE__);
 
 	u_atou(elf_path_uri, g_res_file_path);
 
-	LdrStartApp(ev_code_base);
+	PFprintf("ElfBox: %s: %d\n", __func__, __LINE__);
 
 	return status;
 }
-#elif defined(EP2)
-ldrElf *_start(WCHAR *uri, WCHAR *arguments) {
-	UINT32 status;
-	UINT32 ev_code_base;
-	UINT32 reserve;
-
-	if (ldrIsLoaded(g_app_name)) {
-		cprint("ElfBox: Error! Application has already been loaded!\n");
-		return NULL;
-	}
-
-	status = RESULT_OK;
-	ev_code_base = ldrRequestEventBase();
-	reserve = ev_code_base + 1;
-	reserve = ldrInitEventHandlersTbl(g_state_any_hdls, reserve);
-	reserve = ldrInitEventHandlersTbl(g_state_init_hdls, reserve);
-	reserve = ldrInitEventHandlersTbl(g_state_main_hdls, reserve);
-	reserve = ldrInitEventHandlersTbl(g_state_popup_hdls, reserve);
-
-	status |= APP_Register(&ev_code_base, 1, g_state_table_hdls, APP_STATE_MAX, (void *) ApplicationStart);
-
-	u_strcpy(g_res_file_path, uri);
-
-	status |= ldrSendEvent(ev_code_base);
-	g_app_elf.name = (char *) g_app_name;
-
-	return (status == RESULT_OK) ? &g_app_elf : NULL;
-}
-#elif defined(EPMCORE)
-UINT32 ELF_Entry(ldrElf *elf, WCHAR *arguments) {
-	UINT32 status;
-	UINT32 reserve;
-	WCHAR *ptr;
-
-	status = RESULT_OK;
-	g_app_elf = elf;
-	g_app_elf->name = (char *) g_app_name;
-
-	if (ldrIsLoaded(g_app_elf->name)) {
-		PFprintf("%s: Application already loaded.\n", g_app_elf->name);
-		return RESULT_FAIL;
-	}
-
-	reserve = g_app_elf->evbase + 1;
-	reserve = ldrInitEventHandlersTbl(g_state_any_hdls, reserve);
-	reserve = ldrInitEventHandlersTbl(g_state_init_hdls, reserve);
-	reserve = ldrInitEventHandlersTbl(g_state_main_hdls, reserve);
-	reserve = ldrInitEventHandlersTbl(g_state_popup_hdls, reserve);
-
-	status |= APP_Register(&g_app_elf->evbase, 1, g_state_table_hdls, APP_STATE_MAX, (void *) ApplicationStart);
-	if (status == RESULT_OK) {
-		PFprintf("%s: Application has been registered successfully.\n", g_app_elf->name);
-
-		ptr = NULL;
-		u_strcpy(g_res_file_path, L"file:/");
-		ptr = g_res_file_path + u_strlen(g_res_file_path);
-		DL_FsGetURIFromID(&g_app_elf->id, ptr);
-
-		status |= ldrSendEvent(g_app_elf->evbase);
-	} else {
-		PFprintf("%s: Cannot register application.\n", g_app_elf->name);
-	}
-
-	return status;
-}
-#endif
 
 static UINT32 ApplicationStart(EVENT_STACK_T *ev_st, REG_ID_T reg_id, void *reg_hdl) {
 	UINT32 status;
@@ -290,25 +229,33 @@ static UINT32 ApplicationStart(EVENT_STACK_T *ev_st, REG_ID_T reg_id, void *reg_
 
 	status = RESULT_FAIL;
 
+	PFprintf("ElfBox: %s: %d\n", __func__, __LINE__);
+
 	if (AFW_InquireRoutingStackByRegId(reg_id) != RESULT_OK) {
 		app_instance = (APP_INSTANCE_T *) APP_InitAppData((void *) APP_HandleEvent, sizeof(APP_INSTANCE_T),
 			reg_id, 0, 1, 1, 1, 1, 0);
 
+		PFprintf("ElfBox: %s: %d\n", __func__, __LINE__);
+
 		InitResourses(app_instance->resources);
+
+		PFprintf("ElfBox: %s: %d\n", __func__, __LINE__);
+
 		app_instance->menu_current_item_index = APP_MENU_ITEM_FIRST;
 		app_instance->popup = APP_POPUP_DUMP_OK;
 		app_instance->view = APP_VIEW_ABOUT;
 		app_instance->flag_from_select = FALSE;
+
+		PFprintf("ElfBox: %s: %d\n", __func__, __LINE__);
+
 		SetPhoneParameters(app_instance);
+
+		PFprintf("ElfBox: %s: %d\n", __func__, __LINE__);
 
 		status = APP_Start(ev_st, &app_instance->app, APP_STATE_MAIN,
 			g_state_table_hdls, ApplicationStop, g_app_name, 0);
 
-#if defined(EP2)
-		g_app_elf.app = (APPLICATION_T *) app_instance;
-#elif defined(EPMCORE)
-		g_app_elf->app = &app_instance->app;
-#endif
+		PFprintf("ElfBox: %s: %d\n", __func__, __LINE__);
 	}
 
 	return status;
@@ -327,14 +274,6 @@ static UINT32 ApplicationStop(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
 
 	status |= APP_Exit(ev_st, app, 0);
 
-#if defined(EP1)
-	LdrUnloadELF(&Lib);
-#elif defined(EP2)
-	ldrUnloadElf();
-#elif defined(EPMCORE)
-	ldrUnloadElf(g_app_elf);
-#endif
-
 	return status;
 }
 
@@ -348,13 +287,21 @@ static UINT32 SetPhoneParameters(APP_INSTANCE_T *app_instance) {
 
 	result = RESULT_OK;
 
+	PFprintf("ElfBox: %s: %d\n", __func__, __LINE__);
+
 	g_str_help_content_p1 = suAllocMem(sizeof(WCHAR) * (DEBUG_OUTPUT_MAX_LENGTH + 1), &result);
 	if (result != RESULT_OK) {
 		return RESULT_FAIL;
 	}
+
+	PFprintf("ElfBox: %s: %d\n", __func__, __LINE__);
+
 	memclr(g_str_help_content_p1, sizeof(WCHAR) * (DEBUG_OUTPUT_MAX_LENGTH + 1));
 
+	PFprintf("ElfBox: %s: %d\n", __func__, __LINE__);
+
 	if (strncmp("LTE2", LdrGetPlatformName(), sizeof("LTE2") - 1) == 0) {
+		PFprintf("ElfBox: %s: %d\n", __func__, __LINE__);
 		if (strncmp("L7e", LdrGetPhoneName(), sizeof("L7e") - 1) == 0) {
 			app_instance->phone_parameters.soc = SOC_LTE2_LAST;
 		} else if (strncmp("K1", LdrGetPhoneName(), sizeof("K1") - 1) == 0) {
@@ -383,6 +330,7 @@ static UINT32 SetPhoneParameters(APP_INSTANCE_T *app_instance) {
 			app_instance->phone_parameters.soc = SOC_LTE2;
 		}
 	} else if (strncmp("LTE", LdrGetPlatformName(), sizeof("LTE") - 1) == 0) {
+		PFprintf("ElfBox: %s: %d\n", __func__, __LINE__);
 		if (strncmp("V300", LdrGetPhoneName(), sizeof("V300") - 1) == 0) {
 			app_instance->phone_parameters.soc = SOC_LTE_OLD;
 		} else if (strncmp("V500", LdrGetPhoneName(), sizeof("V500") - 1) == 0) {
@@ -399,6 +347,9 @@ static UINT32 SetPhoneParameters(APP_INSTANCE_T *app_instance) {
 			app_instance->phone_parameters.soc = SOC_LTE;
 		}
 	}
+
+	PFprintf("ElfBox: %s: %d\n", __func__, __LINE__);
+
 	PFprintf("SoC: %d\n", app_instance->phone_parameters.soc);
 	sprintf(buffer_a, "SoC: %s\n", GetSoCName(app_instance->phone_parameters.soc));
 	u_atou(buffer_a, buffer_u);
@@ -476,15 +427,21 @@ static UINT32 HandleStateEnter(EVENT_STACK_T *ev_st, APPLICATION_T *app, ENTER_S
 	UINT8 notice_type;
 	LIST_ENTRY_T *list;
 
+	PFprintf("ElfBox: %s: %d\n", __func__, __LINE__);
+
 	if (state != ENTER_STATE_ENTER) {
 		if (app->state != APP_STATE_MAIN) {
 			return RESULT_OK;
 		}
 	}
 
+	PFprintf("ElfBox: %s: %d\n", __func__, __LINE__);
+
 	app_instance = (APP_INSTANCE_T *) app;
 
 	DeleteDialog(app);
+
+	PFprintf("ElfBox: %s: %d\n", __func__, __LINE__);
 
 	port = app->port;
 	app_state = app->state;
@@ -492,22 +449,40 @@ static UINT32 HandleStateEnter(EVENT_STACK_T *ev_st, APPLICATION_T *app, ENTER_S
 
 	memclr(&content, sizeof(CONTENT_T));
 
+	PFprintf("ElfBox: %s: %d\n", __func__, __LINE__);
+
 	switch (app_state) {
 		case APP_STATE_MAIN:
+			PFprintf("ElfBox: %s: %d\n", __func__, __LINE__);
 			list = CreateList(ev_st, app, 1, APP_MENU_ITEM_MAX);
+			PFprintf("ElfBox: %s: %d\n", __func__, __LINE__);
 			if (list != NULL) {
+
+				PFprintf("ElfBox: %s: %d\n", __func__, __LINE__);
+
 				dialog = UIS_CreateStaticList(&port, 0, APP_MENU_ITEM_MAX, 0, list, FALSE, 2, NULL,
 					app_instance->resources[APP_RESOURCE_NAME]);
 				suFreeMem(list);
 
 				/* Insert cursor to proper position. */
 				if (app_instance->flag_from_select) {
+					PFprintf("ElfBox: %s: %d\n", __func__, __LINE__);
 					if (app_instance->menu_current_item_index != APP_MENU_ITEM_FIRST) {
+
+						PFprintf("ElfBox: %s: %d\n", __func__, __LINE__);
+
 						APP_UtilAddEvChangeListPosition(ev_st, app, app_instance->menu_current_item_index + 1,
 							NULL, NULL, NULL);
+
+						PFprintf("ElfBox: %s: %d\n", __func__, __LINE__);
+
 						UIS_HandleEvent(dialog, ev_st);
+
+						PFprintf("ElfBox: %s: %d\n", __func__, __LINE__);
 					}
 					app_instance->flag_from_select = FALSE;
+
+					PFprintf("ElfBox: %s: %d\n", __func__, __LINE__);
 				}
 			}
 			break;
@@ -565,7 +540,7 @@ static UINT32 HandleStateExit(EVENT_STACK_T *ev_st, APPLICATION_T *app, EXIT_STA
 
 static UINT32 DeleteDialog(APPLICATION_T *app) {
 	if (app->dialog != DialogType_None) {
-		UIS_Delete(app->dialog);
+		APP_UtilUISDialogDelete(&app->dialog);
 		app->dialog = DialogType_None;
 		return RESULT_OK;
 	}
@@ -603,8 +578,12 @@ static UINT32 HandleEventSelect(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
 	app_instance = (APP_INSTANCE_T *) app;
 	event = AFW_GetEv(ev_st);
 
+	PFprintf("ElfBox: %s: %d\n", __func__, __LINE__);
+
 	app_instance->flag_from_select = TRUE;
 	app_instance->menu_current_item_index = event->data.index - 1;
+
+	PFprintf("ElfBox: %s: %d\n", __func__, __LINE__);
 
 	switch (app_instance->menu_current_item_index) {
 		case APP_MENU_ITEM_BOOT_HWCFG:
@@ -675,6 +654,8 @@ static UINT32 HandleEventBack(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
 
 	status = RESULT_OK;
 
+	PFprintf("ElfBox: %s: %d\n", __func__, __LINE__);
+
 	status |= APP_UtilChangeState(APP_STATE_MAIN, ev_st, app);
 
 	return status;
@@ -689,6 +670,8 @@ static LIST_ENTRY_T *CreateList(EVENT_STACK_T *ev_st, APPLICATION_T *app, UINT32
 	status = RESULT_OK;
 	result = RESULT_OK;
 
+	PFprintf("ElfBox: %s: %d\n", __func__, __LINE__);
+
 	if (count == 0) {
 		return NULL;
 	}
@@ -697,11 +680,15 @@ static LIST_ENTRY_T *CreateList(EVENT_STACK_T *ev_st, APPLICATION_T *app, UINT32
 		return NULL;
 	}
 
+	PFprintf("ElfBox: %s: %d\n", __func__, __LINE__);
+
 	for (i = 0; i < count; ++i) {
 		memclr(&list_elements[i], sizeof(LIST_ENTRY_T));
 		list_elements[i].editable = FALSE;
 		list_elements[i].content.static_entry.formatting = TRUE;
 	}
+
+	PFprintf("ElfBox: %s: %d\n", __func__, __LINE__);
 
 	status |= UIS_MakeContentFromString("Mq0",
 		&list_elements[APP_MENU_ITEM_BOOT_HWCFG].content.static_entry.text,
@@ -727,9 +714,25 @@ static LIST_ENTRY_T *CreateList(EVENT_STACK_T *ev_st, APPLICATION_T *app, UINT32
 	status |= UIS_MakeContentFromString("Mq0",
 		&list_elements[APP_MENU_ITEM_ABOUT].content.static_entry.text,
 		g_str_menu_about);
+	status |= UIS_MakeContentFromString("Mq0",
+		&list_elements[APP_MENU_ITEM_ABOUT2].content.static_entry.text,
+		g_str_menu_about);
+	status |= UIS_MakeContentFromString("Mq0",
+		&list_elements[APP_MENU_ITEM_ABOUT3].content.static_entry.text,
+		g_str_menu_about);
+	status |= UIS_MakeContentFromString("Mq0",
+		&list_elements[APP_MENU_ITEM_ABOUT4].content.static_entry.text,
+		g_str_menu_about);
+	status |= UIS_MakeContentFromString("Mq0",
+		&list_elements[APP_MENU_ITEM_ABOUT5].content.static_entry.text,
+		g_str_menu_about);
+
+	PFprintf("ElfBox: %s: %d\n", __func__, __LINE__);
 
 	if (status != RESULT_OK) {
+		PFprintf("OOO ElfBox: %s: %d\n", __func__, __LINE__);
 		suFreeMem(list_elements);
+		PFprintf("OOO ElfBox: %s: %d\n", __func__, __LINE__);
 		return NULL;
 	}
 
