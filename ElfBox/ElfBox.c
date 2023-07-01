@@ -21,6 +21,19 @@
 #include <filesystem.h>
 #include <time_date.h>
 
+/*
+ * HACK: V300 structure. Move it to SDK?
+ *
+ * V300 sizeof:    244 (f4): 2928
+ * ROKR E1 sizeof: 248 (f8): 2976
+ */
+
+typedef struct {
+	BOOL                    editable;
+	INT32                   tag;
+	LIST_CONTENT_T          content;
+} V300_LIST_ENTRY_T;
+
 #define TIMER_FAST_TRIGGER_MS             (1)
 #define TIMER_POPUP_DELAY_MS            (100)
 #define DISK_DRIVER_NAME_SIZE             (8)
@@ -122,7 +135,7 @@ static UINT32 HandleEventTimerExpired(EVENT_STACK_T *ev_st, APPLICATION_T *app);
 static UINT32 HandleEventSelect(EVENT_STACK_T *ev_st, APPLICATION_T *app);
 static UINT32 HandleEventBack(EVENT_STACK_T *ev_st, APPLICATION_T *app);
 
-static LIST_ENTRY_T *CreateList(EVENT_STACK_T *ev_st, APPLICATION_T *app, UINT32 start, UINT32 count);
+static V300_LIST_ENTRY_T *CreateList(EVENT_STACK_T *ev_st, APPLICATION_T *app, UINT32 start, UINT32 count);
 
 static UINT32 DumpBootAndHwcfg(EVENT_STACK_T *ev_st, APPLICATION_T *app);
 static UINT32 DumpPds(EVENT_STACK_T *ev_st, APPLICATION_T *app);
@@ -454,7 +467,7 @@ static UINT32 HandleStateEnter(EVENT_STACK_T *ev_st, APPLICATION_T *app, ENTER_S
 	switch (app_state) {
 		case APP_STATE_MAIN:
 			PFprintf("ElfBox: %s: %d\n", __func__, __LINE__);
-			list = CreateList(ev_st, app, 1, APP_MENU_ITEM_MAX);
+			list = (LIST_ENTRY_T *) CreateList(ev_st, app, 1, APP_MENU_ITEM_MAX);
 			PFprintf("ElfBox: %s: %d\n", __func__, __LINE__);
 			if (list != NULL) {
 
@@ -661,21 +674,29 @@ static UINT32 HandleEventBack(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
 	return status;
 }
 
-static LIST_ENTRY_T *CreateList(EVENT_STACK_T *ev_st, APPLICATION_T *app, UINT32 start, UINT32 count) {
+static V300_LIST_ENTRY_T *CreateList(EVENT_STACK_T *ev_st, APPLICATION_T *app, UINT32 start, UINT32 count) {
 	UINT32 status;
 	INT32 result;
 	UINT32 i;
-	LIST_ENTRY_T *list_elements;
+	V300_LIST_ENTRY_T *list_elements;
 
 	status = RESULT_OK;
 	result = RESULT_OK;
 
 	PFprintf("ElfBox: %s: %d\n", __func__, __LINE__);
 
+	//	switch (1) {
+	//    case sizeof(LIST_ENTRY_T):
+	//    case sizeof(LIST_ENTRY_T):
+	//        break;
+	//    }
+
+	PFprintf("ElfBox sizeof: %d: %d\n", sizeof(V300_LIST_ENTRY_T), sizeof(V300_LIST_ENTRY_T) * count);
+
 	if (count == 0) {
 		return NULL;
 	}
-	list_elements = (LIST_ENTRY_T *) suAllocMem(sizeof(LIST_ENTRY_T) * count, &result);
+	list_elements = (V300_LIST_ENTRY_T *) suAllocMem(sizeof(V300_LIST_ENTRY_T) * count, &result);
 	if (result != RESULT_OK) {
 		return NULL;
 	}
@@ -683,7 +704,7 @@ static LIST_ENTRY_T *CreateList(EVENT_STACK_T *ev_st, APPLICATION_T *app, UINT32
 	PFprintf("ElfBox: %s: %d\n", __func__, __LINE__);
 
 	for (i = 0; i < count; ++i) {
-		memclr(&list_elements[i], sizeof(LIST_ENTRY_T));
+		memclr(&list_elements[i], sizeof(V300_LIST_ENTRY_T));
 		list_elements[i].editable = FALSE;
 		list_elements[i].content.static_entry.formatting = TRUE;
 	}
