@@ -18,7 +18,7 @@ set LIB_PATH=%ARM_PATH%\lib
 set LIB_MAIN=Lib.o
 
 :: Defines.
-set DEFINES=-D__P2K__ -DEP1
+set DEFINES=-D__P2K__ -DEP1 -DFTR_V300
 
 :: ELF name.
 set ELF_NAME=ElfBox

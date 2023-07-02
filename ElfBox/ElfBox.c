@@ -21,19 +21,6 @@
 #include <filesystem.h>
 #include <time_date.h>
 
-/*
- * HACK: V300 structure. Move it to SDK?
- *
- * V300 sizeof:    244 (f4): 2928
- * ROKR E1 sizeof: 248 (f8): 2976
- */
-
-typedef struct {
-	BOOL                    editable;
-	INT32                   tag;
-	LIST_CONTENT_T          content;
-} V300_LIST_ENTRY_T;
-
 #define TIMER_FAST_TRIGGER_MS             (1)
 #define TIMER_POPUP_DELAY_MS            (100)
 #define DISK_DRIVER_NAME_SIZE             (8)
@@ -68,10 +55,6 @@ typedef enum {
 	APP_MENU_ITEM_IRAM,
 	APP_MENU_ITEM_HELP,
 	APP_MENU_ITEM_ABOUT,
-	APP_MENU_ITEM_ABOUT2,
-	APP_MENU_ITEM_ABOUT3,
-	APP_MENU_ITEM_ABOUT4,
-	APP_MENU_ITEM_ABOUT5,
 	APP_MENU_ITEM_MAX
 } APP_MENU_ITEM_T;
 
@@ -135,7 +118,7 @@ static UINT32 HandleEventTimerExpired(EVENT_STACK_T *ev_st, APPLICATION_T *app);
 static UINT32 HandleEventSelect(EVENT_STACK_T *ev_st, APPLICATION_T *app);
 static UINT32 HandleEventBack(EVENT_STACK_T *ev_st, APPLICATION_T *app);
 
-static V300_LIST_ENTRY_T *CreateList(EVENT_STACK_T *ev_st, APPLICATION_T *app, UINT32 start, UINT32 count);
+static LIST_ENTRY_T *CreateList(EVENT_STACK_T *ev_st, APPLICATION_T *app, UINT32 start, UINT32 count);
 
 static UINT32 DumpBootAndHwcfg(EVENT_STACK_T *ev_st, APPLICATION_T *app);
 static UINT32 DumpPds(EVENT_STACK_T *ev_st, APPLICATION_T *app);
@@ -467,7 +450,7 @@ static UINT32 HandleStateEnter(EVENT_STACK_T *ev_st, APPLICATION_T *app, ENTER_S
 	switch (app_state) {
 		case APP_STATE_MAIN:
 			PFprintf("ElfBox: %s: %d\n", __func__, __LINE__);
-			list = (LIST_ENTRY_T *) CreateList(ev_st, app, 1, APP_MENU_ITEM_MAX);
+			list = CreateList(ev_st, app, 1, APP_MENU_ITEM_MAX);
 			PFprintf("ElfBox: %s: %d\n", __func__, __LINE__);
 			if (list != NULL) {
 
@@ -674,11 +657,11 @@ static UINT32 HandleEventBack(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
 	return status;
 }
 
-static V300_LIST_ENTRY_T *CreateList(EVENT_STACK_T *ev_st, APPLICATION_T *app, UINT32 start, UINT32 count) {
+static LIST_ENTRY_T *CreateList(EVENT_STACK_T *ev_st, APPLICATION_T *app, UINT32 start, UINT32 count) {
 	UINT32 status;
 	INT32 result;
 	UINT32 i;
-	V300_LIST_ENTRY_T *list_elements;
+	LIST_ENTRY_T *list_elements;
 
 	status = RESULT_OK;
 	result = RESULT_OK;
@@ -691,12 +674,12 @@ static V300_LIST_ENTRY_T *CreateList(EVENT_STACK_T *ev_st, APPLICATION_T *app, U
 	//        break;
 	//    }
 
-	PFprintf("ElfBox sizeof: %d: %d\n", sizeof(V300_LIST_ENTRY_T), sizeof(V300_LIST_ENTRY_T) * count);
+	PFprintf("ElfBox sizeof: %d: %d\n", sizeof(LIST_ENTRY_T), sizeof(LIST_ENTRY_T) * count);
 
 	if (count == 0) {
 		return NULL;
 	}
-	list_elements = (V300_LIST_ENTRY_T *) suAllocMem(sizeof(V300_LIST_ENTRY_T) * count, &result);
+	list_elements = (LIST_ENTRY_T *) suAllocMem(sizeof(LIST_ENTRY_T) * count, &result);
 	if (result != RESULT_OK) {
 		return NULL;
 	}
@@ -704,7 +687,7 @@ static V300_LIST_ENTRY_T *CreateList(EVENT_STACK_T *ev_st, APPLICATION_T *app, U
 	PFprintf("ElfBox: %s: %d\n", __func__, __LINE__);
 
 	for (i = 0; i < count; ++i) {
-		memclr(&list_elements[i], sizeof(V300_LIST_ENTRY_T));
+		memclr(&list_elements[i], sizeof(LIST_ENTRY_T));
 		list_elements[i].editable = FALSE;
 		list_elements[i].content.static_entry.formatting = TRUE;
 	}
@@ -734,18 +717,6 @@ static V300_LIST_ENTRY_T *CreateList(EVENT_STACK_T *ev_st, APPLICATION_T *app, U
 		g_str_menu_help);
 	status |= UIS_MakeContentFromString("Mq0",
 		&list_elements[APP_MENU_ITEM_ABOUT].content.static_entry.text,
-		g_str_menu_about);
-	status |= UIS_MakeContentFromString("Mq0",
-		&list_elements[APP_MENU_ITEM_ABOUT2].content.static_entry.text,
-		g_str_menu_about);
-	status |= UIS_MakeContentFromString("Mq0",
-		&list_elements[APP_MENU_ITEM_ABOUT3].content.static_entry.text,
-		g_str_menu_about);
-	status |= UIS_MakeContentFromString("Mq0",
-		&list_elements[APP_MENU_ITEM_ABOUT4].content.static_entry.text,
-		g_str_menu_about);
-	status |= UIS_MakeContentFromString("Mq0",
-		&list_elements[APP_MENU_ITEM_ABOUT5].content.static_entry.text,
 		g_str_menu_about);
 
 	PFprintf("ElfBox: %s: %d\n", __func__, __LINE__);
@@ -857,7 +828,7 @@ static UINT32 DumpIRAM(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
 
 	app_instance = (APP_INSTANCE_T *) app;
 
-	if (app_instance->phone_parameters.soc == SOC_LTE) {
+	if (app_instance->phone_parameters.soc == SOC_LTE || app_instance->phone_parameters.soc == SOC_LTE_OLD) {
 		return DumpMemoryRegionToFile(ev_st, app, 0x03FC0000, 0x40000, g_file_dump_iram, 0);
 	} else {
 		return DumpMemoryRegionToFile(ev_st, app, 0x03F80000, 0x80000, g_file_dump_iram, 0);
