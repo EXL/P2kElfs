@@ -20,6 +20,8 @@
 #include <dl.h>
 #include <filesystem.h>
 
+#define MAX_VOLUMES_COUNT     (4)
+
 typedef enum {
 	APP_STATE_ANY,
 	APP_STATE_INIT,
@@ -43,6 +45,24 @@ typedef enum {
 	APP_VIEW_ABOUT
 } APP_VIEW_T;
 
+typedef enum {
+	FS_VOLUME,
+	FS_FOLDER,
+	FS_FILE,
+	FS_ELF
+} FS_ENTITY_T;
+
+typedef struct {
+	WCHAR name[FS_MAX_FILE_NAME_LENGTH];
+	FS_ENTITY_T type;
+} FS_OBJECT_T;
+
+typedef struct {
+	BOOL root;
+	UINT16 count;
+	FS_OBJECT_T *list;
+} FS_T;
+
 typedef struct {
 	APPLICATION_T app; /* Must be first. */
 
@@ -50,6 +70,8 @@ typedef struct {
 	APP_VIEW_T view;
 	UINT32 menu_current_item_index;
 	BOOL flag_from_select;
+
+	FS_T fs;
 } APP_INSTANCE_T;
 
 UINT32 Register(const char *elf_path_uri, const char *args, UINT32 ev_code); /* ElfPack 1.x entry point. */
@@ -69,6 +91,7 @@ static UINT32 HandleEventSelect(EVENT_STACK_T *ev_st, APPLICATION_T *app);
 static UINT32 HandleEventBack(EVENT_STACK_T *ev_st, APPLICATION_T *app);
 
 static LIST_ENTRY_T *CreateList(EVENT_STACK_T *ev_st, APPLICATION_T *app, UINT32 start, UINT32 count);
+static UINT32 UpdateFileList(EVENT_STACK_T *ev_st, APPLICATION_T *app, const WCHAR *directory, const WCHAR *filter);
 
 static const char g_app_name[APP_NAME_LEN] = "ElfBox";
 static const UINT32 g_ev_code_base = 0x00000FF1;
@@ -137,6 +160,9 @@ static UINT32 ApplicationStart(EVENT_STACK_T *ev_st, REG_ID_T reg_id, void *reg_
 		app_instance->menu_current_item_index = 0;
 		app_instance->view = APP_VIEW_ABOUT;
 		app_instance->flag_from_select = FALSE;
+		app_instance->fs.root = FALSE;
+		app_instance->fs.count = 0;
+		app_instance->fs.list = NULL;
 
 		status = APP_Start(ev_st, &app_instance->app, APP_STATE_MAIN,
 			g_state_table_hdls, ApplicationStop, g_app_name, 0);
@@ -196,9 +222,9 @@ static UINT32 HandleStateEnter(EVENT_STACK_T *ev_st, APPLICATION_T *app, ENTER_S
 	LIST_ENTRY_T *list;
 
 	if (state != ENTER_STATE_ENTER) {
-		if (app->state != APP_STATE_MAIN) {
+//		if (app->state != APP_STATE_MAIN) {
 			return RESULT_OK;
-		}
+//		}
 	}
 
 	app_instance = (APP_INSTANCE_T *) app;
@@ -213,9 +239,10 @@ static UINT32 HandleStateEnter(EVENT_STACK_T *ev_st, APPLICATION_T *app, ENTER_S
 
 	switch (app_state) {
 		case APP_STATE_MAIN:
-			list = CreateList(ev_st, app, 1, 2);
+			UpdateFileList(ev_st, app, L"file:/a/mobile", L"*");
+			list = CreateList(ev_st, app, 1, app_instance->fs.count);
 			if (list != NULL) {
-				dialog = UIS_CreateStaticList(&port, 0, 2, 0, list, FALSE, 2, NULL,
+				dialog = UIS_CreateStaticList(&port, 0, app_instance->fs.count, 0, list, FALSE, 2, NULL,
 					app_instance->resources[APP_RESOURCE_NAME]);
 				suFreeMem(list);
 
@@ -340,9 +367,11 @@ static LIST_ENTRY_T *CreateList(EVENT_STACK_T *ev_st, APPLICATION_T *app, UINT32
 	INT32 result;
 	UINT32 i;
 	LIST_ENTRY_T *list_elements;
+	APP_INSTANCE_T *appi;
 
 	status = RESULT_OK;
 	result = RESULT_OK;
+	appi = (APP_INSTANCE_T *) app;
 
 	if (count == 0) {
 		return NULL;
@@ -356,14 +385,11 @@ static LIST_ENTRY_T *CreateList(EVENT_STACK_T *ev_st, APPLICATION_T *app, UINT32
 		memclr(&list_elements[i], sizeof(LIST_ENTRY_T));
 		list_elements[i].editable = FALSE;
 		list_elements[i].content.static_entry.formatting = TRUE;
-	}
 
-	status |= UIS_MakeContentFromString("Mq0",
-		&list_elements[0].content.static_entry.text,
-		g_str_menu_help);
-	status |= UIS_MakeContentFromString("Mq0",
-		&list_elements[1].content.static_entry.text,
-		g_str_menu_about);
+		status |= UIS_MakeContentFromString("Mq0",
+			&list_elements[0].content.static_entry.text,
+			appi->fs.list[i].name);
+	}
 
 	if (status != RESULT_OK) {
 		suFreeMem(list_elements);
@@ -371,4 +397,134 @@ static LIST_ENTRY_T *CreateList(EVENT_STACK_T *ev_st, APPLICATION_T *app, UINT32
 	}
 
 	return list_elements;
+}
+
+static UINT32 UpdateFileList(EVENT_STACK_T *ev_st, APPLICATION_T *app, const WCHAR *directory, const WCHAR *filter) {
+	INT32 error;
+	APP_INSTANCE_T *appi;
+	FS_SEARCH_PARAMS_T search_params;
+	FS_SEARCH_RESULT_T search_result;
+	FS_SEARCH_HANDLE_T search_handle;
+
+	error = RESULT_OK;
+	appi = (APP_INSTANCE_T *) app;
+
+	if (!directory || !u_strcmp(directory, L"/")) {
+		/*
+		 * List of volumes.
+		 *   /a/
+		 *   /b/
+		 *   /c/
+		 */
+
+		INT32 i;
+		WCHAR volumes[MAX_VOLUMES_COUNT * 3];
+		WCHAR *result = DL_FsVolumeEnum(volumes);
+		if (!result) {
+			return RESULT_FAIL;
+		}
+
+		appi->fs.root = TRUE;
+		appi->fs.count = 0;
+		if (appi->fs.list) {
+			suFreeMem(appi->fs.list);
+		}
+		appi->fs.list = suAllocMem(sizeof(FS_OBJECT_T) * MAX_VOLUMES_COUNT, &error);
+		if (error) {
+			return RESULT_FAIL;
+		}
+
+		for (i = 0; i < MAX_VOLUMES_COUNT; ++i) {
+			appi->fs.list[i].name[0] = volumes[i * 3];
+			appi->fs.list[i].name[1] = volumes[i * 3 + 1];
+			appi->fs.list[i].name[2] = volumes[i * 3];
+			appi->fs.list[i].name[3] = 0;
+			appi->fs.list[i].name[4] = 0;
+			appi->fs.list[i].type = FS_VOLUME;
+
+			appi->fs.count += 1;
+
+			if (!volumes[i * 3 + 2]) {
+				break;
+			}
+		}
+	} else {
+		/*
+		 * List of directories and files.
+		 */
+		INT32 i;
+		INT32 j;
+		UINT8 mode;
+		UINT16 res;
+		WCHAR search_string[FS_MAX_URI_NAME_LENGTH + 16]; /* 280 */
+
+		if (!u_strncmp(directory, L"file:/", 6)) {
+			u_strcpy(search_string, directory);
+		} else {
+			u_strcpy(search_string, L"file:/");
+			u_strcat(search_string, directory);
+		}
+
+		if (directory[u_strlen(directory) - 1] != L'/') {
+			u_strcat(search_string, L"/");
+		}
+
+		u_strcat(search_string, L"\xFFFE");
+		u_strcat(search_string, filter);
+
+		search_params.flags = 0x1A;
+		search_params.attrib = 0;
+		search_params.mask = 0;
+
+		if ((DL_FsSSearch(search_params, L"file://a/mobile/audio/\xFFFE*", &search_handle, &appi->fs.count, 0)) != RESULT_OK) {
+			PFprintf("ELF: err 1 %d\n", error);
+			DL_FsSearchClose(search_handle);
+			return RESULT_FAIL;
+		}
+
+		appi->fs.count += 1;
+
+		if (appi->fs.list) {
+			suFreeMem(appi->fs.list);
+		}
+		appi->fs.list = suAllocMem(sizeof(FS_OBJECT_T) * appi->fs.count, &error);
+		if (error) {
+			PFprintf("ELF: err %d\n", appi->fs.count);
+			return RESULT_FAIL;
+		}
+		u_strcpy(appi->fs.list[0].name, L"..");
+		appi->fs.list[0].type = FS_FOLDER;
+
+		res = 1;
+		mode = 0;
+		for (i = 0, j = 1; j <= appi->fs.count; ++i) {
+			if (i >= appi->fs.count) {
+				if (mode > 0) {
+					break;
+				} else {
+					i = -1;
+					mode = 1;
+					continue;
+				}
+			}
+			if (DL_FsSearchResults(search_handle, i, &res, &search_result) == RESULT_OK) {
+				if ((mode == 0) && !(search_result.attrib & FS_ATTR_DIRECTORY)) {
+					continue;
+				}
+				if ((mode == 1) && (search_result.attrib & FS_ATTR_DIRECTORY)) {
+					continue;
+				}
+
+
+				PFprintf("ELF: %d\n", j);
+				u_strcpy(appi->fs.list[j].name, search_result.name);
+				appi->fs.list[j].type = FS_FILE;
+				j++;
+			}
+		}
+
+		DL_FsSearchClose(search_handle);
+	}
+
+	return RESULT_OK;
 }
