@@ -89,6 +89,7 @@ static UINT32 DeleteDialog(APPLICATION_T *app);
 static UINT32 HandleEventTimerExpired(EVENT_STACK_T *ev_st, APPLICATION_T *app);
 static UINT32 HandleEventSelect(EVENT_STACK_T *ev_st, APPLICATION_T *app);
 static UINT32 HandleEventBack(EVENT_STACK_T *ev_st, APPLICATION_T *app);
+static UINT32 HandleEventSearchCompleated(EVENT_STACK_T *ev_st, APPLICATION_T *app);
 
 static LIST_ENTRY_T *CreateList(EVENT_STACK_T *ev_st, APPLICATION_T *app, UINT32 start, UINT32 count);
 static UINT32 UpdateFileList(EVENT_STACK_T *ev_st, APPLICATION_T *app, const WCHAR *directory, const WCHAR *filter);
@@ -121,6 +122,7 @@ static EVENT_HANDLER_ENTRY_T g_state_main_hdls[] = {
 	{ EV_DONE, ApplicationStop },
 	{ EV_DIALOG_DONE, ApplicationStop },
 	{ EV_SELECT, HandleEventSelect },
+	{ 0x8213D, HandleEventSearchCompleated },
 	{ STATE_HANDLERS_END, NULL }
 };
 
@@ -239,7 +241,7 @@ static UINT32 HandleStateEnter(EVENT_STACK_T *ev_st, APPLICATION_T *app, ENTER_S
 
 	switch (app_state) {
 		case APP_STATE_MAIN:
-			UpdateFileList(ev_st, app, L"file:/a/mobile", L"*");
+			UpdateFileList(ev_st, app, L"/a/", L"*");
 			list = CreateList(ev_st, app, 1, app_instance->fs.count);
 			if (list != NULL) {
 				dialog = UIS_CreateStaticList(&port, 0, app_instance->fs.count, 0, list, FALSE, 2, NULL,
@@ -399,12 +401,20 @@ static LIST_ENTRY_T *CreateList(EVENT_STACK_T *ev_st, APPLICATION_T *app, UINT32
 	return list_elements;
 }
 
+WCHAR* e(UINT16 a, W_CHAR*s) {
+
+	PFprintf(":AAAAA: %d\n", a);
+
+	return NULL;
+}
+
 static UINT32 UpdateFileList(EVENT_STACK_T *ev_st, APPLICATION_T *app, const WCHAR *directory, const WCHAR *filter) {
 	INT32 error;
 	APP_INSTANCE_T *appi;
 	FS_SEARCH_PARAMS_T search_params;
 	FS_SEARCH_RESULT_T search_result;
 	FS_SEARCH_HANDLE_T search_handle;
+	IFACE_DATA_T iface;
 
 	error = RESULT_OK;
 	appi = (APP_INSTANCE_T *) app;
@@ -457,6 +467,9 @@ static UINT32 UpdateFileList(EVENT_STACK_T *ev_st, APPLICATION_T *app, const WCH
 		UINT8 mode;
 		UINT16 res;
 		WCHAR search_string[FS_MAX_URI_NAME_LENGTH + 16]; /* 280 */
+		char debug_str[FS_MAX_URI_NAME_LENGTH + 16];
+
+		DL_FS_SEARCH_INFO_T *search_info = NULL;
 
 		if (!u_strncmp(directory, L"file:/", 6)) {
 			u_strcpy(search_string, directory);
@@ -472,16 +485,33 @@ static UINT32 UpdateFileList(EVENT_STACK_T *ev_st, APPLICATION_T *app, const WCH
 		u_strcat(search_string, L"\xFFFE");
 		u_strcat(search_string, filter);
 
-		search_params.flags = 0x1A;
+		search_params.flags = 0x1C;
 		search_params.attrib = 0;
 		search_params.mask = 0;
 
-		if ((DL_FsSSearch(search_params, L"file://a/mobile/audio/\xFFFE*", &search_handle, &appi->fs.count, 0)) != RESULT_OK) {
-			PFprintf("ELF: err 1 %d\n", error);
-			DL_FsSearchClose(search_handle);
-			return RESULT_FAIL;
-		}
+//		iface.port = app->port;
+//		search_handle = DL_FsSSearch(&iface, search_params, search_string, 0);
+//		PFprintf("LOL0: %d\n", search_handle);
 
+//		if ((DL_FsSSearch(search_params, search_string, &search_handle, &appi->fs.count, 0)) != RESULT_OK) {
+//			DL_FsSearchClose(search_handle);
+//			return RESULT_FAIL;
+//		}
+
+		search_handle = DL_FsSSearch(
+			search_params,
+			search_string,
+			&search_info,
+			(DL_FS_URI_FNCT_PTR *)e,
+			0);
+
+		u_utoa(search_string, debug_str);
+		PFprintf("SH: %d\n", search_handle);
+		PFprintf("LOL: %s\n", debug_str);
+
+		PFprintf("SN: %d\n", search_info->num);
+
+		appi->fs.count = search_info->num;
 		appi->fs.count += 1;
 
 		if (appi->fs.list) {
@@ -507,7 +537,7 @@ static UINT32 UpdateFileList(EVENT_STACK_T *ev_st, APPLICATION_T *app, const WCH
 					continue;
 				}
 			}
-			if (DL_FsSearchResults(search_handle, i, &res, &search_result) == RESULT_OK) {
+			if (DL_FsSearchResults(search_info->shandle, i, &res, &search_result) == RESULT_OK) {
 				if ((mode == 0) && !(search_result.attrib & FS_ATTR_DIRECTORY)) {
 					continue;
 				}
@@ -515,16 +545,36 @@ static UINT32 UpdateFileList(EVENT_STACK_T *ev_st, APPLICATION_T *app, const WCH
 					continue;
 				}
 
-
-				PFprintf("ELF: %d\n", j);
+				u_utoa(search_result.name, debug_str);
+				PFprintf("ELF: %d %d %s\n", i, j, debug_str);
 				u_strcpy(appi->fs.list[j].name, search_result.name);
 				appi->fs.list[j].type = FS_FILE;
 				j++;
 			}
 		}
 
-		DL_FsSearchClose(search_handle);
+		DL_FsSearchClose(search_info->shandle);
 	}
+
+	return RESULT_OK;
+}
+
+static UINT32 HandleEventSearchCompleated(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
+	EVENT_T *event;
+	FS_SEARCH_COMPLETED_INDEX_T *search_index;
+	char name[256];
+
+	event = AFW_GetEv(ev_st);
+	search_index = (FS_SEARCH_COMPLETED_INDEX_T *) event->attachment;
+
+	PFprintf("Search Completed: %d %d\n", event->att_size, search_index->search_total);
+
+	PFprintf("Search Completed: %d %d\n", search_index->search_result.attrib, search_index->search_result.owner);
+
+	u_utoa(search_index->search_result.name, name);
+	PFprintf("Search Completed: %s\n", name);
+
+
 
 	return RESULT_OK;
 }
