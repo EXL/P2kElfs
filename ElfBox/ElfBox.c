@@ -53,7 +53,7 @@ typedef enum {
 } FS_ENTITY_T;
 
 typedef struct {
-	WCHAR name[FS_MAX_FILE_NAME_LENGTH];
+	WCHAR name[FS_MAX_FILE_NAME_LENGTH + 1];
 	FS_ENTITY_T type;
 } FS_OBJECT_T;
 
@@ -91,7 +91,7 @@ static UINT32 HandleEventSelect(EVENT_STACK_T *ev_st, APPLICATION_T *app);
 static UINT32 HandleEventBack(EVENT_STACK_T *ev_st, APPLICATION_T *app);
 static UINT32 HandleEventSearchCompleated(EVENT_STACK_T *ev_st, APPLICATION_T *app);
 
-static LIST_ENTRY_T *CreateList(EVENT_STACK_T *ev_st, APPLICATION_T *app, UINT32 start, UINT32 count);
+static LIST_ENTRY_T *CreateList(EVENT_STACK_T *ev_st, APPLICATION_T *app);
 static UINT32 UpdateFileList(EVENT_STACK_T *ev_st, APPLICATION_T *app, const WCHAR *directory, const WCHAR *filter);
 
 static const char g_app_name[APP_NAME_LEN] = "ElfBox";
@@ -241,8 +241,7 @@ static UINT32 HandleStateEnter(EVENT_STACK_T *ev_st, APPLICATION_T *app, ENTER_S
 
 	switch (app_state) {
 		case APP_STATE_MAIN:
-			UpdateFileList(ev_st, app, L"/a/", L"*");
-			list = CreateList(ev_st, app, 1, app_instance->fs.count);
+			list = CreateList(ev_st, app);
 			if (list != NULL) {
 				dialog = UIS_CreateStaticList(&port, 0, app_instance->fs.count, 0, list, FALSE, 2, NULL,
 					app_instance->resources[APP_RESOURCE_NAME]);
@@ -364,33 +363,44 @@ static UINT32 HandleEventBack(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
 	return status;
 }
 
-static LIST_ENTRY_T *CreateList(EVENT_STACK_T *ev_st, APPLICATION_T *app, UINT32 start, UINT32 count) {
+static LIST_ENTRY_T *CreateList(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
 	UINT32 status;
 	INT32 result;
 	UINT32 i;
 	LIST_ENTRY_T *list_elements;
 	APP_INSTANCE_T *appi;
+	char debug_str[FS_MAX_URI_NAME_LENGTH + 16];
 
 	status = RESULT_OK;
 	result = RESULT_OK;
 	appi = (APP_INSTANCE_T *) app;
 
-	if (count == 0) {
+	if (appi->fs.list) {
+		suFreeMem(appi->fs.list);
+		appi->fs.list = NULL;
+	}
+	UpdateFileList(ev_st, app, L"/a/mobile/audio", L"*");
+
+	if (appi->fs.count == 0) {
 		return NULL;
 	}
-	list_elements = (LIST_ENTRY_T *) suAllocMem(sizeof(LIST_ENTRY_T) * count, &result);
+
+	list_elements = (LIST_ENTRY_T *) suAllocMem(sizeof(LIST_ENTRY_T) * appi->fs.count, &result);
 	if (result != RESULT_OK) {
 		return NULL;
 	}
 
-	for (i = 0; i < count; ++i) {
+	for (i = 0; i < appi->fs.count; ++i) {
 		memclr(&list_elements[i], sizeof(LIST_ENTRY_T));
 		list_elements[i].editable = FALSE;
 		list_elements[i].content.static_entry.formatting = TRUE;
 
 		status |= UIS_MakeContentFromString("Mq0",
-			&list_elements[0].content.static_entry.text,
+			&list_elements[i].content.static_entry.text,
 			appi->fs.list[i].name);
+
+		u_utoa(appi->fs.list[i].name, debug_str);
+		PFprintf("ELF: %d %s\n", i, debug_str);
 	}
 
 	if (status != RESULT_OK) {
@@ -415,6 +425,7 @@ static UINT32 UpdateFileList(EVENT_STACK_T *ev_st, APPLICATION_T *app, const WCH
 	FS_SEARCH_RESULT_T search_result;
 	FS_SEARCH_HANDLE_T search_handle;
 	IFACE_DATA_T iface;
+	char debug_str[FS_MAX_URI_NAME_LENGTH + 16];
 
 	error = RESULT_OK;
 	appi = (APP_INSTANCE_T *) app;
@@ -467,7 +478,6 @@ static UINT32 UpdateFileList(EVENT_STACK_T *ev_st, APPLICATION_T *app, const WCH
 		UINT8 mode;
 		UINT16 res;
 		WCHAR search_string[FS_MAX_URI_NAME_LENGTH + 16]; /* 280 */
-		char debug_str[FS_MAX_URI_NAME_LENGTH + 16];
 
 		DL_FS_SEARCH_INFO_T *search_info = NULL;
 
@@ -489,15 +499,15 @@ static UINT32 UpdateFileList(EVENT_STACK_T *ev_st, APPLICATION_T *app, const WCH
 		search_params.attrib = 0;
 		search_params.mask = 0;
 
-//		iface.port = app->port;
-//		search_handle = DL_FsSSearch(&iface, search_params, search_string, 0);
-//		PFprintf("LOL0: %d\n", search_handle);
+		iface.port = app->port;
+		search_handle = DL_FsSSearch(&iface, search_params, search_string, 0);
+		PFprintf("LOL0: %d\n", search_handle);
 
 //		if ((DL_FsSSearch(search_params, search_string, &search_handle, &appi->fs.count, 0)) != RESULT_OK) {
 //			DL_FsSearchClose(search_handle);
 //			return RESULT_FAIL;
 //		}
-
+/*
 		search_handle = DL_FsSSearch(
 			search_params,
 			search_string,
@@ -522,6 +532,7 @@ static UINT32 UpdateFileList(EVENT_STACK_T *ev_st, APPLICATION_T *app, const WCH
 			PFprintf("ELF: err %d\n", appi->fs.count);
 			return RESULT_FAIL;
 		}
+
 		u_strcpy(appi->fs.list[0].name, L"..");
 		appi->fs.list[0].type = FS_FOLDER;
 
@@ -544,15 +555,12 @@ static UINT32 UpdateFileList(EVENT_STACK_T *ev_st, APPLICATION_T *app, const WCH
 				if ((mode == 1) && (search_result.attrib & FS_ATTR_DIRECTORY)) {
 					continue;
 				}
-
-				u_utoa(search_result.name, debug_str);
-				PFprintf("ELF: %d %d %s\n", i, j, debug_str);
 				u_strcpy(appi->fs.list[j].name, search_result.name);
 				appi->fs.list[j].type = FS_FILE;
 				j++;
 			}
 		}
-
+*/
 		DL_FsSearchClose(search_info->shandle);
 	}
 
@@ -563,18 +571,20 @@ static UINT32 HandleEventSearchCompleated(EVENT_STACK_T *ev_st, APPLICATION_T *a
 	EVENT_T *event;
 	FS_SEARCH_COMPLETED_INDEX_T *search_index;
 	char name[256];
+	UINT16 res;
+	int i;
 
 	event = AFW_GetEv(ev_st);
 	search_index = (FS_SEARCH_COMPLETED_INDEX_T *) event->attachment;
 
 	PFprintf("Search Completed: %d %d\n", event->att_size, search_index->search_total);
 
-	PFprintf("Search Completed: %d %d\n", search_index->search_result.attrib, search_index->search_result.owner);
-
-	u_utoa(search_index->search_result.name, name);
-	PFprintf("Search Completed: %s\n", name);
-
-
+	for (i = 0; i < search_index->search_total; ++i) {
+		if (DL_FsSearchResults(search_index->search_handle, i, &res, &search_index->search_result) == RESULT_OK) {
+			u_utoa(search_index->search_result.name, name);
+			PFprintf("Search Completed: %s\n", name);
+		}
+	}
 
 	return RESULT_OK;
 }
