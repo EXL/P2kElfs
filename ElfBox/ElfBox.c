@@ -29,8 +29,9 @@
 #define D(format, ...) UtilLogStringData(format, ##__VA_ARGS__); PFprintf(format, ##__VA_ARGS__)
 #endif
 
-#define MAX_VOLUMES_COUNT     (4)
-#define MAX_FILENAME_SYMS     (64)
+#define TIMER_FAST_TRIGGER_MS             (1)
+#define MAX_VOLUMES_COUNT                 (4)
+#define MAX_FILENAME_SYMS                 (64)
 
 typedef enum {
 	APP_STATE_ANY,
@@ -43,6 +44,7 @@ typedef enum {
 
 typedef enum {
 	APP_TIMER_EXIT = 0x0001,
+	APP_TIMER_TO_MAIN_VIEW,
 	APP_TIMER_EXIT_FAST
 } APP_TIMER_T;
 
@@ -65,7 +67,7 @@ typedef enum {
 typedef enum {
 	FS_VOLUME,
 	FS_FOLDER,
-	FS_UP_FOLDER,
+	FS_FOLDER_UP,
 	FS_FILE,
 	FS_ELF
 } FS_ENTITY_T;
@@ -91,6 +93,7 @@ typedef struct {
 	BOOL flag_from_select;
 
 	WCHAR current_path[FS_MAX_PATH_NAME_LENGTH + 1];
+	WCHAR current_title[FS_MAX_PATH_NAME_LENGTH + 1];
 	FS_T fs;
 } APP_INSTANCE_T;
 
@@ -118,18 +121,22 @@ static UINT32 UpdateFileList(EVENT_STACK_T *ev_st, APPLICATION_T *app, const WCH
 static UINT32 FillFileList(EVENT_STACK_T *ev_st, APPLICATION_T *app, FS_SEARCH_COMPLETED_INDEX_T *search_index);
 
 static UINT32 CreateSearchString(WCHAR *search_string, const WCHAR *search_directory, const WCHAR *search_pattern);
-static const WCHAR *GetFileNameFromPath(WCHAR *path);
+static const WCHAR *GetFileNameFromPath(const WCHAR *path);
+static BOOL IsElfFile(const WCHAR *path);
+
+static const WCHAR *DirUp(WCHAR *path);
+static const WCHAR *DirDown(WCHAR *path, const WCHAR *directory_name);
 
 static const char g_app_name[APP_NAME_LEN] = "ElfBox";
 static const UINT32 g_ev_code_base = 0x00000FF1;
 
-static const WCHAR g_str_app_name[] = L"ElfBox";
+static const WCHAR g_str_app_name[] = L"Elf Box";
 
 static const WCHAR g_str_menu_help[] = L"Help...";
 static const WCHAR g_str_menu_about[] = L"About...";
 static const WCHAR g_str_view_help[] = L"Help";
 static const WCHAR g_str_popup_please_wait[] = L"Please wait";
-static const WCHAR g_str_popup_error[] = L"Error!";
+static const WCHAR g_str_popup_error[] = L"Cannot Run!";
 static const WCHAR g_str_popup_not_elf[] = L"It is not ELF file.";
 static const WCHAR g_str_help_content_p1[] = L"A simple ELF-applications launcher.";
 static const WCHAR g_str_about_content_p1[] = L"Version: 1.0";
@@ -194,6 +201,8 @@ static UINT32 ApplicationStart(EVENT_STACK_T *ev_st, REG_ID_T reg_id, void *reg_
 		appi->view = APP_VIEW_ABOUT;
 		appi->flag_from_select = FALSE;
 
+		u_strcpy(appi->current_path, L"/a");
+		u_strcpy(appi->current_title, g_str_app_name);
 		appi->fs.root = FALSE;
 		appi->fs.count = 0;
 		appi->fs.list = NULL;
@@ -226,8 +235,6 @@ static UINT32 InitResourses(RESOURCE_ID *resources) {
 
 	status = RESULT_OK;
 
-	status |= DRM_CreateResource(&resources[APP_RESOURCE_NAME], RES_TYPE_STRING,
-		(void *) g_str_app_name, (u_strlen(g_str_app_name) + 1) * sizeof(WCHAR));
 	status |= DRM_CreateResource(&resources[APP_RESOURCE_ICON_ELF], RES_TYPE_GRAPHICS,
 		(void *) icon_elf_gif, sizeof(icon_elf_gif));
 
@@ -278,6 +285,10 @@ static UINT32 HandleStateEnter(EVENT_STACK_T *ev_st, APPLICATION_T *app, ENTER_S
 		case APP_STATE_MAIN:
 			list = CreateList(ev_st, app);
 			if (list != NULL) {
+				DRM_ClearResource(appi->resources[APP_RESOURCE_NAME]);
+				DRM_CreateResource(&appi->resources[APP_RESOURCE_NAME], RES_TYPE_STRING,
+					(void *) appi->current_title, (u_strlen(appi->current_title) + 1) * sizeof(WCHAR));
+
 				dialog = UIS_CreateStaticList(&port, 0, appi->fs.count, 0, list, FALSE, 2, NULL,
 					appi->resources[APP_RESOURCE_NAME]);
 				suFreeMem(list);
@@ -298,13 +309,14 @@ static UINT32 HandleStateEnter(EVENT_STACK_T *ev_st, APPLICATION_T *app, ENTER_S
 			switch (appi->popup) {
 				default:
 				case APP_POPUP_WAIT:
-					UpdateList(ev_st, app, L"/a/mobile", L"*");
+					UpdateList(ev_st, app, appi->current_path, L"*");
 					notice_type = NOTICE_TYPE_WAIT_NO_KEY;
 					UIS_MakeContentFromString("MCq0", &content, g_str_popup_please_wait);
 					break;
 				case APP_POPUP_NOT_ELF:
 					notice_type = NOTICE_TYPE_FAIL;
 					UIS_MakeContentFromString("MCq0NMCq1", &content, g_str_popup_error, g_str_popup_not_elf);
+					appi->popup = APP_POPUP_WAIT;
 					break;
 			}
 			dialog = UIS_CreateTransientNotice(&port, &content, notice_type);
@@ -368,6 +380,9 @@ static UINT32 HandleEventTimerExpired(EVENT_STACK_T *ev_st, APPLICATION_T *app) 
 			DL_AudPlayTone(0x00,  0xFF);
 			return ApplicationStop(ev_st, app);
 			break;
+		case APP_TIMER_TO_MAIN_VIEW:
+			return APP_UtilChangeState(APP_STATE_MAIN, ev_st, app);
+			break;
 		default:
 			break;
 	}
@@ -384,21 +399,66 @@ static UINT32 HandleEventSelect(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
 	appi = (APP_INSTANCE_T *) app;
 	event = AFW_GetEv(ev_st);
 
-	appi->flag_from_select = TRUE;
 	appi->menu_current_item_index = event->data.index - 1;
 
-	switch (appi->menu_current_item_index) {
-		case 0:
-			appi->view = APP_VIEW_HELP;
-			status |= APP_UtilChangeState(APP_STATE_VIEW, ev_st, app);
+//	switch (appi->menu_current_item_index) {
+//		case 0:
+//			appi->view = APP_VIEW_HELP;
+//			status |= APP_UtilChangeState(APP_STATE_VIEW, ev_st, app);
+//			break;
+//		case 1:
+//			appi->view = APP_VIEW_ABOUT;
+//			status |= APP_UtilChangeState(APP_STATE_VIEW, ev_st, app);
+//			break;
+//		default:
+//			break;
+//	}
+
+	switch (appi->fs.list[appi->menu_current_item_index].type) {
+		case FS_VOLUME:
+			u_strcpy(appi->current_path, appi->fs.list[appi->menu_current_item_index].name);
+			appi->current_path[u_strlen(appi->current_path) - 1] = 0;
+			u_strcpy(appi->current_title, appi->current_path);
 			break;
-		case 1:
-			appi->view = APP_VIEW_ABOUT;
-			status |= APP_UtilChangeState(APP_STATE_VIEW, ev_st, app);
+		case FS_FOLDER:
+			u_strcpy(appi->current_path,
+				DirDown(appi->current_path, appi->fs.list[appi->menu_current_item_index].name));
+			u_strcpy(appi->current_title, appi->current_path);
+			break;
+		case FS_FOLDER_UP:
+			u_strcpy(appi->current_path,
+				DirUp(appi->current_path));
+			u_strcpy(appi->current_title, appi->current_path);
+			break;
+		case FS_FILE:
+			appi->flag_from_select = TRUE;
+			appi->popup = APP_POPUP_NOT_ELF;
+			break;
+		case FS_ELF:
+			appi->flag_from_select = TRUE;
 			break;
 		default:
 			break;
 	}
+
+#if defined(DEBUG)
+	{
+		char file_path[FS_MAX_PATH_NAME_LENGTH + 1];
+
+		D("%s:%d: Selected: %d %d.\n", __func__, __LINE__,
+			appi->menu_current_item_index, appi->fs.list[appi->menu_current_item_index].type);
+
+		u_utoa(appi->current_path, file_path);
+		D("%s:%d: Current Dir: %s\n",
+			__func__, __LINE__, file_path);
+
+		u_utoa(appi->current_title, file_path);
+		D("%s:%d: Current Title: %s\n",
+			__func__, __LINE__, file_path);
+	}
+#endif
+
+	status |= APP_UtilChangeState(APP_STATE_POPUP, ev_st, app);
 
 	return status;
 }
@@ -438,11 +498,9 @@ static LIST_ENTRY_T *CreateList(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
 		list_elements[i].editable = FALSE;
 		list_elements[i].content.static_entry.formatting = TRUE;
 
-		status |= UIS_MakeContentFromString("q1",
-			&list_elements[i].content.static_entry.text, appi->fs.list[i].name);
-
-		list_elements[i].content.static_entry.marks[0] = appi->resources[APP_RESOURCE_ICON_ELF];
-		list_elements[i].content.static_entry.marks[1] = appi->resources[APP_RESOURCE_ICON_ELF];
+		status |= UIS_MakeContentFromString("Mp0 Mq1",
+			&list_elements[i].content.static_entry.text,
+			appi->resources[APP_RESOURCE_ICON_ELF], appi->fs.list[i].name);
 	}
 
 	if (status != RESULT_OK) {
@@ -460,6 +518,7 @@ static UINT32 UpdateList(EVENT_STACK_T *ev_st, APPLICATION_T *app, const WCHAR *
 
 	if (!directory || !u_strcmp(directory, L"/")) {
 		status |= UpdateVolumeList(ev_st, app);
+		status |= APP_UtilStartTimer(TIMER_FAST_TRIGGER_MS, APP_TIMER_TO_MAIN_VIEW, app);
 	} else {
 		WCHAR search_string[FS_MAX_URI_NAME_LENGTH + 16]; /* 280 */
 		status |= CreateSearchString(search_string, directory, filter);
@@ -481,6 +540,12 @@ static UINT32 UpdateVolumeList(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
 	INT32 error;
 	APP_INSTANCE_T *appi;
 	WCHAR volumes[MAX_VOLUMES_COUNT * 3];
+//	= {
+//		L'/', L'a', 0xFFEE,
+//		L'/', L'b', 0xFFEE,
+//		L'/', L'c', 0xFFEE,
+//		L'/', L'd', 0xFFEE
+//	};
 	WCHAR *result;
 
 	appi = (APP_INSTANCE_T *) app;
@@ -492,10 +557,12 @@ static UINT32 UpdateVolumeList(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
 	appi->fs.root = TRUE;
 	appi->fs.count = 0;
 	if (appi->fs.list) {
+		D("%s:%d: Cleaning previous file list.\n", __func__, __LINE__);
 		suFreeMem(appi->fs.list);
 	}
 	appi->fs.list = suAllocMem(sizeof(FS_OBJECT_T) * MAX_VOLUMES_COUNT, &error);
 	if (error != RESULT_OK) {
+		D("%s:%d: Error: Cannot allocate %d bytes.\n", __func__, __LINE__, sizeof(FS_OBJECT_T) * MAX_VOLUMES_COUNT);
 		return RESULT_FAIL;
 	}
 
@@ -506,110 +573,53 @@ static UINT32 UpdateVolumeList(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
 		appi->fs.list[i].name[3] = 0;
 		appi->fs.list[i].name[4] = 0;
 		appi->fs.list[i].type = FS_VOLUME;
-
 		appi->fs.count += 1;
-
 		if (!volumes[i * 3 + 2]) {
 			break;
 		}
 	}
-}
 
-WCHAR* e(UINT16 a, W_CHAR*s) {
-
-	D(":AAAAA: %d\n", a);
-
-	return NULL;
+	return RESULT_OK;
 }
 
 static UINT32 UpdateFileList(EVENT_STACK_T *ev_st, APPLICATION_T *app, const WCHAR *search_string) {
 	/*
 	 * List of directories and files.
 	 */
+	DL_FS_URI_FNCT_PTR hack_function;
+	FS_SEARCH_COMPLETED_INDEX_T search_index;
 	FS_SEARCH_PARAMS_T search_params;
-	FS_SEARCH_RESULT_T search_result;
-	FS_SEARCH_HANDLE_T search_handle;
-
-	INT32 error;
-	APP_INSTANCE_T *appi;
-
-	IFACE_DATA_T iface;
-
-
-	INT32 i;
-	INT32 j;
-	UINT8 mode;
-	UINT16 res;
-
-	DL_FS_SEARCH_INFO_T *search_info = NULL;
+	DL_FS_SEARCH_INFO_T *search_info;
+//	FS_SEARCH_RESULT_T search_result;
+//	FS_SEARCH_HANDLE_T search_handle;
 
 	search_params.flags = FS_SEARCH_START_PATH | FS_SEARCH_FOLDERS;
 	search_params.attrib = FS_ATTR_DEFAULT;
-	search_params.mask = 0;
+	search_params.mask = FS_ATTR_DEFAULT;
 
-	iface.port = app->port;
-	search_handle = DL_FsSSearch(&iface, search_params, search_string, 0);
-	PFprintf("LOL0: %d\n", search_handle);
+//	IFACE_DATA_T iface;
+//	iface.port = app->port;
+//	search_handle = DL_FsSSearch(&iface, search_params, search_string, 0);
+//	PFprintf("LOL0: %d\n", search_handle);
 
 //		if ((DL_FsSSearch(search_params, search_string, &search_handle, &appi->fs.count, 0)) != RESULT_OK) {
 //			DL_FsSearchClose(search_handle);
 //			return RESULT_FAIL;
 //		}
-/*
-	search_handle = DL_FsSSearch(
-		search_params,
-		search_string,
-		&search_info,
-		(DL_FS_URI_FNCT_PTR *)e,
-		0);
 
-	u_utoa(search_string, debug_str);
-	PFprintf("SH: %d\n", search_handle);
-	PFprintf("LOL: %s\n", debug_str);
+	search_index.search_handle = DL_FsSSearch(search_params, search_string, &search_info, &hack_function, 0);
 
-	PFprintf("SN: %d\n", search_info->num);
+	D("%s:%d: Handle: %d.\n", __func__, __LINE__, search_index.search_handle);
+	D("%s:%d: Info Num: %d.\n", __func__, __LINE__, search_info->num);
 
-	appi->fs.count = search_info->num;
-	appi->fs.count += 1;
+	search_index.search_handle = search_info->shandle;
+	search_index.search_total = search_info->num;
 
-	if (appi->fs.list) {
-		suFreeMem(appi->fs.list);
-	}
-	appi->fs.list = suAllocMem(sizeof(FS_OBJECT_T) * appi->fs.count, &error);
-	if (error) {
-		PFprintf("ELF: err %d\n", appi->fs.count);
-		return RESULT_FAIL;
-	}
+	FillFileList(ev_st, app, &search_index);
 
-	u_strcpy(appi->fs.list[0].name, L"..");
-	appi->fs.list[0].type = FS_FOLDER;
+	APP_UtilStartTimer(TIMER_FAST_TRIGGER_MS, APP_TIMER_TO_MAIN_VIEW, app);
 
-	res = 1;
-	mode = 0;
-	for (i = 0, j = 1; j <= appi->fs.count; ++i) {
-		if (i >= appi->fs.count) {
-			if (mode > 0) {
-				break;
-			} else {
-				i = -1;
-				mode = 1;
-				continue;
-			}
-		}
-		if (DL_FsSearchResults(search_info->shandle, i, &res, &search_result) == RESULT_OK) {
-			if ((mode == 0) && !(search_result.attrib & FS_ATTR_DIRECTORY)) {
-				continue;
-			}
-			if ((mode == 1) && (search_result.attrib & FS_ATTR_DIRECTORY)) {
-				continue;
-			}
-			u_strcpy(appi->fs.list[j].name, search_result.name);
-			appi->fs.list[j].type = FS_FILE;
-			j++;
-		}
-	}
-*/
-//		DL_FsSearchClose(search_info->shandle);
+	return RESULT_OK;
 }
 
 static UINT32 FillFileList(EVENT_STACK_T *ev_st, APPLICATION_T *app, FS_SEARCH_COMPLETED_INDEX_T *search_index) {
@@ -617,7 +627,7 @@ static UINT32 FillFileList(EVENT_STACK_T *ev_st, APPLICATION_T *app, FS_SEARCH_C
 	INT32 error;
 	APP_INSTANCE_T *appi;
 	UINT16 i;
-	UINT16 count, mode;
+	UINT16 count;
 #if defined(DEBUG)
 	char file_path[FS_MAX_FILE_NAME_LENGTH + 1];
 #endif
@@ -639,7 +649,7 @@ static UINT32 FillFileList(EVENT_STACK_T *ev_st, APPLICATION_T *app, FS_SEARCH_C
 		return RESULT_FAIL;
 	}
 	u_strcpy(appi->fs.list[0].name, L"..");
-	appi->fs.list[0].type = FS_UP_FOLDER;
+	appi->fs.list[0].type = FS_FOLDER_UP;
 
 	for (i = 0; i < search_index->search_total; ++i) {
 		status = DL_FsSearchResults(search_index->search_handle, i, &count, &search_index->search_result);
@@ -655,12 +665,7 @@ static UINT32 FillFileList(EVENT_STACK_T *ev_st, APPLICATION_T *app, FS_SEARCH_C
 			if (search_index->search_result.attrib & FS_ATTR_DIRECTORY) {
 				appi->fs.list[i + 1].type = FS_FOLDER;
 			} else {
-//				if (!u_stristr(appi->fs.list[i + 1].name, L".elf")) {
-//					appi->fs.list[i + 1].type = FS_ELF;
-//				} else {
-//					appi->fs.list[i + 1].type = FS_FILE;
-//				}
-				appi->fs.list[i + 1].type = FS_FILE;
+				appi->fs.list[i + 1].type = (IsElfFile(appi->fs.list[i + 1].name)) ? FS_ELF : FS_FILE;
 			}
 		}
 	}
@@ -702,8 +707,47 @@ static UINT32 CreateSearchString(WCHAR *search_string, const WCHAR *search_direc
 
 	u_strcat(search_string, L"\xFFFE");
 	u_strcat(search_string, search_pattern);
+
+	return RESULT_OK;
 }
 
-static const WCHAR *GetFileNameFromPath(WCHAR *path) {
-	return u_strrchr(path, L'/') + 1;
+static const WCHAR *GetFileNameFromPath(const WCHAR *path) {
+	if (u_strrchr(path, L'/')) {
+		return u_strrchr(path, L'/') + 1;
+	} else {
+		return path;
+	}
+}
+
+static BOOL IsElfFile(const WCHAR *path) {
+	WCHAR *last_dot;
+
+	last_dot = u_strrchr(path, L'.');
+
+	if (last_dot) {
+		last_dot += 1;
+
+		if (last_dot[0] == L'e' &&
+			last_dot[1] == L'l' &&
+			last_dot[2] == L'f') {
+			return TRUE;
+		}
+
+	}
+
+	return FALSE;
+}
+
+static const WCHAR *DirUp(WCHAR *path) {
+	u_strrchr(path, L'/')[0] = 0;
+	if (!u_strlen(path)) {
+		u_strcpy(path, L"/");
+	}
+	return path;
+}
+
+static const WCHAR *DirDown(WCHAR *path, const WCHAR *directory_name) {
+	u_strcat(path, L"/");
+	u_strcat(path, directory_name);
+	return path;
 }
