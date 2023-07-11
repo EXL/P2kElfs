@@ -45,8 +45,8 @@ typedef enum {
 
 typedef enum {
 	APP_TIMER_EXIT = 0x0001,
-	APP_TIMER_TO_MAIN_VIEW,
-	APP_TIMER_EXIT_FAST
+	APP_TIMER_EXIT_FAST,
+	APP_TIMER_TO_MAIN_VIEW
 } APP_TIMER_T;
 
 typedef enum {
@@ -57,8 +57,7 @@ typedef enum {
 
 typedef enum {
 	APP_POPUP_WAIT,
-	APP_POPUP_NOT_ELF,
-	APP_POPUP_SEARCH_FAILED
+	APP_POPUP_NOT_ELF
 } APP_POPUP_T;
 
 typedef enum {
@@ -123,11 +122,12 @@ static UINT32 UpdateFileList(EVENT_STACK_T *ev_st, APPLICATION_T *app, const WCH
 static UINT32 FillFileList(EVENT_STACK_T *ev_st, APPLICATION_T *app, FS_SEARCH_COMPLETED_INDEX_T *search_index);
 
 static UINT32 CreateSearchString(WCHAR *search_string, const WCHAR *search_directory, const WCHAR *search_pattern);
+static UINT32 AddUriFileHeader(WCHAR *out_str, const WCHAR *in_str);
 static const WCHAR *GetFileNameFromPath(const WCHAR *path);
 static BOOL IsElfFile(const WCHAR *path);
-
 static const WCHAR *DirUp(WCHAR *path);
 static const WCHAR *DirDown(WCHAR *path, const WCHAR *directory_name);
+static UINT32 RunElfApplication(EVENT_STACK_T *ev_st, APPLICATION_T *app, const WCHAR *elf_path);
 
 static const char g_app_name[APP_NAME_LEN] = "ElfBox";
 static const UINT32 g_ev_code_base = 0x00000FF1;
@@ -140,8 +140,6 @@ static const WCHAR g_str_view_help[] = L"Help";
 static const WCHAR g_str_popup_please_wait[] = L"Please wait";
 static const WCHAR g_str_popup_cannot_run[] = L"Cannot Run!";
 static const WCHAR g_str_popup_not_elf[] = L"It is not an ELF file.";
-static const WCHAR g_str_popup_cannot_search[] = L"Cannot Search!";
-static const WCHAR g_str_popup_error_search[] = L"Search error, last directory is:";
 static const WCHAR g_str_help_content_p1[] = L"A simple ELF-applications launcher.";
 static const WCHAR g_str_about_content_p1[] = L"Version: 1.0";
 static const WCHAR g_str_about_content_p2[] = L"\x00A9 EXL, 02-Jul-2023.";
@@ -321,11 +319,6 @@ static UINT32 HandleStateEnter(EVENT_STACK_T *ev_st, APPLICATION_T *app, ENTER_S
 					notice_type = NOTICE_TYPE_FAIL;
 					UIS_MakeContentFromString("MCq0NMCq1", &content, g_str_popup_cannot_run, g_str_popup_not_elf);
 					break;
-				case APP_POPUP_SEARCH_FAILED:
-					notice_type = NOTICE_TYPE_FAIL;
-					UIS_MakeContentFromString("MCq0NMCq1NMCq2", &content,
-						g_str_popup_cannot_search, g_str_popup_error_search, appi->current_path);
-					break;
 			}
 			dialog = UIS_CreateTransientNotice(&port, &content, notice_type);
 			/* Reset it to default POPUP_WAIT */
@@ -445,7 +438,9 @@ static UINT32 HandleEventSelect(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
 			appi->popup = APP_POPUP_NOT_ELF;
 			break;
 		case FS_ELF:
-			appi->flag_from_select = TRUE;
+			u_strcpy(appi->current_path, L"/");
+			u_strcpy(appi->current_path, appi->fs.list[appi->menu_current_item_index].name);
+			status |= RunElfApplication(ev_st, app, appi->current_path);
 			break;
 		default:
 			break;
@@ -624,15 +619,20 @@ static UINT32 UpdateFileList(EVENT_STACK_T *ev_st, APPLICATION_T *app, const WCH
 //		}
 
 	status |= DL_FsSSearch(search_params, search_string, &search_info, &complete_function, 0);
-	D("%s:%d: Handle: %d.\n", __func__, __LINE__, status);
+	D("%s:%d: Status: %d.\n", __func__, __LINE__, status);
 	D("%s:%d: Info Num: %d.\n", __func__, __LINE__, search_info->num);
 	if (status != RESULT_OK) {
+		D("%s:%d: Trying to fix search.\n", __func__, __LINE__);
 		if (search_info->shandle) {
+			D("%s:%d: Search Handle is not 0.\n", __func__, __LINE__);
 			status |= DL_FsSearchClose(search_info->shandle);
 		}
-		appi->flag_from_select = 1;
-		appi->popup = APP_POPUP_SEARCH_FAILED;
-		status |= APP_UtilChangeState(APP_STATE_POPUP, ev_st, app);
+
+		u_strcpy(appi->current_path, L"/");
+		UpdateVolumeList(ev_st, app);
+
+		status |= APP_UtilStartTimer(TIMER_FAST_TRIGGER_MS, APP_TIMER_TO_MAIN_VIEW, app);
+		return status;
 	}
 
 	search_index.search_handle = search_info->shandle;
@@ -717,12 +717,7 @@ static UINT32 HandleEventSearchCompleted(EVENT_STACK_T *ev_st, APPLICATION_T *ap
 }
 
 static UINT32 CreateSearchString(WCHAR *search_string, const WCHAR *search_directory, const WCHAR *search_pattern) {
-	if (!u_strncmp(search_directory, L"file:/", 6)) {
-		u_strcpy(search_string, search_directory);
-	} else {
-		u_strcpy(search_string, L"file:/");
-		u_strcat(search_string, search_directory);
-	}
+	AddUriFileHeader(search_string, search_directory);
 
 	if (search_directory[u_strlen(search_directory) - 1] != L'/') {
 		u_strcat(search_string, L"/");
@@ -731,6 +726,16 @@ static UINT32 CreateSearchString(WCHAR *search_string, const WCHAR *search_direc
 	u_strcat(search_string, L"\xFFFE");
 	u_strcat(search_string, search_pattern);
 
+	return RESULT_OK;
+}
+
+static UINT32 AddUriFileHeader(WCHAR *out_str, const WCHAR *in_str) {
+	if (!u_strncmp(in_str, L"file:/", 6)) {
+		u_strcpy(out_str, in_str);
+	} else {
+		u_strcpy(out_str, L"file:/");
+		u_strcat(out_str, in_str);
+	}
 	return RESULT_OK;
 }
 
@@ -773,4 +778,27 @@ static const WCHAR *DirDown(WCHAR *path, const WCHAR *directory_name) {
 	u_strcat(path, L"/");
 	u_strcat(path, directory_name);
 	return path;
+}
+
+static UINT32 RunElfApplication(EVENT_STACK_T *ev_st, APPLICATION_T *app, const WCHAR *elf_path) {
+	UINT32 status;
+	WCHAR elf_uri[FS_MAX_URI_NAME_LENGTH + 1]; /* 265 */
+
+	status = RESULT_OK;
+
+	status |= AddUriFileHeader(elf_uri, elf_path);
+
+#if defined(DEBUG)
+	{
+		char elf_uri_string[FS_MAX_URI_NAME_LENGTH + 1]; /* 265 */
+		u_utoa(elf_uri, elf_uri_string);
+		D("%s:%d: Trying to run %s elf application.\n", __func__, __LINE__, elf_uri_string);
+	}
+#endif
+
+	status |= LdrLoadELF(elf_uri, NULL);
+	status |= APP_ConsumeEv(ev_st, app);
+//	status |= ApplicationStop(ev_st, app);
+
+	return status;
 }
