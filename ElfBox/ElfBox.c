@@ -623,10 +623,8 @@ static UINT32 UpdateFileList(EVENT_STACK_T *ev_st, APPLICATION_T *app, const WCH
 //			return RESULT_FAIL;
 //		}
 
-	search_info->shandle = 0;
-
 	status |= DL_FsSSearch(search_params, search_string, &search_info, &complete_function, 0);
-	D("%s:%d: Handle: %d.\n", __func__, __LINE__, search_index.search_handle);
+	D("%s:%d: Handle: %d.\n", __func__, __LINE__, status);
 	D("%s:%d: Info Num: %d.\n", __func__, __LINE__, search_info->num);
 	if (status != RESULT_OK) {
 		if (search_info->shandle) {
