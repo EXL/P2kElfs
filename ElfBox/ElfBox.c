@@ -268,9 +268,7 @@ static UINT32 HandleStateEnter(EVENT_STACK_T *ev_st, APPLICATION_T *app, ENTER_S
 	LIST_ENTRY_T *list;
 
 	if (state != ENTER_STATE_ENTER) {
-//		if (app->state != APP_STATE_MAIN) {
-			return RESULT_OK;
-//		}
+		return RESULT_OK;
 	}
 
 	appi = (APP_INSTANCE_T *) app;
@@ -438,8 +436,8 @@ static UINT32 HandleEventSelect(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
 			appi->popup = APP_POPUP_NOT_ELF;
 			break;
 		case FS_ELF:
-			u_strcpy(appi->current_path, L"/");
-			u_strcpy(appi->current_path, appi->fs.list[appi->menu_current_item_index].name);
+			u_strcat(appi->current_path, L"/");
+			u_strcat(appi->current_path, appi->fs.list[appi->menu_current_item_index].name);
 			status |= RunElfApplication(ev_st, app, appi->current_path);
 			break;
 		default:
@@ -798,7 +796,7 @@ static UINT32 RunElfApplication(EVENT_STACK_T *ev_st, APPLICATION_T *app, const 
 
 	status |= LdrLoadELF(elf_uri, NULL);
 	status |= APP_ConsumeEv(ev_st, app);
-//	status |= ApplicationStop(ev_st, app);
+	status |= ApplicationStop(ev_st, app);
 
 	return status;
 }
