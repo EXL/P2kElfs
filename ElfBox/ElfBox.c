@@ -125,6 +125,7 @@ static UINT32 DeleteDialog(APPLICATION_T *app);
 
 static UINT32 HandleEventTimerExpired(EVENT_STACK_T *ev_st, APPLICATION_T *app);
 static UINT32 HandleEventSelect(EVENT_STACK_T *ev_st, APPLICATION_T *app);
+static UINT32 HandleEventBackDir(EVENT_STACK_T *ev_st, APPLICATION_T *app);
 static UINT32 HandleEventHelp(EVENT_STACK_T *ev_st, APPLICATION_T *app);
 static UINT32 HandleEventAbout(EVENT_STACK_T *ev_st, APPLICATION_T *app);
 static UINT32 HandleEventExit(EVENT_STACK_T *ev_st, APPLICATION_T *app);
@@ -175,7 +176,7 @@ static EVENT_HANDLER_ENTRY_T g_state_init_hdls[] = {
 };
 
 static EVENT_HANDLER_ENTRY_T g_state_main_hdls[] = {
-	{ EV_DONE, ApplicationStop },
+	{ EV_DONE, HandleEventBackDir },
 	{ EV_DIALOG_DONE, ApplicationStop },
 	{ EV_SELECT, HandleEventSelect },
 	{ STATE_HANDLERS_RESERVED, HandleEventHelp },
@@ -562,6 +563,26 @@ static UINT32 HandleEventSelect(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
 	return status;
 }
 
+static UINT32 HandleEventBackDir(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
+	UINT32 status;
+	APP_INSTANCE_T *appi;
+
+	status = RESULT_OK;
+	appi = (APP_INSTANCE_T *) app;
+
+	if (!appi->fs.root) {
+		u_strcpy(appi->current_path,
+			DirUp(appi->current_path));
+		u_strcpy(appi->current_title, appi->current_path);
+
+		status |= APP_UtilChangeState(APP_STATE_POPUP, ev_st, app);
+	} else {
+		status |= ApplicationStop(ev_st, app);
+	}
+
+	return status;
+}
+
 static UINT32 HandleEventHelp(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
 	UINT32 status;
 	APP_INSTANCE_T *appi;
@@ -684,6 +705,9 @@ static UINT32 UpdateVolumeList(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
 	WCHAR *result;
 
 	appi = (APP_INSTANCE_T *) app;
+
+	appi->fs.root = TRUE;
+
 	result = DL_FsVolumeEnum(volumes);
 	if (!result) {
 		return RESULT_FAIL;
@@ -733,6 +757,8 @@ static UINT32 UpdateFileList(EVENT_STACK_T *ev_st, APPLICATION_T *app, const WCH
 
 	status = RESULT_OK;
 	appi = (APP_INSTANCE_T *) app;
+
+	appi->fs.root = FALSE;
 
 	search_params.flags = FS_SEARCH_START_PATH | FS_SEARCH_FOLDERS;
 	search_params.attrib = FS_ATTR_DEFAULT;
