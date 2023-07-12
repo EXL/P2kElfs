@@ -51,7 +51,17 @@ typedef enum {
 
 typedef enum {
 	APP_RESOURCE_NAME,
+	APP_RESOURCE_MENU,
+	APP_RESOURCE_HELP,
+	APP_RESOURCE_ABOUT,
+	APP_RESOURCE_EXIT,
 	APP_RESOURCE_ICON_ELF,
+	APP_RESOURCE_ACTION_BACK,
+	APP_RESOURCE_ACTION_RUN,
+	APP_RESOURCE_ACTION_HELP,
+	APP_RESOURCE_ACTION_ABOUT,
+	APP_RESOURCE_ACTION_EXIT,
+	APP_RESOURCE_LIST_DESCRIPTION,
 	APP_RESOURCE_MAX
 } APP_RESOURCES_T;
 
@@ -100,6 +110,9 @@ typedef struct {
 
 UINT32 Register(const char *elf_path_uri, const char *args, UINT32 ev_code); /* ElfPack 1.x entry point. */
 
+static UINT32 LdrInitEventHandlersTbl(EVENT_HANDLER_ENTRY_T *tbl, UINT32 *base);
+static UINT32 LdrFindEventHandlerTbl(EVENT_HANDLER_ENTRY_T *tbl, EVENT_HANDLER_T *hfn);
+
 static UINT32 ApplicationStart(EVENT_STACK_T *ev_st, REG_ID_T reg_id, void *reg_hdl);
 static UINT32 ApplicationStop(EVENT_STACK_T *ev_st, APPLICATION_T *app);
 
@@ -112,6 +125,9 @@ static UINT32 DeleteDialog(APPLICATION_T *app);
 
 static UINT32 HandleEventTimerExpired(EVENT_STACK_T *ev_st, APPLICATION_T *app);
 static UINT32 HandleEventSelect(EVENT_STACK_T *ev_st, APPLICATION_T *app);
+static UINT32 HandleEventHelp(EVENT_STACK_T *ev_st, APPLICATION_T *app);
+static UINT32 HandleEventAbout(EVENT_STACK_T *ev_st, APPLICATION_T *app);
+static UINT32 HandleEventExit(EVENT_STACK_T *ev_st, APPLICATION_T *app);
 static UINT32 HandleEventBack(EVENT_STACK_T *ev_st, APPLICATION_T *app);
 static UINT32 HandleEventSearchCompleted(EVENT_STACK_T *ev_st, APPLICATION_T *app);
 
@@ -130,12 +146,14 @@ static const WCHAR *DirDown(WCHAR *path, const WCHAR *directory_name);
 static UINT32 RunElfApplication(EVENT_STACK_T *ev_st, APPLICATION_T *app, const WCHAR *elf_path);
 
 static const char g_app_name[APP_NAME_LEN] = "ElfBox";
+
 static const UINT32 g_ev_code_base = 0x00000FF1;
 
 static const WCHAR g_str_app_name[] = L"ElfBox Launcher";
-
+static const WCHAR g_str_app_menu[] = L"ElfBox Menu";
 static const WCHAR g_str_menu_help[] = L"Help...";
 static const WCHAR g_str_menu_about[] = L"About...";
+static const WCHAR g_str_menu_exit[] = L"Exit";
 static const WCHAR g_str_view_help[] = L"Help";
 static const WCHAR g_str_popup_please_wait[] = L"Please wait";
 static const WCHAR g_str_popup_cannot_run[] = L"Cannot Run!";
@@ -160,6 +178,9 @@ static EVENT_HANDLER_ENTRY_T g_state_main_hdls[] = {
 	{ EV_DONE, ApplicationStop },
 	{ EV_DIALOG_DONE, ApplicationStop },
 	{ EV_SELECT, HandleEventSelect },
+	{ STATE_HANDLERS_RESERVED, HandleEventHelp },
+	{ STATE_HANDLERS_RESERVED, HandleEventAbout },
+	{ STATE_HANDLERS_RESERVED, HandleEventExit },
 	{ STATE_HANDLERS_END, NULL }
 };
 
@@ -181,9 +202,35 @@ static const STATE_HANDLERS_ENTRY_T g_state_table_hdls[] = {
 UINT32 Register(const char *elf_path_uri, const char *args, UINT32 ev_code) {
 	UINT32 status;
 
+	D("%s:%d: Reserve ev_code: %d 0x%X.\n", __func__, __LINE__, ev_code, ev_code);
+	LdrInitEventHandlersTbl(g_state_main_hdls, &ev_code);
+
 	status = APP_Register(&g_ev_code_base, 1, g_state_table_hdls, APP_STATE_MAX, (void *) ApplicationStart);
 
 	return status;
+}
+
+static UINT32 LdrInitEventHandlersTbl(EVENT_HANDLER_ENTRY_T *tbl, UINT32 *base) {
+	UINT32 i = 0;
+	while (tbl[i].code != STATE_HANDLERS_END) {
+		if (tbl[i].code == STATE_HANDLERS_RESERVED) {
+			tbl[i].code = (*base)++;
+			D("%s:%d: Added my own ev_code: %d 0x%X.\n", __func__, __LINE__, tbl[i].code, tbl[i].code);
+		}
+		i++;
+	}
+	return *base;
+}
+
+static UINT32 LdrFindEventHandlerTbl(EVENT_HANDLER_ENTRY_T *tbl, EVENT_HANDLER_T *hfn) {
+	UINT32 i = 0;
+	while (tbl[i].code != STATE_HANDLERS_END) {
+		if (tbl[i].hfunc == hfn) {
+			return tbl[i].code;
+		}
+		i++;
+	}
+	return 0;
 }
 
 static UINT32 ApplicationStart(EVENT_STACK_T *ev_st, REG_ID_T reg_id, void *reg_hdl) {
@@ -234,11 +281,48 @@ static UINT32 ApplicationStop(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
 
 static UINT32 InitResourses(RESOURCE_ID *resources) {
 	UINT32 status;
+	RES_ACTION_LIST_ITEM_T action;
+	UIS_LIST_RESOURCE_CONTENTS_T list_description;
 
 	status = RESULT_OK;
 
+	status |= DRM_CreateResource(&resources[APP_RESOURCE_NAME], RES_TYPE_STRING,
+		(void *) g_str_app_name, (u_strlen(g_str_app_name) + 1) * sizeof(WCHAR));
+	status |= DRM_CreateResource(&resources[APP_RESOURCE_MENU], RES_TYPE_STRING,
+		(void *) g_str_app_menu, (u_strlen(g_str_app_menu) + 1) * sizeof(WCHAR));
+	status |= DRM_CreateResource(&resources[APP_RESOURCE_HELP], RES_TYPE_STRING,
+		(void *) g_str_menu_help, (u_strlen(g_str_menu_help) + 1) * sizeof(WCHAR));
+	status |= DRM_CreateResource(&resources[APP_RESOURCE_ABOUT], RES_TYPE_STRING,
+		(void *) g_str_menu_about, (u_strlen(g_str_menu_about) + 1) * sizeof(WCHAR));
+	status |= DRM_CreateResource(&resources[APP_RESOURCE_EXIT], RES_TYPE_STRING,
+		(void *) g_str_menu_exit, (u_strlen(g_str_menu_exit) + 1) * sizeof(WCHAR));
+
 	status |= DRM_CreateResource(&resources[APP_RESOURCE_ICON_ELF], RES_TYPE_GRAPHICS,
 		(void *) icon_elf_gif, sizeof(icon_elf_gif));
+
+	action.softkey_label = resources[APP_RESOURCE_HELP];
+	action.list_label = resources[APP_RESOURCE_HELP];
+	action.softkey_priority = 0;
+	action.list_priority = APP_RESOURCE_MAX - APP_RESOURCE_HELP;
+	status |= DRM_CreateResource(&resources[APP_RESOURCE_ACTION_HELP], RES_TYPE_ACTION, &action, sizeof(action));
+
+	action.softkey_label = resources[APP_RESOURCE_ABOUT];
+	action.list_label = resources[APP_RESOURCE_ABOUT];
+	action.softkey_priority = 0;
+	action.list_priority = APP_RESOURCE_MAX - APP_RESOURCE_ABOUT;
+	status |= DRM_CreateResource(&resources[APP_RESOURCE_ACTION_ABOUT], RES_TYPE_ACTION, &action, sizeof(action));
+
+	action.softkey_label = resources[APP_RESOURCE_EXIT];
+	action.list_label = resources[APP_RESOURCE_EXIT];
+	action.softkey_priority = 0;
+	action.list_priority = APP_RESOURCE_MAX - APP_RESOURCE_EXIT;
+	status |= DRM_CreateResource(&resources[APP_RESOURCE_ACTION_EXIT], RES_TYPE_ACTION, &action, sizeof(action));
+
+	memclr(&list_description, sizeof(list_description));
+	list_description.list_title = resources[APP_RESOURCE_NAME];
+	list_description.menu_title = resources[APP_RESOURCE_MENU];
+	status |= DRM_CreateResource(&resources[APP_RESOURCE_LIST_DESCRIPTION], RES_TYPE_LIST_DESCR,
+		&list_description, sizeof(list_description));
 
 	return status;
 }
@@ -266,6 +350,7 @@ static UINT32 HandleStateEnter(EVENT_STACK_T *ev_st, APPLICATION_T *app, ENTER_S
 	APP_STATE_T app_state;
 	UINT8 notice_type;
 	LIST_ENTRY_T *list;
+	ACTIONS_T actions;
 
 	if (state != ENTER_STATE_ENTER) {
 		return RESULT_OK;
@@ -285,12 +370,22 @@ static UINT32 HandleStateEnter(EVENT_STACK_T *ev_st, APPLICATION_T *app, ENTER_S
 		case APP_STATE_MAIN:
 			list = CreateList(ev_st, app);
 			if (list != NULL) {
-				DRM_ClearResource(appi->resources[APP_RESOURCE_NAME]);
-				DRM_CreateResource(&appi->resources[APP_RESOURCE_NAME], RES_TYPE_STRING,
+				DRM_SetResource(appi->resources[APP_RESOURCE_NAME],
 					(void *) appi->current_title, (u_strlen(appi->current_title) + 1) * sizeof(WCHAR));
 
-				dialog = UIS_CreateStaticList(&port, 0, appi->fs.count, 0, list, FALSE, 2, NULL,
-					appi->resources[APP_RESOURCE_NAME]);
+				actions.action[0].operation = ACTION_OP_ADD;
+				actions.action[0].event = LdrFindEventHandlerTbl(g_state_main_hdls, HandleEventHelp);
+				actions.action[0].action_res = appi->resources[APP_RESOURCE_ACTION_HELP];
+				actions.action[1].operation = ACTION_OP_ADD;
+				actions.action[1].event = LdrFindEventHandlerTbl(g_state_main_hdls, HandleEventAbout);
+				actions.action[1].action_res = appi->resources[APP_RESOURCE_ACTION_ABOUT];
+				actions.action[2].operation = ACTION_OP_ADD;
+				actions.action[2].event = LdrFindEventHandlerTbl(g_state_main_hdls, HandleEventExit);
+				actions.action[2].action_res = appi->resources[APP_RESOURCE_ACTION_EXIT];
+				actions.count = 3;
+
+				dialog = UIS_CreateStaticList(&port, 0, appi->fs.count, 0, list, FALSE, 2, &actions,
+					appi->resources[APP_RESOURCE_LIST_DESCRIPTION]);
 				suFreeMem(list);
 
 				/* Insert cursor to proper position. */
@@ -376,9 +471,10 @@ static UINT32 HandleEventTimerExpired(EVENT_STACK_T *ev_st, APPLICATION_T *app) 
 
 	switch (timer_id) {
 		case APP_TIMER_EXIT:
-		case APP_TIMER_EXIT_FAST:
 			/* Play an exit sound using quiet speaker. */
 			DL_AudPlayTone(0x00,  0xFF);
+			/* Fall through */
+		case APP_TIMER_EXIT_FAST:
 			return ApplicationStop(ev_st, app);
 			break;
 		case APP_TIMER_TO_MAIN_VIEW:
@@ -462,6 +558,42 @@ static UINT32 HandleEventSelect(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
 #endif
 
 	status |= APP_UtilChangeState(APP_STATE_POPUP, ev_st, app);
+
+	return status;
+}
+
+static UINT32 HandleEventHelp(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
+	UINT32 status;
+	APP_INSTANCE_T *appi;
+
+	status = RESULT_OK;
+	appi = (APP_INSTANCE_T *) app;
+
+	appi->view = APP_VIEW_HELP;
+	status |= APP_UtilChangeState(APP_STATE_VIEW, ev_st, app);
+
+	return status;
+}
+
+static UINT32 HandleEventAbout(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
+	UINT32 status;
+	APP_INSTANCE_T *appi;
+
+	status = RESULT_OK;
+	appi = (APP_INSTANCE_T *) app;
+
+	appi->view = APP_VIEW_ABOUT;
+	status |= APP_UtilChangeState(APP_STATE_VIEW, ev_st, app);
+
+	return status;
+}
+
+static UINT32 HandleEventExit(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
+	UINT32 status;
+
+	status = RESULT_OK;
+
+	status |= ApplicationStop(ev_st, app);
 
 	return status;
 }
