@@ -21,7 +21,10 @@
 #include <filesystem.h>
 #include <resources.h>
 
-#include "icons/icon_elf_gif.h"
+#include "icons/icon_elf_15x15.h"
+#include "icons/icon_file_15x15.h"
+#include "icons/icon_disk_15x15.h"
+#include "icons/icon_folder_15x15.h"
 
 /* TODO: Move it to SDK. */
 #if !defined(DEBUG)
@@ -55,6 +58,9 @@ typedef enum {
 	APP_RESOURCE_HELP,
 	APP_RESOURCE_ABOUT,
 	APP_RESOURCE_EXIT,
+	APP_RESOURCE_ICON_DISK,
+	APP_RESOURCE_ICON_FOLDER,
+	APP_RESOURCE_ICON_FILE,
 	APP_RESOURCE_ICON_ELF,
 	APP_RESOURCE_ACTION_BACK,
 	APP_RESOURCE_ACTION_RUN,
@@ -298,8 +304,14 @@ static UINT32 InitResourses(RESOURCE_ID *resources) {
 	status |= DRM_CreateResource(&resources[APP_RESOURCE_EXIT], RES_TYPE_STRING,
 		(void *) g_str_menu_exit, (u_strlen(g_str_menu_exit) + 1) * sizeof(WCHAR));
 
+	status |= DRM_CreateResource(&resources[APP_RESOURCE_ICON_DISK], RES_TYPE_GRAPHICS,
+		(void *) disk_15x15_gif, sizeof(disk_15x15_gif));
+	status |= DRM_CreateResource(&resources[APP_RESOURCE_ICON_FOLDER], RES_TYPE_GRAPHICS,
+		(void *) folder_15x15_gif, sizeof(folder_15x15_gif));
+	status |= DRM_CreateResource(&resources[APP_RESOURCE_ICON_FILE], RES_TYPE_GRAPHICS,
+		(void *) file_15x15_gif, sizeof(file_15x15_gif));
 	status |= DRM_CreateResource(&resources[APP_RESOURCE_ICON_ELF], RES_TYPE_GRAPHICS,
-		(void *) icon_elf_gif, sizeof(icon_elf_gif));
+		(void *) elf_15x15_gif, sizeof(elf_15x15_gif));
 
 	action.softkey_label = resources[APP_RESOURCE_HELP];
 	action.list_label = resources[APP_RESOURCE_HELP];
@@ -635,6 +647,7 @@ static LIST_ENTRY_T *CreateList(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
 	UINT32 i;
 	LIST_ENTRY_T *list_elements;
 	APP_INSTANCE_T *appi;
+	RESOURCE_ID list_icon;
 
 	status = RESULT_OK;
 	result = RESULT_OK;
@@ -654,9 +667,25 @@ static LIST_ENTRY_T *CreateList(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
 		list_elements[i].editable = FALSE;
 		list_elements[i].content.static_entry.formatting = TRUE;
 
+		switch (appi->fs.list[i].type) {
+			case FS_VOLUME:
+				list_icon = appi->resources[APP_RESOURCE_ICON_DISK];
+				break;
+			case FS_FOLDER_UP:
+			case FS_FOLDER:
+				list_icon = appi->resources[APP_RESOURCE_ICON_FOLDER];
+				break;
+			default:
+			case FS_FILE:
+				list_icon = appi->resources[APP_RESOURCE_ICON_FILE];
+				break;
+			case FS_ELF:
+				list_icon = appi->resources[APP_RESOURCE_ICON_ELF];
+				break;
+		}
+
 		status |= UIS_MakeContentFromString("Mp0 Mq1",
-			&list_elements[i].content.static_entry.text,
-			appi->resources[APP_RESOURCE_ICON_ELF], appi->fs.list[i].name);
+			&list_elements[i].content.static_entry.text, list_icon, appi->fs.list[i].name);
 	}
 
 	if (status != RESULT_OK) {
@@ -760,7 +789,7 @@ static UINT32 UpdateFileList(EVENT_STACK_T *ev_st, APPLICATION_T *app, const WCH
 
 	appi->fs.root = FALSE;
 
-	search_params.flags = FS_SEARCH_START_PATH | FS_SEARCH_FOLDERS;
+	search_params.flags = FS_SEARCH_FOLDERS | FS_SEARCH_SORT_BY_NAME | FS_SEARCH_START_PATH;
 	search_params.attrib = FS_ATTR_DEFAULT;
 	search_params.mask = FS_ATTR_DEFAULT;
 
