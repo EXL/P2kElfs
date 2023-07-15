@@ -164,7 +164,8 @@ static const WCHAR g_str_menu_help[] = L"Help...";
 static const WCHAR g_str_menu_about[] = L"About...";
 static const WCHAR g_str_menu_exit[] = L"Exit";
 static const WCHAR g_str_view_help[] = L"Help";
-static const WCHAR g_str_popup_please_wait[] = L"Please wait";
+static const WCHAR g_str_popup_please_wait[] = L"Please wait!";
+static const WCHAR g_str_popup_sorting[] = L"Sorting files and folders";
 static const WCHAR g_str_popup_cannot_run[] = L"Cannot Run!";
 static const WCHAR g_str_popup_not_elf[] = L"It is not an ELF file.";
 static const WCHAR g_str_help_content_p1[] = L"A simple ELF-applications launcher.";
@@ -421,7 +422,7 @@ static UINT32 HandleStateEnter(EVENT_STACK_T *ev_st, APPLICATION_T *app, ENTER_S
 				case APP_POPUP_WAIT:
 					UpdateList(ev_st, app, appi->current_path, L"*");
 					notice_type = NOTICE_TYPE_WAIT_NO_KEY;
-					UIS_MakeContentFromString("MCq0", &content, g_str_popup_please_wait);
+					UIS_MakeContentFromString("MCq0NMCq1", &content, g_str_popup_please_wait, g_str_popup_sorting);
 					break;
 				case APP_POPUP_NOT_ELF:
 					notice_type = NOTICE_TYPE_FAIL;
@@ -871,7 +872,14 @@ static UINT32 FillFileList(EVENT_STACK_T *ev_st, APPLICATION_T *app, FS_SEARCH_C
 				search_index->search_result.attrib, search_index->search_result.owner);
 #endif
 			if (search_index->search_result.attrib == DIRECTORY_FILTER_ATTRIBUTE) {
-				/* HACK: Use first dot to proper files and folder sorting. */
+				/*
+				 * HACK Stage 1: Use first dot to proper files and folder sorting:
+				 *  - ..
+				 *  - .folder1
+				 *  - .folder2
+				 *  - File
+				 *  - file
+				 */
 				u_strcpy(appi->fs.list[i + 1].name, L".");
 				u_strcpy(appi->fs.list[i + 1].name + 1, GetFileNameFromPath(search_index->search_result.name));
 				appi->fs.list[i + 1].type = FS_FOLDER;
@@ -892,11 +900,19 @@ static UINT32 FillFileList(EVENT_STACK_T *ev_st, APPLICATION_T *app, FS_SEARCH_C
 static int file_comparate(const void *obj_1, const void *obj_2) {
 	FS_OBJECT_T *fs_obj_1;
 	FS_OBJECT_T *fs_obj_2;
+	WCHAR fs_name_1[MAX_FILENAME_SYMS + 1];
+	WCHAR fs_name_2[MAX_FILENAME_SYMS + 1];
 
 	fs_obj_1 = (FS_OBJECT_T *) obj_1;
 	fs_obj_2 = (FS_OBJECT_T *) obj_2;
 
-	return u_strcmp(fs_obj_1->name, fs_obj_2->name);
+	u_strcpy(fs_name_1, fs_obj_1->name);
+	u_strcpy(fs_name_2, fs_obj_2->name);
+
+	u_strmakeupper(fs_name_1);
+	u_strmakeupper(fs_name_2);
+
+	return u_strcmp(fs_name_1, fs_name_2);
 }
 
 static UINT32 SortFileList(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
@@ -911,7 +927,7 @@ static UINT32 SortFileList(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
 
 	qsort(objects, appi->fs.count, sizeof(FS_OBJECT_T), &file_comparate);
 
-	/* HACK: Strip additional sorting dots. */
+	/* HACK Stage 2: Strip additional sorting helper dots. */
 	for (i = 0; i < appi->fs.count; ++i) {
 		if (appi->fs.list[i].type == FS_FOLDER) {
 			u_strcpy(appi->fs.list[i].name, appi->fs.list[i].name + 1);
