@@ -25,6 +25,7 @@
 #include "icons/icon_file_15x15.h"
 #include "icons/icon_disk_15x15.h"
 #include "icons/icon_folder_15x15.h"
+#include "icons/icon_elfbox_48x48.h"
 
 #define TIMER_FAST_TRIGGER_MS             (1)
 #define MAX_VOLUMES_COUNT                 (4)
@@ -55,6 +56,7 @@ typedef enum {
 	APP_RESOURCE_ICON_FOLDER,
 	APP_RESOURCE_ICON_FILE,
 	APP_RESOURCE_ICON_ELF,
+	APP_RESOURCE_ICON_ELFBOX,
 	APP_RESOURCE_ACTION_BACK,
 	APP_RESOURCE_ACTION_RUN,
 	APP_RESOURCE_ACTION_HELP,
@@ -75,23 +77,23 @@ typedef enum {
 } APP_VIEW_T;
 
 typedef enum {
-	FS_VOLUME,
-	FS_FOLDER,
-	FS_FOLDER_UP,
-	FS_FILE,
-	FS_ELF
-} FS_ENTITY_T;
+	APP_FS_VOLUME,
+	APP_FS_FOLDER,
+	APP_FS_FOLDER_UP,
+	APP_FS_FILE,
+	APP_FS_ELF
+} APP_FS_ENTITY_T;
 
 typedef struct {
 	WCHAR name[MAX_FILENAME_SYMS + 1];
-	FS_ENTITY_T type;
-} FS_OBJECT_T;
+	APP_FS_ENTITY_T type;
+} APP_FS_OBJECT_T;
 
 typedef struct {
 	BOOL root;
 	UINT16 count;
-	FS_OBJECT_T *list;
-} FS_T;
+	APP_FS_OBJECT_T *list;
+} APP_FS_T;
 
 typedef struct {
 	APPLICATION_T app; /* Must be first. */
@@ -104,7 +106,7 @@ typedef struct {
 
 	WCHAR current_path[FS_MAX_PATH_NAME_LENGTH + 1];
 	WCHAR current_title[FS_MAX_PATH_NAME_LENGTH + 1];
-	FS_T fs;
+	APP_FS_T fs;
 } APP_INSTANCE_T;
 
 UINT32 Register(const char *elf_path_uri, const char *args, UINT32 ev_code); /* ElfPack 1.x entry point. */
@@ -129,7 +131,6 @@ static UINT32 HandleEventHelp(EVENT_STACK_T *ev_st, APPLICATION_T *app);
 static UINT32 HandleEventAbout(EVENT_STACK_T *ev_st, APPLICATION_T *app);
 static UINT32 HandleEventExit(EVENT_STACK_T *ev_st, APPLICATION_T *app);
 static UINT32 HandleEventBack(EVENT_STACK_T *ev_st, APPLICATION_T *app);
-static UINT32 HandleEventSearchCompleted(EVENT_STACK_T *ev_st, APPLICATION_T *app);
 
 static LIST_ENTRY_T *CreateList(EVENT_STACK_T *ev_st, APPLICATION_T *app);
 static UINT32 UpdateList(EVENT_STACK_T *ev_st, APPLICATION_T *app, const WCHAR *directory, const WCHAR *filter);
@@ -151,20 +152,20 @@ static const char g_app_name[APP_NAME_LEN] = "ElfBox";
 
 static const UINT32 g_ev_code_base = 0x00000FF1;
 
-static const WCHAR g_str_app_name[] = L"ElfBox Launcher";
-static const WCHAR g_str_app_menu[] = L"ElfBox Menu";
-static const WCHAR g_str_menu_help[] = L"Help...";
-static const WCHAR g_str_menu_about[] = L"About...";
-static const WCHAR g_str_menu_exit[] = L"Exit";
-static const WCHAR g_str_view_help[] = L"Help";
-static const WCHAR g_str_popup_please_wait[] = L"Please wait!";
-static const WCHAR g_str_popup_sorting[] = L"Sorting files and folders";
-static const WCHAR g_str_popup_cannot_run[] = L"Cannot Run!";
-static const WCHAR g_str_popup_not_elf[] = L"It is not an ELF file.";
-static const WCHAR g_str_help_content_p1[] = L"A simple ELF-applications launcher.";
-static const WCHAR g_str_about_content_p1[] = L"Version: 1.0";
-static const WCHAR g_str_about_content_p2[] = L"\x00A9 EXL, 02-Jul-2023.";
-static const WCHAR g_str_about_content_p3[] = L"https://github.com/EXL/P2kElfs/tree/master/ElfBox";
+static const WCHAR *g_str_app_name = L"ElfBox Launcher";
+static const WCHAR *g_str_app_menu = L"ElfBox Menu";
+static const WCHAR *g_str_menu_help = L"Help...";
+static const WCHAR *g_str_menu_about = L"About...";
+static const WCHAR *g_str_menu_exit = L"Exit";
+static const WCHAR *g_str_view_help = L"Help";
+static const WCHAR *g_str_popup_please_wait = L"Please wait!";
+static const WCHAR *g_str_popup_sorting = L"Sorting files and folders...";
+static const WCHAR *g_str_popup_cannot_run = L"Cannot Run!";
+static const WCHAR *g_str_popup_not_elf = L"It is not an ELF file.";
+static const WCHAR *g_str_help_content_p1 = L"A simple ELF-applications launcher.";
+static const WCHAR *g_str_about_content_p1 = L"Version: 1.0";
+static const WCHAR *g_str_about_content_p2 = L"\x00A9 EXL, 02-Jul-2023.";
+static const WCHAR *g_str_about_content_p3 = L"https://github.com/EXL/P2kElfs/tree/master/ElfBox";
 
 static EVENT_HANDLER_ENTRY_T g_state_any_hdls[] = {
 	{ EV_REVOKE_TOKEN, APP_HandleUITokenRevoked },
@@ -190,7 +191,6 @@ static EVENT_HANDLER_ENTRY_T g_state_main_hdls[] = {
 static EVENT_HANDLER_ENTRY_T g_state_popup_hdls[] = {
 	{ EV_DONE, HandleEventBack },
 	{ EV_DIALOG_DONE, HandleEventBack },
-	{ EV_FILE_SEARCH_COMPLETED, HandleEventSearchCompleted },
 	{ STATE_HANDLERS_END, NULL }
 };
 
@@ -308,6 +308,8 @@ static UINT32 InitResourses(RESOURCE_ID *resources) {
 		(void *) file_15x15_gif, sizeof(file_15x15_gif));
 	status |= DRM_CreateResource(&resources[APP_RESOURCE_ICON_ELF], RES_TYPE_GRAPHICS,
 		(void *) elf_15x15_gif, sizeof(elf_15x15_gif));
+	status |= DRM_CreateResource(&resources[APP_RESOURCE_ICON_ELFBOX], RES_TYPE_GRAPHICS,
+		(void *) elfbox_48x48_gif, sizeof(elfbox_48x48_gif));
 
 	action.softkey_label = resources[APP_RESOURCE_HELP];
 	action.list_label = resources[APP_RESOURCE_HELP];
@@ -434,7 +436,8 @@ static UINT32 HandleStateEnter(EVENT_STACK_T *ev_st, APPLICATION_T *app, ENTER_S
 						g_str_help_content_p1);
 					break;
 				case APP_VIEW_ABOUT:
-					UIS_MakeContentFromString("q0NMCq1NMCq2NMCq3", &content, g_str_app_name,
+					UIS_MakeContentFromString("q0NMCp1NMCq2NMCq3NMCq4", &content, g_str_app_name,
+						appi->resources[APP_RESOURCE_ICON_ELFBOX],
 						g_str_about_content_p1, g_str_about_content_p2, g_str_about_content_p3);
 					break;
 			}
@@ -508,26 +511,26 @@ static UINT32 HandleEventSelect(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
 	appi->menu_current_item_index = event->data.index - 1;
 
 	switch (appi->fs.list[appi->menu_current_item_index].type) {
-		case FS_VOLUME:
+		case APP_FS_VOLUME:
 			u_strcpy(appi->current_path, appi->fs.list[appi->menu_current_item_index].name);
 			appi->current_path[u_strlen(appi->current_path) - 1] = 0;
 			u_strcpy(appi->current_title, appi->current_path);
 			break;
-		case FS_FOLDER:
+		case APP_FS_FOLDER:
 			u_strcpy(appi->current_path,
 				DirDown(appi->current_path, appi->fs.list[appi->menu_current_item_index].name));
 			u_strcpy(appi->current_title, appi->current_path);
 			break;
-		case FS_FOLDER_UP:
+		case APP_FS_FOLDER_UP:
 			u_strcpy(appi->current_path,
 				DirUp(appi->current_path));
 			u_strcpy(appi->current_title, appi->current_path);
 			break;
-		case FS_FILE:
+		case APP_FS_FILE:
 			appi->flag_from_select = TRUE;
 			appi->popup = APP_POPUP_NOT_ELF;
 			break;
-		case FS_ELF:
+		case APP_FS_ELF:
 			u_strcat(appi->current_path, L"/");
 			u_strcat(appi->current_path, appi->fs.list[appi->menu_current_item_index].name);
 			status |= RunElfApplication(ev_st, app, appi->current_path);
@@ -563,8 +566,7 @@ static UINT32 HandleEventBackDir(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
 	appi = (APP_INSTANCE_T *) app;
 
 	if (!appi->fs.root) {
-		u_strcpy(appi->current_path,
-			DirUp(appi->current_path));
+		u_strcpy(appi->current_path, DirUp(appi->current_path));
 		u_strcpy(appi->current_title, appi->current_path);
 
 		status |= APP_UtilChangeState(APP_STATE_POPUP, ev_st, app);
@@ -648,18 +650,18 @@ static LIST_ENTRY_T *CreateList(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
 		list_elements[i].content.static_entry.formatting = TRUE;
 
 		switch (appi->fs.list[i].type) {
-			case FS_VOLUME:
+			case APP_FS_VOLUME:
 				list_icon = appi->resources[APP_RESOURCE_ICON_DISK];
 				break;
-			case FS_FOLDER_UP:
-			case FS_FOLDER:
+			case APP_FS_FOLDER_UP:
+			case APP_FS_FOLDER:
 				list_icon = appi->resources[APP_RESOURCE_ICON_FOLDER];
 				break;
 			default:
-			case FS_FILE:
+			case APP_FS_FILE:
 				list_icon = appi->resources[APP_RESOURCE_ICON_FILE];
 				break;
-			case FS_ELF:
+			case APP_FS_ELF:
 				list_icon = appi->resources[APP_RESOURCE_ICON_ELF];
 				break;
 		}
@@ -705,12 +707,14 @@ static UINT32 UpdateVolumeList(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
 	INT32 error;
 	APP_INSTANCE_T *appi;
 	WCHAR volumes[MAX_VOLUMES_COUNT * 3];
-//	= {
-//		L'/', L'a', 0xFFEE,
-//		L'/', L'b', 0xFFEE,
-//		L'/', L'c', 0xFFEE,
-//		L'/', L'd', 0xFFEE
-//	};
+#if 0
+	= {
+		L'/', L'a', 0xFFEE,
+		L'/', L'b', 0xFFEE,
+		L'/', L'c', 0xFFEE,
+		L'/', L'd', 0xFFEE
+	};
+#endif
 	WCHAR *result;
 
 	appi = (APP_INSTANCE_T *) app;
@@ -728,9 +732,9 @@ static UINT32 UpdateVolumeList(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
 		D("%s\n", "Cleaning previous file list.");
 		suFreeMem(appi->fs.list);
 	}
-	appi->fs.list = suAllocMem(sizeof(FS_OBJECT_T) * MAX_VOLUMES_COUNT, &error);
+	appi->fs.list = suAllocMem(sizeof(APP_FS_OBJECT_T) * MAX_VOLUMES_COUNT, &error);
 	if (error != RESULT_OK) {
-		D("Error: Cannot allocate %d bytes.\n", sizeof(FS_OBJECT_T) * MAX_VOLUMES_COUNT);
+		D("Error: Cannot allocate %d bytes.\n", sizeof(APP_FS_OBJECT_T) * MAX_VOLUMES_COUNT);
 		return RESULT_FAIL;
 	}
 
@@ -740,7 +744,7 @@ static UINT32 UpdateVolumeList(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
 		appi->fs.list[i].name[2] = volumes[i * 3];
 		appi->fs.list[i].name[3] = 0;
 		appi->fs.list[i].name[4] = 0;
-		appi->fs.list[i].type = FS_VOLUME;
+		appi->fs.list[i].type = APP_FS_VOLUME;
 		appi->fs.count += 1;
 		if (!volumes[i * 3 + 2]) {
 			break;
@@ -761,8 +765,6 @@ static UINT32 UpdateFileList(EVENT_STACK_T *ev_st, APPLICATION_T *app, const WCH
 	FS_SEARCH_PARAMS_T search_params;
 	FS_SEARCH_INFO_T *search_info;
 	FS_URI_FNCT_PTR complete_function;
-//	FS_SEARCH_RESULT_T search_result;
-//	FS_SEARCH_HANDLE_T search_handle;
 
 	status = RESULT_OK;
 	appi = (APP_INSTANCE_T *) app;
@@ -772,16 +774,6 @@ static UINT32 UpdateFileList(EVENT_STACK_T *ev_st, APPLICATION_T *app, const WCH
 	search_params.flags = FS_SEARCH_FOLDERS | FS_SEARCH_SORT_BY_NAME | FS_SEARCH_START_PATH;
 	search_params.attrib = FS_ATTR_DEFAULT;
 	search_params.mask = FS_ATTR_DEFAULT;
-
-//	IFACE_DATA_T iface;
-//	iface.port = app->port;
-//	search_handle = DL_FsSSearch(&iface, search_params, search_string, 0);
-//	D("LOL0: %d\n", search_handle);
-
-//		if ((DL_FsSSearch(search_params, search_string, &search_handle, &appi->fs.count, 0)) != RESULT_OK) {
-//			DL_FsSearchClose(search_handle);
-//			return RESULT_FAIL;
-//		}
 
 	status |= DL_FsSSearch(search_params, search_string, &search_info, &complete_function, 0);
 	D("Status: %d.\n", status);
@@ -828,13 +820,13 @@ static UINT32 FillFileList(EVENT_STACK_T *ev_st, APPLICATION_T *app, FS_SEARCH_C
 
 	appi->fs.count = search_index->search_total;
 	appi->fs.count += 1;
-	appi->fs.list = suAllocMem(sizeof(FS_OBJECT_T) * appi->fs.count, &error);
+	appi->fs.list = suAllocMem(sizeof(APP_FS_OBJECT_T) * appi->fs.count, &error);
 	if (error) {
-		D("Error: Cannot allocate %d bytes.\n", sizeof(FS_OBJECT_T) * appi->fs.count);
+		D("Error: Cannot allocate %d bytes.\n", sizeof(APP_FS_OBJECT_T) * appi->fs.count);
 		return RESULT_FAIL;
 	}
 	u_strcpy(appi->fs.list[0].name, L"..");
-	appi->fs.list[0].type = FS_FOLDER_UP;
+	appi->fs.list[0].type = APP_FS_FOLDER_UP;
 
 	for (i = 0; i < search_index->search_total; ++i) {
 		status = DL_FsSearchResults(search_index->search_handle, i, &count, &search_index->search_result);
@@ -856,10 +848,10 @@ static UINT32 FillFileList(EVENT_STACK_T *ev_st, APPLICATION_T *app, FS_SEARCH_C
 				 */
 				u_strcpy(appi->fs.list[i + 1].name, L".");
 				u_strcpy(appi->fs.list[i + 1].name + 1, GetFileNameFromPath(search_index->search_result.name));
-				appi->fs.list[i + 1].type = FS_FOLDER;
+				appi->fs.list[i + 1].type = APP_FS_FOLDER;
 			} else {
 				u_strcpy(appi->fs.list[i + 1].name, GetFileNameFromPath(search_index->search_result.name));
-				appi->fs.list[i + 1].type = (IsElfFile(appi->fs.list[i + 1].name)) ? FS_ELF : FS_FILE;
+				appi->fs.list[i + 1].type = (IsElfFile(appi->fs.list[i + 1].name)) ? APP_FS_ELF : APP_FS_FILE;
 			}
 		}
 	}
@@ -872,13 +864,13 @@ static UINT32 FillFileList(EVENT_STACK_T *ev_st, APPLICATION_T *app, FS_SEARCH_C
 }
 
 static int file_comparate(const void *obj_1, const void *obj_2) {
-	FS_OBJECT_T *fs_obj_1;
-	FS_OBJECT_T *fs_obj_2;
+	APP_FS_OBJECT_T *fs_obj_1;
+	APP_FS_OBJECT_T *fs_obj_2;
 	WCHAR fs_name_1[MAX_FILENAME_SYMS + 1];
 	WCHAR fs_name_2[MAX_FILENAME_SYMS + 1];
 
-	fs_obj_1 = (FS_OBJECT_T *) obj_1;
-	fs_obj_2 = (FS_OBJECT_T *) obj_2;
+	fs_obj_1 = (APP_FS_OBJECT_T *) obj_1;
+	fs_obj_2 = (APP_FS_OBJECT_T *) obj_2;
 
 	u_strcpy(fs_name_1, fs_obj_1->name);
 	u_strcpy(fs_name_2, fs_obj_2->name);
@@ -893,38 +885,20 @@ static UINT32 SortFileList(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
 	INT32 i;
 	UINT32 status;
 	APP_INSTANCE_T *appi;
-	FS_OBJECT_T *objects;
+	APP_FS_OBJECT_T *objects;
 
 	status = RESULT_OK;
 	appi = (APP_INSTANCE_T *) app;
 	objects = appi->fs.list;
 
-	qsort(objects, appi->fs.count, sizeof(FS_OBJECT_T), &file_comparate);
+	qsort(objects, appi->fs.count, sizeof(APP_FS_OBJECT_T), &file_comparate);
 
 	/* HACK Stage 2: Strip additional sorting helper dots. */
 	for (i = 0; i < appi->fs.count; ++i) {
-		if (appi->fs.list[i].type == FS_FOLDER) {
+		if (appi->fs.list[i].type == APP_FS_FOLDER) {
 			u_strcpy(appi->fs.list[i].name, appi->fs.list[i].name + 1);
 		}
 	}
-
-	return status;
-}
-
-static UINT32 HandleEventSearchCompleted(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
-	UINT32 status;
-	EVENT_T *event;
-	FS_SEARCH_COMPLETED_INDEX_T *search_index;
-
-	status = RESULT_OK;
-	event = AFW_GetEv(ev_st);
-	search_index = (FS_SEARCH_COMPLETED_INDEX_T *) event->attachment;
-
-	D("%d elements found.\n", search_index->search_total);
-
-	status |= FillFileList(ev_st, app, search_index);
-	status |= APP_ConsumeEv(ev_st, app);
-	status |= APP_UtilChangeState(APP_STATE_MAIN, ev_st, app);
 
 	return status;
 }
@@ -1015,3 +989,38 @@ static UINT32 RunElfApplication(EVENT_STACK_T *ev_st, APPLICATION_T *app, const 
 
 	return status;
 }
+
+/*
+ * Async search example using `DL_FsISearch()` function.
+ * Buggy as hell.
+ */
+#if 0
+static UINT32 HandleEventSearchCompleted(EVENT_STACK_T *ev_st, APPLICATION_T *app);
+
+{ EV_FILE_SEARCH_COMPLETED, HandleEventSearchCompleted },
+
+{
+	IFACE_DATA_T iface;
+	iface.port = app->port;
+	status |= DL_FsISearch(&iface, search_params, search_string, 0);
+	D("Status: %d.\n", status);
+}
+
+static UINT32 HandleEventSearchCompleted(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
+	UINT32 status;
+	EVENT_T *event;
+	FS_SEARCH_COMPLETED_INDEX_T *search_index;
+
+	status = RESULT_OK;
+	event = AFW_GetEv(ev_st);
+	search_index = (FS_SEARCH_COMPLETED_INDEX_T *) event->attachment;
+
+	D("%d elements found.\n", search_index->search_total);
+
+	status |= FillFileList(ev_st, app, search_index);
+	status |= APP_ConsumeEv(ev_st, app);
+	status |= APP_UtilChangeState(APP_STATE_MAIN, ev_st, app);
+
+	return status;
+}
+#endif
