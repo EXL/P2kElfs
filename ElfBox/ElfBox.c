@@ -143,6 +143,8 @@ static UINT32 UpdateList(EVENT_STACK_T *ev_st, APPLICATION_T *app, const WCHAR *
 static UINT32 UpdateVolumeList(EVENT_STACK_T *ev_st, APPLICATION_T *app);
 static UINT32 UpdateFileList(EVENT_STACK_T *ev_st, APPLICATION_T *app, const WCHAR *search_string);
 static UINT32 FillFileList(EVENT_STACK_T *ev_st, APPLICATION_T *app, FS_SEARCH_COMPLETED_INDEX_T *search_index);
+static int file_comparate(const void *obj_1, const void *obj_2);
+static UINT32 SortFileList(EVENT_STACK_T *ev_st, APPLICATION_T *app);
 
 static UINT32 CreateSearchString(WCHAR *search_string, const WCHAR *search_directory, const WCHAR *search_pattern);
 static UINT32 AddUriFileHeader(WCHAR *out_str, const WCHAR *in_str);
@@ -868,17 +870,53 @@ static UINT32 FillFileList(EVENT_STACK_T *ev_st, APPLICATION_T *app, FS_SEARCH_C
 				__func__, __LINE__, i + 1, file_path,
 				search_index->search_result.attrib, search_index->search_result.owner);
 #endif
-			u_strcpy(appi->fs.list[i + 1].name, GetFileNameFromPath(search_index->search_result.name));
-
 			if (search_index->search_result.attrib == DIRECTORY_FILTER_ATTRIBUTE) {
+				/* HACK: Use first dot to proper files and folder sorting. */
+				u_strcpy(appi->fs.list[i + 1].name, L".");
+				u_strcpy(appi->fs.list[i + 1].name + 1, GetFileNameFromPath(search_index->search_result.name));
 				appi->fs.list[i + 1].type = FS_FOLDER;
 			} else {
+				u_strcpy(appi->fs.list[i + 1].name, GetFileNameFromPath(search_index->search_result.name));
 				appi->fs.list[i + 1].type = (IsElfFile(appi->fs.list[i + 1].name)) ? FS_ELF : FS_FILE;
 			}
 		}
 	}
 
+	status |= SortFileList(ev_st, app);
+
 	status |= DL_FsSearchClose(search_index->search_handle);
+
+	return status;
+}
+
+static int file_comparate(const void *obj_1, const void *obj_2) {
+	FS_OBJECT_T *fs_obj_1;
+	FS_OBJECT_T *fs_obj_2;
+
+	fs_obj_1 = (FS_OBJECT_T *) obj_1;
+	fs_obj_2 = (FS_OBJECT_T *) obj_2;
+
+	return u_strcmp(fs_obj_1->name, fs_obj_2->name);
+}
+
+static UINT32 SortFileList(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
+	INT32 i;
+	UINT32 status;
+	APP_INSTANCE_T *appi;
+	FS_OBJECT_T *objects;
+
+	status = RESULT_OK;
+	appi = (APP_INSTANCE_T *) app;
+	objects = appi->fs.list;
+
+	qsort(objects, appi->fs.count, sizeof(FS_OBJECT_T), &file_comparate);
+
+	/* HACK: Strip additional sorting dots. */
+	for (i = 0; i < appi->fs.count; ++i) {
+		if (appi->fs.list[i].type == FS_FOLDER) {
+			u_strcpy(appi->fs.list[i].name, appi->fs.list[i].name + 1);
+		}
+	}
 
 	return status;
 }
