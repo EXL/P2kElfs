@@ -143,6 +143,7 @@ static UINT32 SortFileList(EVENT_STACK_T *ev_st, APPLICATION_T *app);
 static UINT32 CreateSearchString(WCHAR *search_string, const WCHAR *search_directory, const WCHAR *search_pattern);
 static UINT32 AddUriFileHeader(WCHAR *out_str, const WCHAR *in_str);
 static const WCHAR *GetFileNameFromPath(const WCHAR *path);
+static BOOL IsDirectory(UINT16 file_attributes);
 static BOOL IsElfFile(const WCHAR *path);
 static const WCHAR *DirUp(WCHAR *path);
 static const WCHAR *DirDown(WCHAR *path, const WCHAR *directory_name);
@@ -150,7 +151,11 @@ static UINT32 RunElfApplication(EVENT_STACK_T *ev_st, APPLICATION_T *app, const 
 
 static const char g_app_name[APP_NAME_LEN] = "ElfBox";
 
+#if defined(FTR_V300)
 static const UINT32 g_ev_code_base = 0x00000FF1;
+#else
+static const UINT32 g_ev_code_base = 0x000003DC;
+#endif
 
 static const WCHAR *g_str_app_name = L"ElfBox Launcher";
 static const WCHAR *g_str_app_menu = L"ElfBox Menu";
@@ -166,6 +171,7 @@ static const WCHAR *g_str_help_content_p1 = L"A simple ELF-applications launcher
 static const WCHAR *g_str_about_content_p1 = L"Version: 1.0";
 static const WCHAR *g_str_about_content_p2 = L"\x00A9 EXL, 02-Jul-2023.";
 static const WCHAR *g_str_about_content_p3 = L"https://github.com/EXL/P2kElfs/tree/master/ElfBox";
+static const WCHAR *g_str_about_content_p4 = L"       "; /* HACK: gap */
 
 static EVENT_HANDLER_ENTRY_T g_state_any_hdls[] = {
 	{ EV_REVOKE_TOKEN, APP_HandleUITokenRevoked },
@@ -436,9 +442,10 @@ static UINT32 HandleStateEnter(EVENT_STACK_T *ev_st, APPLICATION_T *app, ENTER_S
 						g_str_help_content_p1);
 					break;
 				case APP_VIEW_ABOUT:
-					UIS_MakeContentFromString("q0NMCp1NMCq2NMCq3NMCq4", &content, g_str_app_name,
+					UIS_MakeContentFromString("q0NMCp1NMCq2NMCq3NMCq4NMCq5NMCq6", &content, g_str_app_name,
 						appi->resources[APP_RESOURCE_ICON_ELFBOX],
-						g_str_about_content_p1, g_str_about_content_p2, g_str_about_content_p3);
+						g_str_about_content_p1, g_str_about_content_p2, g_str_about_content_p3,
+						g_str_about_content_p4, g_str_about_content_p4);
 					break;
 			}
 			dialog = UIS_CreateViewer(&port, &content, NULL);
@@ -768,21 +775,29 @@ static UINT32 UpdateFileList(EVENT_STACK_T *ev_st, APPLICATION_T *app, const WCH
 
 	status = RESULT_OK;
 	appi = (APP_INSTANCE_T *) app;
+	search_info = NULL;
+	complete_function = NULL;
 
 	appi->fs.root = FALSE;
 
-	search_params.flags = FS_SEARCH_FOLDERS | FS_SEARCH_SORT_BY_NAME | FS_SEARCH_START_PATH;
+	search_params.flags = FS_SEARCH_FOLDERS | FS_SEARCH_START_PATH;
 	search_params.attrib = FS_ATTR_DEFAULT;
 	search_params.mask = FS_ATTR_DEFAULT;
 
-	status |= DL_FsSSearch(search_params, search_string, &search_info, &complete_function, 0);
+#if defined(FTR_V300)
+	status |= DL_FsSearch(search_params, search_string, &search_info, &complete_function, 0);
+	search_index.search_handle = search_info->shandle;
+	search_index.search_total = search_info->num;
+#else
+	status |= DL_FsSSearch(search_params, search_string, &search_index.search_handle, &search_index.search_total, 0);
+#endif
 	D("Status: %d.\n", status);
-	D("Info Num: %d.\n", search_info->num);
+	D("Info Num: %d.\n", search_index.search_total);
 	if (status != RESULT_OK) {
 		D("%s\n", "Trying to fix search.");
-		if (search_info->shandle) {
+		if (search_index.search_handle) {
 			D("%s\n", "Search Handle is not 0.");
-			status |= DL_FsSearchClose(search_info->shandle);
+			status |= DL_FsSearchClose(search_index.search_handle);
 		}
 
 		u_strcpy(appi->current_path, L"/");
@@ -791,9 +806,6 @@ static UINT32 UpdateFileList(EVENT_STACK_T *ev_st, APPLICATION_T *app, const WCH
 		status |= APP_UtilStartTimer(TIMER_FAST_TRIGGER_MS, APP_TIMER_TO_MAIN_VIEW, app);
 		return status;
 	}
-
-	search_index.search_handle = search_info->shandle;
-	search_index.search_total = search_info->num;
 
 	status |= FillFileList(ev_st, app, &search_index);
 
@@ -837,7 +849,7 @@ static UINT32 FillFileList(EVENT_STACK_T *ev_st, APPLICATION_T *app, FS_SEARCH_C
 			D("%d Added: %s, attrib 0x%X, owner %d.\n",
 				i + 1, file_path, search_index->search_result.attrib, search_index->search_result.owner);
 #endif
-			if (search_index->search_result.attrib == DIRECTORY_FILTER_ATTRIBUTE) {
+			if (IsDirectory(search_index->search_result.attrib)) {
 				/*
 				 * HACK Stage 1: Use first dot to proper files and folder sorting:
 				 *  - ..
@@ -932,6 +944,14 @@ static const WCHAR *GetFileNameFromPath(const WCHAR *path) {
 	} else {
 		return path;
 	}
+}
+
+static BOOL IsDirectory(UINT16 file_attributes) {
+#if defined(FTR_V300)
+	return (file_attributes == DIRECTORY_FILTER_ATTRIBUTE);
+#else
+	return (file_attributes & FS_ATTR_DIRECTORY);
+#endif
 }
 
 static BOOL IsElfFile(const WCHAR *path) {
