@@ -1,7 +1,7 @@
 #ifndef PERLIN_H
 #define PERLIN_H
 
-#include "fixed.h"
+#include "Fixed.h"
 
 Fixed perlin(Fixed x, Fixed y, Fixed angle, int cache_idx);
 
