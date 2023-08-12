@@ -833,7 +833,7 @@ static UINT32 DumpIRAM(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
 
 	app_instance = (APP_INSTANCE_T *) app;
 
-	if (app_instance->phone_parameters.soc == SOC_LTE) {
+	if (app_instance->phone_parameters.soc == SOC_LTE || app_instance->phone_parameters.soc == SOC_LTE_OLD) {
 		return DumpMemoryRegionToFile(ev_st, app, 0x03FC0000, 0x40000, g_file_dump_iram, 0);
 	} else {
 		return DumpMemoryRegionToFile(ev_st, app, 0x03F80000, 0x80000, g_file_dump_iram, 0);
