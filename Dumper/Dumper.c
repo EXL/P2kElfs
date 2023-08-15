@@ -24,7 +24,7 @@
 #define TIMER_FAST_TRIGGER_MS             (1)
 #define TIMER_POPUP_DELAY_MS            (100)
 #define DISK_DRIVER_NAME_SIZE             (8)
-#define DEBUG_OUTPUT_MAX_LENGTH         (200)
+#define DEBUG_OUTPUT_MAX_LENGTH         (256)
 
 typedef enum {
 	APP_STATE_ANY,
@@ -53,6 +53,7 @@ typedef enum {
 	APP_MENU_ITEM_BATTERY_ROM,
 	APP_MENU_ITEM_IROM,
 	APP_MENU_ITEM_IRAM,
+	APP_MENU_ITEM_PANIC,
 	APP_MENU_ITEM_HELP,
 	APP_MENU_ITEM_ABOUT,
 	APP_MENU_ITEM_MAX
@@ -126,6 +127,7 @@ static UINT32 DumpRam(EVENT_STACK_T *ev_st, APPLICATION_T *app);
 static UINT32 DumpBatteryRom(EVENT_STACK_T *ev_st, APPLICATION_T *app);
 static UINT32 DumpIROM(EVENT_STACK_T *ev_st, APPLICATION_T *app);
 static UINT32 DumpIRAM(EVENT_STACK_T *ev_st, APPLICATION_T *app);
+static UINT32 DumpPanic(EVENT_STACK_T *ev_st, APPLICATION_T *app);
 static UINT32 DumpMemoryRegionToFile(
 	EVENT_STACK_T *ev_st, APPLICATION_T *app,
 	UINT32 start, UINT32 size, const WCHAR *filename,
@@ -140,8 +142,9 @@ static const WCHAR g_str_menu_boot_hwcfg[] = L"Boot, hwcfg CG5";
 static const WCHAR g_str_menu_pds[] = L"PDS CG6";
 static const WCHAR g_str_menu_ram[] = L"RAM";
 static const WCHAR g_str_menu_battery_rom[] = L"Battery ROM";
-static const WCHAR g_str_menu_irom[] = L"IROM";
-static const WCHAR g_str_menu_iram[] = L"IRAM";
+static const WCHAR g_str_menu_irom[] = L"IROM (integrated)";
+static const WCHAR g_str_menu_iram[] = L"IRAM (integrated)";
+static const WCHAR g_str_menu_panic[] = L"Panics Data";
 static const WCHAR g_str_menu_help[] = L"Help...";
 static const WCHAR g_str_menu_about[] = L"About...";
 static const WCHAR g_str_dump_ok[] = L"Memory region dumped to:";
@@ -160,6 +163,7 @@ static const WCHAR g_file_dump_ram[]         = L"D_RAM.bin";
 static const WCHAR g_file_dump_battery_rom[] = L"D_BATT_ROM.bin";
 static const WCHAR g_file_dump_irom[]        = L"D_IROM.bin";
 static const WCHAR g_file_dump_iram[]        = L"D_IRAM.bin";
+static const WCHAR g_file_dump_panic[]        = L"D_PANIC.bin";
 
 static WCHAR g_res_file_path[FS_MAX_URI_NAME_LENGTH];
 static WCHAR g_cur_file_path[FS_MAX_URI_NAME_LENGTH];
@@ -399,6 +403,15 @@ static UINT32 SetPhoneParameters(APP_INSTANCE_T *app_instance) {
 			app_instance->phone_parameters.soc = SOC_LTE;
 		}
 	}
+
+	sprintf(buffer_a, "Phone: %s\n", LdrGetPhoneName());
+	u_atou(buffer_a, buffer_u);
+	u_strcat(g_str_help_content_p1, buffer_u);
+
+	sprintf(buffer_a, "Firmware: %s_%s\n", LdrGetFirmwareMajorVersion(), LdrGetFirmwareMinorVersion());
+	u_atou(buffer_a, buffer_u);
+	u_strcat(g_str_help_content_p1, buffer_u);
+
 	PFprintf("SoC: %d\n", app_instance->phone_parameters.soc);
 	sprintf(buffer_a, "SoC: %s\n", GetSoCName(app_instance->phone_parameters.soc));
 	u_atou(buffer_a, buffer_u);
@@ -655,6 +668,14 @@ static UINT32 HandleEventSelect(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
 			}
 			status |= APP_UtilChangeState(APP_STATE_POPUP, ev_st, app);
 			break;
+		case APP_MENU_ITEM_PANIC:
+			if (DumpPanic(ev_st, app) == RESULT_OK) {
+				app_instance->popup = APP_POPUP_DUMP_OK;
+			} else {
+				app_instance->popup = APP_POPUP_DUMP_FAIL;
+			}
+			status |= APP_UtilChangeState(APP_STATE_POPUP, ev_st, app);
+			break;
 		case APP_MENU_ITEM_HELP:
 			app_instance->view = APP_VIEW_HELP;
 			status |= APP_UtilChangeState(APP_STATE_VIEW, ev_st, app);
@@ -721,6 +742,9 @@ static LIST_ENTRY_T *CreateList(EVENT_STACK_T *ev_st, APPLICATION_T *app, UINT32
 	status |= UIS_MakeContentFromString("Mq0",
 		&list_elements[APP_MENU_ITEM_IRAM].content.static_entry.text,
 		g_str_menu_iram);
+	status |= UIS_MakeContentFromString("Mq0",
+		&list_elements[APP_MENU_ITEM_PANIC].content.static_entry.text,
+		g_str_menu_panic);
 	status |= UIS_MakeContentFromString("Mq0",
 		&list_elements[APP_MENU_ITEM_HELP].content.static_entry.text,
 		g_str_menu_help);
@@ -838,6 +862,14 @@ static UINT32 DumpIRAM(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
 	} else {
 		return DumpMemoryRegionToFile(ev_st, app, 0x03F80000, 0x80000, g_file_dump_iram, 0);
 	}
+}
+
+static UINT32 DumpPanic(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
+	APP_INSTANCE_T *app_instance;
+
+	app_instance = (APP_INSTANCE_T *) app;
+
+	return DumpMemoryRegionToFile(ev_st, app, 0x10020000, 0x20000, g_file_dump_panic, 0);
 }
 
 static UINT32 DumpMemoryRegionToFile(
