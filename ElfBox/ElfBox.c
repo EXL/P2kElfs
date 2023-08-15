@@ -152,10 +152,12 @@ static UINT32 RunElfApplication(EVENT_STACK_T *ev_st, APPLICATION_T *app, const 
 static const char g_app_name[APP_NAME_LEN] = "ElfBox";
 
 #if defined(FTR_V300)
-static const UINT32 g_ev_code_base = 0x00000FF1;
+static const UINT32 g_ev_code_base = 0x000003D9; /* Mobile QQ application event. */
 #else
-static const UINT32 g_ev_code_base = 0x000003DC;
+static const UINT32 g_ev_code_base = 0x000003DC; /* MotoMixer application event. */
 #endif
+
+static const WCHAR *g_start_path = L"/a/Elf";
 
 static const WCHAR *g_str_app_name = L"ElfBox Launcher";
 static const WCHAR *g_str_app_menu = L"ElfBox Menu";
@@ -211,7 +213,7 @@ static const STATE_HANDLERS_ENTRY_T g_state_table_hdls[] = {
 UINT32 Register(const char *elf_path_uri, const char *args, UINT32 ev_code) {
 	UINT32 status;
 
-	D("Reserve 'ev_code' app event: %d 0x%X.\n", ev_code, ev_code);
+	LOG("Reserve 'ev_code' app event: %d 0x%X.\n", ev_code, ev_code);
 	LdrInitEventHandlersTbl(g_state_main_hdls, &ev_code);
 
 	status = APP_Register(&g_ev_code_base, 1, g_state_table_hdls, APP_STATE_MAX, (void *) ApplicationStart);
@@ -224,7 +226,7 @@ static UINT32 LdrInitEventHandlersTbl(EVENT_HANDLER_ENTRY_T *tbl, UINT32 *base) 
 	while (tbl[i].code != STATE_HANDLERS_END) {
 		if (tbl[i].code == STATE_HANDLERS_RESERVED) {
 			tbl[i].code = (*base)++;
-			D("Added my own ev_code: %d 0x%X.\n", tbl[i].code, tbl[i].code);
+			LOG("Added my own ev_code: %d 0x%X.\n", tbl[i].code, tbl[i].code);
 		}
 		i++;
 	}
@@ -259,7 +261,7 @@ static UINT32 ApplicationStart(EVENT_STACK_T *ev_st, REG_ID_T reg_id, void *reg_
 		appi->view = APP_VIEW_ABOUT;
 		appi->flag_from_select = FALSE;
 
-		u_strcpy(appi->current_path, L"/a");
+		u_strcpy(appi->current_path, g_start_path);
 		u_strcpy(appi->current_title, g_str_app_name);
 		appi->fs.root = FALSE;
 		appi->fs.count = 0;
@@ -550,13 +552,13 @@ static UINT32 HandleEventSelect(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
 	{
 		char file_path[FS_MAX_PATH_NAME_LENGTH + 1];
 
-		D("Selected: %d %d.\n", appi->menu_current_item_index, appi->fs.list[appi->menu_current_item_index].type);
+		LOG("Selected: %d %d.\n", appi->menu_current_item_index, appi->fs.list[appi->menu_current_item_index].type);
 
 		u_utoa(appi->current_path, file_path);
-		D("Current Dir: %s\n", file_path);
+		LOG("Current Dir: %s\n", file_path);
 
 		u_utoa(appi->current_title, file_path);
-		D("Current Title: %s\n", file_path);
+		LOG("Current Title: %s\n", file_path);
 	}
 #endif
 
@@ -736,12 +738,12 @@ static UINT32 UpdateVolumeList(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
 	appi->fs.root = TRUE;
 	appi->fs.count = 0;
 	if (appi->fs.list) {
-		D("%s\n", "Cleaning previous file list.");
+		LOG("%s\n", "Cleaning previous file list.");
 		suFreeMem(appi->fs.list);
 	}
 	appi->fs.list = suAllocMem(sizeof(APP_FS_OBJECT_T) * MAX_VOLUMES_COUNT, &error);
 	if (error != RESULT_OK) {
-		D("Error: Cannot allocate %d bytes.\n", sizeof(APP_FS_OBJECT_T) * MAX_VOLUMES_COUNT);
+		LOG("Error: Cannot allocate %d bytes.\n", sizeof(APP_FS_OBJECT_T) * MAX_VOLUMES_COUNT);
 		return RESULT_FAIL;
 	}
 
@@ -791,12 +793,12 @@ static UINT32 UpdateFileList(EVENT_STACK_T *ev_st, APPLICATION_T *app, const WCH
 #else
 	status |= DL_FsSSearch(search_params, search_string, &search_index.search_handle, &search_index.search_total, 0);
 #endif
-	D("Status: %d.\n", status);
-	D("Info Num: %d.\n", search_index.search_total);
+	LOG("Status: %d.\n", status);
+	LOG("Info Num: %d.\n", search_index.search_total);
 	if (status != RESULT_OK) {
-		D("%s\n", "Trying to fix search.");
+		LOG("%s\n", "Trying to fix search.");
 		if (search_index.search_handle) {
-			D("%s\n", "Search Handle is not 0.");
+			LOG("%s\n", "Search Handle is not 0.");
 			status |= DL_FsSearchClose(search_index.search_handle);
 		}
 
@@ -826,7 +828,7 @@ static UINT32 FillFileList(EVENT_STACK_T *ev_st, APPLICATION_T *app, FS_SEARCH_C
 	appi = (APP_INSTANCE_T *) app;
 	count = 1;
 
-	D("%s\n", "Cleaning previous file list.");
+	LOG("%s\n", "Cleaning previous file list.");
 	suFreeMem(appi->fs.list);
 	appi->fs.list = NULL;
 
@@ -834,7 +836,7 @@ static UINT32 FillFileList(EVENT_STACK_T *ev_st, APPLICATION_T *app, FS_SEARCH_C
 	appi->fs.count += 1;
 	appi->fs.list = suAllocMem(sizeof(APP_FS_OBJECT_T) * appi->fs.count, &error);
 	if (error) {
-		D("Error: Cannot allocate %d bytes.\n", sizeof(APP_FS_OBJECT_T) * appi->fs.count);
+		LOG("Error: Cannot allocate %d bytes.\n", sizeof(APP_FS_OBJECT_T) * appi->fs.count);
 		return RESULT_FAIL;
 	}
 	u_strcpy(appi->fs.list[0].name, L"..");
@@ -846,7 +848,7 @@ static UINT32 FillFileList(EVENT_STACK_T *ev_st, APPLICATION_T *app, FS_SEARCH_C
 #if defined(DEBUG)
 			char file_path[FS_MAX_FILE_NAME_LENGTH + 1];
 			u_utoa(search_index->search_result.name, file_path);
-			D("%d Added: %s, attrib 0x%X, owner %d.\n",
+			LOG("%d Added: %s, attrib 0x%X, owner %d.\n",
 				i + 1, file_path, search_index->search_result.attrib, search_index->search_result.owner);
 #endif
 			if (IsDirectory(search_index->search_result.attrib)) {
@@ -999,7 +1001,7 @@ static UINT32 RunElfApplication(EVENT_STACK_T *ev_st, APPLICATION_T *app, const 
 	{
 		char elf_uri_string[FS_MAX_URI_NAME_LENGTH + 1]; /* 265 */
 		u_utoa(elf_uri, elf_uri_string);
-		D("Trying to run %s elf application.\n", elf_uri_string);
+		LOG("Trying to run %s elf application.\n", elf_uri_string);
 	}
 #endif
 
@@ -1023,7 +1025,7 @@ static UINT32 HandleEventSearchCompleted(EVENT_STACK_T *ev_st, APPLICATION_T *ap
 	IFACE_DATA_T iface;
 	iface.port = app->port;
 	status |= DL_FsISearch(&iface, search_params, search_string, 0);
-	D("Status: %d.\n", status);
+	LOG("Status: %d.\n", status);
 }
 
 static UINT32 HandleEventSearchCompleted(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
@@ -1035,7 +1037,7 @@ static UINT32 HandleEventSearchCompleted(EVENT_STACK_T *ev_st, APPLICATION_T *ap
 	event = AFW_GetEv(ev_st);
 	search_index = (FS_SEARCH_COMPLETED_INDEX_T *) event->attachment;
 
-	D("%d elements found.\n", search_index->search_total);
+	LOG("%d elements found.\n", search_index->search_total);
 
 	status |= FillFileList(ev_st, app, search_index);
 	status |= APP_ConsumeEv(ev_st, app);
