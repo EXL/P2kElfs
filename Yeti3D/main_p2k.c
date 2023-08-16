@@ -725,7 +725,13 @@ static UINT32 ATI_Driver_Set_Display_Mode(APPLICATION_T *app, AHIROTATE_T mode) 
 	}
 
 	status |= AhiDispModeGet(appi->ahi.context, &display_mode);
+
+#if defined(FTR_V300)
+	DAL_DisableDisplay(DISPLAY_MAIN);
+#else
 	status |= AhiDispState(appi->ahi.context, DISPLAY_OFF, 0);
+#endif
+
 	display_mode.rotation = mode;
 	status = AhiDispModeSet(appi->ahi.context, &display_mode, 0);
 	if (status != RESULT_OK) {
@@ -733,7 +739,12 @@ static UINT32 ATI_Driver_Set_Display_Mode(APPLICATION_T *app, AHIROTATE_T mode) 
 		return RESULT_FAIL;
 	}
 	status |= AhiDispSurfSet(appi->ahi.context, appi->ahi.screen, 0);
+
+#if defined(FTR_V300)
+	DAL_EnableDisplay(DISPLAY_MAIN);
+#else
 	status |= AhiDispState(appi->ahi.context, DISPLAY_ON, 0);
+#endif
 
 	return status;
 }
