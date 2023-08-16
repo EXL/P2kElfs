@@ -28,7 +28,7 @@ typedef enum {
 } APP_STATE_T;
 
 typedef enum {
-	APP_TIMER_DUMP_OK = 0x0001,
+	APP_TIMER_DUMP_OK = 0xE398,
 	APP_TIMER_DUMP_FAIL
 } APP_TIMER_T;
 
