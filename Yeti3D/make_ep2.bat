@@ -20,7 +20,11 @@ set LIB_MAIN=std.sa
 set LIB_LIBC=libc.a
 
 :: Defines.
-set DEFINES=-D__P2K__ -DEP2 -DROT_0 -DFPS_30
+set DEFINES=-D__P2K__ -DEP2 -DROT_90 -DFPS_30
+:: set DEFINES=-D__P2K__ -DEP2 -DROT_90 -DFPS_30 -DFTR_V300 -DJAVA_HEAP
+:: set DEFINES=-DDEBUG
+:: set DEFINES=-DFPS_METER
+:: set DEFINES=-DMEMORY_MANUAL_ALLOCATION
 
 :: Includes.
 set INCLUDES=-I..\src\

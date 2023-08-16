@@ -31,8 +31,6 @@
 #include <time_date.h>
 #include <utilities.h>
 
-#define LOG(format, ...) UtilLogStringData(format, ##__VA_ARGS__); PFprintf(format, ##__VA_ARGS__)
-
 #define TIMER_FAST_TRIGGER_MS             (1)
 #if defined(FPS_15)
 #define TIMER_FAST_UPDATE_MS              (1000 / 15) /* ~15 FPS. */
@@ -49,7 +47,7 @@ typedef enum {
 } APP_STATE_T;
 
 typedef enum {
-	APP_TIMER_EXIT = 0x0001,
+	APP_TIMER_EXIT = 0xE398,
 	APP_TIMER_LOOP
 } APP_TIMER_T;
 
@@ -802,8 +800,13 @@ static UINT32 ATI_Driver_Start(APPLICATION_T *app) {
 	appi->ahi.bitmap.height = appi->bmp_height;
 	appi->ahi.bitmap.stride = appi->bmp_width * 2; /* (width * bpp) */
 	appi->ahi.bitmap.format = AHIFMT_16BPP_565;
+#if defined(JAVA_HEAP)
+	appi->ahi.bitmap.image = AmMemAllocPointer(appi->bmp_width * appi->bmp_height * 2);
+	if (!appi->ahi.bitmap.image) {
+#else
 	appi->ahi.bitmap.image = suAllocMem(appi->bmp_width * appi->bmp_height * 2, &result);
 	if (result != RESULT_OK) {
+#endif
 		LOG("%s\n", "Error: Cannot allocate screen buffer memory.");
 		return RESULT_FAIL;
 	}
@@ -852,7 +855,11 @@ static UINT32 ATI_Driver_Stop(APPLICATION_T *app) {
 
 	if (app_instance->p_bitmap) {
 		LOG("%s\n", "Free: ATI Bitmap memory.");
+#if defined(JAVA_HEAP)
+		AmMemFreePointer(app_instance->p_bitmap);
+#else
 		suFreeMem(app_instance->p_bitmap);
+#endif
 		app_instance->p_bitmap = NULL;
 	}
 
