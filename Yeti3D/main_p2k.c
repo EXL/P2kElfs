@@ -637,10 +637,14 @@ static UINT32 ATI_Driver_Set_Display_Mode(APPLICATION_T *app, AHIROTATE_T mode) 
 
 	device_context = DAL_GetDeviceContext(DISPLAY_MAIN);
 
-//	start_addr = 0x12300000;
-//	search_region = 0x01000000;
+#if defined(FTR_V300)
+	/* Use this if `Class_dal` constant is unknown or buggy. */
+	start_addr = 0x12000000;
+	search_region = 0x01000000;
+#else
 	start_addr = (UINT32) Class_dal;
 	search_region = 0x00000100;
+#endif
 	surface_block_offset = Find_Surface_Addresses_In_RAM(app, start_addr, search_region);
 
 	status |= AhiDispModeGet(appi->ahi.context, &display_mode);
@@ -655,15 +659,17 @@ static UINT32 ATI_Driver_Set_Display_Mode(APPLICATION_T *app, AHIROTATE_T mode) 
 
 	LOG("ATI Display Mode Dumps 1:\n\t"
 		"Class_dal=0x%08X 0x%08X 0x%08X\n\t"
-		"start_addr=0x%08X 0x%08X 0x%08X\n\t"
+		"start_addr=0x%08X 0x%08X 0x%08X\n",
+		*Class_dal, &Class_dal, Class_dal, *((UINT32 *)start_addr), &start_addr, start_addr);
+
+	LOG("ATI Display Mode Dumps 2:\n\t"
 		"search_region=0x%08X\n\t"
 		"surface_disp_addr=0x%08X\n\t"
 		"surface_draw_addr=0x%08X\n\t"
 		"surface_block_offset=0x%08X\n",
-		*Class_dal, &Class_dal, Class_dal, *((UINT32 *)start_addr), &start_addr, start_addr,
-		search_region, surface_disp_addr, surface_draw_addr, surface_block_offset, surface_block_offset);
+		search_region, surface_disp_addr, surface_draw_addr, surface_block_offset);
 
-	LOG("ATI Display Mode Dumps 2:\n\t"
+	LOG("ATI Display Mode Dumps 3:\n\t"
 		"display_source_buffer=0x%08X 0x%08X\n\t"
 		"appi->ahi.screen=0x%08X 0x%08X\n\t"
 		"appi->ahi.draw=0x%08X 0x%08X\n",
