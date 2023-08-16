@@ -16,6 +16,7 @@ LIB_MAIN = Lib.o
 
 # Defines.
 DEFINES = -D__P2K__ -DEP1
+DEFINES = -D__P2K__ -DEP1 -DFTR_V300 -DDEBUG
 
 # ELF name.
 ELF_NAME = Screenshot

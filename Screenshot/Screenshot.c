@@ -41,7 +41,7 @@ typedef enum {
 } APP_DISPLAY_T;
 
 typedef enum {
-	APP_TIMER_SCREEN_OK = 0x0001,
+	APP_TIMER_SCREEN_OK = 0xE398,
 	APP_TIMER_SCREEN_FAIL,
 	APP_TIMER_EXIT
 } APP_TIMER_T;
@@ -115,7 +115,11 @@ static const UINT8 g_key_screenshot = KEY_POUND;
 static const WCHAR g_msg_state_main[] = L"Hold \"#\" to Screenshot!\nHold \"0\" to Help.\nHold \"*\" to Exit.";
 static const WCHAR g_msg_softkey_got_it[] = L"Got it!";
 
+#if defined(FTR_V300)
+static const char g_scr_filename_template[] = "/a/mobile/picture/SCR_%02d%02d%04d_%02d%02d%02d.bmp";
+#else
 static const char g_scr_filename_template[] = "/c/mobile/picture/SCR_%02d%02d%04d_%02d%02d%02d.bmp";
+#endif
 
 /*
  * The 0xFF bytes are for later replacement.
@@ -173,16 +177,17 @@ static __inline UINT32 SwapUINT32(UINT32 value) {
 }
 
 static __inline void InsertData(UINT8 *start_address, UINT32 start_offset, UINT32 value) {
+#if !defined(FTR_V300)
 	*((__packed UINT32 *) &start_address[start_offset]) = SwapUINT32(value);
-
+#else
 	/*
 	 * Alternative way.
-	 *
+	 */
 	start_address[start_offset + 0x00] = (value >>  0) & 0x000000FF;
 	start_address[start_offset + 0x01] = (value >>  8) & 0x000000FF;
 	start_address[start_offset + 0x02] = (value >> 16) & 0x000000FF;
 	start_address[start_offset + 0x03] = (value >> 24) & 0x000000FF;
-	*/
+#endif
 }
 
 UINT32 Register(const char *elf_path_uri, const char *args, UINT32 ev_code) {
@@ -437,7 +442,11 @@ static UINT32 HandleEventTimerExpired(EVENT_STACK_T *ev_st, APPLICATION_T *app) 
 
 	if (timer_id == APP_TIMER_SCREEN_OK) {
 		/* Play a normal camera shutter sound using loud speaker. */
+#if defined(FTR_V300)
+		MME_GC_playback_open_audio_play_forget(L"/a/mobile/system/shutter5.wav");
+#else
 		MME_GC_playback_open_audio_play_forget(L"/a/mobile/system/shutter5.amr");
+#endif
 	} else if (timer_id == APP_TIMER_SCREEN_FAIL) {
 		/* Play an error sound using quiet speaker. */
 		DL_AudPlayTone(0x02,  0xFF);
