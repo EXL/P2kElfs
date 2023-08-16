@@ -19,6 +19,7 @@ set LIB_MAIN=Lib.o
 
 :: Defines.
 set DEFINES=-D__P2K__ -DEP1 -DROT_90 -DFPS_15
+:: set DEFINES=-D__P2K__ -DEP1 -DROT_90 -DFPS_15 -DFTR_V300
 
 :: ELF name.
 set ELF_NAME=Perlin
