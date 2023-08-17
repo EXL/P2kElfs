@@ -637,14 +637,12 @@ static UINT32 ATI_Driver_Set_Display_Mode(APPLICATION_T *app, AHIROTATE_T mode) 
 
 	device_context = DAL_GetDeviceContext(DISPLAY_MAIN);
 
-#if defined(FTR_V300)
 	/* Use this if `Class_dal` constant is unknown or buggy. */
-	start_addr = 0x12000000;
-	search_region = 0x01000000;
-#else
+//	start_addr = 0x12000000;
+//	search_region = 0x03FFFFFF; /* 4 MB RAM */
+//	search_region = 0x07FFFFFF; /* 8 MB RAM */
 	start_addr = (UINT32) Class_dal;
 	search_region = 0x00000100;
-#endif
 	surface_block_offset = Find_Surface_Addresses_In_RAM(app, start_addr, search_region);
 
 	status |= AhiDispModeGet(appi->ahi.context, &display_mode);
