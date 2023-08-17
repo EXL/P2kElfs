@@ -36,7 +36,7 @@ typedef enum {
 } APP_STATE_T;
 
 typedef enum {
-	APP_TIMER_EXIT = 0x0001,
+	APP_TIMER_EXIT = 0xE398,
 	APP_TIMER_EXIT_FAST
 } APP_TIMER_T;
 
@@ -806,7 +806,11 @@ static UINT32 DumpBatteryRom(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
 	ClearDataArrays(battery_rom, HAPI_BATTERY_ROM_BYTE_SIZE);
 
 	battery_status = HAPI_BATTERY_ROM_NONE;
+#if defined(FTR_V300)
+	memset(&battery_id, 0xFF, HAPI_BATTERY_ROM_UNIQUE_ID_SIZE);
+#else
 	HAPI_BATTERY_ROM_get_unique_id(battery_id);
+#endif
 	battery_status = HAPI_BATTERY_ROM_read(battery_rom);
 
 	u_strcpy(g_cur_file_path, g_res_file_path);
