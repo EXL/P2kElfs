@@ -806,7 +806,7 @@ static UINT32 DumpBatteryRom(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
 	ClearDataArrays(battery_rom, HAPI_BATTERY_ROM_BYTE_SIZE);
 
 	battery_status = HAPI_BATTERY_ROM_NONE;
-#if defined(FTR_V300)
+#if defined(FTR_V600)
 	memset(&battery_id, 0xFF, HAPI_BATTERY_ROM_UNIQUE_ID_SIZE);
 #else
 	HAPI_BATTERY_ROM_get_unique_id(battery_id);

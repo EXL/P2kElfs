@@ -151,7 +151,7 @@ static UINT32 RunElfApplication(EVENT_STACK_T *ev_st, APPLICATION_T *app, const 
 
 static const char g_app_name[APP_NAME_LEN] = "ElfBox";
 
-#if defined(FTR_V300)
+#if defined(FTR_V600)
 static const UINT32 g_ev_code_base = 0x000003D9; /* Mobile QQ application event. */
 #else
 static const UINT32 g_ev_code_base = 0x000003DC; /* MotoMixer application event. */
@@ -786,7 +786,7 @@ static UINT32 UpdateFileList(EVENT_STACK_T *ev_st, APPLICATION_T *app, const WCH
 	search_params.attrib = FS_ATTR_DEFAULT;
 	search_params.mask = FS_ATTR_DEFAULT;
 
-#if defined(FTR_V300)
+#if defined(FTR_V600)
 	status |= DL_FsSearch(search_params, search_string, &search_info, &complete_function, 0);
 	search_index.search_handle = search_info->shandle;
 	search_index.search_total = search_info->num;
@@ -949,7 +949,7 @@ static const WCHAR *GetFileNameFromPath(const WCHAR *path) {
 }
 
 static BOOL IsDirectory(UINT16 file_attributes) {
-#if defined(FTR_V300)
+#if defined(FTR_V600)
 	return (file_attributes == DIRECTORY_FILTER_ATTRIBUTE);
 #else
 	return (file_attributes & FS_ATTR_DIRECTORY);

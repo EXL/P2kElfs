@@ -396,7 +396,7 @@ static UINT32 ProcessKeyboard(EVENT_STACK_T *ev_st, APPLICATION_T *app, UINT32 k
 	switch (key) {
 		case MULTIKEY_0:
 		case MULTIKEY_SOFT_LEFT:
-#if defined(FTR_V300)
+#if defined(FTR_V600)
 			AFW_AddEvNoD(ev_st, EV_DONE);
 #else
 			app->exit_status = TRUE;
@@ -730,7 +730,7 @@ static UINT32 ATI_Driver_Set_Display_Mode(APPLICATION_T *app, AHIROTATE_T mode) 
 
 	status |= AhiDispModeGet(appi->ahi.context, &display_mode);
 
-#if defined(FTR_V300)
+#if defined(FTR_V600)
 	DAL_DisableDisplay(DISPLAY_MAIN);
 #else
 	status |= AhiDispState(appi->ahi.context, DISPLAY_OFF, 0);
@@ -744,7 +744,7 @@ static UINT32 ATI_Driver_Set_Display_Mode(APPLICATION_T *app, AHIROTATE_T mode) 
 	}
 	status |= AhiDispSurfSet(appi->ahi.context, appi->ahi.screen, 0);
 
-#if defined(FTR_V300)
+#if defined(FTR_V600)
 	DAL_EnableDisplay(DISPLAY_MAIN);
 #else
 	status |= AhiDispState(appi->ahi.context, DISPLAY_ON, 0);

@@ -15,7 +15,7 @@ LIB_PATH = $(ARM_PATH)/lib
 LIB_MAIN = Lib.o
 
 # Defines.
-DEFINES = -D__P2K__ -DEP1 -DDEBUG -DFTR_V300
+DEFINES = -D__P2K__ -DEP1 -DDEBUG -DFTR_V600
 
 # ELF name.
 ELF_NAME = Benchmark
