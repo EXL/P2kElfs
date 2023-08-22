@@ -1298,4 +1298,3 @@ static void FreeResourses(void) {
 		yeti = NULL;
 	}
 }
-#undef LOG

@@ -908,5 +908,3 @@ static void FreeResourses(void) {
 		sintable = NULL;
 	}
 }
-
-#undef LOG
