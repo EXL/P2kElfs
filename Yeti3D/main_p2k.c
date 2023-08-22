@@ -396,11 +396,7 @@ static UINT32 ProcessKeyboard(EVENT_STACK_T *ev_st, APPLICATION_T *app, UINT32 k
 	switch (key) {
 		case MULTIKEY_0:
 		case MULTIKEY_SOFT_LEFT:
-#if defined(FTR_V600)
-			AFW_AddEvNoD(ev_st, EV_DONE);
-#else
 			app->exit_status = TRUE;
-#endif
 			break;
 		case MULTIKEY_1:
 			g_keyboard[E_KEY_LOOK_DOWN] = pressed;
