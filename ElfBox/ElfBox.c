@@ -41,7 +41,7 @@ typedef enum {
 } APP_STATE_T;
 
 typedef enum {
-	APP_TIMER_EXIT = 0x0001,
+	APP_TIMER_EXIT = 0xF398,
 	APP_TIMER_EXIT_FAST,
 	APP_TIMER_TO_MAIN_VIEW
 } APP_TIMER_T;
@@ -543,6 +543,7 @@ static UINT32 HandleEventSelect(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
 			u_strcat(appi->current_path, L"/");
 			u_strcat(appi->current_path, appi->fs.list[appi->menu_current_item_index].name);
 			status |= RunElfApplication(ev_st, app, appi->current_path);
+			return RESULT_OK;
 			break;
 		default:
 			break;
