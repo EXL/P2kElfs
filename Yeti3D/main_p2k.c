@@ -289,8 +289,19 @@ static UINT32 HandleStateEnter(EVENT_STACK_T *ev_st, APPLICATION_T *app, ENTER_S
 
 	switch (app_state) {
 		case APP_STATE_MAIN:
+#if !defined(FTR_V600)
 			dialog = UIS_CreateNullDialog(&port);
-
+#else
+			{
+				DRAWING_BUFFER_T buffer;
+				GRAPHIC_POINT_T point;
+				point = UIS_CanvasGetDisplaySize();
+				buffer.w = point.x + 1;
+				buffer.h = point.y + 1;
+				buffer.buf = NULL;
+				dialog = UIS_CreateColorCanvas(&port, &buffer, TRUE);
+			}
+#endif
 			DL_KeyKjavaGetKeyState(); /* Reset Keys. */
 
 			if (state == ENTER_STATE_ENTER) {
