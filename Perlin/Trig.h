@@ -1,7 +1,7 @@
 #ifndef TRIG_H
 #define TRIG_H
 
-#include "fixed.h"
+#include "Fixed.h"
 
 Fixed fix_cos(Fixed deg);
 

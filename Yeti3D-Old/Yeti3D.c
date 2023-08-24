@@ -28,8 +28,6 @@
 #include <time_date.h>
 #include <utilities.h>
 
-#define LOG(format, ...) UtilLogStringData(format, ##__VA_ARGS__); PFprintf(format, ##__VA_ARGS__)
-
 #define TIMER_FAST_TRIGGER_MS             (1)
 #if defined(FPS_15)
 #define TIMER_FAST_UPDATE_MS              (1000 / 15) /* ~15 FPS. */
@@ -46,7 +44,7 @@ typedef enum {
 } APP_STATE_T;
 
 typedef enum {
-	APP_TIMER_EXIT = 0x0001,
+	APP_TIMER_EXIT = 0xE398,
 	APP_TIMER_LOOP
 } APP_TIMER_T;
 
@@ -281,8 +279,19 @@ static UINT32 HandleStateEnter(EVENT_STACK_T *ev_st, APPLICATION_T *app, ENTER_S
 
 	switch (app_state) {
 		case APP_STATE_MAIN:
+#if !defined(FTR_V600)
 			dialog = UIS_CreateNullDialog(&port);
-
+#else
+			{
+				DRAWING_BUFFER_T buffer;
+				GRAPHIC_POINT_T point;
+				point = UIS_CanvasGetDisplaySize();
+				buffer.w = point.x + 1;
+				buffer.h = point.y + 1;
+				buffer.buf = NULL;
+				dialog = UIS_CreateColorCanvas(&port, &buffer, TRUE);
+			}
+#endif
 			DL_KeyKjavaGetKeyState(); /* Reset Keys. */
 
 			if (state == ENTER_STATE_ENTER) {
@@ -899,5 +908,3 @@ static void FreeResourses(void) {
 		sintable = NULL;
 	}
 }
-
-#undef LOG

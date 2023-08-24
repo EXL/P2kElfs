@@ -3,6 +3,7 @@ Project {
 		"BattDump/BattDump.qbs",
 		"Benchmark/Benchmark.qbs",
 		"Dumper/Dumper.qbs",
+		"ElfBox/ElfBox.qbs",
 		"FireEffect/FireEffect.qbs",
 		"Perlin/Perlin.qbs",
 		"PowerAlert/PowerAlert.qbs",

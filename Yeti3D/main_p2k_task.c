@@ -32,8 +32,6 @@
 #include <utilities.h>
 #include <tasks.h>
 
-#define LOG(format, ...) UtilLogStringData(format, ##__VA_ARGS__); PFprintf(format, ##__VA_ARGS__)
-
 #define TIMER_FAST_TRIGGER_MS             (1)
 #define TASK_STACK_SIZE                   (0x5000)
 #define TASK_PRIORITY                     (0x18)
@@ -1300,4 +1298,3 @@ static void FreeResourses(void) {
 		yeti = NULL;
 	}
 }
-#undef LOG

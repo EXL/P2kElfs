@@ -1,4 +1,4 @@
-# This Makefile was edited by EXL, 27-Mar-2023.
+# This Makefile was edited by EXL, 02-Jun-2023.
 # Default platform is Motorola P2K, ElfPack v1.x, ADS1.2 [Build 848] on Linux.
 # Warning: `-nodebug` flag option for `armlink` is buggy.
 
@@ -15,11 +15,12 @@ LIB_PATH = $(ARM_PATH)/lib
 LIB_MAIN = Lib.o
 
 # Defines.
-DEFINES = -D__P2K__ -DEP1 -DROT_90 -DFPS_30
-#DEFINES = -D__P2K__ -DEP1 -DROT_90 -DFPS_30 -DFTR_V600
+DEFINES = -D__P2K__ -DEP1
+#DEFINES = -D__P2K__ -DEP1 -DFTR_V600
+#DEFINES = -DDEBUG
 
 # ELF name.
-ELF_NAME = FireEffect
+ELF_NAME = ElfBox
 
 all:
 	$(ARM_PATH)/bin/tcc -I$(SDK_PATH) $(DEFINES) -bigend -apcs /interwork -O2 -c $(ELF_NAME).c \

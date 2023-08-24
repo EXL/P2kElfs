@@ -44,7 +44,7 @@ typedef enum {
 } APP_DISPLAY_T;
 
 typedef enum {
-	APP_TIMER_EXIT = 0x0001
+	APP_TIMER_EXIT = 0xE398
 } APP_TIMER_T;
 
 typedef enum {

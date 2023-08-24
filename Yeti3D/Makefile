@@ -16,6 +16,10 @@ LIB_MAIN = Lib.o
 
 # Defines.
 DEFINES = -D__P2K__ -DEP1 -DROT_90 -DFPS_30
+#DEFINES = -D__P2K__ -DEP1 -DROT_90 -DFPS_30 -DFTR_V600 -DJAVA_HEAP
+#DEFINES = -DDEBUG
+#DEFINES = -DFPS_METER
+#DEFINES = -DMEMORY_MANUAL_ALLOCATION
 
 # ELF name.
 ELF_NAME = Yeti3D
@@ -30,4 +34,4 @@ all:
 
 clean:
 	-rm -f *.o
-	-rm -f $(ELF_NAME).elf
+	-rm -f *.elf

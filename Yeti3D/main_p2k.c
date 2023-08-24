@@ -31,8 +31,6 @@
 #include <time_date.h>
 #include <utilities.h>
 
-#define LOG(format, ...) UtilLogStringData(format, ##__VA_ARGS__); PFprintf(format, ##__VA_ARGS__)
-
 #define TIMER_FAST_TRIGGER_MS             (1)
 #if defined(FPS_15)
 #define TIMER_FAST_UPDATE_MS              (1000 / 15) /* ~15 FPS. */
@@ -49,7 +47,7 @@ typedef enum {
 } APP_STATE_T;
 
 typedef enum {
-	APP_TIMER_EXIT = 0x0001,
+	APP_TIMER_EXIT = 0xE398,
 	APP_TIMER_LOOP
 } APP_TIMER_T;
 
@@ -291,8 +289,19 @@ static UINT32 HandleStateEnter(EVENT_STACK_T *ev_st, APPLICATION_T *app, ENTER_S
 
 	switch (app_state) {
 		case APP_STATE_MAIN:
+#if !defined(FTR_V600)
 			dialog = UIS_CreateNullDialog(&port);
-
+#else
+			{
+				DRAWING_BUFFER_T buffer;
+				GRAPHIC_POINT_T point;
+				point = UIS_CanvasGetDisplaySize();
+				buffer.w = point.x + 1;
+				buffer.h = point.y + 1;
+				buffer.buf = NULL;
+				dialog = UIS_CreateColorCanvas(&port, &buffer, TRUE);
+			}
+#endif
 			DL_KeyKjavaGetKeyState(); /* Reset Keys. */
 
 			if (state == ENTER_STATE_ENTER) {
@@ -635,8 +644,10 @@ static UINT32 ATI_Driver_Set_Display_Mode(APPLICATION_T *app, AHIROTATE_T mode) 
 
 	device_context = DAL_GetDeviceContext(DISPLAY_MAIN);
 
-//	start_addr = 0x12300000;
-//	search_region = 0x01000000;
+	/* Use this if `Class_dal` constant is unknown or buggy. */
+//	start_addr = 0x12000000;
+//	search_region = 0x03FFFFFF; /* 4 MB RAM */
+//	search_region = 0x07FFFFFF; /* 8 MB RAM */
 	start_addr = (UINT32) Class_dal;
 	search_region = 0x00000100;
 	surface_block_offset = Find_Surface_Addresses_In_RAM(app, start_addr, search_region);
@@ -653,15 +664,17 @@ static UINT32 ATI_Driver_Set_Display_Mode(APPLICATION_T *app, AHIROTATE_T mode) 
 
 	LOG("ATI Display Mode Dumps 1:\n\t"
 		"Class_dal=0x%08X 0x%08X 0x%08X\n\t"
-		"start_addr=0x%08X 0x%08X 0x%08X\n\t"
+		"start_addr=0x%08X 0x%08X 0x%08X\n",
+		*Class_dal, &Class_dal, Class_dal, *((UINT32 *)start_addr), &start_addr, start_addr);
+
+	LOG("ATI Display Mode Dumps 2:\n\t"
 		"search_region=0x%08X\n\t"
 		"surface_disp_addr=0x%08X\n\t"
 		"surface_draw_addr=0x%08X\n\t"
 		"surface_block_offset=0x%08X\n",
-		*Class_dal, &Class_dal, Class_dal, *((UINT32 *)start_addr), &start_addr, start_addr,
-		search_region, surface_disp_addr, surface_draw_addr, surface_block_offset, surface_block_offset);
+		search_region, surface_disp_addr, surface_draw_addr, surface_block_offset);
 
-	LOG("ATI Display Mode Dumps 2:\n\t"
+	LOG("ATI Display Mode Dumps 3:\n\t"
 		"display_source_buffer=0x%08X 0x%08X\n\t"
 		"appi->ahi.screen=0x%08X 0x%08X\n\t"
 		"appi->ahi.draw=0x%08X 0x%08X\n",
@@ -723,7 +736,13 @@ static UINT32 ATI_Driver_Set_Display_Mode(APPLICATION_T *app, AHIROTATE_T mode) 
 	}
 
 	status |= AhiDispModeGet(appi->ahi.context, &display_mode);
+
+#if defined(FTR_V600)
+	DAL_DisableDisplay(DISPLAY_MAIN);
+#else
 	status |= AhiDispState(appi->ahi.context, DISPLAY_OFF, 0);
+#endif
+
 	display_mode.rotation = mode;
 	status = AhiDispModeSet(appi->ahi.context, &display_mode, 0);
 	if (status != RESULT_OK) {
@@ -731,7 +750,12 @@ static UINT32 ATI_Driver_Set_Display_Mode(APPLICATION_T *app, AHIROTATE_T mode) 
 		return RESULT_FAIL;
 	}
 	status |= AhiDispSurfSet(appi->ahi.context, appi->ahi.screen, 0);
+
+#if defined(FTR_V600)
+	DAL_EnableDisplay(DISPLAY_MAIN);
+#else
 	status |= AhiDispState(appi->ahi.context, DISPLAY_ON, 0);
+#endif
 
 	return status;
 }
@@ -802,8 +826,13 @@ static UINT32 ATI_Driver_Start(APPLICATION_T *app) {
 	appi->ahi.bitmap.height = appi->bmp_height;
 	appi->ahi.bitmap.stride = appi->bmp_width * 2; /* (width * bpp) */
 	appi->ahi.bitmap.format = AHIFMT_16BPP_565;
+#if defined(JAVA_HEAP)
+	appi->ahi.bitmap.image = AmMemAllocPointer(appi->bmp_width * appi->bmp_height * 2);
+	if (!appi->ahi.bitmap.image) {
+#else
 	appi->ahi.bitmap.image = suAllocMem(appi->bmp_width * appi->bmp_height * 2, &result);
 	if (result != RESULT_OK) {
+#endif
 		LOG("%s\n", "Error: Cannot allocate screen buffer memory.");
 		return RESULT_FAIL;
 	}
@@ -852,7 +881,11 @@ static UINT32 ATI_Driver_Stop(APPLICATION_T *app) {
 
 	if (app_instance->p_bitmap) {
 		LOG("%s\n", "Free: ATI Bitmap memory.");
+#if defined(JAVA_HEAP)
+		AmMemFreePointer(app_instance->p_bitmap);
+#else
 		suFreeMem(app_instance->p_bitmap);
+#endif
 		app_instance->p_bitmap = NULL;
 	}
 
@@ -1240,4 +1273,3 @@ static void FreeResourses(void) {
 		yeti = NULL;
 	}
 }
-#undef LOG
