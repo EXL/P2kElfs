@@ -15,6 +15,24 @@ Port of the heavy optimized "Yeti3D" 3D engine demo by **Derek J. Evans** from [
 
 ![Photo of Yeti3D on Motorola L6 and Motorola E1](../images/Photo_Yeti3D_L6_E1_1.jpg)
 
+## Photos of Motorola RAZR V3i
+
+Thanks to @Limows
+
+![Photo of Yeti3D on Motorola V3i 1](../images/Photo_Yeti3D_V3i_1.jpg) ![Photo of Yeti3D on Motorola V3i 2](../images/Photo_Yeti3D_V3i_2.jpg)
+
+## Photos of Motorola V235
+
+Thanks to @Indepth6
+
+![Photo of Yeti3D on Motorola V235 1](../images/Photo_Yeti3D_V235_1.jpg)
+
+## Photos of Motorola V360
+
+Thanks to @baat
+
+![Photo of Yeti3D on Motorola V360 1](../images/Photo_Yeti3D_V360_1.jpg)
+
 ## Videos of Motorola SLVR L6 and Motorola ROKR E1
 
 See [Yeti3D Engine port to ELF for Motorola P2K phones](https://www.youtube.com/watch?v=HqgMxK00QFg) video on YouTube.
