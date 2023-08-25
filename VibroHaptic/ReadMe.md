@@ -16,6 +16,7 @@ The "Vibro Haptic" ELF daemon utility with GUI settings for vibration feedback l
 ## ELF files
 
 * VibroHaptic.elf (ELF for ElfPack 1.0)
+* VibroHaptic_V600.elf (ELF for ElfPack 1.0 and Motorola V600)
 
 ## Additional information
 

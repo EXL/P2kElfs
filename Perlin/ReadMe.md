@@ -11,11 +11,11 @@ Port of the "Perlin" plasma and fire demo by [@BOOtak](https://github.com/BOOtak
 
 ![Screenshot of Perlin from Motorola E1 1](../images/Screenshot_Perlin_E1_1.png) ![Screenshot of Perlin from Motorola E1 2](../images/Screenshot_Perlin_E1_2.png) ![Screenshot of Perlin from Motorola E1 3](../images/Screenshot_Perlin_E1_3.png)
 
-## Photos
+## Photos of Motorola SLVR L6 and Motorola ROKR E1
 
 ![Photo of Perlin on Motorola L6 and Motorola E1 1](../images/Photo_Perlin_L6_E1_1.jpg)
 
-## Videos
+## Videos of Motorola SLVR L6 and Motorola ROKR E1
 
 See [Some ELF demos/games on Motorola P2K phones using ATI Imageon W2240/W2250 videochip
 ](https://www.youtube.com/watch?v=DsYLWXPgmsU&t=110s) video on YouTube.

@@ -11,7 +11,7 @@ Port of the Doom PSX fire effect demo splash screen to the Motorola P2K phones p
 
 ![Screenshot of Fire Effect from Motorola E1 1](../images/Screenshot_FireEffect_E1_1.png) ![Screenshot of Fire Effect from Motorola E1 2](../images/Screenshot_FireEffect_E1_2.png)
 
-## Photos
+## Photos of Motorola SLVR L6 and Motorola ROKR E1
 
 ![Photo of Fire Effect on Motorola L6 and Motorola E1 1](../images/Photo_FireEffect_L6_E1_1.jpg)
 

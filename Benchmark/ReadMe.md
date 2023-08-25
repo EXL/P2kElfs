@@ -5,6 +5,10 @@ Benchmark
 
 * Various signal e.g. vibromotor finding version. See [find_vibromotor_signal](https://github.com/EXL/P2kElfs/tree/find_vibromotor_signal) branch in this repository.
 
+## ELF files
+
+* Benchmark.elf (ELF for ElfPack 1.0)
+
 ## Additional information
 
 The ELF-application has been tested on the following phones and firmware:

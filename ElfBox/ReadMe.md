@@ -15,6 +15,11 @@ A simple "ElfBox" ELF-applications launcher.
 
 ![Screenshot 1 of ElfBox from Motorola ROKR E1](../images/Screenshot_ElfBox_E1_1.png) ![Screenshot 2 of ElfBox from Motorola ROKR E1](../images/Screenshot_ElfBox_E1_2.png) ![Screenshot 3 of ElfBox from Motorola ROKR E1](../images/Screenshot_ElfBox_E1_3.png) ![Screenshot 4 of ElfBox from Motorola ROKR E1](../images/Screenshot_ElfBox_E1_4.png)
 
+## ELF files
+
+* ElfBox.elf (ELF for ElfPack 1.0)
+* ElfBox_V600.elf (ELF for ElfPack 1.0 and Motorola V600)
+
 ## Additional information
 
 The ELF-application has been tested on the following phones and firmware:
