@@ -70,10 +70,11 @@ See [Yeti3D Engine port to ELF for Motorola P2K phones](https://www.youtube.com/
 * 2 (3rd) - Elf for ElfPack 2.0, tested with.
 * T (4th) - Elf for ElfPack 2.0, with using Tasks and Semaphores.
 * D (4th) - Debug test version with some unique patches like screen buffer in Java Heap and FPS output, works without using `Class_dal` constant.
+* J (4th) - A special optimized versions with creating screen buffer in Java Heap also, for weak phones like Motorola V600.
 
 ### Summary
 
-* 8 ELFs + ElfPack 2.0 ELFs + 4 Task and Semaphores ELFs + 1 Debug ELF = 21 ELFs.
+* 8 ELFs + ElfPack 2.0 ELFs + 4 Task and Semaphores ELFs + 1 Debug ELF + 3 J-weak V600 ELFs = 24 ELFs.
 
 ## Additional information
 
@@ -81,6 +82,11 @@ The ELF-application has been tested on the following phones and firmware:
 
 * Motorola SLVR L6: R3443H1_G_0A.65.0BR
 * Motorola ROKR E1: R373_G_0E.30.49R
+* Motorola V600: TRIPLETS_G_0B.09.72R
+* Motorola V360: R4513_G_08.B7.ACR
+* Motorola V235: R3512_G_0A.30.6CR
+* Motorola SLVR L7: R4513_G_08.B7.E0R_RB
+* Motorola RAZR V3i: R4441D_G_08.01.03R
 
 Application type: GUI + ATI + Java Heap + Videomode.
 
