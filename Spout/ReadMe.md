@@ -15,6 +15,12 @@ Port of the "Spout" game by kuni to the Motorola P2K phones platform.
 
 ![Photo of Spout on Motorola L6 and Motorola E1 1](../images/Photo_Spout_L6_E1_1.jpg)
 
+## Photos of Motorola RAZR V3i
+
+Thanks to @Limows
+
+![Photo of Spout on Motorola V3i 1](../images/Photo_Spout_V3i_1.jpg)
+
 ## Videos of Motorola SLVR L6 and Motorola ROKR E1
 
 See [Some ELF demos/games on Motorola P2K phones using ATI Imageon W2240/W2250 videochip
