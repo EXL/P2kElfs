@@ -7,9 +7,13 @@ The "Screenshot" ELF daemon utility with GUI to fast take screenshots.
 
 ![Screenshot of Screenshot from Motorola L6](../images/Screenshot_Screenshot_L6_1.png)
 
+## Screenshots from Motorola V600
+
+![Screenshot of Screenshot from Motorola V600](../images/Screenshot_Screenshot_V600_1.png)
+
 ## Screenshots from Motorola ROKR E1
 
-![Screenshot of Screenshot from Motorola E1](../images/Screenshot_Screenshot_E1_1.png)
+![Screenshot of Screenshot from Motorola ROKR E1](../images/Screenshot_Screenshot_E1_1.png)
 
 ## ELF files
 
