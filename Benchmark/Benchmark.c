@@ -23,6 +23,7 @@
 
 #define TIMER_FAST_TRIGGER_MS             (1)
 #define TIMER_POPUP_DELAY_MS            (100)
+#define TIMER_BENCHMARK_DELAY            (50)
 
 typedef enum {
 	APP_STATE_ANY,
@@ -35,7 +36,8 @@ typedef enum {
 
 typedef enum {
 	APP_TIMER_EXIT = 0xE398,
-	APP_TIMER_EXIT_FAST
+	APP_TIMER_EXIT_FAST,
+	APP_TIMER_DO_BENCHMARK
 } APP_TIMER_T;
 
 typedef enum {
@@ -108,7 +110,8 @@ static const WCHAR g_str_menu_bench_ram[] = L"RAM (SRAM)";
 static const WCHAR g_str_menu_bench_heap[] = L"HEAP (J2ME)";
 static const WCHAR g_str_menu_help[] = L"Help...";
 static const WCHAR g_str_menu_about[] = L"About...";
-static const WCHAR g_str_popup_wait[] = L"Please wait";
+static const WCHAR g_str_popup_wait_p1[] = L"Please wait";
+static const WCHAR g_str_popup_wait_p2[] = L"Benchmarking in progress...";
 static const WCHAR g_str_view_help[] = L"Help";
 static const WCHAR g_str_help_content_p1[] = L"A simple benchmarking application for Motorola P2K phones.";
 static const WCHAR g_str_about_content_p1[] = L"Version: 1.0";
@@ -371,7 +374,8 @@ static UINT32 HandleStateEnter(EVENT_STACK_T *ev_st, APPLICATION_T *app, ENTER_S
 				default:
 				case APP_POPUP_PLEASE_WAIT:
 					notice_type = NOTICE_TYPE_WAIT;
-					UIS_MakeContentFromString("MCq0", &content, g_str_popup_wait);
+					UIS_MakeContentFromString("MCq0NMCq1", &content, g_str_popup_wait_p1, g_str_popup_wait_p2);
+					APP_UtilStartTimer(TIMER_BENCHMARK_DELAY, APP_TIMER_DO_BENCHMARK, app);
 					break;
 				}
 			dialog = UIS_CreateTransientNotice(&port, &content, notice_type);
@@ -423,7 +427,9 @@ static UINT32 DeleteDialog(APPLICATION_T *app) {
 static UINT32 HandleEventTimerExpired(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
 	EVENT_T *event;
 	APP_TIMER_T timer_id;
+	APP_INSTANCE_T *app_instance;
 
+	app_instance = (APP_INSTANCE_T *) app;
 	event = AFW_GetEv(ev_st);
 	timer_id = ((DL_TIMER_DATA_T *) event->attachment)->ID;
 
@@ -434,6 +440,17 @@ static UINT32 HandleEventTimerExpired(EVENT_STACK_T *ev_st, APPLICATION_T *app) 
 			/* Play an exit sound using quiet speaker. */
 			DL_AudPlayTone(0x00,  0xFF);
 			return ApplicationStop(ev_st, app);
+			break;
+		case APP_TIMER_DO_BENCHMARK:
+			switch (app_instance->menu_current_item_index) {
+				case APP_MENU_ITEM_BENCH_CPU:
+						BGG_MIPS();
+						app_instance->view = APP_VIEW_HELP;
+						APP_UtilChangeState(APP_STATE_VIEW, ev_st, app);
+						break;
+				default:
+						break;
+			}
 			break;
 		default:
 			break;
@@ -455,6 +472,9 @@ static UINT32 HandleEventSelect(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
 	app_instance->menu_current_item_index = event->data.index - 1;
 
 	switch (app_instance->menu_current_item_index) {
+		case APP_MENU_ITEM_BENCH_CPU:
+			status |= APP_UtilChangeState(APP_STATE_POPUP, ev_st, app);
+			break;
 		case APP_MENU_ITEM_HELP:
 			app_instance->view = APP_VIEW_HELP;
 			status |= APP_UtilChangeState(APP_STATE_VIEW, ev_st, app);

@@ -1,3 +1,41 @@
+#include <apps.h>
+#include <utilities.h>
+
+#define CLOCKS_PER_SEC 8192
+
+//#pragma O2
+static __inline void BogoMIPS_Delay(int loops) {
+	int i;
+	for (i = loops; !!(i > 0); --i) {
+		//nop();
+		;
+	}
+}
+//#pragma O2
+
+UINT32 BGG_MIPS() {
+	UINT32 loops_per_sec = 1;
+	UINT64 ticks;
+	UINT32 delta;
+
+	while ((loops_per_sec <<= 1)) {
+		ticks = suPalReadTime();
+		BogoMIPS_Delay(loops_per_sec);
+		delta = (UINT32) (suPalReadTime() - ticks);
+		if (delta >= CLOCKS_PER_SEC) {
+			//			15343 -- 2097152
+			//			(2097152 / 15343) * 8192
+			UINT32 lps = loops_per_sec;
+			lps = (lps / delta) * CLOCKS_PER_SEC;
+			LOG("OK: %lu -- %lu\n", delta, loops_per_sec);
+			LOG("OK: %lu.%02lu BogoMips\n", lps / 500000, (lps/5000) % 100);
+			return 0;
+		}
+	}
+	LOG("%s\n", "Failed!");
+	return 1;
+}
+
 #if 0
 /*
  * About:
