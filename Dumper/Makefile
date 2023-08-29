@@ -15,8 +15,8 @@ LIB_PATH = $(ARM_PATH)/lib
 LIB_MAIN = Lib.o
 
 # Defines.
-DEFINES = -D__P2K__ -DEP1
-#DEFINES = -D__P2K__ -DEP1 -DFTR_V600
+DEFINES = -D__P2K__ -DEP1 -DUSE_MME
+#DEFINES = -D__P2K__ -DEP1 -DUSE_MME -DFTR_V600
 
 # ELF name.
 ELF_NAME = Dumper

@@ -20,9 +20,10 @@
 #include <dl.h>
 #include <filesystem.h>
 #include <time_date.h>
+#include <mme.h>
 
 #define TIMER_FAST_TRIGGER_MS             (1)
-#define TIMER_POPUP_DELAY_MS            (100)
+#define TIMER_POPUP_DELAY_MS             (50)
 #define DISK_DRIVER_NAME_SIZE             (8)
 #define DEBUG_OUTPUT_MAX_LENGTH         (256)
 
@@ -37,7 +38,9 @@ typedef enum {
 
 typedef enum {
 	APP_TIMER_EXIT = 0xE398,
-	APP_TIMER_EXIT_FAST
+	APP_TIMER_EXIT_FAST,
+	APP_TIMER_DO_BENCHMARK,
+	APP_TIMER_DUMP_OK
 } APP_TIMER_T;
 
 typedef enum {
@@ -149,6 +152,8 @@ static const WCHAR g_str_menu_help[] = L"Help...";
 static const WCHAR g_str_menu_about[] = L"About...";
 static const WCHAR g_str_dump_ok[] = L"Memory region dumped to:";
 static const WCHAR g_str_dump_fail[] = L"Check free space. Cannot dump memory region to:";
+static const WCHAR g_str_dump_wait_p1[] = L"Dumping memory region to file";
+static const WCHAR g_str_dump_wait_p2[] = L"Please wait...";
 static const WCHAR g_str_view_help[] = L"Help";
 static WCHAR *g_str_help_content_p1 = NULL;
 static const WCHAR g_str_help_content_p2[] = L"ELF utility for dumping various memory regions of Motorola P2K phones."
@@ -530,6 +535,7 @@ static UINT32 HandleStateEnter(EVENT_STACK_T *ev_st, APPLICATION_T *app, ENTER_S
 				case APP_POPUP_DUMP_OK:
 					notice_type = NOTICE_TYPE_OK;
 					UIS_MakeContentFromString("MCq0NMCq1", &content, g_str_dump_ok, g_cur_file_path);
+					APP_UtilStartTimer(TIMER_POPUP_DELAY_MS, APP_TIMER_DUMP_OK, app);
 					break;
 				case APP_POPUP_DUMP_FAIL:
 					notice_type = NOTICE_TYPE_FAIL;
@@ -537,6 +543,8 @@ static UINT32 HandleStateEnter(EVENT_STACK_T *ev_st, APPLICATION_T *app, ENTER_S
 					break;
 				case APP_POPUP_DUMP_WAIT:
 					notice_type = NOTICE_TYPE_WAIT;
+					UIS_MakeContentFromString("MCq0NMCq1", &content, g_str_dump_wait_p1, g_str_dump_wait_p2);
+					APP_UtilStartTimer(TIMER_POPUP_DELAY_MS, APP_TIMER_DO_BENCHMARK, app);
 					break;
 			}
 			dialog = UIS_CreateTransientNotice(&port, &content, notice_type);
@@ -589,7 +597,9 @@ static UINT32 DeleteDialog(APPLICATION_T *app) {
 static UINT32 HandleEventTimerExpired(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
 	EVENT_T *event;
 	APP_TIMER_T timer_id;
+	APP_INSTANCE_T *app_instance;
 
+	app_instance = (APP_INSTANCE_T *) app;
 	event = AFW_GetEv(ev_st);
 	timer_id = ((DL_TIMER_DATA_T *) event->attachment)->ID;
 
@@ -599,6 +609,56 @@ static UINT32 HandleEventTimerExpired(EVENT_STACK_T *ev_st, APPLICATION_T *app) 
 			/* Play an exit sound using quiet speaker. */
 			DL_AudPlayTone(0x00,  0xFF);
 			return ApplicationStop(ev_st, app);
+			break;
+		case APP_TIMER_DO_BENCHMARK:
+			switch (app_instance->menu_current_item_index) {
+				case APP_MENU_ITEM_BOOT_HWCFG:
+					app_instance->popup =
+						(DumpBootAndHwcfg(ev_st, app) == RESULT_OK) ? APP_POPUP_DUMP_OK : APP_POPUP_DUMP_FAIL;
+					APP_UtilChangeState(APP_STATE_POPUP, ev_st, app);
+					break;
+				case APP_MENU_ITEM_PDS:
+					app_instance->popup =
+						(DumpPds(ev_st, app) == RESULT_OK) ? APP_POPUP_DUMP_OK : APP_POPUP_DUMP_FAIL;
+					APP_UtilChangeState(APP_STATE_POPUP, ev_st, app);
+					break;
+				case APP_MENU_ITEM_RAM:
+					app_instance->popup =
+						(DumpRam(ev_st, app) == RESULT_OK) ? APP_POPUP_DUMP_OK : APP_POPUP_DUMP_FAIL;
+					APP_UtilChangeState(APP_STATE_POPUP, ev_st, app);
+					break;
+				case APP_MENU_ITEM_BATTERY_ROM:
+					app_instance->popup =
+						(DumpBatteryRom(ev_st, app) == RESULT_OK) ? APP_POPUP_DUMP_OK : APP_POPUP_DUMP_FAIL;
+					APP_UtilChangeState(APP_STATE_POPUP, ev_st, app);
+					break;
+				case APP_MENU_ITEM_IROM:
+					app_instance->popup =
+						(DumpIROM(ev_st, app) == RESULT_OK) ? APP_POPUP_DUMP_OK : APP_POPUP_DUMP_FAIL;
+					APP_UtilChangeState(APP_STATE_POPUP, ev_st, app);
+					break;
+				case APP_MENU_ITEM_IRAM:
+					app_instance->popup =
+						(DumpIRAM(ev_st, app) == RESULT_OK) ? APP_POPUP_DUMP_OK : APP_POPUP_DUMP_FAIL;
+					APP_UtilChangeState(APP_STATE_POPUP, ev_st, app);
+					break;
+				case APP_MENU_ITEM_PANIC:
+					app_instance->popup =
+						(DumpPanic(ev_st, app) == RESULT_OK) ? APP_POPUP_DUMP_OK : APP_POPUP_DUMP_FAIL;
+					APP_UtilChangeState(APP_STATE_POPUP, ev_st, app);
+					break;
+			}
+			break;
+		case APP_TIMER_DUMP_OK:
+#if defined(USE_MME)
+			/* Play a normal camera shutter sound using loud speaker. */
+			/* NOTE: Function `MME_GC_playback_open_audio_play_forget()` may not be available on most libraries. */
+#if !defined(FTR_V600)
+			MME_GC_playback_open_audio_play_forget(L"/a/mobile/system/shutter5.amr");
+#else
+			MME_GC_playback_open_audio_play_forget(L"/a/mobile/system/shutter5.wav");
+#endif /* !defined(FTR_V600) */
+#endif /* !defined(USE_MME) */
 			break;
 		default:
 			break;
@@ -621,59 +681,13 @@ static UINT32 HandleEventSelect(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
 
 	switch (app_instance->menu_current_item_index) {
 		case APP_MENU_ITEM_BOOT_HWCFG:
-			if (DumpBootAndHwcfg(ev_st, app) == RESULT_OK) {
-				app_instance->popup = APP_POPUP_DUMP_OK;
-			} else {
-				app_instance->popup = APP_POPUP_DUMP_FAIL;
-			}
-			status |= APP_UtilChangeState(APP_STATE_POPUP, ev_st, app);
-			break;
 		case APP_MENU_ITEM_PDS:
-			if (DumpPds(ev_st, app) == RESULT_OK) {
-				app_instance->popup = APP_POPUP_DUMP_OK;
-			} else {
-				app_instance->popup = APP_POPUP_DUMP_FAIL;
-			}
-			status |= APP_UtilChangeState(APP_STATE_POPUP, ev_st, app);
-			break;
 		case APP_MENU_ITEM_RAM:
-			if (DumpRam(ev_st, app) == RESULT_OK) {
-				app_instance->popup = APP_POPUP_DUMP_OK;
-			} else {
-				app_instance->popup = APP_POPUP_DUMP_FAIL;
-			}
-			status |= APP_UtilChangeState(APP_STATE_POPUP, ev_st, app);
-			break;
 		case APP_MENU_ITEM_BATTERY_ROM:
-			if (DumpBatteryRom(ev_st, app) == RESULT_OK) {
-				app_instance->popup = APP_POPUP_DUMP_OK;
-			} else {
-				app_instance->popup = APP_POPUP_DUMP_FAIL;
-			}
-			status |= APP_UtilChangeState(APP_STATE_POPUP, ev_st, app);
-			break;
 		case APP_MENU_ITEM_IROM:
-			if (DumpIROM(ev_st, app) == RESULT_OK) {
-				app_instance->popup = APP_POPUP_DUMP_OK;
-			} else {
-				app_instance->popup = APP_POPUP_DUMP_FAIL;
-			}
-			status |= APP_UtilChangeState(APP_STATE_POPUP, ev_st, app);
-			break;
 		case APP_MENU_ITEM_IRAM:
-			if (DumpIRAM(ev_st, app) == RESULT_OK) {
-				app_instance->popup = APP_POPUP_DUMP_OK;
-			} else {
-				app_instance->popup = APP_POPUP_DUMP_FAIL;
-			}
-			status |= APP_UtilChangeState(APP_STATE_POPUP, ev_st, app);
-			break;
 		case APP_MENU_ITEM_PANIC:
-			if (DumpPanic(ev_st, app) == RESULT_OK) {
-				app_instance->popup = APP_POPUP_DUMP_OK;
-			} else {
-				app_instance->popup = APP_POPUP_DUMP_FAIL;
-			}
+			app_instance->popup = APP_POPUP_DUMP_WAIT;
 			status |= APP_UtilChangeState(APP_STATE_POPUP, ev_st, app);
 			break;
 		case APP_MENU_ITEM_HELP:
