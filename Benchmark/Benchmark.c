@@ -21,9 +21,10 @@
 #include <mem.h>
 #include <utilities.h>
 
+#include "Phases.h"
+
 #define TIMER_FAST_TRIGGER_MS             (1)
-#define TIMER_POPUP_DELAY_MS            (100)
-#define TIMER_BENCHMARK_DELAY            (50)
+#define TIMER_POPUP_DELAY_MS             (50)
 
 typedef enum {
 	APP_STATE_ANY,
@@ -62,7 +63,8 @@ typedef enum {
 
 typedef enum {
 	APP_VIEW_HELP,
-	APP_VIEW_ABOUT
+	APP_VIEW_ABOUT,
+	APP_VIEW_CPU_RESULTS
 } APP_VIEW_T;
 
 typedef struct {
@@ -73,6 +75,8 @@ typedef struct {
 	APP_VIEW_T view;
 	APP_MENU_ITEM_T menu_current_item_index;
 	BOOL flag_from_select;
+
+	BENCHMARK_RESULTS_CPU_T cpu_result;
 } APP_INSTANCE_T;
 
 #if defined(EP1)
@@ -117,6 +121,9 @@ static const WCHAR g_str_help_content_p1[] = L"A simple benchmarking application
 static const WCHAR g_str_about_content_p1[] = L"Version: 1.0";
 static const WCHAR g_str_about_content_p2[] = L"\x00A9 EXL, 28-Aug-2023.";
 static const WCHAR g_str_about_content_p3[] = L"https://github.com/EXL/P2kElfs/tree/master/Benchmark";
+static const WCHAR g_str_view_cpu_results[] = L"CPU Results";
+static const WCHAR g_str_view_cpu_bogomips[] = L"BogoMIPS:";
+static const WCHAR g_str_view_cpu_bogomips_ms[] = L"BogoMIPS Time:";
 
 #if defined(EP2)
 static ldrElf g_app_elf;
@@ -375,7 +382,7 @@ static UINT32 HandleStateEnter(EVENT_STACK_T *ev_st, APPLICATION_T *app, ENTER_S
 				case APP_POPUP_PLEASE_WAIT:
 					notice_type = NOTICE_TYPE_WAIT;
 					UIS_MakeContentFromString("MCq0NMCq1", &content, g_str_popup_wait_p1, g_str_popup_wait_p2);
-					APP_UtilStartTimer(TIMER_BENCHMARK_DELAY, APP_TIMER_DO_BENCHMARK, app);
+					APP_UtilStartTimer(TIMER_POPUP_DELAY_MS, APP_TIMER_DO_BENCHMARK, app);
 					break;
 				}
 			dialog = UIS_CreateTransientNotice(&port, &content, notice_type);
@@ -389,6 +396,11 @@ static UINT32 HandleStateEnter(EVENT_STACK_T *ev_st, APPLICATION_T *app, ENTER_S
 				case APP_VIEW_ABOUT:
 					UIS_MakeContentFromString("q0NMCq1NMCq2NMCq3", &content, g_str_app_name,
 						g_str_about_content_p1, g_str_about_content_p2, g_str_about_content_p3);
+					break;
+				case APP_VIEW_CPU_RESULTS:
+					UIS_MakeContentFromString("q0Nq1Si2Nq3Sq4", &content, g_str_view_cpu_results,
+						g_str_view_cpu_bogomips_ms, app_instance->cpu_result.ms,
+						g_str_view_cpu_bogomips, app_instance->cpu_result.bogomips);
 					break;
 			}
 			dialog = UIS_CreateViewer(&port, &content, NULL);
@@ -444,12 +456,12 @@ static UINT32 HandleEventTimerExpired(EVENT_STACK_T *ev_st, APPLICATION_T *app) 
 		case APP_TIMER_DO_BENCHMARK:
 			switch (app_instance->menu_current_item_index) {
 				case APP_MENU_ITEM_BENCH_CPU:
-						BGG_MIPS();
-						app_instance->view = APP_VIEW_HELP;
-						APP_UtilChangeState(APP_STATE_VIEW, ev_st, app);
-						break;
+					BogoMIPS(&app_instance->cpu_result);
+					app_instance->view = APP_VIEW_CPU_RESULTS;
+					APP_UtilChangeState(APP_STATE_VIEW, ev_st, app);
+					break;
 				default:
-						break;
+					break;
 			}
 			break;
 		default:
