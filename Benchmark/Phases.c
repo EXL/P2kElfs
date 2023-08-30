@@ -10,7 +10,15 @@
 	}
 #endif
 
-static __inline void BogoMIPS_Delay(int loops);
+//#pragma O2
+static void BogoMIPS_Delay(long loops) {
+	long i;
+	for (i = loops; !!(i > 0); --i) {
+		;
+//		nop();
+	}
+}
+//#pragma O2
 
 UINT32 BogoMIPS(BENCHMARK_RESULTS_CPU_T *result) {
 	UINT32 loops_per_sec = 1;
@@ -25,24 +33,27 @@ UINT32 BogoMIPS(BENCHMARK_RESULTS_CPU_T *result) {
 
 		delta = (UINT32) (suPalReadTime() - ticks);
 
-		if (delta >= CLOCKS_PER_SEC) {
+		if (delta >= TICKS_PER_SEC) {
 			UINT32 lps = loops_per_sec;
 			UINT32 bmips_i;
 			UINT32 bmips_f;
-			lps = (lps / delta) * CLOCKS_PER_SEC;
+			lps = (lps / delta) * TICKS_PER_SEC;
 
-			result->ms = suPalTicksToMsec(delta);
 			bmips_i = lps / 500000;
 			bmips_f = (lps / 5000) % 100;
 
-			u_ltou(bmips_i, result->bogomips);
-			u_strcpy(result->bogomips + u_strlen(result->bogomips), L".");
-			u_ltou(bmips_f, result->bogomips + u_strlen(result->bogomips));
+			u_ltou((UINT32) suPalTicksToMsec(delta), result->bogomips_time);
+			u_strcpy(result->bogomips_time + u_strlen(result->bogomips_time), L" ms");
+
+			u_ltou(bmips_i, result->bogomips_res);
+			u_strcpy(result->bogomips_res + u_strlen(result->bogomips_res), L".");
+			u_ltou(bmips_f, result->bogomips_res + u_strlen(result->bogomips_res));
 
 			LOG("OK: Delta Ticks: %lu\n", delta);
-			LOG("OK: Delta Ms: %lu\n", result->ms);
+			LOG("OK: Delta Ms: %lu\n", (UINT32) suPalTicksToMsec(delta));
 			LOG("OK: Loops/s: %lu\n", loops_per_sec);
 			LOG("OK: BogoMIPS: %lu.%02lu\n", bmips_i, bmips_f);
+
 			return RESULT_OK;
 		}
 	}
@@ -50,13 +61,3 @@ UINT32 BogoMIPS(BENCHMARK_RESULTS_CPU_T *result) {
 	LOG("FAIL: %s\n", "Cannot calculate BogoMIPS!");
 	return RESULT_FAIL;
 }
-
-//#pragma O2
-static __inline void BogoMIPS_Delay(int loops) {
-	int i;
-	for (i = loops; !!(i > 0); --i) {
-//		nop();
-		;
-	}
-}
-//#pragma O2

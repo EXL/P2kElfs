@@ -3,12 +3,15 @@
 
 #include <typedefs.h>
 
-#define BOGOMIPS_STRING              (16)
-#define CLOCKS_PER_SEC               (8192)
+#define RESULT_STRING                  (64)
+#define TICKS_PER_SEC                (8192)
 
 typedef struct {
-	WCHAR bogomips[BOGOMIPS_STRING];
-	UINT32 ms;
+	WCHAR bogomips_res[RESULT_STRING];
+	WCHAR bogomips_time[RESULT_STRING];
+
+	WCHAR dhrys_res[RESULT_STRING];
+	WCHAR dhrys_time[RESULT_STRING];
 } BENCHMARK_RESULTS_CPU_T;
 
 extern UINT32 BogoMIPS(BENCHMARK_RESULTS_CPU_T *result);

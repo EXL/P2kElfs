@@ -1,7 +1,12 @@
 Application {
 	Depends { name: "sdk" }
-	files: [ "Benchmark.c", "Phases.c" ]
-	cpp.defines: [ "EP1" ]
+	files: [
+		"Benchmark.c",
+		"Phases.c",
+		"dhry_1.c",
+		"dhry_2.c",
+	]
+	cpp.defines: [ "__P2K__", "EP1" ]
 	cpp.optimization: "O2"
 	cpp.staticLibraries: ["Lib"]
 }

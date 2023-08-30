@@ -123,7 +123,7 @@ static const WCHAR g_str_about_content_p2[] = L"\x00A9 EXL, 28-Aug-2023.";
 static const WCHAR g_str_about_content_p3[] = L"https://github.com/EXL/P2kElfs/tree/master/Benchmark";
 static const WCHAR g_str_view_cpu_results[] = L"CPU Results";
 static const WCHAR g_str_view_cpu_bogomips[] = L"BogoMIPS:";
-static const WCHAR g_str_view_cpu_bogomips_ms[] = L"BogoMIPS Time:";
+static const WCHAR g_str_view_cpu_dhrystones[] = L"Dhrys:";
 
 #if defined(EP2)
 static ldrElf g_app_elf;
@@ -398,9 +398,11 @@ static UINT32 HandleStateEnter(EVENT_STACK_T *ev_st, APPLICATION_T *app, ENTER_S
 						g_str_about_content_p1, g_str_about_content_p2, g_str_about_content_p3);
 					break;
 				case APP_VIEW_CPU_RESULTS:
-					UIS_MakeContentFromString("q0Nq1Si2Nq3Sq4", &content, g_str_view_cpu_results,
-						g_str_view_cpu_bogomips_ms, app_instance->cpu_result.ms,
-						g_str_view_cpu_bogomips, app_instance->cpu_result.bogomips);
+					UIS_MakeContentFromString("q0Nq1Sq2Nq3Sq4Nq5Sq6Nq7Sq8", &content, g_str_view_cpu_results,
+						g_str_view_cpu_bogomips, app_instance->cpu_result.bogomips_time,
+						g_str_view_cpu_bogomips, app_instance->cpu_result.bogomips_res,
+						g_str_view_cpu_dhrystones, app_instance->cpu_result.dhrys_time,
+						g_str_view_cpu_dhrystones, app_instance->cpu_result.dhrys_res);
 					break;
 			}
 			dialog = UIS_CreateViewer(&port, &content, NULL);
@@ -457,6 +459,8 @@ static UINT32 HandleEventTimerExpired(EVENT_STACK_T *ev_st, APPLICATION_T *app) 
 			switch (app_instance->menu_current_item_index) {
 				case APP_MENU_ITEM_BENCH_CPU:
 					BogoMIPS(&app_instance->cpu_result);
+					Dhrystone2(20000, &app_instance->cpu_result);
+
 					app_instance->view = APP_VIEW_CPU_RESULTS;
 					APP_UtilChangeState(APP_STATE_VIEW, ev_st, app);
 					break;
