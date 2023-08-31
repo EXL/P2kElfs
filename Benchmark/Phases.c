@@ -42,12 +42,13 @@ UINT32 BogoMIPS(BENCHMARK_RESULTS_CPU_T *result) {
 			bmips_i = lps / 500000;
 			bmips_f = (lps / 5000) % 100;
 
-			u_ltou((UINT32) suPalTicksToMsec(delta), result->bogomips_time);
-			u_strcpy(result->bogomips_time + u_strlen(result->bogomips_time), L" ms");
+			u_ltou((UINT32) suPalTicksToMsec(delta), result->bogo_time);
+			u_strcpy(result->bogo_time + u_strlen(result->bogo_time), L" ms");
 
-			u_ltou(bmips_i, result->bogomips_res);
-			u_strcpy(result->bogomips_res + u_strlen(result->bogomips_res), L".");
-			u_ltou(bmips_f, result->bogomips_res + u_strlen(result->bogomips_res));
+			u_ltou(bmips_i, result->bogo_mips);
+			u_strcpy(result->bogo_mips + u_strlen(result->bogo_mips), L".");
+			u_ltou(bmips_f, result->bogo_mips + u_strlen(result->bogo_mips));
+			u_strcpy(result->bogo_mips + u_strlen(result->bogo_mips), L" BMIPS");
 
 			LOG("OK: Delta Ticks: %lu\n", delta);
 			LOG("OK: Delta Ms: %lu\n", (UINT32) suPalTicksToMsec(delta));
