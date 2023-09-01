@@ -1,9 +1,11 @@
 Benchmark
 =========
 
+A simple ELF benchmarking application for Motorola P2K phones.
+
 ## Other versions
 
-* Various signal e.g. vibromotor finding version. See [find_vibromotor_signal](https://github.com/EXL/P2kElfs/tree/find_vibromotor_signal) branch in this repository.
+* Various signal e.g. vibromotor finding version using binary search. See [find_vibromotor_signal](https://github.com/EXL/P2kElfs/tree/find_vibromotor_signal) branch in this repository.
 
 ## ELF files
 

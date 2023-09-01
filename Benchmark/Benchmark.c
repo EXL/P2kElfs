@@ -1,6 +1,6 @@
 /*
  * About:
- *   A simple benchmarking application for Motorola P2K phones.
+ *   A simple ELF benchmarking application for Motorola P2K phones.
  *
  * Author:
  *   EXL
@@ -10,9 +10,6 @@
  *
  * Application type:
  *   GUI
- *
- * Additional information:
- *   NONE
  */
 
 #include <loader.h>
@@ -124,7 +121,7 @@ static const WCHAR g_str_menu_exit[] = L"Exit";
 static const WCHAR g_str_popup_wait_p1[] = L"Benchmarking in progress!";
 static const WCHAR g_str_popup_wait_p2[] = L"Please wait...";
 static const WCHAR g_str_view_help[] = L"Help";
-static const WCHAR g_str_help_content_p1[] = L"A simple benchmarking application for Motorola P2K phones.";
+static const WCHAR g_str_help_content_p1[] = L"A simple ELF benchmarking application for Motorola P2K phones.";
 static const WCHAR g_str_about_content_p1[] = L"Version: 1.0";
 static const WCHAR g_str_about_content_p2[] = L"\x00A9 EXL, 28-Aug-2023.";
 static const WCHAR g_str_about_content_p3[] = L"https://github.com/EXL/P2kElfs/tree/master/Benchmark";
