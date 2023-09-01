@@ -64,7 +64,8 @@ typedef enum {
 typedef enum {
 	APP_VIEW_HELP,
 	APP_VIEW_ABOUT,
-	APP_VIEW_CPU_RESULTS
+	APP_VIEW_CPU_RESULTS,
+	APP_VIEW_RAM_RESULTS
 } APP_VIEW_T;
 
 typedef struct {
@@ -77,6 +78,7 @@ typedef struct {
 	BOOL flag_from_select;
 
 	BENCHMARK_RESULTS_CPU_T cpu_result;
+	BENCHMARK_RESULTS_RAM_T ram_result;
 } APP_INSTANCE_T;
 
 #if defined(EP1)
@@ -124,6 +126,9 @@ static const WCHAR g_str_about_content_p3[] = L"https://github.com/EXL/P2kElfs/t
 static const WCHAR g_str_view_cpu_results[] = L"CPU Results";
 static const WCHAR g_str_view_cpu_bogomips[] = L"BogoMIPS:";
 static const WCHAR g_str_view_cpu_dhrystone[] = L"Dhrystone 2.1:";
+static const WCHAR g_str_view_ram_results[] = L"RAM Results";
+static const WCHAR g_str_view_ram_total[] = L"Total available:";
+static const WCHAR g_str_view_ram_top[] = L"Top 3 blocks:";
 
 #if defined(EP2)
 static ldrElf g_app_elf;
@@ -409,6 +414,17 @@ static UINT32 HandleStateEnter(EVENT_STACK_T *ev_st, APPLICATION_T *app, ENTER_S
 							app_instance->cpu_result.dhrys_mips
 					);
 					break;
+				case APP_VIEW_RAM_RESULTS:
+					UIS_MakeContentFromString(
+						"q0Nq1NSq2N NRq3NSq4NSq5NSq6", &content, g_str_view_ram_results,
+						g_str_view_ram_total,
+							app_instance->ram_result.total,
+						g_str_view_ram_top,
+							app_instance->ram_result.blocks[0],
+							app_instance->ram_result.blocks[1],
+							app_instance->ram_result.blocks[2]
+						);
+					break;
 			}
 			dialog = UIS_CreateViewer(&port, &content, NULL);
 			break;
@@ -463,15 +479,23 @@ static UINT32 HandleEventTimerExpired(EVENT_STACK_T *ev_st, APPLICATION_T *app) 
 		case APP_TIMER_DO_BENCHMARK:
 			switch (app_instance->menu_current_item_index) {
 				case APP_MENU_ITEM_BENCH_CPU:
+					app_instance->view = APP_VIEW_CPU_RESULTS;
+
 					BogoMIPS(&app_instance->cpu_result);
 					Dhrystone(&app_instance->cpu_result);
 
-					app_instance->view = APP_VIEW_CPU_RESULTS;
-					APP_UtilChangeState(APP_STATE_VIEW, ev_st, app);
+					break;
+				case APP_MENU_ITEM_BENCH_RAM:
+					app_instance->view = APP_VIEW_RAM_RESULTS;
+
+					TotalRamSize(&app_instance->ram_result);
+					TopOfBiggestRamBlocks(&app_instance->ram_result);
+
 					break;
 				default:
 					break;
 			}
+			APP_UtilChangeState(APP_STATE_VIEW, ev_st, app);
 			break;
 		default:
 			break;
@@ -494,6 +518,7 @@ static UINT32 HandleEventSelect(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
 
 	switch (app_instance->menu_current_item_index) {
 		case APP_MENU_ITEM_BENCH_CPU:
+		case APP_MENU_ITEM_BENCH_RAM:
 			status |= APP_UtilChangeState(APP_STATE_POPUP, ev_st, app);
 			break;
 		case APP_MENU_ITEM_HELP:

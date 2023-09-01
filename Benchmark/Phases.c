@@ -1,5 +1,6 @@
 #include <loader.h>
 #include <utilities.h>
+#include <mem.h>
 
 #include "Phases.h"
 
@@ -61,4 +62,105 @@ UINT32 BogoMIPS(BENCHMARK_RESULTS_CPU_T *result) {
 
 	LOG("FAIL: %s\n", "Cannot calculate BogoMIPS!");
 	return RESULT_FAIL;
+}
+
+static void *AllocateBiggestBlock(UINT32 start_size, UINT32 *max_block_size) {
+	UINT32 size;
+	INT32 error;
+	void *block_address;
+
+	size = start_size;
+	error = RESULT_OK;
+	block_address = NULL;
+
+	while (error == RESULT_OK) {
+		block_address = suAllocMem(size, &error);
+		if (error == RESULT_OK) {
+			suFreeMem(block_address);
+			size += RAM_STEP_SIZE * 4;
+		} else {
+			while (error != RESULT_OK && size > start_size) {
+				size -= RAM_STEP_SIZE;
+				block_address = suAllocMem(size, &error);
+			}
+			break;
+		}
+	}
+
+	if (block_address) {
+		*max_block_size = size;
+	} else {
+		*max_block_size = 0;
+	}
+
+	return block_address;
+}
+
+UINT32 TopOfBiggestRamBlocks(BENCHMARK_RESULTS_RAM_T *result) {
+	UINT16 i;
+	UINT32 status;
+	UINT64 time_start;
+	UINT64 time_end;
+	RAM_ALLOCATED_BLOCK_T top_blocks[RAM_TOP_BLOCKS_COUNT];
+
+	status = RESULT_OK;
+
+	for (i = 0; i < RAM_TOP_BLOCKS_COUNT; ++i) {
+		top_blocks[i].block_address = NULL;
+		top_blocks[i].block_size = 0;
+		top_blocks[i].block_time = 0;
+
+		time_start = suPalReadTime();
+		top_blocks[i].block_address = AllocateBiggestBlock(RAM_STEP_SIZE * 10, &top_blocks[i].block_size);
+		time_end = suPalReadTime();
+		top_blocks[i].block_time = (UINT32) suPalTicksToMsec(time_end - time_start);
+
+		u_ltou(top_blocks[i].block_time, result->blocks[i]);
+		u_strcpy(result->blocks[i] + u_strlen(result->blocks[i]), L" ms | ");
+		u_ltou(top_blocks[i].block_size, result->blocks[i] + u_strlen(result->blocks[i]));
+		u_strcpy(result->blocks[i] + u_strlen(result->blocks[i]), L" B");
+	}
+
+	for (i = 0; i < RAM_TOP_BLOCKS_COUNT; ++i) {
+		if (!top_blocks[i].block_address) {
+			status = RESULT_FAIL;
+		}
+		suFreeMem(top_blocks[i].block_address);
+	}
+
+	return status;
+}
+
+UINT32 TotalRamSize(BENCHMARK_RESULTS_RAM_T *result) {
+	UINT16 i;
+	UINT32 status;
+	UINT32 total_size;
+	UINT64 time_start;
+	UINT64 time_end;
+	RAM_ALLOCATED_BLOCK_T ram_blocks[RAM_TOTAL_BLOCKS_COUNT];
+
+	status = RESULT_OK;
+	i = 0;
+	total_size = 0;
+
+	time_start = suPalReadTime();
+
+	do {
+		ram_blocks[i].block_address = AllocateBiggestBlock(RAM_STEP_SIZE * 5, &ram_blocks[i].block_size);
+		total_size += ram_blocks[i].block_size;
+	} while (ram_blocks[i++].block_address != NULL);
+
+	time_end = suPalReadTime();
+
+	i -= 1;
+	while (i-- > 0) {
+		suFreeMem(ram_blocks[i].block_address);
+	}
+
+	u_ltou((UINT32) suPalTicksToMsec(time_end - time_start), result->total);
+	u_strcpy(result->total + u_strlen(result->total), L" ms | ");
+	u_ltou(total_size, result->total + u_strlen(result->total));
+	u_strcpy(result->total + u_strlen(result->total), L" B");
+
+	return status;
 }
