@@ -24,6 +24,7 @@
 
 #define TIMER_FAST_TRIGGER_MS             (1)
 #define TIMER_POPUP_DELAY_MS             (50)
+#define TIMER_EXIT_DELAY_MS             (100)
 #define DISK_DRIVER_NAME_SIZE             (8)
 #define DEBUG_OUTPUT_MAX_LENGTH         (256)
 
@@ -59,6 +60,7 @@ typedef enum {
 	APP_MENU_ITEM_PANIC,
 	APP_MENU_ITEM_HELP,
 	APP_MENU_ITEM_ABOUT,
+	APP_MENU_ITEM_EXIT,
 	APP_MENU_ITEM_MAX
 } APP_MENU_ITEM_T;
 
@@ -150,6 +152,7 @@ static const WCHAR g_str_menu_iram[] = L"IRAM (integrated)";
 static const WCHAR g_str_menu_panic[] = L"Panics Data";
 static const WCHAR g_str_menu_help[] = L"Help...";
 static const WCHAR g_str_menu_about[] = L"About...";
+static const WCHAR g_str_menu_exit[] = L"Exit";
 static const WCHAR g_str_dump_ok[] = L"Memory region dumped to:";
 static const WCHAR g_str_dump_fail[] = L"Check free space. Cannot dump memory region to:";
 static const WCHAR g_str_dump_wait_p1[] = L"Dumping memory region to file";
@@ -698,6 +701,9 @@ static UINT32 HandleEventSelect(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
 			app_instance->view = APP_VIEW_ABOUT;
 			status |= APP_UtilChangeState(APP_STATE_VIEW, ev_st, app);
 			break;
+		case APP_MENU_ITEM_EXIT:
+			status |= APP_UtilStartTimer(TIMER_EXIT_DELAY_MS, APP_TIMER_EXIT, app);
+			break;
 		default:
 			break;
 	}
@@ -765,6 +771,9 @@ static LIST_ENTRY_T *CreateList(EVENT_STACK_T *ev_st, APPLICATION_T *app, UINT32
 	status |= UIS_MakeContentFromString("Mq0",
 		&list_elements[APP_MENU_ITEM_ABOUT].content.static_entry.text,
 		g_str_menu_about);
+	status |= UIS_MakeContentFromString("Mq0",
+		&list_elements[APP_MENU_ITEM_EXIT].content.static_entry.text,
+		g_str_menu_exit);
 
 	if (status != RESULT_OK) {
 		suFreeMem(list_elements);
