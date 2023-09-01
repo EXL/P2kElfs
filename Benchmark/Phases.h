@@ -26,9 +26,9 @@ extern int Dhrystone(BENCHMARK_RESULTS_CPU_T *result);
 
 /* RAM Benchmark */
 
-#define RAM_TOP_BLOCKS_COUNT            (3)
-#define RAM_STEP_SIZE                 (512)
-#define RAM_TOTAL_BLOCKS_COUNT        (256)
+#define RAM_TOP_BLOCKS_COUNT            (6)
+#define RAM_STEP_SIZE                 (256)
+#define RAM_TOTAL_BLOCKS_COUNT        (512)
 
 typedef struct {
 	WCHAR total[RESULT_STRING];

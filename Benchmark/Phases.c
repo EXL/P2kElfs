@@ -11,7 +11,7 @@
 	}
 #endif
 
-//#pragma O2
+//#pragma O0
 static void BogoMIPS_Delay(long loops) {
 	long i;
 	for (i = loops; !!(i > 0); --i) {
@@ -51,16 +51,16 @@ UINT32 BogoMIPS(BENCHMARK_RESULTS_CPU_T *result) {
 			u_ltou(bmips_f, result->bogo_mips + u_strlen(result->bogo_mips));
 			u_strcpy(result->bogo_mips + u_strlen(result->bogo_mips), L" BMIPS");
 
-			LOG("OK: Delta Ticks: %lu\n", delta);
-			LOG("OK: Delta Ms: %lu\n", (UINT32) suPalTicksToMsec(delta));
-			LOG("OK: Loops/s: %lu\n", loops_per_sec);
-			LOG("OK: BogoMIPS: %lu.%02lu\n", bmips_i, bmips_f);
+			LOG("CPU: Delta ticks: %lu\n", delta);
+			LOG("CPU: Delta ms: %lu\n", (UINT32) suPalTicksToMsec(delta));
+			LOG("CPU: Loops/s: %lu\n", loops_per_sec);
+			LOG("CPU: BogoMIPS: %lu.%02lu\n", bmips_i, bmips_f);
 
 			return RESULT_OK;
 		}
 	}
 
-	LOG("FAIL: %s\n", "Cannot calculate BogoMIPS!");
+	LOG("CPU: Error: %s\n", "Cannot calculate BogoMIPS!");
 	return RESULT_FAIL;
 }
 
@@ -111,9 +111,12 @@ UINT32 TopOfBiggestRamBlocks(BENCHMARK_RESULTS_RAM_T *result) {
 		top_blocks[i].block_time = 0;
 
 		time_start = suPalReadTime();
-		top_blocks[i].block_address = AllocateBiggestBlock(RAM_STEP_SIZE * 10, &top_blocks[i].block_size);
+		top_blocks[i].block_address = AllocateBiggestBlock(RAM_STEP_SIZE * 8, &top_blocks[i].block_size);
 		time_end = suPalReadTime();
 		top_blocks[i].block_time = (UINT32) suPalTicksToMsec(time_end - time_start);
+
+		LOG("RAM: Block %d time: %d\n", i + 1, top_blocks[i].block_time);
+		LOG("RAM: Block %d size: %d\n", i + 1, top_blocks[i].block_size);
 
 		u_ltou(top_blocks[i].block_time, result->blocks[i]);
 		u_strcpy(result->blocks[i] + u_strlen(result->blocks[i]), L" ms | ");
@@ -137,6 +140,7 @@ UINT32 TotalRamSize(BENCHMARK_RESULTS_RAM_T *result) {
 	UINT32 total_size;
 	UINT64 time_start;
 	UINT64 time_end;
+	UINT64 time_result;
 	RAM_ALLOCATED_BLOCK_T ram_blocks[RAM_TOTAL_BLOCKS_COUNT];
 
 	status = RESULT_OK;
@@ -146,7 +150,7 @@ UINT32 TotalRamSize(BENCHMARK_RESULTS_RAM_T *result) {
 	time_start = suPalReadTime();
 
 	do {
-		ram_blocks[i].block_address = AllocateBiggestBlock(RAM_STEP_SIZE * 5, &ram_blocks[i].block_size);
+		ram_blocks[i].block_address = AllocateBiggestBlock(RAM_STEP_SIZE * 4, &ram_blocks[i].block_size);
 		total_size += ram_blocks[i].block_size;
 	} while (ram_blocks[i++].block_address != NULL);
 
@@ -157,7 +161,12 @@ UINT32 TotalRamSize(BENCHMARK_RESULTS_RAM_T *result) {
 		suFreeMem(ram_blocks[i].block_address);
 	}
 
-	u_ltou((UINT32) suPalTicksToMsec(time_end - time_start), result->total);
+	time_result = (UINT32) suPalTicksToMsec(time_end - time_start);
+
+	LOG("RAM: Total time: %d\n", time_result);
+	LOG("RAM: Total size: %d\n", total_size);
+
+	u_ltou(time_result, result->total);
 	u_strcpy(result->total + u_strlen(result->total), L" ms | ");
 	u_ltou(total_size, result->total + u_strlen(result->total));
 	u_strcpy(result->total + u_strlen(result->total), L" B");

@@ -116,8 +116,8 @@ static const WCHAR g_str_menu_bench_ram[] = L"RAM (SRAM)";
 static const WCHAR g_str_menu_bench_heap[] = L"HEAP (J2ME)";
 static const WCHAR g_str_menu_help[] = L"Help...";
 static const WCHAR g_str_menu_about[] = L"About...";
-static const WCHAR g_str_popup_wait_p1[] = L"Please wait";
-static const WCHAR g_str_popup_wait_p2[] = L"Benchmarking in progress...";
+static const WCHAR g_str_popup_wait_p1[] = L"Benchmarking in progress!";
+static const WCHAR g_str_popup_wait_p2[] = L"Please wait...";
 static const WCHAR g_str_view_help[] = L"Help";
 static const WCHAR g_str_help_content_p1[] = L"A simple benchmarking application for Motorola P2K phones.";
 static const WCHAR g_str_about_content_p1[] = L"Version: 1.0";
@@ -128,7 +128,7 @@ static const WCHAR g_str_view_cpu_bogomips[] = L"BogoMIPS:";
 static const WCHAR g_str_view_cpu_dhrystone[] = L"Dhrystone 2.1:";
 static const WCHAR g_str_view_ram_results[] = L"RAM Results";
 static const WCHAR g_str_view_ram_total[] = L"Total available:";
-static const WCHAR g_str_view_ram_top[] = L"Top 3 blocks:";
+static const WCHAR g_str_view_ram_top[] = L"Top 6 blocks:";
 
 #if defined(EP2)
 static ldrElf g_app_elf;
@@ -416,13 +416,16 @@ static UINT32 HandleStateEnter(EVENT_STACK_T *ev_st, APPLICATION_T *app, ENTER_S
 					break;
 				case APP_VIEW_RAM_RESULTS:
 					UIS_MakeContentFromString(
-						"q0Nq1NSq2N NRq3NSq4NSq5NSq6", &content, g_str_view_ram_results,
+						"q0Nq1NSq2N NRq3NSq4NSq5NSq6NSq7NSq8NSq9", &content, g_str_view_ram_results,
 						g_str_view_ram_total,
 							app_instance->ram_result.total,
 						g_str_view_ram_top,
 							app_instance->ram_result.blocks[0],
 							app_instance->ram_result.blocks[1],
-							app_instance->ram_result.blocks[2]
+							app_instance->ram_result.blocks[2],
+							app_instance->ram_result.blocks[3],
+							app_instance->ram_result.blocks[4],
+							app_instance->ram_result.blocks[5]
 						);
 					break;
 			}
