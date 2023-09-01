@@ -64,7 +64,7 @@ UINT32 BogoMIPS(BENCHMARK_RESULTS_CPU_T *result) {
 	return RESULT_FAIL;
 }
 
-static void *AllocateBiggestBlock(UINT32 start_size, UINT32 *max_block_size) {
+static void *AllocateBiggestBlock(UINT32 start_size, UINT32 *max_block_size, UINT32 step, BOOL java_heap) {
 	UINT32 size;
 	INT32 error;
 	void *block_address;
@@ -74,14 +74,32 @@ static void *AllocateBiggestBlock(UINT32 start_size, UINT32 *max_block_size) {
 	block_address = NULL;
 
 	while (error == RESULT_OK) {
-		block_address = suAllocMem(size, &error);
+		if (java_heap) {
+			block_address = AmMemAllocPointer(size);
+			if (block_address == NULL) {
+				error = RESULT_FAIL;
+			}
+		} else {
+			block_address = suAllocMem(size, &error);
+		}
 		if (error == RESULT_OK) {
-			suFreeMem(block_address);
-			size += RAM_STEP_SIZE * 4;
+			if (java_heap) {
+				AmMemFreePointer(block_address);
+			} else {
+				suFreeMem(block_address);
+			}
+			size += step * 4;
 		} else {
 			while (error != RESULT_OK && size > start_size) {
-				size -= RAM_STEP_SIZE;
-				block_address = suAllocMem(size, &error);
+				size -= step;
+				if (java_heap) {
+					block_address = AmMemAllocPointer(size);
+					if (block_address != NULL) {
+						error = RESULT_OK;
+					}
+				} else {
+					block_address = suAllocMem(size, &error);
+				}
 			}
 			break;
 		}
@@ -111,7 +129,9 @@ UINT32 TopOfBiggestRamBlocks(BENCHMARK_RESULTS_RAM_T *result) {
 		top_blocks[i].block_time = 0;
 
 		time_start = suPalReadTime();
-		top_blocks[i].block_address = AllocateBiggestBlock(RAM_STEP_SIZE * 8, &top_blocks[i].block_size);
+		top_blocks[i].block_address = AllocateBiggestBlock(
+			RAM_START_SIZE_BLOCK, &top_blocks[i].block_size, RAM_STEP_SIZE, FALSE
+		);
 		time_end = suPalReadTime();
 		top_blocks[i].block_time = (UINT32) suPalTicksToMsec(time_end - time_start);
 
@@ -140,7 +160,7 @@ UINT32 TotalRamSize(BENCHMARK_RESULTS_RAM_T *result) {
 	UINT32 total_size;
 	UINT64 time_start;
 	UINT64 time_end;
-	UINT64 time_result;
+	UINT32 time_result;
 	RAM_ALLOCATED_BLOCK_T ram_blocks[RAM_TOTAL_BLOCKS_COUNT];
 
 	status = RESULT_OK;
@@ -150,7 +170,9 @@ UINT32 TotalRamSize(BENCHMARK_RESULTS_RAM_T *result) {
 	time_start = suPalReadTime();
 
 	do {
-		ram_blocks[i].block_address = AllocateBiggestBlock(RAM_STEP_SIZE * 4, &ram_blocks[i].block_size);
+		ram_blocks[i].block_address = AllocateBiggestBlock(
+			RAM_START_SIZE_TOTAL, &ram_blocks[i].block_size, RAM_STEP_SIZE, FALSE
+		);
 		total_size += ram_blocks[i].block_size;
 	} while (ram_blocks[i++].block_address != NULL);
 
@@ -170,6 +192,70 @@ UINT32 TotalRamSize(BENCHMARK_RESULTS_RAM_T *result) {
 	u_strcpy(result->total + u_strlen(result->total), L" ms | ");
 	u_ltou(total_size, result->total + u_strlen(result->total));
 	u_strcpy(result->total + u_strlen(result->total), L" B");
+
+	return status;
+}
+
+extern UINT32 TotalHeapSize(BENCHMARK_RESULTS_HEAP_T *result) {
+	UINT16 i;
+	UINT32 status;
+	UINT32 total_size;
+	UINT64 time_start;
+	UINT64 time_end;
+	UINT32 time_result;
+	HEAP_ALLOCATED_BLOCK_T heap_blocks[HEAP_TOTAL_BLOCKS_COUNT];
+
+	status = RESULT_OK;
+	i = 0;
+	total_size = 0;
+
+	time_start = suPalReadTime();
+
+	do {
+		heap_blocks[i].block_address = AllocateBiggestBlock(
+			HEAP_START_SIZE_TOTAL, &heap_blocks[i].block_size, HEAP_STEP_SIZE, TRUE
+		);
+		total_size += heap_blocks[i].block_size;
+	} while (heap_blocks[i++].block_address != NULL);
+
+	time_end = suPalReadTime();
+
+	i -= 1;
+	while (i-- > 0) {
+		AmMemFreePointer(heap_blocks[i].block_address);
+	}
+
+	time_result = (UINT32) suPalTicksToMsec(time_end - time_start);
+
+	LOG("HEAP: Total time: %d\n", time_result);
+	LOG("HEAP: Total size: %d\n", total_size);
+
+	u_ltou(time_result, result->total);
+	u_strcpy(result->total + u_strlen(result->total), L" ms | ");
+	u_ltou(total_size, result->total + u_strlen(result->total));
+	u_strcpy(result->total + u_strlen(result->total), L" B");
+
+	{
+		UINT32 time_i;
+		UINT32 time_f;
+		UINT32 size_i;
+		UINT32 size_f;
+
+		time_i = time_result / 1000;
+		time_f = ((time_result % 1000) * 100) / 1000;
+
+		size_i = total_size / 1024;
+		size_f = ((total_size % 1024) * 100) / 1024;
+
+		u_ltou(time_i, result->desc);
+		u_strcpy(result->desc + u_strlen(result->desc), L".");
+		u_ltou(time_f, result->desc + u_strlen(result->desc));
+		u_strcpy(result->desc + u_strlen(result->desc), L" sec | ");
+		u_ltou(size_i, result->desc + u_strlen(result->desc));
+		u_strcpy(result->desc + u_strlen(result->desc), L".");
+		u_ltou(size_f, result->desc + u_strlen(result->desc));
+		u_strcpy(result->desc + u_strlen(result->desc), L" KiB");
+	}
 
 	return status;
 }

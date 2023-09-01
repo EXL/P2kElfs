@@ -67,7 +67,8 @@ typedef enum {
 	APP_VIEW_HELP,
 	APP_VIEW_ABOUT,
 	APP_VIEW_CPU_RESULTS,
-	APP_VIEW_RAM_RESULTS
+	APP_VIEW_RAM_RESULTS,
+	APP_VIEW_HEAP_RESULTS
 } APP_VIEW_T;
 
 typedef struct {
@@ -81,6 +82,7 @@ typedef struct {
 
 	BENCHMARK_RESULTS_CPU_T cpu_result;
 	BENCHMARK_RESULTS_RAM_T ram_result;
+	BENCHMARK_RESULTS_HEAP_T heap_result;
 } APP_INSTANCE_T;
 
 #if defined(EP1)
@@ -130,8 +132,9 @@ static const WCHAR g_str_view_cpu_results[] = L"CPU Results";
 static const WCHAR g_str_view_cpu_bogomips[] = L"BogoMIPS:";
 static const WCHAR g_str_view_cpu_dhrystone[] = L"Dhrystone 2.1:";
 static const WCHAR g_str_view_ram_results[] = L"RAM Results";
-static const WCHAR g_str_view_ram_total[] = L"Total available:";
+static const WCHAR g_str_view_mem_total[] = L"Total available:";
 static const WCHAR g_str_view_ram_top[] = L"Top 6 blocks:";
+static const WCHAR g_str_view_heap_results[] = L"Java Heap Results";
 
 #if defined(EP2)
 static ldrElf g_app_elf;
@@ -420,7 +423,7 @@ static UINT32 HandleStateEnter(EVENT_STACK_T *ev_st, APPLICATION_T *app, ENTER_S
 				case APP_VIEW_RAM_RESULTS:
 					UIS_MakeContentFromString(
 						"q0Nq1NSq2N NRq3NSq4NSq5NSq6NSq7NSq8NSq9", &content, g_str_view_ram_results,
-						g_str_view_ram_total,
+						g_str_view_mem_total,
 							app_instance->ram_result.total,
 						g_str_view_ram_top,
 							app_instance->ram_result.blocks[0],
@@ -429,7 +432,15 @@ static UINT32 HandleStateEnter(EVENT_STACK_T *ev_st, APPLICATION_T *app, ENTER_S
 							app_instance->ram_result.blocks[3],
 							app_instance->ram_result.blocks[4],
 							app_instance->ram_result.blocks[5]
-						);
+					);
+					break;
+				case APP_VIEW_HEAP_RESULTS:
+					UIS_MakeContentFromString(
+						"q0Nq1NSq2NSq3", &content, g_str_view_heap_results,
+						g_str_view_mem_total,
+							app_instance->heap_result.total,
+							app_instance->heap_result.desc
+					);
 					break;
 			}
 			dialog = UIS_CreateViewer(&port, &content, NULL);
@@ -498,6 +509,12 @@ static UINT32 HandleEventTimerExpired(EVENT_STACK_T *ev_st, APPLICATION_T *app) 
 					TopOfBiggestRamBlocks(&app_instance->ram_result);
 
 					break;
+				case APP_MENU_ITEM_BENCH_HEAP:
+					app_instance->view = APP_VIEW_HEAP_RESULTS;
+
+					TotalHeapSize(&app_instance->heap_result);
+
+					break;
 				default:
 					break;
 			}
@@ -525,6 +542,7 @@ static UINT32 HandleEventSelect(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
 	switch (app_instance->menu_current_item_index) {
 		case APP_MENU_ITEM_BENCH_CPU:
 		case APP_MENU_ITEM_BENCH_RAM:
+		case APP_MENU_ITEM_BENCH_HEAP:
 			status |= APP_UtilChangeState(APP_STATE_POPUP, ev_st, app);
 			break;
 		case APP_MENU_ITEM_HELP:
