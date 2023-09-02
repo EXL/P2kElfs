@@ -18,7 +18,7 @@
 #include <mem.h>
 #include <utilities.h>
 
-#include "Phases.h"
+#include "Benchmark.h"
 
 #define TIMER_FAST_TRIGGER_MS             (1)
 #define TIMER_POPUP_DELAY_MS             (50)

@@ -2,7 +2,7 @@
 #include <utilities.h>
 #include <mem.h>
 
-#include "Phases.h"
+#include "Benchmark.h"
 
 #if __CC_ARM && __arm
 #define nop() \

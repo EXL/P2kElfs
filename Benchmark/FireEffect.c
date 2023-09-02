@@ -8,7 +8,7 @@
 #include <mem.h>
 #include <utilities.h>
 
-#include "Phases.h"
+#include "Benchmark.h"
 
 static const UINT32 fire_palette[] = {
 	ATI_565RGB(0x07, 0x07, 0x07), /*  0 */
