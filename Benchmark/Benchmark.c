@@ -424,10 +424,14 @@ static UINT32 HandleStateEnter(EVENT_STACK_T *ev_st, APPLICATION_T *app, ENTER_S
 					break;
 				case APP_VIEW_GPU_RESULTS:
 					UIS_MakeContentFromString(
-						"q0Nq1NSq2NSq3N NRq4NSq5", &content, g_str_view_gpu_results,
+						"q0Nq1NSq2NSq3NSq4NSq5NSq6NSq7N NRq8NSq9", &content, g_str_view_gpu_results,
 						g_str_view_gpu_fps,
-							app_instance->gpu_result.fps,
-							app_instance->gpu_result.frames,
+							app_instance->gpu_result.fps_pass1,
+							app_instance->gpu_result.fms_pass1,
+							app_instance->gpu_result.fps_pass2,
+							app_instance->gpu_result.fms_pass2,
+							app_instance->gpu_result.fps_pass3,
+							app_instance->gpu_result.fms_pass3,
 						g_str_view_gpu_properties,
 							app_instance->gpu_result.properties
 					);
@@ -517,30 +521,20 @@ static UINT32 HandleEventTimerExpired(EVENT_STACK_T *ev_st, APPLICATION_T *app) 
 				case APP_MENU_ITEM_BENCH_GPU:
 					app_instance->view = APP_VIEW_GPU_RESULTS;
 
-					{
-						UINT32 status;
-						APP_AHI_T ahi;
+					Bench_GPU_Passes(BITMAP_WIDTH_LOW, BITMAP_HEIGHT_LOW,
+						app_instance->gpu_result.fps_pass1,
+						app_instance->gpu_result.fms_pass1,
+						app_instance->gpu_result.properties);
 
-						ahi.info_driver = NULL;
-						ahi.bmp_width = BITMAP_WIDTH;
-						ahi.bmp_height = BITMAP_HEIGHT;
-						ahi.p_fire = NULL;
-						ahi.flag_restart_demo = FALSE;
+					Bench_GPU_Passes(BITMAP_WIDTH_MID, BITMAP_HEIGHT_MID,
+						app_instance->gpu_result.fps_pass2,
+						app_instance->gpu_result.fms_pass2,
+						app_instance->gpu_result.properties);
 
-						ATI_Driver_Start(&ahi, app_instance->gpu_result.properties);
-						GFX_Draw_Start(&ahi);
-
-						do {
-							FPS_Meter();
-							status = GFX_Draw_Step(&ahi);
-							ATI_Driver_Flush(&ahi);
-						} while (status == RESULT_OK);
-
-						GFX_Draw_Stop(&ahi);
-						ATI_Driver_Stop(&ahi);
-					}
-
-					CalculateAverageFpsAndTime(app_instance->gpu_result.fps, app_instance->gpu_result.frames);
+					Bench_GPU_Passes(BITMAP_WIDTH_HIGH, BITMAP_WIDTH_HIGH,
+						app_instance->gpu_result.fps_pass3,
+						app_instance->gpu_result.fms_pass3,
+						app_instance->gpu_result.properties);
 
 					break;
 				case APP_MENU_ITEM_BENCH_RAM:

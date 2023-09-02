@@ -250,7 +250,7 @@ static UINT32 ATI_Display_Mode_Log(APP_AHI_T *ahi, AHIDISPMODE_T *display_mode) 
 
 	u_strcpy(properties + u_strlen(properties), L"D_MIRR: ");
 	u_strcpy(properties + u_strlen(properties), GetMirroringName(display_mode->mirror));
-	u_strcpy(properties + u_strlen(properties), L"\n\n");
+	u_strcpy(properties + u_strlen(properties), L"\n");
 
 	return RESULT_OK;
 }

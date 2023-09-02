@@ -28,8 +28,12 @@ extern int Dhrystone(BENCHMARK_RESULTS_CPU_T *result);
 
 /* GPU Benchmark */
 
-#define BITMAP_WIDTH                   (64)
-#define BITMAP_HEIGHT                  (48)
+#define BITMAP_WIDTH_LOW               (48)
+#define BITMAP_HEIGHT_LOW              (32)
+#define BITMAP_WIDTH_MID               (64)
+#define BITMAP_HEIGHT_MID              (48)
+#define BITMAP_WIDTH_HIGH              (96)
+#define BITMAP_HEIGHT_HIGH             (80)
 #define START_Y_COORD                  (220)
 #define MAX_FPS_COUNT                  (64)
 
@@ -69,8 +73,12 @@ typedef struct {
 } FPS_VALUES_T;
 
 typedef struct {
-	WCHAR fps[RESULT_STRING];
-	WCHAR frames[RESULT_STRING];
+	WCHAR fps_pass1[RESULT_STRING];
+	WCHAR fms_pass1[RESULT_STRING];
+	WCHAR fps_pass2[RESULT_STRING];
+	WCHAR fms_pass2[RESULT_STRING];
+	WCHAR fps_pass3[RESULT_STRING];
+	WCHAR fms_pass3[RESULT_STRING];
 	WCHAR properties[RESULT_STRING * 4];
 } BENCHMARK_RESULTS_GPU_T;
 
@@ -87,6 +95,8 @@ extern UINT32 GFX_Draw_Stop(APP_AHI_T *ahi);
 extern void FPS_Meter(void);
 
 extern UINT32 CalculateAverageFpsAndTime(WCHAR *result_fps, WCHAR *result_fms);
+
+extern UINT32 Bench_GPU_Passes(UINT32 bmp_width, UINT32 bmp_height, WCHAR *fps, WCHAR *fms, WCHAR *props);
 
 /* RAM Benchmark */
 

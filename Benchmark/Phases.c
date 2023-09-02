@@ -196,7 +196,7 @@ UINT32 TotalRamSize(BENCHMARK_RESULTS_RAM_T *result) {
 	return status;
 }
 
-extern UINT32 TotalHeapSize(BENCHMARK_RESULTS_HEAP_T *result) {
+UINT32 TotalHeapSize(BENCHMARK_RESULTS_HEAP_T *result) {
 	UINT16 i;
 	UINT32 status;
 	UINT32 total_size;
@@ -256,6 +256,33 @@ extern UINT32 TotalHeapSize(BENCHMARK_RESULTS_HEAP_T *result) {
 		u_ltou(size_f, result->desc + u_strlen(result->desc));
 		u_strcpy(result->desc + u_strlen(result->desc), L" KiB");
 	}
+
+	return status;
+}
+
+UINT32 Bench_GPU_Passes(UINT32 bmp_width, UINT32 bmp_height, WCHAR *fps, WCHAR *fms, WCHAR *props) {
+	UINT32 status;
+	APP_AHI_T ahi;
+
+	ahi.info_driver = NULL;
+	ahi.bmp_width = bmp_width;
+	ahi.bmp_height = bmp_height;
+	ahi.p_fire = NULL;
+	ahi.flag_restart_demo = FALSE;
+
+	ATI_Driver_Start(&ahi, props);
+	GFX_Draw_Start(&ahi);
+
+	do {
+		FPS_Meter();
+		status = GFX_Draw_Step(&ahi);
+		ATI_Driver_Flush(&ahi);
+	} while (status == RESULT_OK);
+
+	GFX_Draw_Stop(&ahi);
+	ATI_Driver_Stop(&ahi);
+
+	CalculateAverageFpsAndTime(fps, fms);
 
 	return status;
 }
