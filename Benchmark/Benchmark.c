@@ -110,7 +110,7 @@ static UINT32 HandleEventBack(EVENT_STACK_T *ev_st, APPLICATION_T *app);
 
 static LIST_ENTRY_T *CreateList(EVENT_STACK_T *ev_st, APPLICATION_T *app, UINT32 start, UINT32 count);
 
-static const char g_app_name[APP_NAME_LEN] = "Benchmark";
+const char g_app_name[APP_NAME_LEN] = "Benchmark";
 
 static const WCHAR g_str_app_name[] = L"Benchmark";
 static const WCHAR g_str_menu_bench_cpu[] = L"CPU (MCU)";
@@ -423,16 +423,13 @@ static UINT32 HandleStateEnter(EVENT_STACK_T *ev_st, APPLICATION_T *app, ENTER_S
 					);
 					break;
 				case APP_VIEW_GPU_RESULTS:
-//					UIS_MakeContentFromString(
-//						"q0Nq1NSq2N NSq3N NRq4NSq5NSq6NSq7", &content, g_str_view_gpu_results,
-//						g_str_view_gpu_fps,
-//							L"TODO",
-//						app_instance->cpu_result.bogo_mips,
-//						g_str_view_cpu_dhrystone,
-//						app_instance->cpu_result.dhrys_time,
-//						app_instance->cpu_result.dhrys_score,
-//						app_instance->cpu_result.dhrys_mips
-//						);
+					UIS_MakeContentFromString(
+						"q0Nq1NSq2N NRq3NSq4", &content, g_str_view_gpu_results,
+						g_str_view_gpu_fps,
+							L"TODO",
+						g_str_view_gpu_properties,
+							L"TODO"
+					);
 					break;
 				case APP_VIEW_RAM_RESULTS:
 					UIS_MakeContentFromString(
@@ -519,7 +516,29 @@ static UINT32 HandleEventTimerExpired(EVENT_STACK_T *ev_st, APPLICATION_T *app) 
 				case APP_MENU_ITEM_BENCH_GPU:
 					app_instance->view = APP_VIEW_GPU_RESULTS;
 
-					/* TODO: */
+					{
+						UINT32 status;
+						APP_AHI_T ahi;
+
+						ahi.info_driver = NULL;
+						ahi.bmp_width = BITMAP_WIDTH;
+						ahi.bmp_height = BITMAP_HEIGHT;
+						ahi.p_fire = NULL;
+						ahi.flag_restart_demo = FALSE;
+
+						ATI_Driver_Start(&ahi);
+						GFX_Draw_Start(&ahi);
+
+						do {
+							FPS_Meter();
+							status = GFX_Draw_Step(&ahi);
+							ATI_Driver_Flush(&ahi);
+						} while (status == RESULT_OK);
+
+						GFX_Draw_Stop(&ahi);
+						ATI_Driver_Stop(&ahi);
+					}
+
 					break;
 				case APP_MENU_ITEM_BENCH_RAM:
 					app_instance->view = APP_VIEW_RAM_RESULTS;
