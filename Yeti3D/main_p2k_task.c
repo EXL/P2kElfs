@@ -14,7 +14,7 @@
  *   https://forum.motofan.ru/index.php?s=&showtopic=170514&view=findpost&p=1459600
  *
  * Application type:
- *   GUI + ATI + Java Heap + Videomode
+ *   GUI + ATI + Java Heap + Videomode + Tasks
  */
 
 #include "yeti.h"
