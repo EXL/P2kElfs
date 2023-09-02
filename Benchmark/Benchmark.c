@@ -64,6 +64,7 @@ typedef enum {
 	APP_VIEW_HELP,
 	APP_VIEW_ABOUT,
 	APP_VIEW_CPU_RESULTS,
+	APP_VIEW_GPU_RESULTS,
 	APP_VIEW_RAM_RESULTS,
 	APP_VIEW_HEAP_RESULTS
 } APP_VIEW_T;
@@ -78,6 +79,7 @@ typedef struct {
 	BOOL flag_from_select;
 
 	BENCHMARK_RESULTS_CPU_T cpu_result;
+	BENCHMARK_RESULTS_GPU_T gpu_result;
 	BENCHMARK_RESULTS_RAM_T ram_result;
 	BENCHMARK_RESULTS_HEAP_T heap_result;
 } APP_INSTANCE_T;
@@ -132,6 +134,9 @@ static const WCHAR g_str_view_ram_results[] = L"RAM Results";
 static const WCHAR g_str_view_mem_total[] = L"Total available:";
 static const WCHAR g_str_view_ram_top[] = L"Top 6 blocks:";
 static const WCHAR g_str_view_heap_results[] = L"Java Heap Results";
+static const WCHAR g_str_view_gpu_results[] = L"GPU Results";
+static const WCHAR g_str_view_gpu_fps[] = L"FPS:";
+static const WCHAR g_str_view_gpu_properties[] = L"Properties:";
 
 #if defined(EP2)
 static ldrElf g_app_elf;
@@ -417,6 +422,18 @@ static UINT32 HandleStateEnter(EVENT_STACK_T *ev_st, APPLICATION_T *app, ENTER_S
 							app_instance->cpu_result.dhrys_mips
 					);
 					break;
+				case APP_VIEW_GPU_RESULTS:
+//					UIS_MakeContentFromString(
+//						"q0Nq1NSq2N NSq3N NRq4NSq5NSq6NSq7", &content, g_str_view_gpu_results,
+//						g_str_view_gpu_fps,
+//							L"TODO",
+//						app_instance->cpu_result.bogo_mips,
+//						g_str_view_cpu_dhrystone,
+//						app_instance->cpu_result.dhrys_time,
+//						app_instance->cpu_result.dhrys_score,
+//						app_instance->cpu_result.dhrys_mips
+//						);
+					break;
 				case APP_VIEW_RAM_RESULTS:
 					UIS_MakeContentFromString(
 						"q0Nq1NSq2N NRq3NSq4NSq5NSq6NSq7NSq8NSq9", &content, g_str_view_ram_results,
@@ -499,6 +516,11 @@ static UINT32 HandleEventTimerExpired(EVENT_STACK_T *ev_st, APPLICATION_T *app) 
 					Dhrystone(&app_instance->cpu_result);
 
 					break;
+				case APP_MENU_ITEM_BENCH_GPU:
+					app_instance->view = APP_VIEW_GPU_RESULTS;
+
+					/* TODO: */
+					break;
 				case APP_MENU_ITEM_BENCH_RAM:
 					app_instance->view = APP_VIEW_RAM_RESULTS;
 
@@ -538,6 +560,7 @@ static UINT32 HandleEventSelect(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
 
 	switch (app_instance->menu_current_item_index) {
 		case APP_MENU_ITEM_BENCH_CPU:
+		case APP_MENU_ITEM_BENCH_GPU:
 		case APP_MENU_ITEM_BENCH_RAM:
 		case APP_MENU_ITEM_BENCH_HEAP:
 			status |= APP_UtilChangeState(APP_STATE_POPUP, ev_st, app);

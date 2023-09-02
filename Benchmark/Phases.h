@@ -24,6 +24,13 @@ extern UINT32 BogoMIPS(BENCHMARK_RESULTS_CPU_T *result);
 
 extern int Dhrystone(BENCHMARK_RESULTS_CPU_T *result);
 
+/* GPU Benchmark */
+
+typedef struct {
+	WCHAR fps[RESULT_STRING];
+	WCHAR properties[RESULT_STRING];
+} BENCHMARK_RESULTS_GPU_T;
+
 /* RAM Benchmark */
 
 #define RAM_TOP_BLOCKS_COUNT           (6)
