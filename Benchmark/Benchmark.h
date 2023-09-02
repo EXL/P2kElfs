@@ -28,12 +28,18 @@ extern int Dhrystone(BENCHMARK_RESULTS_CPU_T *result);
 
 /* GPU Benchmark */
 
-#define BITMAP_WIDTH_LOW               (48)
-#define BITMAP_HEIGHT_LOW              (32)
-#define BITMAP_WIDTH_MID               (64)
-#define BITMAP_HEIGHT_MID              (48)
-#define BITMAP_WIDTH_HIGH              (96)
-#define BITMAP_HEIGHT_HIGH             (80)
+/* Pass 1 */
+#define BITMAP_WIDTH_LOW               (32)
+#define BITMAP_HEIGHT_LOW              (24)
+
+/* Pass 2 */
+#define BITMAP_WIDTH_MID               (48)
+#define BITMAP_HEIGHT_MID              (32)
+
+/* Pass 3 */
+#define BITMAP_WIDTH_HIGH              (64)
+#define BITMAP_HEIGHT_HIGH             (48)
+
 #define START_Y_COORD                  (220)
 #define MAX_FPS_COUNT                  (64)
 
