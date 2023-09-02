@@ -135,7 +135,7 @@ static const WCHAR g_str_view_mem_total[] = L"Total available:";
 static const WCHAR g_str_view_ram_top[] = L"Top 6 blocks:";
 static const WCHAR g_str_view_heap_results[] = L"Java Heap Results";
 static const WCHAR g_str_view_gpu_results[] = L"GPU Results";
-static const WCHAR g_str_view_gpu_fps[] = L"FPS:";
+static const WCHAR g_str_view_gpu_fps[] = L"Average FPS:";
 static const WCHAR g_str_view_gpu_properties[] = L"Properties:";
 
 #if defined(EP2)
@@ -424,11 +424,12 @@ static UINT32 HandleStateEnter(EVENT_STACK_T *ev_st, APPLICATION_T *app, ENTER_S
 					break;
 				case APP_VIEW_GPU_RESULTS:
 					UIS_MakeContentFromString(
-						"q0Nq1NSq2N NRq3NSq4", &content, g_str_view_gpu_results,
+						"q0Nq1NSq2NSq3N NRq4NSq5", &content, g_str_view_gpu_results,
 						g_str_view_gpu_fps,
-							L"TODO",
+							app_instance->gpu_result.fps,
+							app_instance->gpu_result.frames,
 						g_str_view_gpu_properties,
-							L"TODO"
+							L"TO\x0A00DO"
 					);
 					break;
 				case APP_VIEW_RAM_RESULTS:
@@ -538,6 +539,8 @@ static UINT32 HandleEventTimerExpired(EVENT_STACK_T *ev_st, APPLICATION_T *app) 
 						GFX_Draw_Stop(&ahi);
 						ATI_Driver_Stop(&ahi);
 					}
+
+					CalculateAverageFpsAndTime(app_instance->gpu_result.fps, app_instance->gpu_result.frames);
 
 					break;
 				case APP_MENU_ITEM_BENCH_RAM:

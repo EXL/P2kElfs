@@ -50,8 +50,70 @@ static const UINT32 fire_palette[] = {
 	ATI_565RGB(0xFF, 0xFF, 0xFF)  /* 36 */
 };
 
+static FPS_VALUES_T fps_values;
+static UINT64 start_time;
+static UINT64 end_time;
+static UINT32 frames;
+
+UINT32 CalculateAverageFpsAndTime(WCHAR *result_fps, WCHAR *result_fms) {
+	UINT32 status;
+	UINT32 time;
+	UINT16 i;
+	UINT16 avr_fps_i;
+	UINT16 avr_fps_f;
+	UINT16 sum_fps_i;
+	UINT16 sum_fps_f;
+	UINT16 size;
+	UINT16 avr_fms_i;
+	UINT16 avr_fms_f;
+
+	status = RESULT_OK;
+	sum_fps_i = 0;
+	sum_fps_f = 0;
+	size = fps_values.size;
+	time = (UINT32) (end_time - start_time);
+
+	for (i = 0; i < fps_values.size; ++i) {
+		if (fps_values.values[i].fps_i > 0) {
+			sum_fps_i += fps_values.values[i].fps_i;
+			sum_fps_f += fps_values.values[i].fps_f;
+		} else {
+			size -= 1;
+		}
+	}
+
+	if (sum_fps_f >= 10) {
+		sum_fps_i += sum_fps_f / 10;
+		sum_fps_f %= 10;
+	}
+
+	sum_fps_i *= 10;
+	sum_fps_i += sum_fps_f;
+
+	avr_fps_i = sum_fps_i / (size * 10);
+	avr_fps_f = ((sum_fps_i % (size * 10)) * 10) / (size * 10);
+
+	u_ltou(time, result_fps);
+	u_strcpy(result_fps + u_strlen(result_fps), L" ms | ");
+	u_ltou(avr_fps_i, result_fps + u_strlen(result_fps));
+	u_strcpy(result_fps + u_strlen(result_fps), L".");
+	u_ltou(avr_fps_f, result_fps + u_strlen(result_fps));
+	u_strcpy(result_fps + u_strlen(result_fps), L" FPS");
+
+	avr_fms_i = (frames * 1000) / time;
+	avr_fms_f = (((frames * 1000) % time) * 10) / time;
+
+	u_ltou(frames, result_fms);
+	u_strcpy(result_fms + u_strlen(result_fms), L" fs | ");
+	u_ltou(avr_fms_i, result_fms + u_strlen(result_fms));
+	u_strcpy(result_fms + u_strlen(result_fms), L".");
+	u_ltou(avr_fms_f, result_fms + u_strlen(result_fms));
+	u_strcpy(result_fms + u_strlen(result_fms), L" FMS");
+
+	return status;
+}
+
 void FPS_Meter(void) {
-#if defined(FPS_METER)
 	UINT64 current_time;
 	UINT32 delta;
 
@@ -64,21 +126,32 @@ void FPS_Meter(void) {
 	delta = (UINT32) (current_time - last_time);
 	last_time = current_time;
 
+	frames += 1;
+
 	tick = (tick + delta) / 2;
 	if (tick != 0) {
 		fps = 1000 * 10 / tick;
 	}
 
 	if (one > 30) {
+#if defined(FPS_METER)
 		UtilLogStringData("FPS: %d.%d\n", fps / 10, fps % 10);
 		PFprintf("FPS: %d.%d\n", fps / 10, fps % 10);
 #if defined(EP2)
 		cprintf("FPS: %d.%d\n", fps / 10, fps % 10);
-#endif
+#endif // EP2
+#endif // FPS_METER
+
+		if (fps_values.size < MAX_FPS_COUNT) {
+			fps_values.values[fps_values.size].fps_i = fps / 10;
+			fps_values.values[fps_values.size].fps_f = fps % 10;
+
+			fps_values.size += 1;
+		}
+
 		one = 0;
 	}
 	one++;
-#endif
 }
 
 static UINT32 ATI_Display_Mode_Log(AHIDISPMODE_T *display_mode) {
@@ -288,10 +361,18 @@ UINT32 GFX_Draw_Start(APP_AHI_T *ahi) {
 	/* Fill last line to RGB(0xFF, 0xFF, 0xFF) except last line. */
 	memset((UINT8 *) (ahi->p_fire + (ahi->bmp_height - 1) * ahi->bmp_width), 36, ahi->bmp_width);
 
+	memclr(&fps_values, sizeof(FPS_VALUES_T));
+
+	start_time = suPalTicksToMsec(suPalReadTime());
+	fps_values.size = 0;
+	frames = 0;
+
 	return RESULT_OK;
 }
 
 UINT32 GFX_Draw_Stop(APP_AHI_T *ahi) {
+	end_time = suPalTicksToMsec(suPalReadTime());
+
 	if (ahi->p_fire) {
 		suFreeMem(ahi->p_fire);
 		ahi->p_fire = NULL;
@@ -321,7 +402,6 @@ UINT32 GFX_Draw_Step(APP_AHI_T *ahi) {
 	UINT16 stop;
 
 	if (ahi->flag_restart_demo) {
-		GFX_Draw_Start(ahi);
 		ahi->flag_restart_demo = FALSE;
 		return RESULT_FAIL;
 	}

@@ -31,7 +31,7 @@ extern int Dhrystone(BENCHMARK_RESULTS_CPU_T *result);
 #define BITMAP_WIDTH                   (64)
 #define BITMAP_HEIGHT                  (48)
 #define START_Y_COORD                  (220)
-#define FPS_METER
+#define MAX_FPS_COUNT                  (64)
 
 typedef struct {
 	BOOL is_CSTN_display;
@@ -59,8 +59,19 @@ typedef struct {
 } APP_AHI_T;
 
 typedef struct {
+	UINT16 fps_i;
+	UINT16 fps_f;
+} FPS_T;
+
+typedef struct {
+	UINT16 size;
+	FPS_T values[MAX_FPS_COUNT];
+} FPS_VALUES_T;
+
+typedef struct {
 	WCHAR fps[RESULT_STRING];
-	WCHAR properties[RESULT_STRING];
+	WCHAR frames[RESULT_STRING];
+	WCHAR properties[RESULT_STRING * 4];
 } BENCHMARK_RESULTS_GPU_T;
 
 extern const char g_app_name[APP_NAME_LEN];
@@ -75,6 +86,8 @@ extern UINT32 GFX_Draw_Stop(APP_AHI_T *ahi);
 
 extern void FPS_Meter(void);
 
+extern UINT32 CalculateAverageFpsAndTime(WCHAR *result_fps, WCHAR *result_fms);
+
 /* RAM Benchmark */
 
 #define RAM_TOP_BLOCKS_COUNT           (6)
@@ -82,6 +95,7 @@ extern void FPS_Meter(void);
 #define RAM_TOTAL_BLOCKS_COUNT         (512)
 #define RAM_START_SIZE_TOTAL           (RAM_STEP_SIZE * 4)
 #define RAM_START_SIZE_BLOCK           (RAM_STEP_SIZE * 8)
+#define FPS_METER
 
 typedef struct {
 	WCHAR total[RESULT_STRING];
