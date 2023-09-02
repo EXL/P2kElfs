@@ -54,6 +54,7 @@ static FPS_VALUES_T fps_values;
 static UINT64 start_time;
 static UINT64 end_time;
 static UINT32 frames;
+static WCHAR *properties;
 
 UINT32 CalculateAverageFpsAndTime(WCHAR *result_fps, WCHAR *result_fms) {
 	UINT32 status;
@@ -154,13 +155,102 @@ void FPS_Meter(void) {
 	one++;
 }
 
-static UINT32 ATI_Display_Mode_Log(AHIDISPMODE_T *display_mode) {
+static WCHAR *GetPixelFormatName(AHIPIXFMT_T pixel_format) {
+	switch (pixel_format) {
+		default:
+			return L"UNKNOWN";
+		case AHIFMT_1BPP:
+			return L"1 Bpp";
+		case AHIFMT_4BPP:
+			return L"4 Bpp";
+		case AHIFMT_8BPP:
+			return L"8 Bpp";
+		case AHIFMT_16BPP_444:
+			return L"16 Bpp (444)";
+		case AHIFMT_16BPP_555:
+			return L"16 Bpp (555)";
+		case AHIFMT_16BPP_565:
+			return L"16 Bpp (565)";
+	}
+}
+
+static WCHAR *GetRotationName(AHIROTATE_T rotation) {
+	switch (rotation) {
+		default:
+			return L"UNKNOWN";
+		case AHIROT_0:
+			return L"0";
+		case AHIROT_90:
+			return L"90";
+		case AHIROT_180:
+			return L"180";
+		case AHIROT_270:
+			return L"270";
+	}
+}
+
+static WCHAR *GetMirroringName(AHIMIRROR_T mirroring) {
+	switch (mirroring) {
+		default:
+			return L"UNKNOWN";
+		case AHIMIRR_NO:
+			return L"NO";
+		case AHIMIRR_VERTICAL:
+			return L"VER";
+		case AHIMIRR_HORIZONTAL:
+			return L"HOR";
+		case AHIMIRR_VER_HOR:
+			return L"VER_HOR";
+	}
+}
+
+static WCHAR *GetBooleanName(BOOL boolean_t) {
+	switch (boolean_t) {
+		default:
+		case FALSE:
+			return L"FALSE";
+		case TRUE:
+			return L"TRUE";
+	}
+}
+
+static UINT32 ATI_Display_Mode_Log(APP_AHI_T *ahi, AHIDISPMODE_T *display_mode) {
 	LOG("%s\n", "ATI Display Mode.");
 	LOG("ATI Display Size: %dx%d\n", display_mode->size.x, display_mode->size.y);
+
+	u_strcpy(properties, L"D_SIZE: ");
+	u_ltou(display_mode->size.x, properties + u_strlen(properties));
+	u_strcpy(properties + u_strlen(properties), L"x");
+	u_ltou(display_mode->size.y, properties + u_strlen(properties));
+	u_strcpy(properties + u_strlen(properties), L"\n");
+
+	u_strcpy(properties + u_strlen(properties), L"D_CSTN: ");
+	u_strcpy(properties + u_strlen(properties), GetBooleanName(ahi->is_CSTN_display));
+	u_strcpy(properties + u_strlen(properties), L"\n");
+
 	LOG("ATI Display Pixel Format: %d\n", display_mode->pixel_format);
+
+	u_strcpy(properties + u_strlen(properties), L"D_FRMT: ");
+	u_strcpy(properties + u_strlen(properties), GetPixelFormatName(display_mode->pixel_format));
+	u_strcpy(properties + u_strlen(properties), L"\n");
+
 	LOG("ATI Display Frequency: %d\n", display_mode->frequency);
+
+	u_strcpy(properties + u_strlen(properties), L"D_FREQ: ");
+	u_ltou(display_mode->frequency, properties + u_strlen(properties));
+	u_strcpy(properties + u_strlen(properties), L" Hz\n");
+
 	LOG("ATI Display Rotation: %d\n", display_mode->rotation);
+
+	u_strcpy(properties + u_strlen(properties), L"D_ROT: ");
+	u_strcpy(properties + u_strlen(properties), GetRotationName(display_mode->rotation));
+	u_strcpy(properties + u_strlen(properties), L"\n");
+
 	LOG("ATI Display Mirror: %d\n", display_mode->mirror);
+
+	u_strcpy(properties + u_strlen(properties), L"D_MIRR: ");
+	u_strcpy(properties + u_strlen(properties), GetMirroringName(display_mode->mirror));
+	u_strcpy(properties + u_strlen(properties), L"\n\n");
 
 	return RESULT_OK;
 }
@@ -169,20 +259,45 @@ static UINT32 ATI_Driver_Log(APP_AHI_T *ahi) {
 	LOG("%s\n", "ATI Driver Dump.");
 	LOG("ATI Driver Name: %s\n", ahi->info_driver->drvName);
 	LOG("ATI Driver Version: %s\n", ahi->info_driver->drvVer);
+
+	u_strcpy(properties + u_strlen(properties), L"A: ");
+	u_atou(ahi->info_driver->drvVer, properties + u_strlen(properties));
+	u_strcpy(properties + u_strlen(properties), L"\n");
+
 	LOG("ATI S/W Revision: %d (0x%08X)\n",
 		ahi->info_driver->swRevision, ahi->info_driver->swRevision);
 	LOG("ATI Chip ID: %d (0x%08X)\n",
 		ahi->info_driver->chipId, ahi->info_driver->chipId);
+
+	u_strcpy(properties + u_strlen(properties), L"A_ID: ");
+	u_ltou(ahi->info_driver->chipId, properties + u_strlen(properties));
+	u_strcpy(properties + u_strlen(properties), L"\n");
+
 	LOG("ATI Revision ID: %d (0x%08X)\n",
 		ahi->info_driver->revisionId, ahi->info_driver->revisionId);
 	LOG("ATI CPU Bus Interface Mode: %d (0x%08X)\n",
 		ahi->info_driver->cpuBusInterfaceMode, ahi->info_driver->cpuBusInterfaceMode);
 	LOG("ATI Total Memory: %d (%d KiB)\n",
 		ahi->info_driver->totalMemory, ahi->info_driver->totalMemory / 1024);
+
+	u_strcpy(properties + u_strlen(properties), L"A_TMEM: ");
+	u_ltou(ahi->info_driver->totalMemory, properties + u_strlen(properties));
+	u_strcpy(properties + u_strlen(properties), L"\n");
+
 	LOG("ATI Internal Memory: %d (%d KiB)\n",
 		ahi->info_driver->internalMemSize, ahi->info_driver->internalMemSize / 1024);
+
+	u_strcpy(properties + u_strlen(properties), L"A_IMEM: ");
+	u_ltou(ahi->info_driver->internalMemSize, properties + u_strlen(properties));
+	u_strcpy(properties + u_strlen(properties), L"\n");
+
 	LOG("ATI External Memory: %d (%d KiB)\n",
 		ahi->info_driver->externalMemSize, ahi->info_driver->externalMemSize / 1024);
+
+	u_strcpy(properties + u_strlen(properties), L"A_EMEM: ");
+	u_ltou(ahi->info_driver->externalMemSize, properties + u_strlen(properties));
+	u_strcpy(properties + u_strlen(properties), L"\n");
+
 	LOG("ATI CAPS 1: %d (0x%08X)\n", ahi->info_driver->caps1, ahi->info_driver->caps1);
 	LOG("ATI CAPS 2: %d (0x%08X)\n", ahi->info_driver->caps2, ahi->info_driver->caps2);
 
@@ -228,16 +343,32 @@ static UINT32 ATI_Driver_Log_Memory(APP_AHI_T *ahi, AHIPIXFMT_T pixel_format) {
 
 	LOG("%s\n", "ATI Memory Dump.");
 	LOG("\tATI Internal Memory Largest Block: status=%d, pixel_format=%d, size=%d, size=%d KiB, align=%d\n",
-		status[INTERNAL_MEMORY], pixel_format, sizes[INTERNAL_MEMORY], sizes[INTERNAL_MEMORY] / 1024, alignment[INTERNAL_MEMORY]);
+		status[INTERNAL_MEMORY], pixel_format, sizes[INTERNAL_MEMORY], sizes[INTERNAL_MEMORY] / 1024,
+		alignment[INTERNAL_MEMORY]);
+
+	u_strcpy(properties + u_strlen(properties), L"A_IMBLK: ");
+	u_ltou(sizes[INTERNAL_MEMORY], properties + u_strlen(properties));
+	u_strcpy(properties + u_strlen(properties), L"\n");
+
 	LOG("\tATI External Memory Largest Block: status=%d, pixel_format=%d, size=%d, size=%d KiB, align=%d\n",
-		status[EXTERNAL_MEMORY], pixel_format, sizes[EXTERNAL_MEMORY], sizes[EXTERNAL_MEMORY] / 1024, alignment[EXTERNAL_MEMORY]);
+		status[EXTERNAL_MEMORY], pixel_format, sizes[EXTERNAL_MEMORY], sizes[EXTERNAL_MEMORY] / 1024,
+		alignment[EXTERNAL_MEMORY]);
+
+	u_strcpy(properties + u_strlen(properties), L"A_EMBLK: ");
+	u_ltou(sizes[EXTERNAL_MEMORY], properties + u_strlen(properties));
+	u_strcpy(properties + u_strlen(properties), L"\n");
+
 	LOG("\tATI System Memory Largest Block: status=%d, pixel_format=%d, size=%d, size=%d KiB, align=%d\n",
-		status[SYSTEM_MEMORY], pixel_format, sizes[SYSTEM_MEMORY], sizes[SYSTEM_MEMORY] / 1024, alignment[SYSTEM_MEMORY]);
+		status[SYSTEM_MEMORY], pixel_format, sizes[SYSTEM_MEMORY], sizes[SYSTEM_MEMORY] / 1024,
+		alignment[SYSTEM_MEMORY]);
+
+	u_strcpy(properties + u_strlen(properties), L"A_SMBLK: ");
+	u_ltou(sizes[SYSTEM_MEMORY], properties + u_strlen(properties));
 
 	return status[INTERNAL_MEMORY] && status[EXTERNAL_MEMORY] && status[SYSTEM_MEMORY];
 }
 
-UINT32 ATI_Driver_Start(APP_AHI_T *ahi) {
+UINT32 ATI_Driver_Start(APP_AHI_T *ahi, WCHAR *props) {
 	UINT32 status;
 	INT32 result;
 	AHIDEVICE_T ahi_device;
@@ -245,6 +376,8 @@ UINT32 ATI_Driver_Start(APP_AHI_T *ahi) {
 
 	status = RESULT_OK;
 	result = RESULT_OK;
+
+	properties = props;
 
 	ahi->info_driver = suAllocMem(sizeof(AHIDRVINFO_T), &result);
 	if (!ahi->info_driver && result) {
@@ -310,7 +443,7 @@ UINT32 ATI_Driver_Start(APP_AHI_T *ahi) {
 
 	AhiDrawRopSet(ahi->context, AHIROP3(AHIROP_SRCCOPY));
 
-	status |= ATI_Display_Mode_Log(&display_mode);
+	status |= ATI_Display_Mode_Log(ahi, &display_mode);
 	status |= ATI_Driver_Log(ahi);
 	status |= ATI_Driver_Log_Memory(ahi, AHIFMT_16BPP_565);
 

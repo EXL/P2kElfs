@@ -76,7 +76,7 @@ typedef struct {
 
 extern const char g_app_name[APP_NAME_LEN];
 
-extern UINT32 ATI_Driver_Start(APP_AHI_T *ahi);
+extern UINT32 ATI_Driver_Start(APP_AHI_T *ahi, WCHAR *props);
 extern UINT32 ATI_Driver_Flush(APP_AHI_T *ahi);
 extern UINT32 ATI_Driver_Stop(APP_AHI_T *ahi);
 
@@ -95,7 +95,6 @@ extern UINT32 CalculateAverageFpsAndTime(WCHAR *result_fps, WCHAR *result_fms);
 #define RAM_TOTAL_BLOCKS_COUNT         (512)
 #define RAM_START_SIZE_TOTAL           (RAM_STEP_SIZE * 4)
 #define RAM_START_SIZE_BLOCK           (RAM_STEP_SIZE * 8)
-#define FPS_METER
 
 typedef struct {
 	WCHAR total[RESULT_STRING];

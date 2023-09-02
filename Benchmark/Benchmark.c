@@ -429,7 +429,7 @@ static UINT32 HandleStateEnter(EVENT_STACK_T *ev_st, APPLICATION_T *app, ENTER_S
 							app_instance->gpu_result.fps,
 							app_instance->gpu_result.frames,
 						g_str_view_gpu_properties,
-							L"TO\x0A00DO"
+							app_instance->gpu_result.properties
 					);
 					break;
 				case APP_VIEW_RAM_RESULTS:
@@ -527,7 +527,7 @@ static UINT32 HandleEventTimerExpired(EVENT_STACK_T *ev_st, APPLICATION_T *app) 
 						ahi.p_fire = NULL;
 						ahi.flag_restart_demo = FALSE;
 
-						ATI_Driver_Start(&ahi);
+						ATI_Driver_Start(&ahi, app_instance->gpu_result.properties);
 						GFX_Draw_Start(&ahi);
 
 						do {
