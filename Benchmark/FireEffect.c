@@ -1,5 +1,5 @@
 /*
- * Extracted from FireEffect/FireEffect ELF application.
+ * Extracted from P2kElfs/FireEffect ELF application.
  */
 
 #include <loader.h>

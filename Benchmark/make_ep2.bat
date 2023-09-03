@@ -1,4 +1,4 @@
-:: This make.bat script was edited by EXL, 27-Mar-2023.
+:: This make.bat script was edited by EXL, 03-Sep-2023.
 :: Default platform is Motorola P2K, ElfPack v2.x, devkitARM release 26 (GCC 4.4.0) on Windows.
 
 :: Uncomment it for disable verbose output.
@@ -20,13 +20,15 @@ set LIB_MAIN=std.sa
 set LIB_LIBC=libc.a
 
 :: Defines.
-set DEFINES=-D__P2K__ -DEP2 -DROT_90 -DFPS_30
+set DEFINES=-D__P2K__ -DEP2
+:: set DEFINES=-D__P2K__ -DEP2 -DFTR_V600
+:: set DEFINES=-D__P2K__ -DEP2 -DFTR_L7E
 
 :: Includes.
 set INCLUDES=-I..\src\
 
 :: Optimization.
-set OPTIM=-O0
+set OPTIM=-O2
 
 :: Output names.
 set ELF_NAME=Benchmark
@@ -34,10 +36,22 @@ set ELF_NAME=Benchmark
 :: Compiling step.
 %ARM_PATH%\bin\arm-eabi-gcc -c -Wall -mbig-endian -mthumb -mthumb-interwork -nostdlib ^
 	-fshort-wchar -fshort-enums -fpack-struct=4 -fno-builtin -fvisibility=hidden ^
+	-I%SDK_PATH% %INCLUDES% %DEFINES% %OPTIM% dhry_1.c -o dhry_1.o
+%ARM_PATH%\bin\arm-eabi-gcc -c -Wall -mbig-endian -mthumb -mthumb-interwork -nostdlib ^
+	-fshort-wchar -fshort-enums -fpack-struct=4 -fno-builtin -fvisibility=hidden ^
+	-I%SDK_PATH% %INCLUDES% %DEFINES% %OPTIM% dhry_2.c -o dhry_2.o
+%ARM_PATH%\bin\arm-eabi-gcc -c -Wall -mbig-endian -mthumb -mthumb-interwork -nostdlib ^
+	-fshort-wchar -fshort-enums -fpack-struct=4 -fno-builtin -fvisibility=hidden ^
+	-I%SDK_PATH% %INCLUDES% %DEFINES% %OPTIM% Phases.c -o Phases.o
+%ARM_PATH%\bin\arm-eabi-gcc -c -Wall -mbig-endian -mthumb -mthumb-interwork -nostdlib ^
+	-fshort-wchar -fshort-enums -fpack-struct=4 -fno-builtin -fvisibility=hidden ^
+	-I%SDK_PATH% %INCLUDES% %DEFINES% %OPTIM% FireEffect.c -o FireEffect.o
+%ARM_PATH%\bin\arm-eabi-gcc -c -Wall -mbig-endian -mthumb -mthumb-interwork -nostdlib ^
+	-fshort-wchar -fshort-enums -fpack-struct=4 -fno-builtin -fvisibility=hidden ^
 	-I%SDK_PATH% %INCLUDES% %DEFINES% %OPTIM% %ELF_NAME%.c -o %ELF_NAME%.o
 
 :: Linking step.
-%ARM_PATH%\bin\arm-eabi-ld -pie -EB %OPTIM% -nostdlib %ELF_NAME%.o ^
+%ARM_PATH%\bin\arm-eabi-ld -pie -EB %OPTIM% -nostdlib dhry_1.o dhry_2.o Phases.o FireEffect.o %ELF_NAME%.o ^
 	%LIB_PATH%\%LIB_MAIN% %LIB_PATH%\%LIB_LIBC% -o %ELF_NAME%_p.elf
 
 :: Post linking step.

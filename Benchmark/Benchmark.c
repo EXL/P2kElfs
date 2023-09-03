@@ -9,7 +9,7 @@
  *   MIT
  *
  * Application type:
- *   GUI
+ *   GUI + ATI + Java Heap
  */
 
 #include <loader.h>
@@ -198,7 +198,7 @@ ldrElf *_start(WCHAR *uri, WCHAR *arguments) {
 	UINT32 reserve;
 
 	if (ldrIsLoaded(g_app_name)) {
-		cprint("%s: Error! Application has already been loaded!\n", g_app_name);
+		cprint("Benchmark: Error! Application has already been loaded!\n");
 		return NULL;
 	}
 
