@@ -2,6 +2,8 @@
  * Extracted from P2kElfs/FireEffect ELF application.
  */
 
+#if defined(EP1) || defined(EP2)
+
 #include <loader.h>
 #include <ati.h>
 #include <dal.h>
@@ -570,3 +572,5 @@ UINT32 GFX_Draw_Step(APP_AHI_T *ahi) {
 
 	return RESULT_OK;
 }
+
+#endif // EP1 || EP2

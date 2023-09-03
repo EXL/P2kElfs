@@ -137,6 +137,7 @@ static const WCHAR g_str_view_heap_results[] = L"Java Heap Results";
 static const WCHAR g_str_view_gpu_results[] = L"GPU Results";
 static const WCHAR g_str_view_gpu_fps[] = L"Average FPS:";
 static const WCHAR g_str_view_gpu_properties[] = L"Properties:";
+static const WCHAR g_str_view_gpu_todo[] = L"Not yet implemented, sorry!";
 
 #if defined(EP2)
 static ldrElf g_app_elf;
@@ -437,6 +438,7 @@ static UINT32 HandleStateEnter(EVENT_STACK_T *ev_st, APPLICATION_T *app, ENTER_S
 					);
 					break;
 				case APP_VIEW_RAM_RESULTS:
+#if defined(EP1) || defined(EP2)
 					UIS_MakeContentFromString(
 						"q0Nq1NSq2N NRq3NSq4NSq5NSq6NSq7NSq8NSq9", &content, g_str_view_ram_results,
 						g_str_view_mem_total,
@@ -449,6 +451,9 @@ static UINT32 HandleStateEnter(EVENT_STACK_T *ev_st, APPLICATION_T *app, ENTER_S
 							app_instance->ram_result.blocks[4],
 							app_instance->ram_result.blocks[5]
 					);
+#else
+					UIS_MakeContentFromString("q0Nq1", &content, g_str_view_ram_results, g_str_view_gpu_todo);
+#endif
 					break;
 				case APP_VIEW_HEAP_RESULTS:
 					UIS_MakeContentFromString(
@@ -521,6 +526,7 @@ static UINT32 HandleEventTimerExpired(EVENT_STACK_T *ev_st, APPLICATION_T *app) 
 				case APP_MENU_ITEM_BENCH_GPU:
 					app_instance->view = APP_VIEW_GPU_RESULTS;
 
+#if defined(EP1) || defined(EP2)
 					Bench_GPU_Passes(BITMAP_WIDTH_LOW, BITMAP_HEIGHT_LOW,
 						app_instance->gpu_result.fps_pass1,
 						app_instance->gpu_result.fms_pass1,
@@ -535,6 +541,7 @@ static UINT32 HandleEventTimerExpired(EVENT_STACK_T *ev_st, APPLICATION_T *app) 
 						app_instance->gpu_result.fps_pass3,
 						app_instance->gpu_result.fms_pass3,
 						app_instance->gpu_result.properties);
+#endif
 
 					break;
 				case APP_MENU_ITEM_BENCH_RAM:

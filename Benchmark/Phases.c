@@ -260,6 +260,7 @@ UINT32 TotalHeapSize(BENCHMARK_RESULTS_HEAP_T *result) {
 	return status;
 }
 
+#if defined(EP1) || defined(EP2)
 UINT32 Bench_GPU_Passes(UINT32 bmp_width, UINT32 bmp_height, WCHAR *fps, WCHAR *fms, WCHAR *props) {
 	UINT32 status;
 	APP_AHI_T ahi;
@@ -286,3 +287,4 @@ UINT32 Bench_GPU_Passes(UINT32 bmp_width, UINT32 bmp_height, WCHAR *fps, WCHAR *
 
 	return status;
 }
+#endif

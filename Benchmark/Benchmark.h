@@ -2,8 +2,10 @@
 #define BENCHMARK_H
 
 #include <apps.h>
-#include <ati.h>
 #include <typedefs.h>
+#if defined(EP1) || defined(EP2)
+#include <ati.h>
+#endif
 
 #define RESULT_STRING                  (64)
 
@@ -54,6 +56,7 @@ typedef struct {
 	UINT16 y_coord;
 	BOOL flag_restart_demo;
 
+#if defined(EP1) || defined(EP2)
 	AHIDRVINFO_T *info_driver;
 	AHIDEVCONTEXT_T context;
 	AHISURFACE_T screen;
@@ -66,6 +69,8 @@ typedef struct {
 	AHIRECT_T rect_bitmap;
 	AHIRECT_T rect_draw;
 	AHIUPDATEPARAMS_T update_params;
+#endif // EP1 || EP2
+
 } APP_AHI_T;
 
 typedef struct {

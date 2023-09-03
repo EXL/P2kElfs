@@ -41,7 +41,8 @@ set FINAL_NAME=Benchmark_EM1
 	-c %ELF_NAME%.c -o %ELF_NAME%.o
 
 :: Linking step.
-%MCORE_PATH%\GCC_MCore\bin\mcore-elf-ld -dn -r -no-bss-init dhry_1.o dhry_2.o Phases.o FireEffect.o %ELF_NAME%.o ^
+%MCORE_PATH%\GCC_MCore\bin\mcore-elf-ld -dn -r -no-bss-init -z muldefs ^
+	dhry_1.o dhry_2.o Phases.o FireEffect.o %ELF_NAME%.o ^
 	-T%MCORE_PATH%\GCC_MCore\mcore-elf\lib\linker_elf.ld -o %ELF_NAME%.elf
 
 :: Renaming step.
