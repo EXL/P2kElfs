@@ -17,10 +17,10 @@ See [Benchmark ELF on Motorola P2K phones](https://www.youtube.com/TODO) video o
 
 ## Benchmarking results
 
-| Phone    | SET    | CPU (MCU)              | GPU (IPU)                    | RAM (SRAM)                          | HEAP (J2ME)         | Hardware                                                                                            |
-| ---      | ---    | ---                    | ---                          | ---                                 | ---                 | ---                                                                                                 |
-| SLVR L6  | thumb  | 2.85 BMIPS, 5.34 DMIPS | 52.6 FPS, 25.7 FPS, 17.1 FPS | 158 ms, 1222912 B, 12 ms - 117504 B | 3.7 sec, 1108.0 KiB | 128x160 cSTN @ 51 Hz, ATI Imageon W2240, Neptune LTE @ 52 MHz, 8 MB RAM, 256 KB iRAM, 32 MB ROM     |
-| ROKR E1  | thumb  | 2.85 BMIPS, 5.43 DMIPS | 62.5 FPS, 35.0 FPS, 17.1 FPS | 30 ms, 505088 B, 3 ms 77312 B       | 6.9 sec, 1060.0 KiB | 176x220 TFT @ 60 Hz, ATI Imageon W2250, Neptune LTE @ 52 MHz, 8 MB RAM, 256 KB iRAM, 32 MB ROM      |
+| Phone    | SET    | CPU (MCU)                | GPU (IPU)                        | RAM (SRAM)                               | HEAP (J2ME)           | Hardware                                                                                                            |
+| ---      | ---    | ---                      | ---                              | ---                                      | ---                   | ---                                                                                                                 |
+| SLVR L6  | thumb  | 2.85 BMIPS \\ 5.34 DMIPS | 52.6 FPS \\ 25.7 FPS \\ 17.1 FPS | 158 ms \\ 1222912 B \\ 12 ms \\ 117504 B | 3.7 sec \\ 1108.0 KiB | 128x160 cSTN @ 51 Hz @ RGB565 \\ ATI Imageon W2240 \\ Neptune LTE @ 52 MHz \\ 8 MB RAM \\ 256 KB iRAM \\ 32 MB ROM  |
+| ROKR E1  | thumb  | 2.85 BMIPS \\ 5.43 DMIPS | 62.5 FPS \\ 35.0 FPS \\ 17.1 FPS | 30 ms  \\ 505088 B  \\ 3 ms  \\ 77312 B  | 6.9 sec \\ 1060.0 KiB | 176x220 TFT @ 60 Hz @ RGB565  \\ ATI Imageon W2250 \\ Neptune LTE @ 52 MHz \\ 8 MB RAM \\ 256 KB iRAM \\ 32 MB ROM  |
 
 ## Other versions
 
