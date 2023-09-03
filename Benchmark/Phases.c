@@ -11,15 +11,23 @@
 	}
 #endif
 
+#if __CC_ARM && __arm
 //#pragma O0
+#endif
+#if defined(__GNUC__)
+static void __attribute__((optimize("O0"))) BogoMIPS_Delay(long loops) {
+#else
 static void BogoMIPS_Delay(long loops) {
+#endif
 	long i;
 	for (i = loops; !!(i > 0); --i) {
 		;
 //		nop();
 	}
 }
+#if __CC_ARM && __arm
 //#pragma O2
+#endif
 
 UINT32 BogoMIPS(BENCHMARK_RESULTS_CPU_T *result) {
 	UINT32 loops_per_sec = 1;

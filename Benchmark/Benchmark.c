@@ -519,6 +519,8 @@ static UINT32 HandleEventTimerExpired(EVENT_STACK_T *ev_st, APPLICATION_T *app) 
 				case APP_MENU_ITEM_BENCH_CPU:
 					app_instance->view = APP_VIEW_CPU_RESULTS;
 
+					memclr(&app_instance->cpu_result, sizeof(BENCHMARK_RESULTS_CPU_T));
+
 					BogoMIPS(&app_instance->cpu_result);
 					Dhrystone(&app_instance->cpu_result);
 
