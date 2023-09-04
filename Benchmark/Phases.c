@@ -6,29 +6,26 @@
 
 char float_string[FLOAT_STRING];
 
+/* ADS */
 #if __CC_ARM && __arm
-#define nop() \
-	__asm { \
-		nop \
+static __inline void BogoMIPS_Delay(UINT32 loops) {
+#pragma O0
+	UINT32 i;
+	for (i = 0; i < loops; ++i) {
+		__asm { nop };
 	}
+#pragma O2
+}
 #endif
 
-#if __CC_ARM && __arm
-//#pragma O0
-#endif
+/* GCC */
 #if defined(__GNUC__)
-static void __attribute__((optimize("O0"))) BogoMIPS_Delay(long loops) {
-#else
-static void BogoMIPS_Delay(long loops) {
-#endif
-	long i;
-	for (i = loops; !!(i > 0); --i) {
-		;
-//		nop();
+static inline void __attribute__((optimize("O0"))) BogoMIPS_Delay(UINT32 loops) {
+	UINT32 i;
+	for (i = 0; i < loops; ++i) {
+		asm("nop");
 	}
 }
-#if __CC_ARM && __arm
-//#pragma O2
 #endif
 
 UINT32 BogoMIPS(BENCHMARK_RESULTS_CPU_T *result) {
