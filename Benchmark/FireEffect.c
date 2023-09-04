@@ -76,6 +76,13 @@ UINT32 CalculateAverageFpsAndTime(WCHAR *result_fps, WCHAR *result_fms) {
 	size = fps_values.size;
 	time = (UINT32) (end_time - start_time);
 
+	if (!size) {
+		memclr(result_fps, RESULT_STRING);
+		memclr(result_fms, RESULT_STRING);
+
+		return RESULT_FAIL;
+	}
+
 	for (i = 0; i < fps_values.size; ++i) {
 		if (fps_values.values[i].fps_i > 0) {
 			sum_fps_i += fps_values.values[i].fps_i;
