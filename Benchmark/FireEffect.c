@@ -98,9 +98,9 @@ UINT32 CalculateAverageFpsAndTime(WCHAR *result_fps, WCHAR *result_fms) {
 
 	u_ltou(time, result_fps);
 	u_strcpy(result_fps + u_strlen(result_fps), L" ms | ");
-	u_ltou(avr_fps_i, result_fps + u_strlen(result_fps));
-	u_strcpy(result_fps + u_strlen(result_fps), L".");
-	u_ltou(avr_fps_f, result_fps + u_strlen(result_fps));
+
+	sprintf(float_string, "%lu.%01lu", avr_fps_i, avr_fps_f);
+	u_atou(float_string, result_fps + u_strlen(result_fps));
 	u_strcpy(result_fps + u_strlen(result_fps), L" FPS");
 
 	avr_fms_i = (frames * 1000) / time;
@@ -108,9 +108,9 @@ UINT32 CalculateAverageFpsAndTime(WCHAR *result_fps, WCHAR *result_fms) {
 
 	u_ltou(frames, result_fms);
 	u_strcpy(result_fms + u_strlen(result_fms), L" fs | ");
-	u_ltou(avr_fms_i, result_fms + u_strlen(result_fms));
-	u_strcpy(result_fms + u_strlen(result_fms), L".");
-	u_ltou(avr_fms_f, result_fms + u_strlen(result_fms));
+
+	sprintf(float_string, "%lu.%01lu", avr_fms_i, avr_fms_f);
+	u_atou(float_string, result_fms + u_strlen(result_fms));
 	u_strcpy(result_fms + u_strlen(result_fms), L" FMS");
 
 	return status;

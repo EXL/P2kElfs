@@ -256,26 +256,23 @@ int Dhrystone( BENCHMARK_RESULTS_CPU_T *result ) //formerly main()
   dhrys_i = (Number_Of_Runs * 1000) / User_Time;
   dhrys_f = (((Number_Of_Runs * 1000) % User_Time) * 100) / User_Time;
 
-  u_ltou(dhrys_i, result->dhrys_score);
-  u_strcpy(result->dhrys_score + u_strlen(result->dhrys_score), L".");
-  u_ltou(dhrys_f, result->dhrys_score + u_strlen(result->dhrys_score));
+  sprintf(float_string, "%lu.%02lu", dhrys_i, dhrys_f);
+  u_atou(float_string, result->dhrys_score);
   u_strcpy(result->dhrys_score + u_strlen(result->dhrys_score), L" D/sec");
 
   dmips_i = (dhrys_i * 100 + dhrys_f) / DMIPS_VAX_11_780_CONST;
   dmips_i /= 100;
   dmips_f = ((dhrys_i * 100 + dhrys_f) / DMIPS_VAX_11_780_CONST) % 100;
 
-  u_ltou(dmips_i, result->dhrys_mips);
-  u_strcpy(result->dhrys_mips + u_strlen(result->dhrys_mips), L".");
-  u_ltou(dmips_f, result->dhrys_mips + u_strlen(result->dhrys_mips));
+  sprintf(float_string, "%lu.%02lu", dmips_i, dmips_f);
+  u_atou(float_string, result->dhrys_mips);
   u_strcpy(result->dhrys_mips + u_strlen(result->dhrys_mips), L" DMIPS");
 
-    printf("User_Time %ld\n",User_Time);
-    printf("Number_Of_Runs %d\n",Number_Of_Runs);
-    printf("Time per run %ld\n",User_Time/Number_Of_Runs);
+  printf("User_Time %ld\n",User_Time);
+  printf("Number_Of_Runs %d\n",Number_Of_Runs);
+  printf("Time per run %ld\n",User_Time/Number_Of_Runs);
 
-
-    return(0);
+  return(0);
 }
 
 

@@ -4,6 +4,8 @@
 
 #include "Benchmark.h"
 
+char float_string[FLOAT_STRING];
+
 #if __CC_ARM && __arm
 #define nop() \
 	__asm { \
@@ -54,9 +56,8 @@ UINT32 BogoMIPS(BENCHMARK_RESULTS_CPU_T *result) {
 			u_ltou((UINT32) suPalTicksToMsec(delta), result->bogo_time);
 			u_strcpy(result->bogo_time + u_strlen(result->bogo_time), L" ms");
 
-			u_ltou(bmips_i, result->bogo_mips);
-			u_strcpy(result->bogo_mips + u_strlen(result->bogo_mips), L".");
-			u_ltou(bmips_f, result->bogo_mips + u_strlen(result->bogo_mips));
+			sprintf(float_string, "%lu.%02lu", bmips_i, bmips_f);
+			u_atou(float_string, result->bogo_mips);
 			u_strcpy(result->bogo_mips + u_strlen(result->bogo_mips), L" BMIPS");
 
 			LOG("CPU: Delta ticks: %lu\n", delta);
@@ -255,13 +256,12 @@ UINT32 TotalHeapSize(BENCHMARK_RESULTS_HEAP_T *result) {
 		size_i = total_size / 1024;
 		size_f = ((total_size % 1024) * 100) / 1024;
 
-		u_ltou(time_i, result->desc);
-		u_strcpy(result->desc + u_strlen(result->desc), L".");
-		u_ltou(time_f, result->desc + u_strlen(result->desc));
+		sprintf(float_string, "%lu.%02lu", time_i, time_f);
+		u_atou(float_string, result->desc);
 		u_strcpy(result->desc + u_strlen(result->desc), L" sec | ");
-		u_ltou(size_i, result->desc + u_strlen(result->desc));
-		u_strcpy(result->desc + u_strlen(result->desc), L".");
-		u_ltou(size_f, result->desc + u_strlen(result->desc));
+
+		sprintf(float_string, "%lu.%02lu", size_i, size_f);
+		u_atou(float_string, result->desc + u_strlen(result->desc));
 		u_strcpy(result->desc + u_strlen(result->desc), L" KiB");
 	}
 

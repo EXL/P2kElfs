@@ -8,6 +8,9 @@
 #endif
 
 #define RESULT_STRING                  (64)
+#define FLOAT_STRING                   (16)
+
+extern char float_string[FLOAT_STRING];
 
 /* CPU Benchmark */
 
