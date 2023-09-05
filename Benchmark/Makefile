@@ -23,6 +23,7 @@ DEFINES = -D__P2K__ -DEP1
 ELF_NAME = Benchmark
 
 all:
+	$(ARM_PATH)/bin/armasm -32 -bi -apcs /interwork delay_armv4t_ADS.s delay_armv4t_ADS.o
 	$(ARM_PATH)/bin/tcc -I$(SDK_PATH) $(DEFINES) -bigend -apcs /interwork -O2 -c dhry_1.c \
 		-o dhry_1.o
 	$(ARM_PATH)/bin/tcc -I$(SDK_PATH) $(DEFINES) -bigend -apcs /interwork -O2 -c dhry_2.c \
@@ -35,7 +36,8 @@ all:
 		-o $(ELF_NAME).o
 
 	$(ARM_PATH)/bin/armlink -nolocals -reloc -first $(LIB_MAIN)\(Lib\) \
-		dhry_1.o dhry_2.o Phases.o FireEffect.o $(ELF_NAME).o $(LIB_PATH)/$(LIB_MAIN) -o $(ELF_NAME).elf
+		delay_armv4t_ADS.o dhry_1.o dhry_2.o Phases.o FireEffect.o $(ELF_NAME).o \
+		$(LIB_PATH)/$(LIB_MAIN) -o $(ELF_NAME).elf
 
 clean:
 	-rm -f *.o

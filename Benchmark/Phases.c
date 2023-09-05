@@ -6,40 +6,93 @@
 
 char float_string[FLOAT_STRING];
 
-/* ADS */
-#if __CC_ARM && __arm
-static __inline void BogoMIPS_Delay(UINT32 loops) {
-#pragma O0
-	UINT32 i;
-	for (i = 0; i < loops; ++i) {
-		__asm { nop };
+#if defined(PALMOS_BOGOMIPS)
+/* This is the number of bits of precision for the loops_per_second.  Each
+   bit takes on average 1.5/HZ seconds.  This (like the original) is a little
+   better than 1% */
+#define LPS_PREC 8
+#define HZ 1000
+#define TimGetTicks() ((UINT32) suPalTicksToMsec(suPalReadTime()))
+
+UINT32 BogoMIPS(BENCHMARK_RESULTS_CPU_T *result) {
+	UINT32 ticks;
+	UINT32 loopbit;
+	UINT32 bmips_i;
+	UINT32 bmips_f;
+	UINT64 delta_a;
+	UINT64 delta_b;
+	UINT32 lps_precision = LPS_PREC;
+	UINT32 loops_per_sec = 1;
+
+	delta_a = suPalReadTime();
+
+	while (loops_per_sec <<= 1) {  //end while when counter overflows
+		/* wait for "start of" clock tick */
+		ticks = TimGetTicks();
+		while (ticks == TimGetTicks())
+			/* nothing */;
+		/* Go .. */
+		ticks = TimGetTicks();
+		delay_bmips(loops_per_sec);
+		ticks = TimGetTicks() - ticks;
+		if (ticks) /* Break as soon as get delay longer than 1 tick*/
+			break;
 	}
-#pragma O2
+
+	/* Do a binary approximation to get loops_per_jiffy set to equal one clock (up to lps_precision bits) */
+	loops_per_sec >>= 1;
+
+	loopbit = loops_per_sec;
+	while (lps_precision-- && (loopbit >>= 1)) {
+		loops_per_sec |= loopbit;
+		ticks = TimGetTicks();
+		while (ticks == TimGetTicks());
+		ticks = TimGetTicks();
+		delay_bmips(loops_per_sec);
+		if (TimGetTicks() != ticks) {  /* longer than 1 tick */
+			loops_per_sec &= ~loopbit;
+		}
+	}
+
+	loops_per_sec *= HZ / 1000;
+
+	bmips_i = loops_per_sec / (500000 / HZ);
+	bmips_f = (loops_per_sec / (5000 / HZ)) % 100;
+
+	delta_b = suPalReadTime() - delta_a;
+
+	u_ltou((UINT32) suPalTicksToMsec(delta_b), result->bogo_time);
+	u_strcpy(result->bogo_time + u_strlen(result->bogo_time), L" ms");
+
+	sprintf(float_string, "%lu.%02lu", bmips_i, bmips_f);
+	u_atou(float_string, result->bogo_mips);
+	u_strcpy(result->bogo_mips + u_strlen(result->bogo_mips), L" BMIPS");
+
+	LOG("CPU: Delta ticks: %lu\n", delta_b);
+	LOG("CPU: Delta ms: %lu\n", (UINT32) suPalTicksToMsec(delta_b));
+	LOG("CPU: Loops/s: %lu\n", loops_per_sec);
+	LOG("CPU: BogoMIPS: %lu.%02lu\n", bmips_i, bmips_f);
+
+	return RESULT_OK;
 }
 #endif
 
-/* GCC */
-#if defined(__GNUC__)
-static inline void __attribute__((optimize("O0"))) BogoMIPS_Delay(UINT32 loops) {
-	UINT32 i;
-	for (i = 0; i < loops; ++i) {
-		asm("nop");
-	}
-}
-#endif
-
+#if defined(LINUX_BOGOMIPS)
 UINT32 BogoMIPS(BENCHMARK_RESULTS_CPU_T *result) {
 	UINT32 loops_per_sec = 1;
 
-	while ((loops_per_sec <<= 1)) {
+	while ((loops_per_sec *= 2)) {
 		UINT64 ticks;
 		UINT32 delta;
 
 		ticks = suPalReadTime();
 
-		BogoMIPS_Delay(loops_per_sec);
+		delay_bmips(loops_per_sec);
 
 		delta = (UINT32) (suPalReadTime() - ticks);
+
+		LOG("=> %d %d\n", loops_per_sec, delta);
+		suSleep(1, NULL);
 
 		if (delta >= TICKS_PER_SEC) {
 			UINT32 lps = loops_per_sec;
@@ -69,6 +122,16 @@ UINT32 BogoMIPS(BENCHMARK_RESULTS_CPU_T *result) {
 	LOG("CPU: Error: %s\n", "Cannot calculate BogoMIPS!");
 	return RESULT_FAIL;
 }
+#endif
+
+#if defined(MCORE_BOGOMIPS)
+UINT32 BogoMIPS(BENCHMARK_RESULTS_CPU_T *result) {
+	u_strcpy(result->bogo_time, L"Not Implemented");
+	u_strcpy(result->bogo_mips, L"Not Implemented");
+
+	return RESULT_FAIL;
+}
+#endif
 
 static void *AllocateBiggestBlock(UINT32 start_size, UINT32 *max_block_size, UINT32 step, BOOL java_heap) {
 	UINT32 size;

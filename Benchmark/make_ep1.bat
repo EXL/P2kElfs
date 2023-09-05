@@ -18,14 +18,15 @@ set LIB_PATH=%ARM_PATH%\lib
 set LIB_MAIN=Lib.o
 
 :: Defines.
-set DEFINES=-D__P2K__ -DEP1 -DFTR_L7E
-:: set DEFINES=-D__P2K__ -DEP1 -DDEBUG -DFTR_V600
-:: set DEFINES=-D__P2K__ -DEP1 -DDEBUG -DFTR_L7E
+set DEFINES=-D__P2K__ -DEP1 -DPALMOS_BOGOMIPS
+:: set DEFINES=-D__P2K__ -DEP1 -DDEBUG -DPALMOS_BOGOMIPS -DFTR_V600
+:: set DEFINES=-D__P2K__ -DEP1 -DDEBUG -DPALMOS_BOGOMIPS -DFTR_L7E
 
 :: ELF name.
 set ELF_NAME=Benchmark
 
 :: Compiling step.
+%ARM_PATH%\armasm -32 -bi -apcs /interwork delay_armv4t_ADS.s delay_armv4t_ADS.o
 %ARM_PATH%\tcc -I%SDK_PATH% %DEFINES% -bigend -apcs /interwork -O2 -c dhry_1.c -o dhry_1.o
 %ARM_PATH%\tcc -I%SDK_PATH% %DEFINES% -bigend -apcs /interwork -O2 -c dhry_2.c -o dhry_2.o
 %ARM_PATH%\tcc -I%SDK_PATH% %DEFINES% -bigend -apcs /interwork -O2 -c Phases.c -o Phases.o
@@ -33,7 +34,8 @@ set ELF_NAME=Benchmark
 %ARM_PATH%\tcc -I%SDK_PATH% %DEFINES% -bigend -apcs /interwork -O2 -c %ELF_NAME%.c -o %ELF_NAME%.o
 
 :: Linking step.
-%ARM_PATH%\armlink -nolocals -reloc -first %LIB_MAIN%(Lib) dhry_1.o dhry_2.o Phases.o FireEffect.o %ELF_NAME%.o ^
+%ARM_PATH%\armlink -nolocals -reloc -first %LIB_MAIN%(Lib) ^
+	delay_armv4t_ADS.o dhry_1.o dhry_2.o Phases.o FireEffect.o %ELF_NAME%.o ^
 	%LIB_PATH%\%LIB_MAIN% -o %ELF_NAME%.elf
 
 if /I "%1"=="clean" (

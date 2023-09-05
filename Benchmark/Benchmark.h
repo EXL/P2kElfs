@@ -27,6 +27,8 @@ typedef struct {
 	WCHAR dhrys_mips[RESULT_STRING];
 } BENCHMARK_RESULTS_CPU_T;
 
+extern void delay_bmips(UINT32 loops);
+
 extern UINT32 BogoMIPS(BENCHMARK_RESULTS_CPU_T *result);
 
 extern int Dhrystone(BENCHMARK_RESULTS_CPU_T *result);

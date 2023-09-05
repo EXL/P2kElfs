@@ -20,7 +20,7 @@ set LIB_MAIN=std.sa
 set LIB_LIBC=libc.a
 
 :: Defines.
-set DEFINES=-D__P2K__ -DEP2
+set DEFINES=-D__P2K__ -DEP2 -DPALMOS_BOGOMIPS
 :: set DEFINES=-D__P2K__ -DEP2 -DFTR_V600
 :: set DEFINES=-D__P2K__ -DEP2 -DFTR_L7E
 
@@ -34,6 +34,9 @@ set OPTIM=-O2
 set ELF_NAME=Benchmark
 
 :: Compiling step.
+%ARM_PATH%\bin\arm-eabi-gcc -c -Wall -mbig-endian -marm -mthumb-interwork -nostdlib ^
+	-fshort-wchar -fshort-enums -fpack-struct=4 -fno-builtin -fvisibility=hidden ^
+	-I%SDK_PATH% %INCLUDES% %DEFINES% %OPTIM% delay_armv4t_GCC.s -o delay_armv4t_GCC.o
 %ARM_PATH%\bin\arm-eabi-gcc -c -Wall -mbig-endian -mthumb -mthumb-interwork -nostdlib ^
 	-fshort-wchar -fshort-enums -fpack-struct=4 -fno-builtin -fvisibility=hidden ^
 	-I%SDK_PATH% %INCLUDES% %DEFINES% %OPTIM% dhry_1.c -o dhry_1.o
@@ -51,7 +54,8 @@ set ELF_NAME=Benchmark
 	-I%SDK_PATH% %INCLUDES% %DEFINES% %OPTIM% %ELF_NAME%.c -o %ELF_NAME%.o
 
 :: Linking step.
-%ARM_PATH%\bin\arm-eabi-ld -pie -EB %OPTIM% -nostdlib dhry_1.o dhry_2.o Phases.o FireEffect.o %ELF_NAME%.o ^
+%ARM_PATH%\bin\arm-eabi-ld -pie -EB %OPTIM% -nostdlib ^
+	delay_armv4t_GCC.o dhry_1.o dhry_2.o Phases.o FireEffect.o %ELF_NAME%.o ^
 	%LIB_PATH%\%LIB_MAIN% %LIB_PATH%\%LIB_LIBC% -o %ELF_NAME%_p.elf
 
 :: Post linking step.

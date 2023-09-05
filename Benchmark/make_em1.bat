@@ -11,7 +11,7 @@ set MCORE_PATH=C:\MCORE_EM1
 set SDK_PATH=%MCORE_PATH%\SDK
 
 :: Defines.
-set DEFINES=-D__P2K__ -DEM1
+set DEFINES=-D__P2K__ -DEM1 -DMCORE_BOGOMIPS
 
 :: Includes.
 set INCLUDES=-I.
