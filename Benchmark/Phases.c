@@ -73,11 +73,11 @@ UINT32 BogoMIPS(BENCHMARK_RESULTS_CPU_T *result) {
 	u_atou(float_string, result->bogo_mips);
 	u_strcpy(result->bogo_mips + u_strlen(result->bogo_mips), L" BMIPS");
 
-	LOG("CPU: Delta A ticks: %lu\n", delta_a);
+	LOG("CPU: Delta A ticks: %llu\n", delta_a);
 	LOG("CPU: Delta A ms: %lu\n", (UINT32) suPalTicksToMsec(delta_a));
-	LOG("CPU: Delta B ticks: %lu\n", delta_b);
+	LOG("CPU: Delta B ticks: %llu\n", delta_b);
 	LOG("CPU: Delta B ms: %lu\n", (UINT32) suPalTicksToMsec(delta_b));
-	LOG("CPU: Delta ticks: %lu\n", delta);
+	LOG("CPU: Delta ticks: %llu\n", delta);
 	LOG("CPU: Delta ms: %lu\n", (UINT32) suPalTicksToMsec(delta));
 	LOG("CPU: Loops/s: %lu\n", loops_per_sec);
 	LOG("CPU: BogoMIPS: %lu.%02lu\n", bmips_i, bmips_f);
@@ -103,8 +103,7 @@ UINT32 BogoMIPS(BENCHMARK_RESULTS_CPU_T *result) {
 
 		delta = (UINT32) (delta_b - delta_a);
 
-		LOG("=> %d %d\n", loops_per_sec, delta);
-		suSleep(10, NULL);
+		D("=> %lu %lu\n", loops_per_sec, delta);
 
 		if (delta >= TICKS_PER_SEC) {
 			UINT32 lps = loops_per_sec;
@@ -122,9 +121,9 @@ UINT32 BogoMIPS(BENCHMARK_RESULTS_CPU_T *result) {
 			u_atou(float_string, result->bogo_mips);
 			u_strcpy(result->bogo_mips + u_strlen(result->bogo_mips), L" BMIPS");
 
-			LOG("CPU: Delta A ticks: %lu\n", delta_a);
+			LOG("CPU: Delta A ticks: %llu\n", delta_a);
 			LOG("CPU: Delta A ms: %lu\n", (UINT32) suPalTicksToMsec(delta_a));
-			LOG("CPU: Delta B ticks: %lu\n", delta_b);
+			LOG("CPU: Delta B ticks: %llu\n", delta_b);
 			LOG("CPU: Delta B ms: %lu\n", (UINT32) suPalTicksToMsec(delta_b));
 			LOG("CPU: Delta ticks: %lu\n", delta);
 			LOG("CPU: Delta ms: %lu\n", (UINT32) suPalTicksToMsec(delta));
@@ -134,6 +133,9 @@ UINT32 BogoMIPS(BENCHMARK_RESULTS_CPU_T *result) {
 			return RESULT_OK;
 		}
 	}
+
+	u_strcpy(result->bogo_time, L"Error");
+	u_strcpy(result->bogo_mips, L"Error");
 
 	LOG("CPU: Error: %s\n", "Cannot calculate BogoMIPS!");
 	return RESULT_FAIL;
