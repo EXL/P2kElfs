@@ -1,6 +1,9 @@
 #include <loader.h>
 #include <utilities.h>
 #include <mem.h>
+#if defined(EP1) || defined(EP2)
+#include <tasks.h>
+#endif
 
 #include "Benchmark.h"
 
@@ -21,6 +24,7 @@ UINT32 BogoMIPS(BENCHMARK_RESULTS_CPU_T *result) {
 	UINT32 bmips_f;
 	UINT64 delta_a;
 	UINT64 delta_b;
+	UINT64 delta;
 	UINT32 lps_precision = LPS_PREC;
 	UINT32 loops_per_sec = 1;
 
@@ -59,17 +63,22 @@ UINT32 BogoMIPS(BENCHMARK_RESULTS_CPU_T *result) {
 	bmips_i = loops_per_sec / (500000 / HZ);
 	bmips_f = (loops_per_sec / (5000 / HZ)) % 100;
 
-	delta_b = suPalReadTime() - delta_a;
+	delta_b = suPalReadTime();
+	delta = delta_b - delta_a;
 
-	u_ltou((UINT32) suPalTicksToMsec(delta_b), result->bogo_time);
+	u_ltou((UINT32) suPalTicksToMsec(delta), result->bogo_time);
 	u_strcpy(result->bogo_time + u_strlen(result->bogo_time), L" ms");
 
 	sprintf(float_string, "%lu.%02lu", bmips_i, bmips_f);
 	u_atou(float_string, result->bogo_mips);
 	u_strcpy(result->bogo_mips + u_strlen(result->bogo_mips), L" BMIPS");
 
-	LOG("CPU: Delta ticks: %lu\n", delta_b);
-	LOG("CPU: Delta ms: %lu\n", (UINT32) suPalTicksToMsec(delta_b));
+	LOG("CPU: Delta A ticks: %lu\n", delta_a);
+	LOG("CPU: Delta A ms: %lu\n", (UINT32) suPalTicksToMsec(delta_a));
+	LOG("CPU: Delta B ticks: %lu\n", delta_b);
+	LOG("CPU: Delta B ms: %lu\n", (UINT32) suPalTicksToMsec(delta_b));
+	LOG("CPU: Delta ticks: %lu\n", delta);
+	LOG("CPU: Delta ms: %lu\n", (UINT32) suPalTicksToMsec(delta));
 	LOG("CPU: Loops/s: %lu\n", loops_per_sec);
 	LOG("CPU: BogoMIPS: %lu.%02lu\n", bmips_i, bmips_f);
 
@@ -82,17 +91,20 @@ UINT32 BogoMIPS(BENCHMARK_RESULTS_CPU_T *result) {
 	UINT32 loops_per_sec = 1;
 
 	while ((loops_per_sec *= 2)) {
-		UINT64 ticks;
+		UINT64 delta_a;
+		UINT64 delta_b;
 		UINT32 delta;
 
-		ticks = suPalReadTime();
+		delta_a = suPalReadTime();
 
 		delay_bmips(loops_per_sec);
 
-		delta = (UINT32) (suPalReadTime() - ticks);
+		delta_b = suPalReadTime();
+
+		delta = (UINT32) (delta_b - delta_a);
 
 		LOG("=> %d %d\n", loops_per_sec, delta);
-		suSleep(1, NULL);
+		suSleep(10, NULL);
 
 		if (delta >= TICKS_PER_SEC) {
 			UINT32 lps = loops_per_sec;
@@ -110,6 +122,10 @@ UINT32 BogoMIPS(BENCHMARK_RESULTS_CPU_T *result) {
 			u_atou(float_string, result->bogo_mips);
 			u_strcpy(result->bogo_mips + u_strlen(result->bogo_mips), L" BMIPS");
 
+			LOG("CPU: Delta A ticks: %lu\n", delta_a);
+			LOG("CPU: Delta A ms: %lu\n", (UINT32) suPalTicksToMsec(delta_a));
+			LOG("CPU: Delta B ticks: %lu\n", delta_b);
+			LOG("CPU: Delta B ms: %lu\n", (UINT32) suPalTicksToMsec(delta_b));
 			LOG("CPU: Delta ticks: %lu\n", delta);
 			LOG("CPU: Delta ms: %lu\n", (UINT32) suPalTicksToMsec(delta));
 			LOG("CPU: Loops/s: %lu\n", loops_per_sec);
