@@ -1,5 +1,13 @@
 ../Benchmark.c
+../Benchmark.h
 ../Phases.c
+../delay_armv4t_ADS.s
+../delay_armv4t_GCC.s
+../dhry_1.c
+../dhry_2.c
 ../Makefile
-../make.bat
+../make_ep1.bat
+../make_ep2.bat
+../make_em1.bat
+../make_em2.bat
 ../ReadMe.md
