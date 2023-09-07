@@ -19,6 +19,7 @@
 #include <utilities.h>
 
 #include "Overclock.h"
+#include "icons/icon_overclock_48x48.h"
 
 #define TIMER_FAST_TRIGGER_MS             (1)
 #define TIMER_POPUP_DELAY_MS             (50)
@@ -42,6 +43,7 @@ typedef enum {
 
 typedef enum {
 	APP_RESOURCE_NAME,
+	APP_RESOURCE_ICON_OVERCLOCK,
 	APP_RESOURCE_MAX
 } APP_RESOURCES_T;
 
@@ -134,10 +136,16 @@ static const WCHAR g_str_popup_error_p1[] = L"Error!";
 static const WCHAR g_str_popup_error_p2[] = L"Cannot set Neptune SoC clocks to: ";
 static const WCHAR g_str_view_help[] = L"Help";
 static const WCHAR g_str_help_content_p1[] =
-	L"An application for overclocking ARM7TDMI core in Neptune SoC phones from stock 52 MHz to 65 MHz.";
+	L"An application for overclocking ARM7TDMI core in Neptune SoC phones from stock 52 MHz to 65 MHz.\n\n"
+	L"Be careful with experimenting, overclocking can be dangerous and can brick your phone!\n\n"
+	L"First digit is the clock value of the MCU (CPU), it was tested on 65 MHz.\n\n"
+	L"Second digit is the reference clock for DSP and various peripherals.\n\n"
+	L"Base frequency of Clock Control Module (CCM) is 260 MHz.\n\n"
+	L"Dividers are 1, 2, 3, 4, 5, 6, 8, 10 or 12.";
 static const WCHAR g_str_about_content_p1[] = L"Version: 1.0";
-static const WCHAR g_str_about_content_p2[] = L"\x00A9 EXL, 07-Sep-2023.";
+static const WCHAR g_str_about_content_p2[] = L"\x00A9 EXL, 08-Sep-2023.";
 static const WCHAR g_str_about_content_p3[] = L"https://github.com/EXL/P2kElfs/tree/master/Overclock";
+static const WCHAR g_str_about_content_p4[] = L"       "; /* HACK: gap */
 
 static WCHAR g_str_current_clock[STRING_CURRENT_CLOCK_MAX];
 
@@ -330,6 +338,9 @@ static UINT32 InitResourses(RESOURCE_ID *resources) {
 	status |= DRM_CreateResource(&resources[APP_RESOURCE_NAME], RES_TYPE_STRING,
 		(void *) g_str_app_name, u_strlen(g_str_app_name) * sizeof(WCHAR));
 
+	status |= DRM_CreateResource(&resources[APP_RESOURCE_ICON_OVERCLOCK], RES_TYPE_GRAPHICS,
+		(void *) overclock_48x48_gif, sizeof(overclock_48x48_gif));
+
 	return status;
 }
 
@@ -420,8 +431,10 @@ static UINT32 HandleStateEnter(EVENT_STACK_T *ev_st, APPLICATION_T *app, ENTER_S
 					UIS_MakeContentFromString("q0Nq1", &content, g_str_view_help, g_str_help_content_p1);
 					break;
 				case APP_VIEW_ABOUT:
-					UIS_MakeContentFromString("q0NMCq1NMCq2NMCq3", &content, g_str_app_name,
-						g_str_about_content_p1, g_str_about_content_p2, g_str_about_content_p3);
+					UIS_MakeContentFromString("q0NMCp1NMCq2NMCq3NMCq4NMCq5NMCq6", &content, g_str_app_name,
+						app_instance->resources[APP_RESOURCE_ICON_OVERCLOCK],
+						g_str_about_content_p1, g_str_about_content_p2, g_str_about_content_p3,
+						g_str_about_content_p4, g_str_about_content_p4);
 					break;
 			}
 			dialog = UIS_CreateViewer(&port, &content, NULL);
