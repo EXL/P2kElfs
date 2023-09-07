@@ -23,6 +23,7 @@
 #define TIMER_FAST_TRIGGER_MS             (1)
 #define TIMER_POPUP_DELAY_MS             (50)
 #define TIMER_EXIT_DELAY_MS             (100)
+#define STRING_CURRENT_CLOCK_MAX         (64)
 
 typedef enum {
 	APP_STATE_ANY,
@@ -36,7 +37,7 @@ typedef enum {
 typedef enum {
 	APP_TIMER_EXIT = 0xE398,
 	APP_TIMER_EXIT_FAST,
-	APP_TIMER_DO_BENCHMARK
+	APP_TIMER_DO_OVERCLOCK
 } APP_TIMER_T;
 
 typedef enum {
@@ -46,10 +47,17 @@ typedef enum {
 
 typedef enum {
 	APP_MENU_ITEM_FIRST,
-	APP_MENU_ITEM_BENCH_CPU = APP_MENU_ITEM_FIRST,
-	APP_MENU_ITEM_BENCH_GPU,
-	APP_MENU_ITEM_BENCH_RAM,
-	APP_MENU_ITEM_BENCH_HEAP,
+	APP_MENU_ITEM_13MHZ_26MHZ = APP_MENU_ITEM_FIRST,
+	APP_MENU_ITEM_26MHZ_26MHZ,
+	APP_MENU_ITEM_39MHZ_43MHZ,
+	APP_MENU_ITEM_52MHZ_26MHZ,
+	APP_MENU_ITEM_65MHZ_26MHZ,
+	APP_MENU_ITEM_65MHZ_32MHZ,
+	APP_MENU_ITEM_65MHZ_65MHZ,
+	APP_MENU_ITEM_86MHZ_26MHZ,
+	APP_MENU_ITEM_86MHZ_32MHZ,
+	APP_MENU_ITEM_130MHZ_26MHZ,
+	APP_MENU_ITEM_130MHZ_32MHZ,
 	APP_MENU_ITEM_HELP,
 	APP_MENU_ITEM_ABOUT,
 	APP_MENU_ITEM_EXIT,
@@ -57,16 +65,13 @@ typedef enum {
 } APP_MENU_ITEM_T;
 
 typedef enum {
-	APP_POPUP_PLEASE_WAIT
+	APP_POPUP_OK,
+	APP_POPUP_ERROR
 } APP_POPUP_T;
 
 typedef enum {
 	APP_VIEW_HELP,
-	APP_VIEW_ABOUT,
-	APP_VIEW_CPU_RESULTS,
-	APP_VIEW_GPU_RESULTS,
-	APP_VIEW_RAM_RESULTS,
-	APP_VIEW_HEAP_RESULTS
+	APP_VIEW_ABOUT
 } APP_VIEW_T;
 
 typedef struct {
@@ -77,11 +82,6 @@ typedef struct {
 	APP_VIEW_T view;
 	APP_MENU_ITEM_T menu_current_item_index;
 	BOOL flag_from_select;
-
-	BENCHMARK_RESULTS_CPU_T cpu_result;
-	BENCHMARK_RESULTS_GPU_T gpu_result;
-	BENCHMARK_RESULTS_RAM_T ram_result;
-	BENCHMARK_RESULTS_HEAP_T heap_result;
 } APP_INSTANCE_T;
 
 #if defined(EP1)
@@ -109,35 +109,37 @@ static UINT32 HandleEventSelect(EVENT_STACK_T *ev_st, APPLICATION_T *app);
 static UINT32 HandleEventBack(EVENT_STACK_T *ev_st, APPLICATION_T *app);
 
 static LIST_ENTRY_T *CreateList(EVENT_STACK_T *ev_st, APPLICATION_T *app, UINT32 start, UINT32 count);
+static const WCHAR *GetSelectedClocks(APP_MENU_ITEM_T menu_item);
 
-const char g_app_name[APP_NAME_LEN] = "Benchmark";
+const char g_app_name[APP_NAME_LEN] = "Overclock";
 
-static const WCHAR g_str_app_name[] = L"Benchmark";
-static const WCHAR g_str_menu_bench_cpu[] = L"CPU (MCU)";
-static const WCHAR g_str_menu_bench_ipu[] = L"GPU (IPU)";
-static const WCHAR g_str_menu_bench_ram[] = L"RAM (SRAM)";
-static const WCHAR g_str_menu_bench_heap[] = L"HEAP (J2ME)";
+static const WCHAR g_str_app_name[] = L"Overclock";
+static const WCHAR g_str_menu_13_26[] = L"13 | 26 MHz";
+static const WCHAR g_str_menu_26_26[] = L"26 | 26 MHz";
+static const WCHAR g_str_menu_39_43[] = L"39 | 43 MHz";
+static const WCHAR g_str_menu_52_26[] = L"52 | 26 MHz (stock)";
+static const WCHAR g_str_menu_65_26[] = L"65 | 26 MHz";
+static const WCHAR g_str_menu_65_32[] = L"65 | 32 MHz";
+static const WCHAR g_str_menu_65_65[] = L"65 | 65 MHz";
+static const WCHAR g_str_menu_86_26[] = L"86 | 26 MHz";
+static const WCHAR g_str_menu_86_32[] = L"86 | 32 MHz";
+static const WCHAR g_str_menu_130_26[] = L"130 | 26 MHz";
+static const WCHAR g_str_menu_130_32[] = L"130 | 32 MHz";
 static const WCHAR g_str_menu_help[] = L"Help...";
 static const WCHAR g_str_menu_about[] = L"About...";
 static const WCHAR g_str_menu_exit[] = L"Exit";
-static const WCHAR g_str_popup_wait_p1[] = L"Benchmarking in progress!";
-static const WCHAR g_str_popup_wait_p2[] = L"Please wait...";
+static const WCHAR g_str_popup_ok_p1[] = L"Success!";
+static const WCHAR g_str_popup_ok_p2[] = L"Neptune SoC clocks: ";
+static const WCHAR g_str_popup_error_p1[] = L"Error!";
+static const WCHAR g_str_popup_error_p2[] = L"Cannot set Neptune SoC clocks to: ";
 static const WCHAR g_str_view_help[] = L"Help";
-static const WCHAR g_str_help_content_p1[] = L"A simple ELF benchmarking application for Motorola P2K phones.";
+static const WCHAR g_str_help_content_p1[] =
+	L"An application for overclocking ARM7TDMI core in Neptune SoC phones from stock 52 MHz to 65 MHz.";
 static const WCHAR g_str_about_content_p1[] = L"Version: 1.0";
-static const WCHAR g_str_about_content_p2[] = L"\x00A9 EXL, 28-Aug-2023.";
-static const WCHAR g_str_about_content_p3[] = L"https://github.com/EXL/P2kElfs/tree/master/Benchmark";
-static const WCHAR g_str_view_cpu_results[] = L"CPU Results";
-static const WCHAR g_str_view_cpu_bogomips[] = L"BogoMIPS:";
-static const WCHAR g_str_view_cpu_dhrystone[] = L"Dhrystone 2.1:";
-static const WCHAR g_str_view_ram_results[] = L"RAM Results";
-static const WCHAR g_str_view_mem_total[] = L"Total available:";
-static const WCHAR g_str_view_ram_top[] = L"Top 6 blocks:";
-static const WCHAR g_str_view_heap_results[] = L"Java Heap Results";
-static const WCHAR g_str_view_gpu_results[] = L"GPU Results";
-static const WCHAR g_str_view_gpu_fps[] = L"Average FPS:";
-static const WCHAR g_str_view_gpu_properties[] = L"Properties:";
-static const WCHAR g_str_view_gpu_todo[] = L"Not yet implemented, sorry!";
+static const WCHAR g_str_about_content_p2[] = L"\x00A9 EXL, 07-Sep-2023.";
+static const WCHAR g_str_about_content_p3[] = L"https://github.com/EXL/P2kElfs/tree/master/Overclock";
+
+static WCHAR g_str_current_clock[STRING_CURRENT_CLOCK_MAX];
 
 #if defined(EP2)
 static ldrElf g_app_elf;
@@ -199,7 +201,7 @@ ldrElf *_start(WCHAR *uri, WCHAR *arguments) {
 	UINT32 reserve;
 
 	if (ldrIsLoaded(g_app_name)) {
-		cprint("Benchmark: Error! Application has already been loaded!\n");
+		cprint("Overclock: Error! Application has already been loaded!\n");
 		return NULL;
 	}
 
@@ -273,16 +275,16 @@ static UINT32 ApplicationStart(EVENT_STACK_T *ev_st, REG_ID_T reg_id, void *reg_
 
 	if (AFW_InquireRoutingStackByRegId(reg_id) != RESULT_OK) {
 		app_instance = (APP_INSTANCE_T *) APP_InitAppData((void *) APP_HandleEvent, sizeof(APP_INSTANCE_T),
-														  reg_id, 0, 1, 1, 1, 1, 0);
+			reg_id, 0, 1, 1, 1, 1, 0);
 
 		InitResourses(app_instance->resources);
 		app_instance->menu_current_item_index = APP_MENU_ITEM_FIRST;
-		app_instance->popup = APP_POPUP_PLEASE_WAIT;
+		app_instance->popup = APP_POPUP_OK;
 		app_instance->view = APP_VIEW_ABOUT;
 		app_instance->flag_from_select = FALSE;
 
 		status = APP_Start(ev_st, &app_instance->app, APP_STATE_MAIN,
-						   g_state_table_hdls, ApplicationStop, g_app_name, 0);
+			g_state_table_hdls, ApplicationStop, g_app_name, 0);
 
 #if defined(EP2)
 		g_app_elf.app = (APPLICATION_T *) app_instance;
@@ -326,7 +328,7 @@ static UINT32 InitResourses(RESOURCE_ID *resources) {
 	status = RESULT_OK;
 
 	status |= DRM_CreateResource(&resources[APP_RESOURCE_NAME], RES_TYPE_STRING,
-		(void *) g_str_app_name, (u_strlen(g_str_app_name) + 1) * sizeof(WCHAR));
+		(void *) g_str_app_name, u_strlen(g_str_app_name) * sizeof(WCHAR));
 
 	return status;
 }
@@ -375,15 +377,19 @@ static UINT32 HandleStateEnter(EVENT_STACK_T *ev_st, APPLICATION_T *app, ENTER_S
 		case APP_STATE_MAIN:
 			list = CreateList(ev_st, app, 1, APP_MENU_ITEM_MAX);
 			if (list != NULL) {
+				u_strcpy(g_str_current_clock, L"Overclock: ");
+				u_strcpy(g_str_current_clock + u_strlen(g_str_current_clock), L"130 MHz");
+				DRM_SetResource(app_instance->resources[APP_RESOURCE_NAME],
+					(void *) g_str_current_clock, (u_strlen(g_str_current_clock) + 1) * sizeof(WCHAR));
 				dialog = UIS_CreateStaticList(&port, 0, APP_MENU_ITEM_MAX, 0, list, FALSE, 2, NULL,
-											  app_instance->resources[APP_RESOURCE_NAME]);
+					app_instance->resources[APP_RESOURCE_NAME]);
 				suFreeMem(list);
 
 				/* Insert cursor to proper position. */
 				if (app_instance->flag_from_select) {
 					if (app_instance->menu_current_item_index != APP_MENU_ITEM_FIRST) {
 						APP_UtilAddEvChangeListPosition(ev_st, app, app_instance->menu_current_item_index + 1,
-														NULL, NULL, NULL);
+							NULL, NULL, NULL);
 						UIS_HandleEvent(dialog, ev_st);
 					}
 					app_instance->flag_from_select = FALSE;
@@ -393,12 +399,18 @@ static UINT32 HandleStateEnter(EVENT_STACK_T *ev_st, APPLICATION_T *app, ENTER_S
 		case APP_STATE_POPUP:
 			switch (app_instance->popup) {
 				default:
-				case APP_POPUP_PLEASE_WAIT:
-					notice_type = NOTICE_TYPE_WAIT;
-					UIS_MakeContentFromString("MCq0NMCq1", &content, g_str_popup_wait_p1, g_str_popup_wait_p2);
-					APP_UtilStartTimer(TIMER_POPUP_DELAY_MS, APP_TIMER_DO_BENCHMARK, app);
+				case APP_POPUP_OK:
+					notice_type = NOTICE_TYPE_OK;
+					UIS_MakeContentFromString("MCq0NMCq1NMCq2", &content, g_str_popup_ok_p1, g_str_popup_ok_p2,
+						GetSelectedClocks(app_instance->menu_current_item_index));
+					APP_UtilStartTimer(TIMER_POPUP_DELAY_MS, APP_TIMER_DO_OVERCLOCK, app);
 					break;
-				}
+				case APP_POPUP_ERROR:
+					notice_type = NOTICE_TYPE_OK;
+					UIS_MakeContentFromString("MCq0NMCq1NMCq2", &content, g_str_popup_error_p1, g_str_popup_error_p2,
+						GetSelectedClocks(app_instance->menu_current_item_index));
+					break;
+			}
 			dialog = UIS_CreateTransientNotice(&port, &content, notice_type);
 			break;
 		case APP_STATE_VIEW:
@@ -410,58 +422,6 @@ static UINT32 HandleStateEnter(EVENT_STACK_T *ev_st, APPLICATION_T *app, ENTER_S
 				case APP_VIEW_ABOUT:
 					UIS_MakeContentFromString("q0NMCq1NMCq2NMCq3", &content, g_str_app_name,
 						g_str_about_content_p1, g_str_about_content_p2, g_str_about_content_p3);
-					break;
-				case APP_VIEW_CPU_RESULTS:
-					UIS_MakeContentFromString(
-						"q0Nq1NSq2NSq3N NRq4NSq5NSq6NSq7", &content, g_str_view_cpu_results,
-						g_str_view_cpu_bogomips,
-							app_instance->cpu_result.bogo_time,
-							app_instance->cpu_result.bogo_mips,
-						g_str_view_cpu_dhrystone,
-							app_instance->cpu_result.dhrys_time,
-							app_instance->cpu_result.dhrys_score,
-							app_instance->cpu_result.dhrys_mips
-					);
-					break;
-				case APP_VIEW_GPU_RESULTS:
-					UIS_MakeContentFromString(
-						"q0Nq1NSq2NSq3NSq4NSq5NSq6NSq7N NRq8NSq9", &content, g_str_view_gpu_results,
-						g_str_view_gpu_fps,
-							app_instance->gpu_result.fps_pass1,
-							app_instance->gpu_result.fms_pass1,
-							app_instance->gpu_result.fps_pass2,
-							app_instance->gpu_result.fms_pass2,
-							app_instance->gpu_result.fps_pass3,
-							app_instance->gpu_result.fms_pass3,
-						g_str_view_gpu_properties,
-							app_instance->gpu_result.properties
-					);
-					break;
-				case APP_VIEW_RAM_RESULTS:
-#if defined(EP1) || defined(EP2)
-					UIS_MakeContentFromString(
-						"q0Nq1NSq2N NRq3NSq4NSq5NSq6NSq7NSq8NSq9", &content, g_str_view_ram_results,
-						g_str_view_mem_total,
-							app_instance->ram_result.total,
-						g_str_view_ram_top,
-							app_instance->ram_result.blocks[0],
-							app_instance->ram_result.blocks[1],
-							app_instance->ram_result.blocks[2],
-							app_instance->ram_result.blocks[3],
-							app_instance->ram_result.blocks[4],
-							app_instance->ram_result.blocks[5]
-					);
-#else
-					UIS_MakeContentFromString("q0Nq1", &content, g_str_view_ram_results, g_str_view_gpu_todo);
-#endif
-					break;
-				case APP_VIEW_HEAP_RESULTS:
-					UIS_MakeContentFromString(
-						"q0Nq1NSq2NSq3", &content, g_str_view_heap_results,
-						g_str_view_mem_total,
-							app_instance->heap_result.total,
-							app_instance->heap_result.desc
-					);
 					break;
 			}
 			dialog = UIS_CreateViewer(&port, &content, NULL);
@@ -511,62 +471,8 @@ static UINT32 HandleEventTimerExpired(EVENT_STACK_T *ev_st, APPLICATION_T *app) 
 			/* No break here. */
 		case APP_TIMER_EXIT_FAST:
 			/* Play an exit sound using quiet speaker. */
-			DL_AudPlayTone(0x00,  0xFF);
+			DL_AudPlayTone(0x00, 0xFF);
 			return ApplicationStop(ev_st, app);
-			break;
-		case APP_TIMER_DO_BENCHMARK:
-			switch (app_instance->menu_current_item_index) {
-				case APP_MENU_ITEM_BENCH_CPU:
-					app_instance->view = APP_VIEW_CPU_RESULTS;
-
-#if !defined(FTR_L7E)
-					BogoMIPS(&app_instance->cpu_result);
-#else
-					u_strcpy(&app_instance->cpu_result.bogo_time, L"Error: L7e");
-					u_strcpy(&app_instance->cpu_result->bogo_mips, L"Error: L7e");
-#endif
-					Dhrystone(&app_instance->cpu_result);
-
-
-					break;
-				case APP_MENU_ITEM_BENCH_GPU:
-					app_instance->view = APP_VIEW_GPU_RESULTS;
-
-#if defined(EP1) || defined(EP2)
-					Bench_GPU_Passes(BITMAP_WIDTH_LOW, BITMAP_HEIGHT_LOW,
-						app_instance->gpu_result.fps_pass1,
-						app_instance->gpu_result.fms_pass1,
-						app_instance->gpu_result.properties);
-
-					Bench_GPU_Passes(BITMAP_WIDTH_MID, BITMAP_HEIGHT_MID,
-						app_instance->gpu_result.fps_pass2,
-						app_instance->gpu_result.fms_pass2,
-						app_instance->gpu_result.properties);
-
-					Bench_GPU_Passes(BITMAP_WIDTH_HIGH, BITMAP_WIDTH_HIGH,
-						app_instance->gpu_result.fps_pass3,
-						app_instance->gpu_result.fms_pass3,
-						app_instance->gpu_result.properties);
-#endif
-
-					break;
-				case APP_MENU_ITEM_BENCH_RAM:
-					app_instance->view = APP_VIEW_RAM_RESULTS;
-
-					TotalRamSize(&app_instance->ram_result);
-					TopOfBiggestRamBlocks(&app_instance->ram_result);
-
-					break;
-				case APP_MENU_ITEM_BENCH_HEAP:
-					app_instance->view = APP_VIEW_HEAP_RESULTS;
-
-					TotalHeapSize(&app_instance->heap_result);
-
-					break;
-				default:
-					break;
-			}
-			APP_UtilChangeState(APP_STATE_VIEW, ev_st, app);
 			break;
 		default:
 			break;
@@ -588,10 +494,18 @@ static UINT32 HandleEventSelect(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
 	app_instance->menu_current_item_index = event->data.index - 1;
 
 	switch (app_instance->menu_current_item_index) {
-		case APP_MENU_ITEM_BENCH_CPU:
-		case APP_MENU_ITEM_BENCH_GPU:
-		case APP_MENU_ITEM_BENCH_RAM:
-		case APP_MENU_ITEM_BENCH_HEAP:
+		case APP_MENU_ITEM_13MHZ_26MHZ:
+		case APP_MENU_ITEM_26MHZ_26MHZ:
+		case APP_MENU_ITEM_39MHZ_43MHZ:
+		case APP_MENU_ITEM_52MHZ_26MHZ:
+		case APP_MENU_ITEM_65MHZ_26MHZ:
+		case APP_MENU_ITEM_65MHZ_32MHZ:
+		case APP_MENU_ITEM_65MHZ_65MHZ:
+		case APP_MENU_ITEM_86MHZ_26MHZ:
+		case APP_MENU_ITEM_86MHZ_32MHZ:
+		case APP_MENU_ITEM_130MHZ_26MHZ:
+		case APP_MENU_ITEM_130MHZ_32MHZ:
+			app_instance->popup = APP_POPUP_OK;
 			status |= APP_UtilChangeState(APP_STATE_POPUP, ev_st, app);
 			break;
 		case APP_MENU_ITEM_HELP:
@@ -646,17 +560,38 @@ static LIST_ENTRY_T *CreateList(EVENT_STACK_T *ev_st, APPLICATION_T *app, UINT32
 	}
 
 	status |= UIS_MakeContentFromString("Mq0",
-		&list_elements[APP_MENU_ITEM_BENCH_CPU].content.static_entry.text,
-		g_str_menu_bench_cpu);
+		&list_elements[APP_MENU_ITEM_13MHZ_26MHZ].content.static_entry.text,
+		g_str_menu_13_26);
 	status |= UIS_MakeContentFromString("Mq0",
-		&list_elements[APP_MENU_ITEM_BENCH_GPU].content.static_entry.text,
-		g_str_menu_bench_ipu);
+		&list_elements[APP_MENU_ITEM_26MHZ_26MHZ].content.static_entry.text,
+		g_str_menu_26_26);
 	status |= UIS_MakeContentFromString("Mq0",
-		&list_elements[APP_MENU_ITEM_BENCH_RAM].content.static_entry.text,
-		g_str_menu_bench_ram);
+		&list_elements[APP_MENU_ITEM_39MHZ_43MHZ].content.static_entry.text,
+		g_str_menu_39_43);
 	status |= UIS_MakeContentFromString("Mq0",
-		&list_elements[APP_MENU_ITEM_BENCH_HEAP].content.static_entry.text,
-		g_str_menu_bench_heap);
+		&list_elements[APP_MENU_ITEM_52MHZ_26MHZ].content.static_entry.text,
+		g_str_menu_52_26);
+	status |= UIS_MakeContentFromString("Mq0",
+		&list_elements[APP_MENU_ITEM_65MHZ_26MHZ].content.static_entry.text,
+		g_str_menu_65_26);
+	status |= UIS_MakeContentFromString("Mq0",
+		&list_elements[APP_MENU_ITEM_65MHZ_32MHZ].content.static_entry.text,
+		g_str_menu_65_32);
+	status |= UIS_MakeContentFromString("Mq0",
+		&list_elements[APP_MENU_ITEM_65MHZ_65MHZ].content.static_entry.text,
+		g_str_menu_65_65);
+	status |= UIS_MakeContentFromString("Mq0",
+		&list_elements[APP_MENU_ITEM_86MHZ_26MHZ].content.static_entry.text,
+		g_str_menu_86_26);
+	status |= UIS_MakeContentFromString("Mq0",
+		&list_elements[APP_MENU_ITEM_86MHZ_32MHZ].content.static_entry.text,
+		g_str_menu_86_32);
+	status |= UIS_MakeContentFromString("Mq0",
+		&list_elements[APP_MENU_ITEM_130MHZ_26MHZ].content.static_entry.text,
+		g_str_menu_130_26);
+	status |= UIS_MakeContentFromString("Mq0",
+		&list_elements[APP_MENU_ITEM_130MHZ_32MHZ].content.static_entry.text,
+		g_str_menu_130_32);
 	status |= UIS_MakeContentFromString("Mq0",
 		&list_elements[APP_MENU_ITEM_HELP].content.static_entry.text,
 		g_str_menu_help);
@@ -673,4 +608,34 @@ static LIST_ENTRY_T *CreateList(EVENT_STACK_T *ev_st, APPLICATION_T *app, UINT32
 	}
 
 	return list_elements;
+}
+
+static const WCHAR *GetSelectedClocks(APP_MENU_ITEM_T menu_item) {
+	switch (menu_item) {
+		case APP_MENU_ITEM_13MHZ_26MHZ:
+			return g_str_menu_13_26;
+		case APP_MENU_ITEM_26MHZ_26MHZ:
+			return g_str_menu_26_26;
+		case APP_MENU_ITEM_39MHZ_43MHZ:
+			return g_str_menu_39_43;
+		case APP_MENU_ITEM_52MHZ_26MHZ:
+			return g_str_menu_52_26;
+		case APP_MENU_ITEM_65MHZ_26MHZ:
+			return g_str_menu_65_26;
+		case APP_MENU_ITEM_65MHZ_32MHZ:
+			return g_str_menu_65_32;
+		case APP_MENU_ITEM_65MHZ_65MHZ:
+			return g_str_menu_65_65;
+		case APP_MENU_ITEM_86MHZ_26MHZ:
+			return g_str_menu_86_26;
+		case APP_MENU_ITEM_86MHZ_32MHZ:
+			return g_str_menu_86_32;
+		case APP_MENU_ITEM_130MHZ_26MHZ:
+			return g_str_menu_130_26;
+		case APP_MENU_ITEM_130MHZ_32MHZ:
+			return g_str_menu_130_32;
+		default:
+			break;
+	}
+	return NULL;
 }
