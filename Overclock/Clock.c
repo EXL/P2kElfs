@@ -1,3 +1,6 @@
+#include <loader.h>
+#include <utilities.h>
+
 #include "Overclock.h"
 
 typedef enum {
@@ -284,6 +287,9 @@ extern UINT32 SetNeptuneClocks(NEPTUNE_CLOCKS_T neptune_clock) {
 		default:
 			break;
 	}
+
+	LOG("hapi_clock_rate_mcu: %d\n", *hapi_clock_rate_mcu);
+	LOG("hapi_clock_reg->div_factor: %d\n", hapi_clock_reg->div_factor);
 
 	dpll_reg_value_tbl_ptr = REF_26_DPLL_REG_VALUES;
 

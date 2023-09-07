@@ -56,7 +56,10 @@ typedef enum {
 	APP_MENU_ITEM_65MHZ_26MHZ,
 	APP_MENU_ITEM_65MHZ_32MHZ,
 	APP_MENU_ITEM_65MHZ_43MHZ,
+	APP_MENU_ITEM_69MHZ_26MHZ,
+	APP_MENU_ITEM_78MHZ_26MHZ,
 	APP_MENU_ITEM_86MHZ_26MHZ,
+	APP_MENU_ITEM_104MHZ_26MHZ,
 	APP_MENU_ITEM_130MHZ_26MHZ,
 	APP_MENU_ITEM_HELP,
 	APP_MENU_ITEM_ABOUT,
@@ -122,7 +125,10 @@ static const WCHAR g_str_menu_52_26[] = L"52 | 26 MHz (stock)";
 static const WCHAR g_str_menu_65_26[] = L"65 | 26 MHz";
 static const WCHAR g_str_menu_65_32[] = L"65 | 32 MHz";
 static const WCHAR g_str_menu_65_43[] = L"65 | 43 MHz";
+static const WCHAR g_str_menu_69_26[] = L"69 | 26 MHz";
+static const WCHAR g_str_menu_78_26[] = L"78 | 26 MHz";
 static const WCHAR g_str_menu_86_26[] = L"86 | 26 MHz";
+static const WCHAR g_str_menu_104_26[] = L"104 | 26 MHz";
 static const WCHAR g_str_menu_130_26[] = L"130 | 26 MHz";
 static const WCHAR g_str_menu_help[] = L"Help...";
 static const WCHAR g_str_menu_about[] = L"About...";
@@ -511,7 +517,10 @@ static UINT32 HandleEventSelect(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
 		case APP_MENU_ITEM_65MHZ_26MHZ:
 		case APP_MENU_ITEM_65MHZ_32MHZ:
 		case APP_MENU_ITEM_65MHZ_43MHZ:
+		case APP_MENU_ITEM_69MHZ_26MHZ:
+		case APP_MENU_ITEM_78MHZ_26MHZ:
 		case APP_MENU_ITEM_86MHZ_26MHZ:
+		case APP_MENU_ITEM_104MHZ_26MHZ:
 		case APP_MENU_ITEM_130MHZ_26MHZ:
 			app_instance->popup = APP_POPUP_OK;
 			status |= APP_UtilChangeState(APP_STATE_POPUP, ev_st, app);
@@ -589,8 +598,17 @@ static LIST_ENTRY_T *CreateList(EVENT_STACK_T *ev_st, APPLICATION_T *app, UINT32
 		&list_elements[APP_MENU_ITEM_65MHZ_43MHZ].content.static_entry.text,
 		g_str_menu_65_43);
 	status |= UIS_MakeContentFromString("Mq0",
+		&list_elements[APP_MENU_ITEM_69MHZ_26MHZ].content.static_entry.text,
+		g_str_menu_69_26);
+	status |= UIS_MakeContentFromString("Mq0",
+		&list_elements[APP_MENU_ITEM_78MHZ_26MHZ].content.static_entry.text,
+		g_str_menu_78_26);
+	status |= UIS_MakeContentFromString("Mq0",
 		&list_elements[APP_MENU_ITEM_86MHZ_26MHZ].content.static_entry.text,
 		g_str_menu_86_26);
+	status |= UIS_MakeContentFromString("Mq0",
+		&list_elements[APP_MENU_ITEM_104MHZ_26MHZ].content.static_entry.text,
+		g_str_menu_104_26);
 	status |= UIS_MakeContentFromString("Mq0",
 		&list_elements[APP_MENU_ITEM_130MHZ_26MHZ].content.static_entry.text,
 		g_str_menu_130_26);
@@ -628,8 +646,14 @@ static const WCHAR *GetSelectedClocks(APP_MENU_ITEM_T menu_item) {
 			return g_str_menu_65_32;
 		case APP_MENU_ITEM_65MHZ_43MHZ:
 			return g_str_menu_65_43;
+		case APP_MENU_ITEM_69MHZ_26MHZ:
+			return g_str_menu_69_26;
+		case APP_MENU_ITEM_78MHZ_26MHZ:
+			return g_str_menu_78_26;
 		case APP_MENU_ITEM_86MHZ_26MHZ:
 			return g_str_menu_86_26;
+		case APP_MENU_ITEM_104MHZ_26MHZ:
+			return g_str_menu_104_26;
 		case APP_MENU_ITEM_130MHZ_26MHZ:
 			return g_str_menu_130_26;
 		default:
@@ -654,8 +678,14 @@ static NEPTUNE_CLOCKS_T SaveConvertMenuItemToClocks(APP_MENU_ITEM_T menu_item) {
 			return CLOCKS_65MHZ_32MHZ;
 		case APP_MENU_ITEM_65MHZ_43MHZ:
 			return CLOCKS_65MHZ_43MHZ;
+		case APP_MENU_ITEM_69MHZ_26MHZ:
+			return CLOCKS_69MHZ_26MHZ;
+		case APP_MENU_ITEM_78MHZ_26MHZ:
+			return CLOCKS_78MHZ_26MHZ;
 		case APP_MENU_ITEM_86MHZ_26MHZ:
 			return CLOCKS_86MHZ_26MHZ;
+		case APP_MENU_ITEM_104MHZ_26MHZ:
+			return CLOCKS_104MHZ_26MHZ;
 		case APP_MENU_ITEM_130MHZ_26MHZ:
 			return CLOCKS_130MHZ_26MHZ;
 		default:
