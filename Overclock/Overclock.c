@@ -57,9 +57,7 @@ typedef enum {
 	APP_MENU_ITEM_65MHZ_32MHZ,
 	APP_MENU_ITEM_65MHZ_65MHZ,
 	APP_MENU_ITEM_86MHZ_26MHZ,
-	APP_MENU_ITEM_86MHZ_32MHZ,
 	APP_MENU_ITEM_130MHZ_26MHZ,
-	APP_MENU_ITEM_130MHZ_32MHZ,
 	APP_MENU_ITEM_HELP,
 	APP_MENU_ITEM_ABOUT,
 	APP_MENU_ITEM_EXIT,
@@ -124,9 +122,7 @@ static const WCHAR g_str_menu_65_26[] = L"65 | 26 MHz";
 static const WCHAR g_str_menu_65_32[] = L"65 | 32 MHz";
 static const WCHAR g_str_menu_65_65[] = L"65 | 65 MHz";
 static const WCHAR g_str_menu_86_26[] = L"86 | 26 MHz";
-static const WCHAR g_str_menu_86_32[] = L"86 | 32 MHz";
 static const WCHAR g_str_menu_130_26[] = L"130 | 26 MHz";
-static const WCHAR g_str_menu_130_32[] = L"130 | 32 MHz";
 static const WCHAR g_str_menu_help[] = L"Help...";
 static const WCHAR g_str_menu_about[] = L"About...";
 static const WCHAR g_str_menu_exit[] = L"Exit";
@@ -515,9 +511,7 @@ static UINT32 HandleEventSelect(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
 		case APP_MENU_ITEM_65MHZ_32MHZ:
 		case APP_MENU_ITEM_65MHZ_65MHZ:
 		case APP_MENU_ITEM_86MHZ_26MHZ:
-		case APP_MENU_ITEM_86MHZ_32MHZ:
 		case APP_MENU_ITEM_130MHZ_26MHZ:
-		case APP_MENU_ITEM_130MHZ_32MHZ:
 			app_instance->popup = APP_POPUP_OK;
 			status |= APP_UtilChangeState(APP_STATE_POPUP, ev_st, app);
 			break;
@@ -597,14 +591,8 @@ static LIST_ENTRY_T *CreateList(EVENT_STACK_T *ev_st, APPLICATION_T *app, UINT32
 		&list_elements[APP_MENU_ITEM_86MHZ_26MHZ].content.static_entry.text,
 		g_str_menu_86_26);
 	status |= UIS_MakeContentFromString("Mq0",
-		&list_elements[APP_MENU_ITEM_86MHZ_32MHZ].content.static_entry.text,
-		g_str_menu_86_32);
-	status |= UIS_MakeContentFromString("Mq0",
 		&list_elements[APP_MENU_ITEM_130MHZ_26MHZ].content.static_entry.text,
 		g_str_menu_130_26);
-	status |= UIS_MakeContentFromString("Mq0",
-		&list_elements[APP_MENU_ITEM_130MHZ_32MHZ].content.static_entry.text,
-		g_str_menu_130_32);
 	status |= UIS_MakeContentFromString("Mq0",
 		&list_elements[APP_MENU_ITEM_HELP].content.static_entry.text,
 		g_str_menu_help);
@@ -641,12 +629,8 @@ static const WCHAR *GetSelectedClocks(APP_MENU_ITEM_T menu_item) {
 			return g_str_menu_65_65;
 		case APP_MENU_ITEM_86MHZ_26MHZ:
 			return g_str_menu_86_26;
-		case APP_MENU_ITEM_86MHZ_32MHZ:
-			return g_str_menu_86_32;
 		case APP_MENU_ITEM_130MHZ_26MHZ:
 			return g_str_menu_130_26;
-		case APP_MENU_ITEM_130MHZ_32MHZ:
-			return g_str_menu_130_32;
 		default:
 			break;
 	}
