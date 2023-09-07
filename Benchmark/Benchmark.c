@@ -273,7 +273,7 @@ static UINT32 ApplicationStart(EVENT_STACK_T *ev_st, REG_ID_T reg_id, void *reg_
 
 	if (AFW_InquireRoutingStackByRegId(reg_id) != RESULT_OK) {
 		app_instance = (APP_INSTANCE_T *) APP_InitAppData((void *) APP_HandleEvent, sizeof(APP_INSTANCE_T),
-														  reg_id, 0, 1, 1, 1, 1, 0);
+			reg_id, 0, 1, 1, 1, 1, 0);
 
 		InitResourses(app_instance->resources);
 		app_instance->menu_current_item_index = APP_MENU_ITEM_FIRST;
@@ -282,7 +282,7 @@ static UINT32 ApplicationStart(EVENT_STACK_T *ev_st, REG_ID_T reg_id, void *reg_
 		app_instance->flag_from_select = FALSE;
 
 		status = APP_Start(ev_st, &app_instance->app, APP_STATE_MAIN,
-						   g_state_table_hdls, ApplicationStop, g_app_name, 0);
+			g_state_table_hdls, ApplicationStop, g_app_name, 0);
 
 #if defined(EP2)
 		g_app_elf.app = (APPLICATION_T *) app_instance;
@@ -376,14 +376,14 @@ static UINT32 HandleStateEnter(EVENT_STACK_T *ev_st, APPLICATION_T *app, ENTER_S
 			list = CreateList(ev_st, app, 1, APP_MENU_ITEM_MAX);
 			if (list != NULL) {
 				dialog = UIS_CreateStaticList(&port, 0, APP_MENU_ITEM_MAX, 0, list, FALSE, 2, NULL,
-											  app_instance->resources[APP_RESOURCE_NAME]);
+					app_instance->resources[APP_RESOURCE_NAME]);
 				suFreeMem(list);
 
 				/* Insert cursor to proper position. */
 				if (app_instance->flag_from_select) {
 					if (app_instance->menu_current_item_index != APP_MENU_ITEM_FIRST) {
 						APP_UtilAddEvChangeListPosition(ev_st, app, app_instance->menu_current_item_index + 1,
-														NULL, NULL, NULL);
+							NULL, NULL, NULL);
 						UIS_HandleEvent(dialog, ev_st);
 					}
 					app_instance->flag_from_select = FALSE;
@@ -398,7 +398,7 @@ static UINT32 HandleStateEnter(EVENT_STACK_T *ev_st, APPLICATION_T *app, ENTER_S
 					UIS_MakeContentFromString("MCq0NMCq1", &content, g_str_popup_wait_p1, g_str_popup_wait_p2);
 					APP_UtilStartTimer(TIMER_POPUP_DELAY_MS, APP_TIMER_DO_BENCHMARK, app);
 					break;
-				}
+			}
 			dialog = UIS_CreateTransientNotice(&port, &content, notice_type);
 			break;
 		case APP_STATE_VIEW:
@@ -511,7 +511,7 @@ static UINT32 HandleEventTimerExpired(EVENT_STACK_T *ev_st, APPLICATION_T *app) 
 			/* No break here. */
 		case APP_TIMER_EXIT_FAST:
 			/* Play an exit sound using quiet speaker. */
-			DL_AudPlayTone(0x00,  0xFF);
+			DL_AudPlayTone(0x00, 0xFF);
 			return ApplicationStop(ev_st, app);
 			break;
 		case APP_TIMER_DO_BENCHMARK:
