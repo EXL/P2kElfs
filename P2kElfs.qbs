@@ -5,6 +5,7 @@ Project {
 		"Dumper/Dumper.qbs",
 		"ElfBox/ElfBox.qbs",
 		"FireEffect/FireEffect.qbs",
+		"Overclock/Overclock.qbs",
 		"Perlin/Perlin.qbs",
 		"PowerAlert/PowerAlert.qbs",
 		"Screenshot/Screenshot.qbs",
