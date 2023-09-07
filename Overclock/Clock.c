@@ -3,6 +3,9 @@
 
 #include "Overclock.h"
 
+#define HAPI_CLOCK_REG_ADDRESS    0x24845000
+#define HAPI_CLOCK_RATE_ADDRESS   0x03FC3600
+
 typedef enum {
 	HAPI_CLOCK_RATES_INVALID = 0,
 	HAPI_CLOCK_RATES_13_MHZ,
@@ -20,104 +23,104 @@ typedef enum {
 	HAPI_DPLL_RATES_MAX
 } HAPI_CLOCK_RATES_T;
 
-#define PWR_DWN_AMP_MASK       0x00000004   /* PDN_AMP */
-#define DPLL_ENABLE_MASK       0x00000020   /* PEN */
-#define DPLL_BIN_RATE_MOD_MASK 0x00000002   /* BRMO */
-#define DPLL_LOCK_FLAG_MASK    0x00000001   /* LRF */
-#define DIV_CLK_SEL_MASK       0x0000000c   /* DCS */
-#define MCU_CLK_SEL_MASK       0x00000003   /* MCS */
-#define REF_SEL_MASK           0x00000010   /* REF_SEL */
-#define CODEC_CLK_SEL_MASK     0x00000020   /* CODS */
-#define REF_DPLL_DIV_MASK      0x00000f00   /* RDD */
-#define MCU_DPLL_DIV_MASK      0x0000000f   /* MCD */
+#define PWR_DWN_AMP_MASK          0x00000004   /* PDN_AMP */
+#define DPLL_ENABLE_MASK          0x00000020   /* PEN */
+#define DPLL_BIN_RATE_MOD_MASK    0x00000002   /* BRMO */
+#define DPLL_LOCK_FLAG_MASK       0x00000001   /* LRF */
+#define DIV_CLK_SEL_MASK          0x0000000c   /* DCS */
+#define MCU_CLK_SEL_MASK          0x00000003   /* MCS */
+#define REF_SEL_MASK              0x00000010   /* REF_SEL */
+#define CODEC_CLK_SEL_MASK        0x00000020   /* CODS */
+#define REF_DPLL_DIV_MASK         0x00000f00   /* RDD */
+#define MCU_DPLL_DIV_MASK         0x0000000f   /* MCD */
 
-#define MCU_DPLL_DIV_SHIFT     0
-#define USB_DPLL_DIV_SHIFT     4
-#define REF_DPLL_DIV_SHIFT     8
-#define CCM_REF_DPLL_SEL       1
-#define DIV_CLK_SEL_SHIFT      2
-#define MCU_CLK_IN_SEL         1
-#define MCU_CLK_SEL_SHIFT      0
+#define MCU_DPLL_DIV_SHIFT        0
+#define USB_DPLL_DIV_SHIFT        4
+#define REF_DPLL_DIV_SHIFT        8
+#define CCM_REF_DPLL_SEL          1
+#define DIV_CLK_SEL_SHIFT         2
+#define MCU_CLK_IN_SEL            1
+#define MCU_CLK_SEL_SHIFT         0
 
-#define DPLL_DIVIDE_BY_1       0xf
-#define DPLL_DIVIDE_BY_2       0x0
-#define DPLL_DIVIDE_BY_3       0x1
-#define DPLL_DIVIDE_BY_4       0x2
-#define DPLL_DIVIDE_BY_6       0x4
-#define DPLL_DIVIDE_BY_8       0x5
-#define DPLL_DIVIDE_BY_5       0x3
-#define DPLL_DIVIDE_BY_10      0x6
+#define DPLL_DIVIDE_BY_1          0xf
+#define DPLL_DIVIDE_BY_2          0x0
+#define DPLL_DIVIDE_BY_3          0x1
+#define DPLL_DIVIDE_BY_4          0x2
+#define DPLL_DIVIDE_BY_6          0x4
+#define DPLL_DIVIDE_BY_8          0x5
+#define DPLL_DIVIDE_BY_5          0x3
+#define DPLL_DIVIDE_BY_10         0x6
 
-#define MFI_SHIFT              4
-#define PDF_SHIFT              0
-#define MFD_SHIFT              0
-#define MFN_SHIFT              0
+#define MFI_SHIFT                 4
+#define PDF_SHIFT                 0
+#define MFD_SHIFT                 0
+#define MFN_SHIFT                 0
 
-#define MFI_INVALID            (5 << MFI_SHIFT)
-#define PDF_INVALID            (9 << PDF_SHIFT)
-#define MFD_INVALID            (0 << MFD_SHIFT)
-#define MFN_INVALID            (0 << MFN_SHIFT)
+#define MFI_INVALID               (5 << MFI_SHIFT)
+#define PDF_INVALID               (9 << PDF_SHIFT)
+#define MFD_INVALID               (0 << MFD_SHIFT)
+#define MFN_INVALID               (0 << MFN_SHIFT)
 
-#define REF_26_MFI_13MHZ       (5  << MFI_SHIFT)
-#define REF_26_PDF_13MHZ       (19 << PDF_SHIFT)
-#define REF_26_MFD_13MHZ       (2096774  << MFD_SHIFT)
-#define REF_26_MFN_13MHZ       (0  << MFN_SHIFT)
-#define REF_26_MFI_16_8MHZ     (5  << MFI_SHIFT)
-#define REF_26_PDF_16_8MHZ     (19 << PDF_SHIFT)
-#define REF_26_MFD_16_8MHZ     (12 << MFD_SHIFT)
-#define REF_26_MFN_16_8MHZ     (19 << MFN_SHIFT)
-#define REF_26_MFI_19_44MHZ    (13  << MFI_SHIFT)
-#define REF_26_PDF_19_44MHZ    (51  << PDF_SHIFT)
-#define REF_26_MFD_19_44MHZ    (99  << MFD_SHIFT)
-#define REF_26_MFN_19_44MHZ    (644 << MFN_SHIFT)
-#define REF_26_MFI_26MHZ       (5  << MFI_SHIFT)
-#define REF_26_PDF_26MHZ       (9  << PDF_SHIFT)
-#define REF_26_MFD_26MHZ       (2096774  << MFD_SHIFT)
-#define REF_26_MFN_26MHZ       (0  << MFN_SHIFT)
-#define REF_26_MFI_39MHZ       (6  << MFI_SHIFT)
-#define REF_26_PDF_39MHZ       (7   << PDF_SHIFT)
-#define REF_26_MFD_39MHZ       (2096774   << MFD_SHIFT)
-#define REF_26_MFN_39MHZ       (0   << MFN_SHIFT)
-#define REF_26_MFI_40MHZ       (6     << MFI_SHIFT)
-#define REF_26_PDF_40MHZ       (7     << PDF_SHIFT)
-#define REF_26_MFD_40MHZ       (1014  << MFD_SHIFT)
-#define REF_26_MFN_40MHZ       (156   << MFN_SHIFT)
-#define REF_26_MFI_48MHZ       (7   << MFI_SHIFT)
-#define REF_26_PDF_48MHZ       (7   << PDF_SHIFT)
-#define REF_26_MFD_48MHZ       (506 << MFD_SHIFT)
-#define REF_26_MFN_48MHZ       (195 << MFN_SHIFT)
-#define REF_26_MFI_52MHZ       (5  << MFI_SHIFT)
-#define REF_26_PDF_52MHZ       (4  << PDF_SHIFT)
-#define REF_26_MFD_52MHZ       (2096774  << MFD_SHIFT)
-#define REF_26_MFN_52MHZ       (0  << MFN_SHIFT)
-#define REF_26_MFI_104MHZ      (8  << MFI_SHIFT)
-#define REF_26_PDF_104MHZ      (3  << PDF_SHIFT)
-#define REF_26_MFD_104MHZ      (2096774  << MFD_SHIFT)
-#define REF_26_MFN_104MHZ      (0  << MFN_SHIFT)
-#define REF_26_MFI_156MHZ      (12  << MFI_SHIFT)
-#define REF_26_PDF_156MHZ      (3  << PDF_SHIFT)
-#define REF_26_MFD_156MHZ      (2096774  << MFD_SHIFT)
-#define REF_26_MFN_156MHZ      (0  << MFN_SHIFT)
-#define REF_26_MFI_208MHZ      (12  << MFI_SHIFT)
-#define REF_26_PDF_208MHZ      (2  << PDF_SHIFT)
-#define REF_26_MFD_208MHZ      (8388606  << MFD_SHIFT)
-#define REF_26_MFN_208MHZ      (0  << MFN_SHIFT)
-#define REF_26_MFI_260MHZ      (15  << MFI_SHIFT)
-#define REF_26_PDF_260MHZ      (2  << PDF_SHIFT)
-#define REF_26_MFD_260MHZ      (8388606  << MFD_SHIFT)
-#define REF_26_MFN_260MHZ      (0  << MFN_SHIFT)
+#define REF_26_MFI_13MHZ          (5  << MFI_SHIFT)
+#define REF_26_PDF_13MHZ          (19 << PDF_SHIFT)
+#define REF_26_MFD_13MHZ          (2096774  << MFD_SHIFT)
+#define REF_26_MFN_13MHZ          (0  << MFN_SHIFT)
+#define REF_26_MFI_16_8MHZ        (5  << MFI_SHIFT)
+#define REF_26_PDF_16_8MHZ        (19 << PDF_SHIFT)
+#define REF_26_MFD_16_8MHZ        (12 << MFD_SHIFT)
+#define REF_26_MFN_16_8MHZ        (19 << MFN_SHIFT)
+#define REF_26_MFI_19_44MHZ       (13  << MFI_SHIFT)
+#define REF_26_PDF_19_44MHZ       (51  << PDF_SHIFT)
+#define REF_26_MFD_19_44MHZ       (99  << MFD_SHIFT)
+#define REF_26_MFN_19_44MHZ       (644 << MFN_SHIFT)
+#define REF_26_MFI_26MHZ          (5  << MFI_SHIFT)
+#define REF_26_PDF_26MHZ          (9  << PDF_SHIFT)
+#define REF_26_MFD_26MHZ          (2096774  << MFD_SHIFT)
+#define REF_26_MFN_26MHZ          (0  << MFN_SHIFT)
+#define REF_26_MFI_39MHZ          (6  << MFI_SHIFT)
+#define REF_26_PDF_39MHZ          (7   << PDF_SHIFT)
+#define REF_26_MFD_39MHZ          (2096774   << MFD_SHIFT)
+#define REF_26_MFN_39MHZ          (0   << MFN_SHIFT)
+#define REF_26_MFI_40MHZ          (6     << MFI_SHIFT)
+#define REF_26_PDF_40MHZ          (7     << PDF_SHIFT)
+#define REF_26_MFD_40MHZ          (1014  << MFD_SHIFT)
+#define REF_26_MFN_40MHZ          (156   << MFN_SHIFT)
+#define REF_26_MFI_48MHZ          (7   << MFI_SHIFT)
+#define REF_26_PDF_48MHZ          (7   << PDF_SHIFT)
+#define REF_26_MFD_48MHZ          (506 << MFD_SHIFT)
+#define REF_26_MFN_48MHZ          (195 << MFN_SHIFT)
+#define REF_26_MFI_52MHZ          (5  << MFI_SHIFT)
+#define REF_26_PDF_52MHZ          (4  << PDF_SHIFT)
+#define REF_26_MFD_52MHZ          (2096774  << MFD_SHIFT)
+#define REF_26_MFN_52MHZ          (0  << MFN_SHIFT)
+#define REF_26_MFI_104MHZ         (8  << MFI_SHIFT)
+#define REF_26_PDF_104MHZ         (3  << PDF_SHIFT)
+#define REF_26_MFD_104MHZ         (2096774  << MFD_SHIFT)
+#define REF_26_MFN_104MHZ         (0  << MFN_SHIFT)
+#define REF_26_MFI_156MHZ         (12  << MFI_SHIFT)
+#define REF_26_PDF_156MHZ         (3  << PDF_SHIFT)
+#define REF_26_MFD_156MHZ         (2096774  << MFD_SHIFT)
+#define REF_26_MFN_156MHZ         (0  << MFN_SHIFT)
+#define REF_26_MFI_208MHZ         (12  << MFI_SHIFT)
+#define REF_26_PDF_208MHZ         (2  << PDF_SHIFT)
+#define REF_26_MFD_208MHZ         (8388606  << MFD_SHIFT)
+#define REF_26_MFN_208MHZ         (0  << MFN_SHIFT)
+#define REF_26_MFI_260MHZ         (15  << MFI_SHIFT)
+#define REF_26_PDF_260MHZ         (2  << PDF_SHIFT)
+#define REF_26_MFD_260MHZ         (8388606  << MFD_SHIFT)
+#define REF_26_MFN_260MHZ         (0  << MFN_SHIFT)
 
-#define DPLL_CLOCK_RATE_26_MHZ HAPI_CLOCK_RATES_260_MHZ
-#define RDD_DIVIDE_26_MHZ      DPLL_DIVIDE_BY_10
-#define MCD_DIVIDE_26_MHZ      DPLL_DIVIDE_BY_10
+#define DPLL_CLOCK_RATE_26_MHZ    HAPI_CLOCK_RATES_260_MHZ
+#define RDD_DIVIDE_26_MHZ         DPLL_DIVIDE_BY_10
+#define MCD_DIVIDE_26_MHZ         DPLL_DIVIDE_BY_10
 
-#define DPLL_CLOCK_RATE_39_MHZ HAPI_CLOCK_RATES_156_MHZ
-#define RDD_DIVIDE_39_MHZ      DPLL_DIVIDE_BY_6
-#define MCD_DIVIDE_39_MHZ      DPLL_DIVIDE_BY_4
+#define DPLL_CLOCK_RATE_39_MHZ    HAPI_CLOCK_RATES_156_MHZ
+#define RDD_DIVIDE_39_MHZ         DPLL_DIVIDE_BY_6
+#define MCD_DIVIDE_39_MHZ         DPLL_DIVIDE_BY_4
 
-#define DPLL_CLOCK_RATE_52_MHZ HAPI_CLOCK_RATES_260_MHZ
-#define RDD_DIVIDE_52_MHZ      DPLL_DIVIDE_BY_10
-#define MCD_DIVIDE_52_MHZ      DPLL_DIVIDE_BY_5
+#define DPLL_CLOCK_RATE_52_MHZ    HAPI_CLOCK_RATES_260_MHZ
+#define RDD_DIVIDE_52_MHZ         DPLL_DIVIDE_BY_10
+#define MCD_DIVIDE_52_MHZ         DPLL_DIVIDE_BY_5
 
 typedef UINT8 HAPI_CLOCK_RATE_T;
 
@@ -175,10 +178,10 @@ static const DPLL_REG_VALUE_TBL_T REF_26_DPLL_REG_VALUES[HAPI_DPLL_RATES_MAX] = 
 };
 
 /* Clock Control Module (CCM) peripherals address. */
-HAPI_CLOCK_REG_T *hapi_clock_reg = (void *) 0x24845000;
+HAPI_CLOCK_REG_T *hapi_clock_reg = (void *) HAPI_CLOCK_REG_ADDRESS;
 
 /* Current MCU clock rate address. */
-HAPI_CLOCK_RATE_T *hapi_clock_rate_mcu = (void *) 0x3FC3600;
+HAPI_CLOCK_RATE_T *hapi_clock_rate_mcu = (void *) HAPI_CLOCK_RATE_ADDRESS;
 
 extern UINT32 SetNeptuneClocks(NEPTUNE_CLOCKS_T neptune_clock) {
 	UINT32 status;
@@ -312,5 +315,23 @@ extern UINT32 SetNeptuneClocks(NEPTUNE_CLOCKS_T neptune_clock) {
 }
 
 extern const WCHAR *DetermineNeptuneMcuClock(void) {
-	return NULL;
+	switch (*hapi_clock_rate_mcu) {
+		case HAPI_CLOCK_RATES_13_MHZ:
+				return L"13 MHz";
+		case HAPI_CLOCK_RATES_26_MHZ:
+				return L"26 MHz";
+		case HAPI_CLOCK_RATES_39_MHZ:
+				return L"39 MHz";
+		case HAPI_CLOCK_RATES_52_MHZ:
+				switch (hapi_clock_reg->div_factor) {
+					case 1667:
+						return L"52 MHz";
+					case 1666:
+					case 1410:
+					case 1154:
+						return L"65 MHz";
+				}
+			break;
+	}
+	return L"52 MHz";
 }

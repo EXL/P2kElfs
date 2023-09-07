@@ -118,18 +118,18 @@ static NEPTUNE_CLOCKS_T SaveConvertMenuItemToClocks(APP_MENU_ITEM_T menu_item);
 const char g_app_name[APP_NAME_LEN] = "Overclock";
 
 static const WCHAR g_str_app_name[] = L"Overclock";
-static const WCHAR g_str_menu_13_26[] = L"13 | 26 MHz";
-static const WCHAR g_str_menu_26_26[] = L"26 | 26 MHz";
-static const WCHAR g_str_menu_39_26[] = L"39 | 26 MHz";
-static const WCHAR g_str_menu_52_26[] = L"52 | 26 MHz (stock)";
-static const WCHAR g_str_menu_65_26[] = L"65 | 26 MHz";
-static const WCHAR g_str_menu_65_32[] = L"65 | 32 MHz";
-static const WCHAR g_str_menu_65_43[] = L"65 | 43 MHz";
-static const WCHAR g_str_menu_69_26[] = L"69 | 26 MHz";
-static const WCHAR g_str_menu_78_26[] = L"78 | 26 MHz";
-static const WCHAR g_str_menu_86_26[] = L"86 | 26 MHz";
-static const WCHAR g_str_menu_104_26[] = L"104 | 26 MHz";
-static const WCHAR g_str_menu_130_26[] = L"130 | 26 MHz";
+static const WCHAR g_str_menu_13_26[] = L"13 MHz | 26";
+static const WCHAR g_str_menu_26_26[] = L"26 MHz | 26";
+static const WCHAR g_str_menu_39_26[] = L"39 MHz | 26";
+static const WCHAR g_str_menu_52_26[] = L"52 MHz | 26 (stock)";
+static const WCHAR g_str_menu_65_26[] = L"65 MHz | 26";
+static const WCHAR g_str_menu_65_32[] = L"65 MHz | 32";
+static const WCHAR g_str_menu_65_43[] = L"65 MHz | 43";
+static const WCHAR g_str_menu_69_26[] = L"69 MHz | 26";
+static const WCHAR g_str_menu_78_26[] = L"78 MHz | 26";
+static const WCHAR g_str_menu_86_26[] = L"86 MHz | 26";
+static const WCHAR g_str_menu_104_26[] = L"104 MHz | 26";
+static const WCHAR g_str_menu_130_26[] = L"130 MHz | 26";
 static const WCHAR g_str_menu_help[] = L"Help...";
 static const WCHAR g_str_menu_about[] = L"About...";
 static const WCHAR g_str_menu_exit[] = L"Exit";
@@ -392,7 +392,7 @@ static UINT32 HandleStateEnter(EVENT_STACK_T *ev_st, APPLICATION_T *app, ENTER_S
 			list = CreateList(ev_st, app, 1, APP_MENU_ITEM_MAX);
 			if (list != NULL) {
 				u_strcpy(g_str_current_clock, L"Overclock: ");
-				u_strcpy(g_str_current_clock + u_strlen(g_str_current_clock), L"130 MHz");
+				u_strcpy(g_str_current_clock + u_strlen(g_str_current_clock), DetermineNeptuneMcuClock());
 				DRM_SetResource(app_instance->resources[APP_RESOURCE_NAME],
 					(void *) g_str_current_clock, (u_strlen(g_str_current_clock) + 1) * sizeof(WCHAR));
 				dialog = UIS_CreateStaticList(&port, 0, APP_MENU_ITEM_MAX, 0, list, FALSE, 2, NULL,
@@ -489,6 +489,9 @@ static UINT32 HandleEventTimerExpired(EVENT_STACK_T *ev_st, APPLICATION_T *app) 
 			/* Play an exit sound using quiet speaker. */
 			DL_AudPlayTone(0x00, 0xFF);
 			return ApplicationStop(ev_st, app);
+			break;
+		case APP_TIMER_DO_OVERCLOCK:
+			SetNeptuneClocks(SaveConvertMenuItemToClocks(app_instance->menu_current_item_index));
 			break;
 		default:
 			break;
