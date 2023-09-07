@@ -51,11 +51,11 @@ typedef enum {
 	APP_MENU_ITEM_FIRST,
 	APP_MENU_ITEM_13MHZ_26MHZ = APP_MENU_ITEM_FIRST,
 	APP_MENU_ITEM_26MHZ_26MHZ,
-	APP_MENU_ITEM_39MHZ_43MHZ,
+	APP_MENU_ITEM_39MHZ_26MHZ,
 	APP_MENU_ITEM_52MHZ_26MHZ,
 	APP_MENU_ITEM_65MHZ_26MHZ,
 	APP_MENU_ITEM_65MHZ_32MHZ,
-	APP_MENU_ITEM_65MHZ_65MHZ,
+	APP_MENU_ITEM_65MHZ_43MHZ,
 	APP_MENU_ITEM_86MHZ_26MHZ,
 	APP_MENU_ITEM_130MHZ_26MHZ,
 	APP_MENU_ITEM_HELP,
@@ -110,17 +110,18 @@ static UINT32 HandleEventBack(EVENT_STACK_T *ev_st, APPLICATION_T *app);
 
 static LIST_ENTRY_T *CreateList(EVENT_STACK_T *ev_st, APPLICATION_T *app, UINT32 start, UINT32 count);
 static const WCHAR *GetSelectedClocks(APP_MENU_ITEM_T menu_item);
+static NEPTUNE_CLOCKS_T SaveConvertMenuItemToClocks(APP_MENU_ITEM_T menu_item);
 
 const char g_app_name[APP_NAME_LEN] = "Overclock";
 
 static const WCHAR g_str_app_name[] = L"Overclock";
 static const WCHAR g_str_menu_13_26[] = L"13 | 26 MHz";
 static const WCHAR g_str_menu_26_26[] = L"26 | 26 MHz";
-static const WCHAR g_str_menu_39_43[] = L"39 | 43 MHz";
+static const WCHAR g_str_menu_39_26[] = L"39 | 26 MHz";
 static const WCHAR g_str_menu_52_26[] = L"52 | 26 MHz (stock)";
 static const WCHAR g_str_menu_65_26[] = L"65 | 26 MHz";
 static const WCHAR g_str_menu_65_32[] = L"65 | 32 MHz";
-static const WCHAR g_str_menu_65_65[] = L"65 | 65 MHz";
+static const WCHAR g_str_menu_65_43[] = L"65 | 43 MHz";
 static const WCHAR g_str_menu_86_26[] = L"86 | 26 MHz";
 static const WCHAR g_str_menu_130_26[] = L"130 | 26 MHz";
 static const WCHAR g_str_menu_help[] = L"Help...";
@@ -505,11 +506,11 @@ static UINT32 HandleEventSelect(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
 	switch (app_instance->menu_current_item_index) {
 		case APP_MENU_ITEM_13MHZ_26MHZ:
 		case APP_MENU_ITEM_26MHZ_26MHZ:
-		case APP_MENU_ITEM_39MHZ_43MHZ:
+		case APP_MENU_ITEM_39MHZ_26MHZ:
 		case APP_MENU_ITEM_52MHZ_26MHZ:
 		case APP_MENU_ITEM_65MHZ_26MHZ:
 		case APP_MENU_ITEM_65MHZ_32MHZ:
-		case APP_MENU_ITEM_65MHZ_65MHZ:
+		case APP_MENU_ITEM_65MHZ_43MHZ:
 		case APP_MENU_ITEM_86MHZ_26MHZ:
 		case APP_MENU_ITEM_130MHZ_26MHZ:
 			app_instance->popup = APP_POPUP_OK;
@@ -573,8 +574,8 @@ static LIST_ENTRY_T *CreateList(EVENT_STACK_T *ev_st, APPLICATION_T *app, UINT32
 		&list_elements[APP_MENU_ITEM_26MHZ_26MHZ].content.static_entry.text,
 		g_str_menu_26_26);
 	status |= UIS_MakeContentFromString("Mq0",
-		&list_elements[APP_MENU_ITEM_39MHZ_43MHZ].content.static_entry.text,
-		g_str_menu_39_43);
+		&list_elements[APP_MENU_ITEM_39MHZ_26MHZ].content.static_entry.text,
+		g_str_menu_39_26);
 	status |= UIS_MakeContentFromString("Mq0",
 		&list_elements[APP_MENU_ITEM_52MHZ_26MHZ].content.static_entry.text,
 		g_str_menu_52_26);
@@ -585,8 +586,8 @@ static LIST_ENTRY_T *CreateList(EVENT_STACK_T *ev_st, APPLICATION_T *app, UINT32
 		&list_elements[APP_MENU_ITEM_65MHZ_32MHZ].content.static_entry.text,
 		g_str_menu_65_32);
 	status |= UIS_MakeContentFromString("Mq0",
-		&list_elements[APP_MENU_ITEM_65MHZ_65MHZ].content.static_entry.text,
-		g_str_menu_65_65);
+		&list_elements[APP_MENU_ITEM_65MHZ_43MHZ].content.static_entry.text,
+		g_str_menu_65_43);
 	status |= UIS_MakeContentFromString("Mq0",
 		&list_elements[APP_MENU_ITEM_86MHZ_26MHZ].content.static_entry.text,
 		g_str_menu_86_26);
@@ -617,16 +618,16 @@ static const WCHAR *GetSelectedClocks(APP_MENU_ITEM_T menu_item) {
 			return g_str_menu_13_26;
 		case APP_MENU_ITEM_26MHZ_26MHZ:
 			return g_str_menu_26_26;
-		case APP_MENU_ITEM_39MHZ_43MHZ:
-			return g_str_menu_39_43;
+		case APP_MENU_ITEM_39MHZ_26MHZ:
+			return g_str_menu_39_26;
 		case APP_MENU_ITEM_52MHZ_26MHZ:
 			return g_str_menu_52_26;
 		case APP_MENU_ITEM_65MHZ_26MHZ:
 			return g_str_menu_65_26;
 		case APP_MENU_ITEM_65MHZ_32MHZ:
 			return g_str_menu_65_32;
-		case APP_MENU_ITEM_65MHZ_65MHZ:
-			return g_str_menu_65_65;
+		case APP_MENU_ITEM_65MHZ_43MHZ:
+			return g_str_menu_65_43;
 		case APP_MENU_ITEM_86MHZ_26MHZ:
 			return g_str_menu_86_26;
 		case APP_MENU_ITEM_130MHZ_26MHZ:
@@ -635,4 +636,30 @@ static const WCHAR *GetSelectedClocks(APP_MENU_ITEM_T menu_item) {
 			break;
 	}
 	return NULL;
+}
+
+static NEPTUNE_CLOCKS_T SaveConvertMenuItemToClocks(APP_MENU_ITEM_T menu_item) {
+	switch (menu_item) {
+		case APP_MENU_ITEM_13MHZ_26MHZ:
+			return CLOCKS_13MHZ_26MHZ;
+		case APP_MENU_ITEM_26MHZ_26MHZ:
+			return CLOCKS_26MHZ_26MHZ;
+		case APP_MENU_ITEM_39MHZ_26MHZ:
+			return CLOCKS_39MHZ_26MHZ;
+		case APP_MENU_ITEM_52MHZ_26MHZ:
+			return CLOCKS_52MHZ_26MHZ;
+		case APP_MENU_ITEM_65MHZ_26MHZ:
+			return CLOCKS_65MHZ_26MHZ;
+		case APP_MENU_ITEM_65MHZ_32MHZ:
+			return CLOCKS_65MHZ_32MHZ;
+		case APP_MENU_ITEM_65MHZ_43MHZ:
+			return CLOCKS_65MHZ_43MHZ;
+		case APP_MENU_ITEM_86MHZ_26MHZ:
+			return CLOCKS_86MHZ_26MHZ;
+		case APP_MENU_ITEM_130MHZ_26MHZ:
+			return CLOCKS_130MHZ_26MHZ;
+		default:
+			break;
+	}
+	return CLOCKS_52MHZ_26MHZ;
 }
