@@ -522,8 +522,8 @@ static UINT32 HandleEventTimerExpired(EVENT_STACK_T *ev_st, APPLICATION_T *app) 
 #if !defined(FTR_L7E)
 					BogoMIPS(&app_instance->cpu_result);
 #else
-					u_strcpy(&app_instance->cpu_result.bogo_time, L"Error: L7e");
-					u_strcpy(&app_instance->cpu_result->bogo_mips, L"Error: L7e");
+					u_strcpy(app_instance->cpu_result.bogo_time, L"Error: L7e");
+					u_strcpy(app_instance->cpu_result.bogo_mips, L"Error: L7e");
 #endif
 					Dhrystone(&app_instance->cpu_result);
 
