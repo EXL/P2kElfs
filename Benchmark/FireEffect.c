@@ -419,7 +419,7 @@ UINT32 ATI_Driver_Start(APP_AHI_T *ahi, WCHAR *props) {
 	ahi->height = ahi->info_surface_screen.height;
 #else
 	ahi->width = display_mode.size.x;
-	ahi->width = display_mode.size.y;
+	ahi->height = display_mode.size.y;
 #endif
 
 	ahi->update_params.size = sizeof(AHIUPDATEPARAMS_T);
