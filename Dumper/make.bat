@@ -19,6 +19,7 @@ set LIB_MAIN=Lib.o
 
 :: Defines.
 set DEFINES=-D__P2K__ -DEP1 -DUSE_MME
+:: set DEFINES=-D__P2K__ -DEP1 -DUSE_MME -DFTR_V600
 
 :: ELF name.
 set ELF_NAME=Dumper
