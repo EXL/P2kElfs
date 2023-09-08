@@ -43,6 +43,7 @@ See [Some ELF demos/games on Motorola P2K phones using ATI Imageon W2240/W2250 v
 | ROKR E1 | 176x220 | ROT90 | 84x48 (rotozoom)    | Fire   | 15.0       | 1.93, 1.7-2.0      | Perlin.elf   |
 
 * Perlin.elf (ELF for ElfPack 1.0)
+* Perlin_V600.elf (ELF for ElfPack 1.0, Motorola V600 version)
 * Perlin_EP2.elf (ELF for ElfPack 2.0)
 
 ## Additional information
