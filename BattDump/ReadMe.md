@@ -18,6 +18,7 @@ The "Batt Dump" ELF utility for dumping battery ROM by 1-Wire interface.
 ## ELF files
 
 * BattDump.elf (ELF for ElfPack 1.0)
+* BattDump_SEN.elf (ELF for ElfPack 1.0)
 
 ## Additional information
 
