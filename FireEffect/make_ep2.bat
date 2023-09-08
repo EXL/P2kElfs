@@ -21,7 +21,6 @@ set LIB_LIBC=libc.a
 
 :: Defines.
 set DEFINES=-D__P2K__ -DEP2 -DROT_90 -DFPS_30
-:: set DEFINES=-D__P2K__ -DEP2 -DROT_90 -DFPS_30 -DFTR_V600
 
 :: Includes.
 set INCLUDES=-I..\src\
