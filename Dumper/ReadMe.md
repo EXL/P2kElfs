@@ -18,7 +18,7 @@ The "Dumper" ELF utility for dumping various memory regions of Motorola P2K phon
 ## ELF files
 
 * Dumper.elf (ELF for ElfPack 1.0)
-* Dumper_V600.elf (ELF for ElfPack 1.0 and Motorola V600)
+* Dumper_V600.elf (ELF for ElfPack 1.0, Motorola V600 version)
 
 ## Additional information
 

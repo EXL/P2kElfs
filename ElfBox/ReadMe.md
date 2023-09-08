@@ -18,7 +18,7 @@ A simple "ElfBox" ELF-applications launcher.
 ## ELF files
 
 * ElfBox.elf (ELF for ElfPack 1.0)
-* ElfBox_V600.elf (ELF for ElfPack 1.0 and Motorola V600)
+* ElfBox_V600.elf (ELF for ElfPack 1.0, Motorola V600 version)
 
 ## Additional information
 

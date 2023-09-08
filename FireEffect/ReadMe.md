@@ -36,7 +36,7 @@ See [Some ELF demos/games on Motorola P2K phones using ATI Imageon W2240/W2250 v
 | ROKR E1 | 176x220 | ROT90 | 64x48 (rotozoom)    | 30.0       | 18.29, 15.1-30.3   | FireEffect.elf |
 
 * FireEffect.elf (ELF for ElfPack 1.0)
-* FireEffect_BW.elf (ELF for ElfPack 1.0)
+* FireEffect_BW.elf (ELF for ElfPack 1.0, Black & White version)
 * FireEffect_V600.elf (ELF for ElfPack 1.0, Motorola V600 version)
 * FireEffect_EP2.elf (ELF for ElfPack 2.0)
 
