@@ -19,9 +19,9 @@ See [Overclock ELF on Motorola P2K phones](https://www.youtube.com/TODO) video o
 
 ## ELF files
 
-* Overclock_EP1.elf (ELF for ElfPack 1.0, thumb)
-* Overclock_L7e.elf (ELF for ElfPack 1.0, thumb, Motorola SLVR L7e version)
-* Overclock_V600.elf (ELF for ElfPack 1.0, thumb, Motorola V600, version)
+* Overclock.elf (ELF for ElfPack 1.0)
+* Overclock_L7e.elf (ELF for ElfPack 1.0, Motorola SLVR L7e and Motorola V360 version)
+* Overclock_V600.elf (ELF for ElfPack 1.0, Motorola V600 version)
 
 ## Additional information
 
@@ -31,6 +31,7 @@ The ELF-application has been tested on the following phones and firmware:
 * Motorola ROKR E1: R373_G_0E.30.49R
 * Motorola V360: R4513_G_08.B7.ACR
 * Motorola SLVR L7: R4513_G_08.B7.E0R_RB
-* Motorola SLVR L7e: R452D_G_08.01.0AR
+* Motorola SLVR L7e: R452D_G_08.01.0AR (not working)
+* Motorola KRZR K1:  R452F_G_08.03.08R (not working)
 
 Application type: GUI.
