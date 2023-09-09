@@ -39,5 +39,5 @@ set ELF_NAME=Yeti3D
 
 if /I "%1"=="clean" (
 	del *.o
-	del %ELF_NAME%.elf
+	del *.elf
 )

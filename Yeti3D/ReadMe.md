@@ -59,16 +59,16 @@ See [Yeti3D Engine port to ELF for Motorola P2K phones](https://www.youtube.com/
 
 | Phone   | Screen  | Flags | Viewport <br /> Mode       | Optimized | Tasks <br /> Semaphores | Fixed FPS  | FPS <br /> (avg, min-max) | ELF filename         |
 | ---     | ---     | ---   | ---                        | ---       | ---                     | ---        | ---                       | ---                  |
-| SLVR L6 | 128x160 | ROT0  | 160x128 <br /> fullscreen  | No        | No                      | 30.0       | 5.58 <br /> 5.4-5.7       | Y3D_VN1_128x160.elf  |
-| SLVR L6 | 128x160 | ROT0  | 160x128 <br /> fullscreen  | Yes       | No                      | 30.0       | 5.64 <br /> 5.5-5.7       | Y3D_VO1_128x160.elf  |
+| SLVR L6 | 128x160 | ROT0  | 160x128 <br /> fullscreen  | No        | No                      | 30.0       | 5.58 <br /> 5.4-5.7       | Y3D_VN1_160x128.elf  |
+| SLVR L6 | 128x160 | ROT0  | 160x128 <br /> fullscreen  | Yes       | No                      | 30.0       | 5.64 <br /> 5.5-5.7       | Y3D_VO1_160x128.elf  |
 | SLVR L6 | 128x160 | ROT90 | 120x80 <br /> rotozoom     | No        | No                      | 30.0       | 8.20 <br /> 7.8-8.5       | Y3D_RN1_120x80.elf   |
 | SLVR L6 | 128x160 | ROT90 | 120x80 <br /> rotozoom     | Yes       | No                      | 30.0       | 8.23 <br /> 7.8-8.6       | Y3D_RO1_120x80.elf   |
 | SLVR L6 | 128x160 | ROT90 | 96x64 <br /> rotozoom      | No        | No                      | 30.0       | 10.15 <br /> 9.9-10.4     | Y3D_RN1_96x64.elf    |
 | SLVR L6 | 128x160 | ROT90 | 96x64 <br /> rotozoom      | Yes       | No                      | 30.0       | 10.18 <br /> 9.3-10.5     | Y3D_RO1_96x64.elf    |
-| ROKR E1 | 176x220 | ROT0  | 220x176 <br /> fullscreen  | No        | No                      | 30.0       | 3.74 <br /> 3.4-4.0       | Y3D_VN1_176x220.elf  |
-| ROKR E1 | 176x220 | ROT0  | 220x176 <br /> fullscreen  | Yes       | No                      | 30.0       | 3.91 <br /> 3.7-4.0       | Y3D_VO1_176x220.elf  |
-| ROKR E1 | 176x220 | ROT0  | 220x176 <br /> fullscreen  | No        | Yes                     | 1000.0     | 2.83 <br /> 3.0-2.7       | Y3D_VN2T_176x220.elf |
-| ROKR E1 | 176x220 | ROT0  | 220x176 <br /> fullscreen  | Yes       | Yes                     | 1000.0     | 2.83 <br /> 3.0-2.8       | Y3D_VO2T_176x220.elf |
+| ROKR E1 | 176x220 | ROT0  | 220x176 <br /> fullscreen  | No        | No                      | 30.0       | 3.74 <br /> 3.4-4.0       | Y3D_VN1_220x176.elf  |
+| ROKR E1 | 176x220 | ROT0  | 220x176 <br /> fullscreen  | Yes       | No                      | 30.0       | 3.91 <br /> 3.7-4.0       | Y3D_VO1_220x176.elf  |
+| ROKR E1 | 176x220 | ROT0  | 220x176 <br /> fullscreen  | No        | Yes                     | 1000.0     | 2.83 <br /> 3.0-2.7       | Y3D_VN2T_220x176.elf |
+| ROKR E1 | 176x220 | ROT0  | 220x176 <br /> fullscreen  | Yes       | Yes                     | 1000.0     | 2.83 <br /> 3.0-2.8       | Y3D_VO2T_220x176.elf |
 | ROKR E1 | 176x220 | ROT90 | 120x80 <br /> rotozoom     | No        | No                      | 30.0       | 8.40 <br /> 7.4-8.6       | Y3D_RN1_120x80.elf   |
 | ROKR E1 | 176x220 | ROT90 | 120x80 <br /> rotozoom     | Yes       | No                      | 30.0       | 8.40 <br /> 7.0-8.6       | Y3D_RO1_120x80.elf   |
 | ROKR E1 | 176x220 | ROT90 | 96x64 <br /> rotozoom      | No        | No                      | 30.0       | 9.90 <br /> 8.5-10.1      | Y3D_RN1_96x64.elf    |
@@ -76,7 +76,9 @@ See [Yeti3D Engine port to ELF for Motorola P2K phones](https://www.youtube.com/
 | ROKR E1 | 176x220 | ROT90 | 96x64 <br /> rotozoom      | No        | Yes                     | 1000.0     | 8.04 <br /> 7.5-8.6       | Y3D_RN2T_96x64.elf   |
 | ROKR E1 | 176x220 | ROT90 | 96x64 <br /> rotozoom      | Yes       | Yes                     | 1000.0     | 8.12 <br /> 7.5-8.6       | Y3D_RO2T_96x64.elf   |
 | V360    | 176x220 | ROT90 | 96x64 <br /> rotozoom      | No        | No                      | 30.0       | 9.98 <br /> 6.2-12.1      | Y3D_RN1_96x64.elf    |
-| V360    | 176x220 | ROT0  | 220x176 <br /> fullscreen  | No        | No                      | 30.0       | 3.64 <br /> 2.7-5.0       | Y3D_VN1D_176x220.elf |
+| V360    | 176x220 | ROT0  | 220x176 <br /> fullscreen  | No        | No                      | 30.0       | 3.64 <br /> 2.7-5.0       | Y3D_VN1D_220x176.elf |
+
+See [Overclock](../Overclock) project documents for overclocking Yeti3D comparision.
 
 ### Legend
 
@@ -89,10 +91,11 @@ See [Yeti3D Engine port to ELF for Motorola P2K phones](https://www.youtube.com/
 * T (4th) - Elf for ElfPack 2.0, with using Tasks and Semaphores.
 * D (4th) - Debug test version with some unique patches like screen buffer in Java Heap and FPS output, works without using `Class_dal` constant.
 * J (4th) - A special optimized versions with creating screen buffer in Java Heap also, for weak phones like Motorola V600.
+* F (4th) - A special versions with FPS meter.
 
 ### Summary
 
-* 8 ELFs + ElfPack 2.0 ELFs + 4 Task and Semaphores ELFs + 1 Debug ELF + 3 J-weak V600 ELFs = 24 ELFs.
+* 8 ELFs + 8 ElfPack 2.0 ELFs + 4 Task and Semaphores ELFs + 1 Debug ELF + 3 J-weak V600 ELFs + 8 FPS meter ELFs = 32 ELFs.
 
 ## Additional information
 
@@ -105,6 +108,8 @@ The ELF-application has been tested on the following phones and firmware:
 * Motorola V235: R3512_G_0A.30.6CR
 * Motorola SLVR L7: R4513_G_08.B7.E0R_RB
 * Motorola RAZR V3i: R4441D_G_08.01.03R
+* Motorola SLVR L7e: R452D_G_08.01.0AR (some bugs)
+* Motorola KRZR K1:  R452F_G_08.03.08R (some bugs)
 
 Application type: GUI + ATI + Java Heap + Videomode + Tasks (in the Task version).
 
