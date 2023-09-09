@@ -25,6 +25,21 @@ See [Overclocking and Benchmakring old Motorola P2K phones (52 MHz to 65 MHz)](h
 
 ![Screenshot of Overclock results on Benchmark from Motorola E1 2](../images/Screenshot_Overclock_Benchmark_E1_2.png) ![Screenshot of Overclock results on JBenchmark from Motorola E1 2](../images/Screenshot_Overclock_JBenchmark_E1_2.png) ![Screenshot of Overclock results on Benchmark from Motorola L6 3](../images/Screenshot_Overclock_Benchmark_L6_3.png) ![Screenshot of Overclock results on Benchmark from Motorola L6 4](../images/Screenshot_Overclock_Benchmark_L6_4.png)  ![Screenshot of Overclock results on JBenchmark from Motorola L6 3](../images/Screenshot_Overclock_JBenchmark_L6_3.png) ![Screenshot of Overclock results on JBenchmark from Motorola L6 4](../images/Screenshot_Overclock_JBenchmark_L6_4.png)
 
+### JBenchmark table
+
+| Phone    | Freq   | Total | Text  | 2D Shapes | 3D Shapes | Fill Rate | Animation |
+| ---      | ---    | ---   | ---   | ---       | ---       | ---       | ---       |
+| SLVR L6i | 52 MHz | 1051  | 255   | 255       | 194       | 89        | 258       |
+| SLVR L6i | 65 MHz | 1108  | 257   | 258       | 223       | 112       | 258       |
+| ROKR E1  | 52 MHz | 1197  | 368   | 303       | 142       | 52        | 332       |
+| ROKR E1  | 65 MHz | 1493  | 463   | 377       | 179       | 65        | 409       |
+| SLVR L7  | 52 MHz | 1486  | 494   | 358       | 153       | 51        | 430       |
+| SLVR L7  | 65 MHz | 1822  | 595   | 450       | 192       | 64        | 521       |
+| V360     | 52 MHz | 1485  | 486   | 365       | 161       | 55        | 418       |
+| V360     | 65 MHz | 1891  | 612   | 473       | 197       | 69        | 540       |
+| RAZR V3i | 52 MHz | 1208  | 391   | 303       | 125       | 40        | 349       |
+| RAZR V3i | 65 MHz | 1493  | 495   | 358       | 156       | 51        | 433       |
+
 ### Benchmark table
 
 | Phone    | Freq   | CPU (MCU)                                                  | GPU (IPU)                                                                              | RAM (SRAM)                                           | HEAP (J2ME)                |
