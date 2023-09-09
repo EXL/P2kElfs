@@ -45,22 +45,29 @@ See [Benchmark](../Benchmark) project documents for more stock results.
 | Phone    | Freq   | Screen  | Flags | Viewport <br /> Mode       | Optimized | FPS <br /> (avg, min-max) | ELF filename          |
 | ---      | ---    | ---     | ---   | ---                        | ---       | ---                       | ---                   |
 | SLVR L6i | 52 MHz | 128x160 | ROT0  | 160x128 <br /> fullscreen  | No        | 5.58 <br /> 5.4-5.7       | Y3D_VN1F_160x128.elf  |
-
+| SLVR L6i | 65 MHz | 128x160 | ROT0  | 160x128 <br /> fullscreen  | No        | 7.38 <br /> 5.1-8.5       | Y3D_VN1F_160x128.elf  |
 | SLVR L6i | 52 MHz | 128x160 | ROT0  | 160x128 <br /> fullscreen  | Yes       | 5.64 <br /> 5.5-5.7       | Y3D_VO1F_160x128.elf  |
-| SLVR L6i | 65 MHz | 128x160 | ROT0  | 160x128 <br /> fullscreen  | Yes       | 6.81 <br /> 5.4-7.3       | Y3D_VO1F_160x128.elf  |
+| SLVR L6i | 65 MHz | 128x160 | ROT0  | 160x128 <br /> fullscreen  | Yes       | 7.30 <br /> 5.3-8.3       | Y3D_VO1F_160x128.elf  |
 | SLVR L6i | 52 MHz | 128x160 | ROT90 | 120x80 <br /> rotozoom     | No        | 8.20 <br /> 7.8-8.5       | Y3D_RN1F_120x80.elf   |
-
-| SLVR L6i | 65 MHz | 128x160 | ROT90 | 120x80 <br /> rotozoom     | No        | 8.20 <br /> 7.8-8.5       | Y3D_RN1F_120x80.elf   |
-
+| SLVR L6i | 65 MHz | 128x160 | ROT90 | 120x80 <br /> rotozoom     | No        | 10.38 <br /> 9.3-11.1     | Y3D_RN1F_120x80.elf   |
 | SLVR L6i | 52 MHz | 128x160 | ROT90 | 120x80 <br /> rotozoom     | Yes       | 8.23 <br /> 7.8-8.6       | Y3D_RO1F_120x80.elf   |
+| SLVR L6i | 65 MHz | 128x160 | ROT90 | 120x80 <br /> rotozoom     | Yes       | 10.47 <br /> 9.4-12.9     | Y3D_RO1F_120x80.elf   |
 | SLVR L6i | 52 MHz | 128x160 | ROT90 | 96x64 <br /> rotozoom      | No        | 10.15 <br /> 9.9-10.4     | Y3D_RN1F_96x64.elf    |
+| SLVR L6i | 65 MHz | 128x160 | ROT90 | 96x64 <br /> rotozoom      | No        | 11.74 <br /> 10.5-14.2    | Y3D_RN1F_96x64.elf    |
 | SLVR L6i | 52 MHz | 128x160 | ROT90 | 96x64 <br /> rotozoom      | Yes       | 10.18 <br /> 9.3-10.5     | Y3D_RO1F_96x64.elf    |
+| SLVR L6i | 65 MHz | 128x160 | ROT90 | 96x64 <br /> rotozoom      | Yes       | 12.90 <br /> 10.3-15.8    | Y3D_RO1F_96x64.elf    |
 | ROKR E1  | 52 MHz | 176x220 | ROT0  | 220x176 <br /> fullscreen  | No        | 3.74 <br /> 3.4-4.0       | Y3D_VN1F_220x176.elf  |
+| ROKR E1  | 65 MHz | 176x220 | ROT0  | 220x176 <br /> fullscreen  | No        | 5.24 <br /> 5.0-5.4       | Y3D_VN1F_220x176.elf  |
 | ROKR E1  | 52 MHz | 176x220 | ROT0  | 220x176 <br /> fullscreen  | Yes       | 3.91 <br /> 3.7-4.0       | Y3D_VO1F_220x176.elf  |
+| ROKR E1  | 65 MHz | 176x220 | ROT0  | 220x176 <br /> fullscreen  | Yes       | 5.34 <br /> 5.0-5.4       | Y3D_VO1F_220x176.elf  |
 | ROKR E1  | 52 MHz | 176x220 | ROT90 | 120x80 <br /> rotozoom     | No        | 8.40 <br /> 7.4-8.6       | Y3D_RN1F_120x80.elf   |
+| ROKR E1  | 65 MHz | 176x220 | ROT90 | 120x80 <br /> rotozoom     | No        | 12.00 <br /> 11.9-12.1    | Y3D_RN1F_120x80.elf   |
 | ROKR E1  | 52 MHz | 176x220 | ROT90 | 120x80 <br /> rotozoom     | Yes       | 8.40 <br /> 7.0-8.6       | Y3D_RO1F_120x80.elf   |
+| ROKR E1  | 65 MHz | 176x220 | ROT90 | 120x80 <br /> rotozoom     | Yes       | 12.09 <br /> 9.8-15.1     | Y3D_RO1F_120x80.elf   |
 | ROKR E1  | 52 MHz | 176x220 | ROT90 | 96x64 <br /> rotozoom      | No        | 9.90 <br /> 8.5-10.1      | Y3D_RN1F_96x64.elf    |
+| ROKR E1  | 65 MHz | 176x220 | ROT90 | 96x64 <br /> rotozoom      | No        | 14.75 <br /> 12.9-15.1    | Y3D_RN1F_96x64.elf    |
 | ROKR E1  | 52 MHz | 176x220 | ROT90 | 96x64 <br /> rotozoom      | Yes       | 11.15 <br /> 8.6-12.0     | Y3D_RO1F_96x64.elf    |
+| ROKR E1  | 65 MHz | 176x220 | ROT90 | 96x64 <br /> rotozoom      | Yes       | 19.92 <br /> 15.3-20.4    | Y3D_RO1F_96x64.elf    |
 
 See [Yeti3D](../Yeti3D) project documents for more stock results.
 

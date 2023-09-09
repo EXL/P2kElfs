@@ -69,15 +69,21 @@ Prepared for public release: 10/24/2003 - Derek J. Evans <derek@theteahouse.com.
 #define YETI_VIEWPORT_INTERVAL_ERROR 7
 
 #if defined(ROT_90)
-#define YETI_DISPLAY_WIDTH 96
-#define YETI_DISPLAY_HEIGHT 64
-//#define YETI_DISPLAY_WIDTH 120
-//#define YETI_DISPLAY_HEIGHT 80
+    #if !defined(G_DEFAULT)
+        #define YETI_DISPLAY_WIDTH 96
+        #define YETI_DISPLAY_HEIGHT 64
+    #else
+        #define YETI_DISPLAY_WIDTH 120
+        #define YETI_DISPLAY_HEIGHT 80
+    #endif
 #elif defined(ROT_0)
-#define YETI_DISPLAY_WIDTH 220
-#define YETI_DISPLAY_HEIGHT 176
-//#define YETI_DISPLAY_WIDTH 160
-//#define YETI_DISPLAY_HEIGHT 128
+    #if !defined(G_DEFAULT)
+        #define YETI_DISPLAY_WIDTH 220
+        #define YETI_DISPLAY_HEIGHT 176
+    #else
+        #define YETI_DISPLAY_WIDTH 160
+        #define YETI_DISPLAY_HEIGHT 128
+    #endif
 #endif
 
 #if (YETI_DISPLAY_WIDTH == 220) && (YETI_DISPLAY_HEIGHT == 176)
