@@ -28,19 +28,26 @@ See [Benchmark ELF on Motorola P2K phones](https://www.youtube.com/TODO) video o
 | V360     | thumb  | EP1 | 1444 ms <br /> 2.89 BMIPS <br /> 1915 ms <br /> 5.94 DMIPS | 3506 ms <br /> 57.3 FPS <br /> 6364 ms <br /> 39.5 FPS <br /> 13704 ms <br /> 17.2 FPS | 36 ms <br /> 474624 B <br /> 4 ms <br /> 77312 B     | ? <br /> ?                 | R4513_ACR <br /> 176x220 TFT @ 60 Hz @ RGB565 <br /> ATI Imageon W2240 <br /> Neptune LTE2 @ 52 MHz <br /> 8 MB RAM <br /> 512 KB iRAM <br /> 32 MB ROM       |
 | SLVR L7e | thumb  | EP1 | ? <br /> ? <br /> 926 ms <br /> 12.29 DMIPS                | ? <br /> ? <br /> ? <br /> ? <br /> ? <br /> ?                                         | 89 ms <br /> 3359232 B <br /> 5 ms <br /> 230144 B   | 6.95 sec <br /> 1172.0 KiB | R452D_0AR <br /> 176x220 TFT @ ? Hz @ ? <br /> ATI Imageon ? <br /> Neptune LTE2 @ 104 (?) MHz <br /> 16 MB RAM <br /> 512 KB iRAM <br /> 64 MB ROM           |
 
+See [Overclock](../Overclock) project documents for overclocking Benchmark comparision.
+
 ## Other versions
 
 * Various signal e.g. vibromotor finding version using binary search. See [find_vibromotor_signal](https://github.com/EXL/P2kElfs/tree/find_vibromotor_signal) branch in this repository.
+* Some deprecated overclocking MCU hacks. See [overclock_cpu](https://github.com/EXL/P2kElfs/tree/overclock_cpu) branch in this repository.
+* Strange reboot case for Motorola SLVR L7e by pressing "5" button. See [l7e_debug](https://github.com/EXL/P2kElfs/tree/l7e_debug) branch in this repository.
 
 ## ELF files
 
-* Benchmark_EP1.elf (ELF for ElfPack 1.0, thumb)
-* Benchmark_EP1_arm.elf (ELF for ElfPack 1.0, arm)
+* Benchmark.elf (ELF for ElfPack 1.0, thumb)
+* Benchmark_arm.elf (ELF for ElfPack 1.0, arm)
 * Benchmark_EP2.elf (ELF for ElfPack 2.0, thumb)
 * Benchmark_EM1.elf (ELF for ElfPack 1.0, M·CORE)
 * Benchmark_EM2.elf (ELF for ElfPack 2.0, M·CORE)
 * Benchmark_L7e.elf (ELF for ElfPack 1.0, thumb, Motorola SLVR L7e version)
 * Benchmark_V600.elf (ELF for ElfPack 1.0, thumb, Motorola V600, version)
+* FindVibroSignal.elf (ELF for ElfPack 1.0)
+* OverclockCPU.elf (ELF for ElfPack 1.0)
+* Debug_L7e.elf (ELF for ElfPack 1.0)
 
 ## Additional information
 
@@ -51,5 +58,7 @@ The ELF-application has been tested on the following phones and firmware:
 * Motorola V360: R4513_G_08.B7.ACR
 * Motorola SLVR L7: R4513_G_08.B7.E0R_RB
 * Motorola SLVR L7e: R452D_G_08.01.0AR
+* Motorola SLVR L7e: R452D_G_08.01.0AR (some bugs)
+* Motorola KRZR K1:  R452F_G_08.03.08R (some bugs)
 
 Application type: GUI + ATI + Java Heap.
