@@ -519,14 +519,13 @@ static UINT32 HandleEventTimerExpired(EVENT_STACK_T *ev_st, APPLICATION_T *app) 
 				case APP_MENU_ITEM_BENCH_CPU:
 					app_instance->view = APP_VIEW_CPU_RESULTS;
 
-#if !defined(FTR_L7E)
-					BogoMIPS(&app_instance->cpu_result);
-#else
+#if defined(FTR_L7E) || defined(EP2)
 					u_strcpy(app_instance->cpu_result.bogo_time, L"Error: L7e");
 					u_strcpy(app_instance->cpu_result.bogo_mips, L"Error: L7e");
+#else
+					BogoMIPS(&app_instance->cpu_result);
 #endif
 					Dhrystone(&app_instance->cpu_result);
-
 
 					break;
 				case APP_MENU_ITEM_BENCH_GPU:
