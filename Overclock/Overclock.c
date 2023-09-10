@@ -49,7 +49,9 @@ typedef enum {
 
 typedef enum {
 	APP_MENU_ITEM_FIRST,
-	APP_MENU_ITEM_13MHZ_26MHZ = APP_MENU_ITEM_FIRST,
+	APP_MENU_ITEM_13MHZ_13MHZ = APP_MENU_ITEM_FIRST,
+	APP_MENU_ITEM_13MHZ_26MHZ,
+	APP_MENU_ITEM_26MHZ_21MHZ,
 	APP_MENU_ITEM_26MHZ_26MHZ,
 	APP_MENU_ITEM_39MHZ_26MHZ,
 	APP_MENU_ITEM_52MHZ_26MHZ,
@@ -118,7 +120,9 @@ static NEPTUNE_CLOCKS_T SaveConvertMenuItemToClocks(APP_MENU_ITEM_T menu_item);
 const char g_app_name[APP_NAME_LEN] = "Overclock";
 
 static const WCHAR g_str_app_name[] = L"Overclock";
+static const WCHAR g_str_menu_13_13[] = L"13 MHz | 13 MHz";
 static const WCHAR g_str_menu_13_26[] = L"13 MHz | 26 MHz";
+static const WCHAR g_str_menu_26_21[] = L"26 MHz | 21 MHz";
 static const WCHAR g_str_menu_26_26[] = L"26 MHz | 26 MHz";
 static const WCHAR g_str_menu_39_26[] = L"39 MHz | 26 MHz";
 static const WCHAR g_str_menu_52_26[] = L"52 MHz | 26 MHz | stock";
@@ -513,7 +517,9 @@ static UINT32 HandleEventSelect(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
 	app_instance->menu_current_item_index = event->data.index - 1;
 
 	switch (app_instance->menu_current_item_index) {
+		case APP_MENU_ITEM_13MHZ_13MHZ:
 		case APP_MENU_ITEM_13MHZ_26MHZ:
+		case APP_MENU_ITEM_26MHZ_21MHZ:
 		case APP_MENU_ITEM_26MHZ_26MHZ:
 		case APP_MENU_ITEM_39MHZ_26MHZ:
 		case APP_MENU_ITEM_52MHZ_26MHZ:
@@ -580,8 +586,14 @@ static LIST_ENTRY_T *CreateList(EVENT_STACK_T *ev_st, APPLICATION_T *app, UINT32
 	}
 
 	status |= UIS_MakeContentFromString("Mq0",
+		&list_elements[APP_MENU_ITEM_13MHZ_13MHZ].content.static_entry.text,
+		g_str_menu_13_13);
+	status |= UIS_MakeContentFromString("Mq0",
 		&list_elements[APP_MENU_ITEM_13MHZ_26MHZ].content.static_entry.text,
 		g_str_menu_13_26);
+		status |= UIS_MakeContentFromString("Mq0",
+		&list_elements[APP_MENU_ITEM_26MHZ_21MHZ].content.static_entry.text,
+		g_str_menu_26_21);
 	status |= UIS_MakeContentFromString("Mq0",
 		&list_elements[APP_MENU_ITEM_26MHZ_26MHZ].content.static_entry.text,
 		g_str_menu_26_26);
@@ -635,8 +647,12 @@ static LIST_ENTRY_T *CreateList(EVENT_STACK_T *ev_st, APPLICATION_T *app, UINT32
 
 static const WCHAR *GetSelectedClocks(APP_MENU_ITEM_T menu_item) {
 	switch (menu_item) {
+		case APP_MENU_ITEM_13MHZ_13MHZ:
+			return g_str_menu_13_13;
 		case APP_MENU_ITEM_13MHZ_26MHZ:
 			return g_str_menu_13_26;
+		case APP_MENU_ITEM_26MHZ_21MHZ:
+			return g_str_menu_26_21;
 		case APP_MENU_ITEM_26MHZ_26MHZ:
 			return g_str_menu_26_26;
 		case APP_MENU_ITEM_39MHZ_26MHZ:
@@ -667,8 +683,12 @@ static const WCHAR *GetSelectedClocks(APP_MENU_ITEM_T menu_item) {
 
 static NEPTUNE_CLOCKS_T SaveConvertMenuItemToClocks(APP_MENU_ITEM_T menu_item) {
 	switch (menu_item) {
+		case APP_MENU_ITEM_13MHZ_13MHZ:
+			return CLOCKS_13MHZ_13MHZ;
 		case APP_MENU_ITEM_13MHZ_26MHZ:
 			return CLOCKS_13MHZ_26MHZ;
+		case APP_MENU_ITEM_26MHZ_21MHZ:
+			return CLOCKS_26MHZ_21MHZ;
 		case APP_MENU_ITEM_26MHZ_26MHZ:
 			return CLOCKS_26MHZ_26MHZ;
 		case APP_MENU_ITEM_39MHZ_26MHZ:

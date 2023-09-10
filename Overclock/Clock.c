@@ -51,10 +51,11 @@ typedef enum {
 #define DPLL_DIVIDE_BY_2          0x0
 #define DPLL_DIVIDE_BY_3          0x1
 #define DPLL_DIVIDE_BY_4          0x2
+#define DPLL_DIVIDE_BY_5          0x3
 #define DPLL_DIVIDE_BY_6          0x4
 #define DPLL_DIVIDE_BY_8          0x5
-#define DPLL_DIVIDE_BY_5          0x3
 #define DPLL_DIVIDE_BY_10         0x6
+#define DPLL_DIVIDE_BY_12         0x7
 
 #define MFI_SHIFT                 4
 #define PDF_SHIFT                 0
@@ -198,11 +199,37 @@ extern UINT32 SetNeptuneClocks(NEPTUNE_CLOCKS_T neptune_clock) {
 	dpll_reg_value_tbl_ptr = NULL;
 
 	switch (neptune_clock) {
+#if 0 /* Original code. */
 		case CLOCKS_13MHZ_26MHZ: /* 13000000 hz  - 1410 - 83  */
 			*hapi_clock_rate_mcu = HAPI_CLOCK_RATES_13_MHZ;
 			hapi_clock_reg->clk_sel &= ~MCU_CLK_SEL_MASK;
 			hapi_clock_reg->clk_sel &= ~REF_SEL_MASK;
 			hapi_clock_reg->clk_sel |= CODEC_CLK_SEL_MASK;
+			break;
+#endif
+		case CLOCKS_13MHZ_13MHZ: /* UNKNOWN */
+			*hapi_clock_rate_mcu = HAPI_CLOCK_RATES_13_MHZ;
+			dpll_clock_rate = DPLL_CLOCK_RATE_39_MHZ; /* 156 MHz */
+			hapi_clock_reg->div_factor = /* 0x0700 (156 / 12) = 13 MHz */
+				(hapi_clock_reg->div_factor & ~REF_DPLL_DIV_MASK) | (DPLL_DIVIDE_BY_12 << REF_DPLL_DIV_SHIFT);
+			hapi_clock_reg->div_factor = /* 0x0007 (156 / 12) = 13 MHz */
+				(hapi_clock_reg->div_factor & ~MCU_DPLL_DIV_MASK) | (DPLL_DIVIDE_BY_12 << MCU_DPLL_DIV_SHIFT);
+			break;
+		case CLOCKS_13MHZ_26MHZ: /* 13000000 hz  - 1410 - 83  */
+			*hapi_clock_rate_mcu = HAPI_CLOCK_RATES_13_MHZ;
+			dpll_clock_rate = DPLL_CLOCK_RATE_39_MHZ; /* 156 MHz */
+			hapi_clock_reg->div_factor = /* 0x0700  (156 / 6) = 26 MHz */
+				(hapi_clock_reg->div_factor & ~REF_DPLL_DIV_MASK) | (DPLL_DIVIDE_BY_6  << REF_DPLL_DIV_SHIFT);
+			hapi_clock_reg->div_factor = /* 0x0004 (156 / 12) = 13 MHz */
+				(hapi_clock_reg->div_factor & ~MCU_DPLL_DIV_MASK) | (DPLL_DIVIDE_BY_12 << MCU_DPLL_DIV_SHIFT);
+			break;
+		case CLOCKS_26MHZ_21MHZ: /* UNKNOWN */
+			*hapi_clock_rate_mcu = HAPI_CLOCK_RATES_26_MHZ;
+			dpll_clock_rate = DPLL_CLOCK_RATE_26_MHZ; /* 260 MHz */
+			hapi_clock_reg->div_factor = /* 0x0700 (260 / 12) = 21.3(3) MHz */
+				(hapi_clock_reg->div_factor & ~REF_DPLL_DIV_MASK) | (DPLL_DIVIDE_BY_12 << REF_DPLL_DIV_SHIFT);
+			hapi_clock_reg->div_factor = /* 0x0006 (260 / 10) = 26 MHz      */
+				(hapi_clock_reg->div_factor & ~MCU_DPLL_DIV_MASK) | (MCD_DIVIDE_26_MHZ << MCU_DPLL_DIV_SHIFT);
 			break;
 		case CLOCKS_26MHZ_26MHZ: /* 25999996 hz  - 1670 - 242 */
 			*hapi_clock_rate_mcu = HAPI_CLOCK_RATES_26_MHZ;
