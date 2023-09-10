@@ -63,5 +63,7 @@ The ELF-application has been tested on the following phones and firmware:
 * Motorola SLVR L7e: R452D_G_08.01.0AR
 * Motorola SLVR L7e: R452D_G_08.01.0AR (some bugs)
 * Motorola KRZR K1:  R452F_G_08.03.08R (some bugs)
+* Motorola RAZR V3i: R4441D_G_08.01.03R
+* Motorola RAZR V3r: R4515_G_08.BD.D3R
 
 Application type: GUI + ATI + Java Heap.

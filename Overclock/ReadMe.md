@@ -50,9 +50,9 @@ See [Overclocking and Benchmakring old Motorola P2K phones (52 MHz to 65 MHz)](h
 | SLVR L6i | 65 MHz | 1039 ms <br /> 4.03 BMIPS <br /> 1677 ms <br /> 6.78 DMIPS | 3900 ms <br /> 52.6 FPS <br /> 7015 ms <br /> 33.8 FPS <br /> 11442 ms <br /> 20.2 FPS | 125 ms <br /> 1222912 B <br /> 10 ms <br /> 117504 B | 2.34 sec <br /> 1164.0 KiB |
 | ROKR E1  | 52 MHz | 1304 ms <br /> 3.21 BMIPS <br /> 2080 ms <br /> 5.47 DMIPS | 3425 ms <br /> 62.5 FPS <br /> 6279 ms <br /> 39.5 FPS <br /> 13635 ms <br /> 17.7 FPS | 22 ms <br /> 524800 B <br /> 2 ms <br /> 77312 B     | 7.39 sec <br /> 1060.0 KiB |
 | ROKR E1  | 65 MHz | 1039 ms <br /> 4.03 BMIPS <br /> 1653 ms <br /> 6.88 DMIPS | 3454 ms <br /> 62.5 FPS <br /> 5986 ms <br /> 39.5 FPS <br /> 11079 ms <br /> 21.6 FPS | 18 ms <br /> 526336 B <br /> 2 ms <br /> 77312 B     | 5.44 sec <br /> 1060.0 KiB |
-| SLVR L7  | 52 MHz | 1304 ms <br /> 3.21 BMIPS <br /> 1909 ms <br /> 5.96 DMIPS | ? <br /> ? <br /> ? <br /> ? <br /> ? <br /> ?                                         | ? <br /> ? <br /> ? <br /> ?                         | ? <br /> ?                 |
+| SLVR L7  | 52 MHz | 1304 ms <br /> 3.21 BMIPS <br /> 1909 ms <br /> 5.96 DMIPS | 3316 ms <br /> 62.5 FPS <br /> 6365 ms <br /> 39.6 FPS <br /> 13239 ms <br /> 17.1 FPS | 38 ms <br /> 514048 B <br /> 4 ms <br /> 77312 B     | 1.56 sec <br /> 296.0 KiB  |
 | SLVR L7  | 65 MHz | 1043 ms <br /> 4.01 BMIPS <br /> 1528 ms <br /> 7.44 DMIPS | ? <br /> ? <br /> ? <br /> ? <br /> ? <br /> ?                                         | ? <br /> ? <br /> ? <br /> ?                         | ? <br /> ?                 |
-| V360     | 52 MHz | 1304 ms <br /> 3.21 BMIPS <br /> 1922 ms <br /> 5.92 DMIPS | ? <br /> ? <br /> ? <br /> ? <br /> ? <br /> ?                                         | ? <br /> ? <br /> ? <br /> ?                         | ? <br /> ?                 |
+| V360     | 52 MHz | 1304 ms <br /> 3.21 BMIPS <br /> 1915 ms <br /> 5.94 DMIPS | 3506 ms <br /> 57.3 FPS <br /> 6364 ms <br /> 39.5 FPS <br /> 13704 ms <br /> 17.2 FPS | 36 ms <br /> 474624 B <br /> 4 ms <br /> 77312 B     | 1.83 sec <br /> 656.0 KiB  |
 | V360     | 65 MHz | 1035 ms <br /> 4.04 BMIPS <br /> 1524 ms <br /> 7.46 DMIPS | ? <br /> ? <br /> ? <br /> ? <br /> ? <br /> ?                                         | ? <br /> ? <br /> ? <br /> ?                         | ? <br /> ?                 |
 | RAZR V3i | 52 MHz | 1313 ms <br /> 3.17 BMIPS <br /> 1929 ms <br /> 5.90 DMIPS | 3947 ms <br /> 55.5 FPS <br /> 6888 ms <br /> 35.1 FPS <br /> 13768 ms <br /> 15.9 FPS | 71 ms <br /> 1091584 B <br /> 5 ms <br /> 112384 B   | 5.44 sec <br /> 1192.0 KiB |
 | RAZR V3i | 65 MHz | 1067 ms <br /> 3.91 BMIPS <br /> 1563 ms <br /> 7.28 DMIPS | 3905 ms <br /> 55.5 FPS <br /> 6688 ms <br /> 35.1 FPS <br /> 10763 ms <br /> 22.7 FPS | 46 ms <br /> 960512 B <br /> 4 ms <br /> 112384 B    | ? <br /> ?                 |
@@ -108,6 +108,8 @@ The ELF-application has been tested on the following phones and firmware:
 * Motorola SLVR L7: R4513_G_08.B7.E0R_RB
 * Motorola SLVR L7e: R452D_G_08.01.0AR (not working)
 * Motorola KRZR K1:  R452F_G_08.03.08R (not working)
+* Motorola RAZR V3i: R4441D_G_08.01.03R
+* Motorola RAZR V3r: R4515_G_08.BD.D3R
 
 Application type: GUI.
 
