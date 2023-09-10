@@ -21,6 +21,7 @@ set LIB_MAIN=Lib.o
 set DEFINES=-D__P2K__ -DEP1
 :: set DEFINES=-D__P2K__ -DEP1 -DFTR_V600
 :: set DEFINES=-D__P2K__ -DEP1 -DFTR_L7E
+:: set DEFINES=-D__P2K__ -DEP1 -DDISABLE_ALL_INT
 
 :: ELF name.
 set ELF_NAME=Overclock

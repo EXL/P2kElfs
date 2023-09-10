@@ -1,5 +1,6 @@
 #include <loader.h>
 #include <utilities.h>
+#include <dl.h>
 
 #include "Overclock.h"
 
@@ -194,6 +195,10 @@ extern UINT32 SetNeptuneClocks(NEPTUNE_CLOCKS_T neptune_clock) {
 	HAPI_CLOCK_RATE_T dpll_clock_rate;
 	const DPLL_REG_VALUE_TBL_T *dpll_reg_value_tbl_ptr;
 
+#if defined(DISABLE_ALL_INT)
+	UINT32 int_mask = suDisableAllInt();
+#endif
+
 	status = RESULT_OK;
 	dpll_clock_rate = 0;
 	dpll_reg_value_tbl_ptr = NULL;
@@ -342,6 +347,10 @@ extern UINT32 SetNeptuneClocks(NEPTUNE_CLOCKS_T neptune_clock) {
 	hapi_clock_reg->clk_sel = (hapi_clock_reg->clk_sel & ~MCU_CLK_SEL_MASK) | (MCU_CLK_IN_SEL << MCU_CLK_SEL_SHIFT);
 	hapi_clock_reg->clk_sel |= REF_SEL_MASK;
 	hapi_clock_reg->clk_sel &= ~CODEC_CLK_SEL_MASK;
+
+#if defined(DISABLE_ALL_INT)
+	suSetInt(int_mask);
+#endif
 
 	return status;
 }
