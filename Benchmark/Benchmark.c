@@ -559,7 +559,10 @@ static UINT32 HandleEventTimerExpired(EVENT_STACK_T *ev_st, APPLICATION_T *app) 
 				case APP_MENU_ITEM_BENCH_HEAP:
 					app_instance->view = APP_VIEW_HEAP_RESULTS;
 
-					TotalHeapSize(&app_instance->heap_result);
+					if (TotalHeapSize(&app_instance->heap_result) != RESULT_OK) {
+						u_strcpy(app_instance->heap_result.desc, L"Error: Java Heap");
+						u_strcpy(app_instance->heap_result.total, L"Error: Java Heap");
+					}
 
 					break;
 				default:

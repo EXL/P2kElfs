@@ -298,6 +298,14 @@ UINT32 TotalHeapSize(BENCHMARK_RESULTS_HEAP_T *result) {
 
 	time_start = suPalReadTime();
 
+	/* Can I use Java Heap functions? */
+	heap_blocks[i].block_address = AmMemAllocPointer(HEAP_STEP_SIZE);
+	if (heap_blocks[i].block_address != NULL) {
+		AmMemFreePointer(heap_blocks[i].block_address);
+	} else {
+		status = RESULT_FAIL;
+	}
+
 	do {
 		heap_blocks[i].block_address = AllocateBiggestBlock(
 			HEAP_START_SIZE_TOTAL, &heap_blocks[i].block_size, HEAP_STEP_SIZE, TRUE
