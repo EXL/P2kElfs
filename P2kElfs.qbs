@@ -1,5 +1,6 @@
 Project {
 	references: [
+		"Ambilight/Ambilight.qbs",
 		"BattDump/BattDump.qbs",
 		"Benchmark/Benchmark.qbs",
 		"Dumper/Dumper.qbs",
