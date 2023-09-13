@@ -9,7 +9,7 @@
  *   MIT
  *
  * Application type:
- *   Deamon + GUI + Funlights.
+ *   Deamon + GUI + ATI + Funlights.
  */
 
 #include <loader.h>
@@ -103,6 +103,7 @@ typedef struct {
 	APP_MENU_ITEM_T menu_current_item_index;
 	UINT64 ms_key_press_start;
 	APP_OPTIONS_T options;
+	UINT32 timer_handle;
 } APP_INSTANCE_T;
 
 UINT32 Register(const char *elf_path_uri, const char *args, UINT32 ev_code);
@@ -143,6 +144,12 @@ static const WCHAR *GetTriggerOptionString(APP_SELECT_ITEM_T item);
 static UINT32 ReadFileConfig(APPLICATION_T *app, const WCHAR *file_config_path);
 static UINT32 SaveFileConfig(APPLICATION_T *app, const WCHAR *file_config_path);
 
+static UINT32 SetLoopTimer(APPLICATION_T *app, UINT32 period);
+
+static UINT32 StartLights(EVENT_STACK_T *ev_st, APPLICATION_T *app);
+static UINT32 ProcessLights(EVENT_STACK_T *ev_st, APPLICATION_T *app);
+static UINT32 StopLights(EVENT_STACK_T *ev_st, APPLICATION_T *app);
+
 static const char g_app_name[APP_NAME_LEN] = "Ambilight";
 
 static const WCHAR g_str_app_name[] = L"Ambilight";
@@ -173,7 +180,7 @@ static const WCHAR g_str_about_content_p2[] = L"\x00A9 EXL, 13-Sep-2023.";
 static const WCHAR g_str_about_content_p3[] = L"https://github.com/EXL/P2kElfs/tree/master/Ambilight";
 static const WCHAR g_str_about_content_p4[] = L"       "; /* HACK: gap */
 
-static const UINT8 g_key_app_menu = KEY_4;
+static const UINT8 g_key_app_menu = KEY_SOFT_LEFT;
 static const UINT8 g_key_app_exit = KEY_0;
 
 static WCHAR g_config_file_path[FS_MAX_URI_NAME_LENGTH]; /* TODO: Can it be non-global? */
@@ -306,6 +313,9 @@ static UINT32 ApplicationStop(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
 	DeleteDialog(app);
 
 	FreeResourses(app_instance->resources);
+
+	status |= StopLights(ev_st, app);
+	status |= APP_UtilStopTimer(app);
 
 	status |= APP_Exit(ev_st, app, 0);
 
@@ -538,12 +548,11 @@ static UINT32 HandleEventSelect(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
 			if (app_instance->options.mode == APP_SELECT_ITEM_FLASH_100) {
 				status |= APP_UtilChangeState(APP_STATE_WARNING, ev_st, app);
 			} else {
-				/* START LIGHTS! */
-
+				status |= StartLights(ev_st, app);
 			}
 			break;
 		case APP_MENU_ITEM_STOP_LIGHTS:
-			/* STOP LIGHTS! */
+			status |= StopLights(ev_st, app);
 			break;
 		case APP_MENU_ITEM_HELP:
 			app_instance->view = APP_VIEW_HELP;
@@ -631,7 +640,7 @@ static UINT32 HandleEventTimerExpired(EVENT_STACK_T *ev_st, APPLICATION_T *app) 
 		/* Exit App! */
 		return ApplicationStop(ev_st, app);
 	} else if (timer_id == APP_TIMER_DO_LIGHTS) {
-		/* TODO: Lights! */
+		ProcessLights(ev_st, app);
 	}
 
 	return RESULT_OK;
@@ -715,7 +724,7 @@ static UINT32 HandleEventYes(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
 	app_instance = (APP_INSTANCE_T *) app;
 	app_instance->popup = APP_POPUP_RESETED;
 
-	/* TODO: ACtivate Lights! */
+	status |= StartLights(ev_st, app);
 
 	status |= SaveFileConfig(app, g_config_file_path);
 	status |= APP_UtilChangeState(APP_STATE_POPUP, ev_st, app);
@@ -926,4 +935,50 @@ static UINT32 SaveFileConfig(APPLICATION_T *app, const WCHAR *file_config_path) 
 	DL_FsCloseFile(file_config);
 
 	return (written == 0);
+}
+
+static UINT32 SetLoopTimer(APPLICATION_T *app, UINT32 period) {
+	UINT32 status;
+	APP_INSTANCE_T *app_instance;
+	IFACE_DATA_T iface_data;
+
+	status = RESULT_OK;
+	app_instance = (APP_INSTANCE_T *) app;
+	iface_data.port = app->port;
+
+	if (app_instance->timer_handle != 0) {
+		iface_data.handle = app_instance->timer_handle;
+		status |= DL_ClkStopTimer(&iface_data);
+	}
+
+	if (period != 0) {
+		DL_ClkStartCyclicalTimer(&iface_data, period, APP_TIMER_LOOP);
+		status |= app_instance->timer_handle = iface_data.handle;
+	}
+
+	return status;
+}
+
+static UINT32 StartLights(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
+	UINT32 status;
+
+	status = RESULT_OK;
+
+	return status;
+}
+
+static UINT32 ProcessLights(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
+	UINT32 status;
+
+	status = RESULT_OK;
+
+	return status;
+}
+
+static UINT32 StopLights(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
+	UINT32 status;
+
+	status = RESULT_OK;
+
+	return status;
 }
