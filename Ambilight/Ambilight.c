@@ -71,6 +71,7 @@ typedef enum {
 typedef enum {
 	APP_SELECT_ITEM_FIRST,
 	APP_SELECT_ITEM_AMBILIGHT = APP_SELECT_ITEM_FIRST,
+	APP_SELECT_ITEM_FLASH_25,
 	APP_SELECT_ITEM_FLASH_50,
 	APP_SELECT_ITEM_FLASH_100,
 	APP_SELECT_ITEM_RAINBOW,
@@ -180,9 +181,10 @@ static UINT32 Rainbow(EVENT_STACK_T *ev_st, APPLICATION_T *app, BOOL random_colo
 static const char g_app_name[APP_NAME_LEN] = "Ambilight";
 
 static const WCHAR g_str_app_name[] = L"Ambilight";
-static const WCHAR g_str_mode[] = L"Mode:";
-static const WCHAR g_str_e_mode[] = L"Mode";
+static const WCHAR g_str_mode[] = L"Light Mode:";
+static const WCHAR g_str_e_mode[] = L"Light Mode";
 static const WCHAR g_str_mode_ambilight[] = L"Ambilight";
+static const WCHAR g_str_mode_flash25[] = L"Flash 25%";
 static const WCHAR g_str_mode_flash50[] = L"Flash 50%";
 static const WCHAR g_str_mode_flash100[] = L"Flash 100%";
 static const WCHAR g_str_mode_rainbow[] = L"Rainbow";
@@ -202,8 +204,8 @@ static const WCHAR g_str_changed[] = L"Changed:";
 static const WCHAR g_str_started[] = L"Lights service started!";
 static const WCHAR g_str_stopped[] = L"Lights service stopped!";
 static const WCHAR g_str_warn_activated[] = L"The \"Flash 100%\" mode is activated, don't use this mode for too long!";
-static const WCHAR g_str_warn_question[] = L"This can be dangerous to the phone's flashlight diode, are you sure?";
-static const WCHAR g_str_help_content_p1[] = L"Bias ambilighting daemon program for Motorola P2K phones.";
+static const WCHAR g_str_warn_question[] = L"This can be dangerous to the phone's flash diode, are you sure?";
+static const WCHAR g_str_help_content_p1[] = L"Bias lighting (ambilight) daemon program for Motorola P2K phones.";
 static const WCHAR g_str_about_content_p1[] = L"Version: 1.0";
 static const WCHAR g_str_about_content_p2[] = L"\x00A9 EXL, 13-Sep-2023.";
 static const WCHAR g_str_about_content_p3[] = L"https://github.com/EXL/P2kElfs/tree/master/Ambilight";
@@ -919,6 +921,9 @@ static UINT32 SendSelectItemsToList(EVENT_STACK_T *ev_st, APPLICATION_T *app, UI
 	status |= UIS_MakeContentFromString("q0",
 		&list[APP_SELECT_ITEM_AMBILIGHT].content.static_entry.text,
 		g_str_mode_ambilight);
+		status |= UIS_MakeContentFromString("q0",
+		&list[APP_SELECT_ITEM_FLASH_25].content.static_entry.text,
+		g_str_mode_flash25);
 	status |= UIS_MakeContentFromString("q0",
 		&list[APP_SELECT_ITEM_FLASH_50].content.static_entry.text,
 		g_str_mode_flash50);
@@ -954,6 +959,8 @@ static const WCHAR *GetTriggerOptionString(APP_SELECT_ITEM_T item) {
 		default:
 		case APP_SELECT_ITEM_AMBILIGHT:
 			return g_str_mode_ambilight;
+		case APP_SELECT_ITEM_FLASH_25:
+			return g_str_mode_flash25;
 		case APP_SELECT_ITEM_FLASH_50:
 			return g_str_mode_flash50;
 		case APP_SELECT_ITEM_FLASH_100:
@@ -1051,6 +1058,9 @@ static UINT32 ProcessLights(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
 	switch (app_instance->options.mode) {
 		case APP_SELECT_ITEM_AMBILIGHT:
 			HAPI_LP393X_set_tri_color_led(0, 0xFFF);
+			break;
+		case APP_SELECT_ITEM_FLASH_25:
+			HAPI_LP393X_set_tri_color_led(1, 0x444);
 			break;
 		case APP_SELECT_ITEM_FLASH_50:
 			HAPI_LP393X_set_tri_color_led(1, 0x888);
