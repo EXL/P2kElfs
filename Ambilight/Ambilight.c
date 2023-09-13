@@ -185,6 +185,7 @@ static const WCHAR *GetTriggerOptionString(APP_SELECT_ITEM_T item);
 static UINT32 ReadFileConfig(APPLICATION_T *app, const WCHAR *file_config_path);
 static UINT32 SaveFileConfig(APPLICATION_T *app, const WCHAR *file_config_path);
 
+static BOOL IsKeyPadLocked(void);
 static UINT32 SetLoopTimer(APPLICATION_T *app, UINT32 period);
 static UINT32 ConvertDecToHexColor(UINT32 number, WCHAR *heximal);
 static UINT32 ConvertHexColorToDec(const WCHAR *heximal, UINT32 *number);
@@ -702,8 +703,10 @@ static UINT32 HandleEventKeyRelease(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
 		ms_key_release_stop = (UINT32) (suPalTicksToMsec(suPalReadTime()) - app_instance->ms_key_press_start);
 		if ((ms_key_release_stop >= KEY_LONG_PRESS_START_MS) && (ms_key_release_stop <= KEY_LONG_PRESS_STOP_MS)) {
 			if (key == g_key_app_menu) {
-				APP_ConsumeEv(ev_st, app);
-				return HandleEventShow(ev_st, app);
+				if (!IsKeyPadLocked()) {
+					APP_ConsumeEv(ev_st, app);
+					return HandleEventShow(ev_st, app);
+				}
 			} else if (key == g_key_app_exit) {
 #ifdef EXIT_BY_KEY
 				APP_UtilStartTimer(100, APP_TIMER_EXIT, app);
@@ -1068,6 +1071,13 @@ static UINT32 SaveFileConfig(APPLICATION_T *app, const WCHAR *file_config_path) 
 	DL_FsCloseFile(file_config);
 
 	return (written == 0);
+}
+
+static BOOL IsKeyPadLocked(void) {
+	UINT8 keypad_state;
+	DL_DbFeatureGetCurrentState(DB_FEATURE_KEYPAD_STATE, &keypad_state);
+	LOG("keypad_state = %d\n", keypad_state);
+	return (BOOL) keypad_state;
 }
 
 static UINT32 SetLoopTimer(APPLICATION_T *app, UINT32 period) {
