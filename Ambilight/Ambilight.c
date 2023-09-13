@@ -23,8 +23,8 @@
 
 #define MAX_NUMBER_LENGTH           (6)
 #define MAX_NUMBER_VALUE            (999999)
-#define KEY_LONG_PRESS_START_MS     (1500)
-#define KEY_LONG_PRESS_STOP_MS      (3000)
+#define KEY_LONG_PRESS_START_MS     (1000)
+#define KEY_LONG_PRESS_STOP_MS      (2000)
 
 typedef enum {
 	APP_STATE_ANY,
@@ -81,7 +81,9 @@ typedef enum {
 
 typedef enum {
 	APP_POPUP_CHANGED,
-	APP_POPUP_RESETED
+	APP_POPUP_WARNING,
+	APP_POPUP_STARTED,
+	APP_POPUP_STOPPED
 } APP_POPUP_T;
 
 typedef enum {
@@ -105,6 +107,7 @@ typedef struct {
 	UINT64 ms_key_press_start;
 	APP_OPTIONS_T options;
 	UINT32 timer_handle;
+	BOOL is_lights_started;
 } APP_INSTANCE_T;
 
 UINT32 Register(const char *elf_path_uri, const char *args, UINT32 ev_code);
@@ -173,6 +176,8 @@ static const WCHAR g_str_about[] = L"About...";
 static const WCHAR g_str_e_about[] = L"About";
 static const WCHAR g_str_exit[] = L"Exit";
 static const WCHAR g_str_changed[] = L"Changed:";
+static const WCHAR g_str_started[] = L"Lights service started!";
+static const WCHAR g_str_stopped[] = L"Lights service stopped!";
 static const WCHAR g_str_warn_activated[] = L"Flash 100% activated, don't use this mode for too long!";
 static const WCHAR g_str_warn_question[] = L"This can be dangerous to flashlight diode, are you sure?";
 static const WCHAR g_str_help_content_p1[] = L"Bias lighting daemon program for Motorola phones.";
@@ -290,6 +295,7 @@ static UINT32 ApplicationStart(EVENT_STACK_T *ev_st, REG_ID_T reg_id, void *reg_
 		app_instance->ms_key_press_start = 0LLU;
 		app_instance->options.mode = APP_SELECT_ITEM_AMBILIGHT;
 		app_instance->options.delay = 100; /* 100 ms. */
+		app_instance->is_lights_started = FALSE;
 
 		if (DL_FsFFileExist(g_config_file_path)) {
 			ReadFileConfig((APPLICATION_T *) app_instance, g_config_file_path);
@@ -427,8 +433,14 @@ static UINT32 HandleStateEnter(EVENT_STACK_T *ev_st, APPLICATION_T *app, ENTER_S
 					UIS_MakeContentFromString("MCq0NMCq1NMCq2", &content,
 						g_str_changed, g_str_e_mode, GetTriggerOptionString(app_instance->options.mode));
 					break;
-				case APP_POPUP_RESETED:
+				case APP_POPUP_WARNING:
 					UIS_MakeContentFromString("MCq0", &content, g_str_warn_activated);
+					break;
+				case APP_POPUP_STARTED:
+					UIS_MakeContentFromString("MCq0", &content, g_str_started);
+					break;
+				case APP_POPUP_STOPPED:
+					UIS_MakeContentFromString("MCq0", &content, g_str_stopped);
 					break;
 			}
 			dialog = UIS_CreateTransientNotice(&port, &content, NOTICE_TYPE_OK);
@@ -547,13 +559,15 @@ static UINT32 HandleEventSelect(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
 			if (app_instance->options.mode == APP_SELECT_ITEM_FLASH_100) {
 				status |= APP_UtilChangeState(APP_STATE_WARNING, ev_st, app);
 			} else {
-				status |= StartLights(ev_st, app);
-				status |= APP_UtilChangeState(APP_STATE_MAIN, ev_st, app);
+				app_instance->popup = APP_POPUP_STARTED;
+				StartLights(ev_st, app);
+				status |= APP_UtilChangeState(APP_STATE_POPUP, ev_st, app);
 			}
 			break;
 		case APP_MENU_ITEM_STOP_LIGHTS:
-			status |= StopLights(ev_st, app);
-			status |= APP_UtilChangeState(APP_STATE_MAIN, ev_st, app);
+			app_instance->popup = APP_POPUP_STOPPED;
+			StopLights(ev_st, app);
+			status |= APP_UtilChangeState(APP_STATE_POPUP, ev_st, app);
 			break;
 		case APP_MENU_ITEM_HELP:
 			app_instance->view = APP_VIEW_HELP;
@@ -669,6 +683,8 @@ static UINT32 HandleEventEditData(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
 		}
 	}
 
+	StopLights(ev_st, app);
+
 	status |= SaveFileConfig(app, g_config_file_path);
 	status |= APP_UtilChangeState(APP_STATE_MAIN, ev_st, app);
 
@@ -705,6 +721,8 @@ static UINT32 HandleEventSelectDone(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
 	app_instance->options.mode = event->data.index - 1;
 	app_instance->popup = APP_POPUP_CHANGED;
 
+	StopLights(ev_st, app);
+
 	status |= SaveFileConfig(app, g_config_file_path);
 	status |= APP_UtilChangeState(APP_STATE_POPUP, ev_st, app);
 
@@ -721,9 +739,9 @@ static UINT32 HandleEventYes(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
 
 	status = RESULT_OK;
 	app_instance = (APP_INSTANCE_T *) app;
-	app_instance->popup = APP_POPUP_RESETED;
+	app_instance->popup = APP_POPUP_WARNING;
 
-	status |= StartLights(ev_st, app);
+	StartLights(ev_st, app);
 
 	status |= SaveFileConfig(app, g_config_file_path);
 	status |= APP_UtilChangeState(APP_STATE_POPUP, ev_st, app);
@@ -964,6 +982,7 @@ static UINT32 StartLights(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
 
 	status = RESULT_OK;
 	app_instance = (APP_INSTANCE_T *) app;
+	app_instance->is_lights_started = TRUE;
 
 	status |= StopLights(ev_st, app);
 	status |= SetLoopTimer(app, app_instance->options.delay);
@@ -1005,10 +1024,14 @@ static UINT32 ProcessLights(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
 
 static UINT32 StopLights(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
 	UINT32 status;
+	APP_INSTANCE_T *app_instance;
 
 	status = RESULT_OK;
+	app_instance = (APP_INSTANCE_T *) app;
+	app_instance->is_lights_started = FALSE;
 
 	status |= SetLoopTimer(app, 0);
+	status |= APP_UtilStopTimer(app);
 
 	HAPI_LP393X_set_tri_color_led(0, 0x000);
 	HAPI_LP393X_set_tri_color_led(1, 0x000);
