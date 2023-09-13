@@ -78,6 +78,8 @@ typedef enum {
 	APP_SELECT_ITEM_RANDOM,
 	APP_SELECT_ITEM_STROBOSCOPE,
 	APP_SELECT_ITEM_STROBO_FLASH,
+	APP_SELECT_ITEM_COLOR,
+	APP_SELECT_ITEM_COLOR_FLASH,
 	APP_SELECT_ITEM_MAX
 } APP_SELECT_ITEM_T;
 
@@ -111,7 +113,8 @@ typedef enum {
 	RAINBOW_GREEN,
 	RAINBOW_LIGHT_BLUE,
 	RAINBOW_BLUE,
-	RAINBOW_VIOLET
+	RAINBOW_VIOLET,
+	RAINBOW_WHITE
 } RAINBOW_COLOR_T;
 
 typedef struct {
@@ -130,7 +133,7 @@ typedef struct {
 	APP_COLOR_T color_current;
 	APP_COLOR_T color_pattern;
 	RAINBOW_COLOR_T rainbow;
-
+	UINT32 stroboscope;
 } APP_INSTANCE_T;
 
 UINT32 Register(const char *elf_path_uri, const char *args, UINT32 ev_code);
@@ -176,7 +179,9 @@ static UINT32 SetLoopTimer(APPLICATION_T *app, UINT32 period);
 static UINT32 StartLights(EVENT_STACK_T *ev_st, APPLICATION_T *app);
 static UINT32 ProcessLights(EVENT_STACK_T *ev_st, APPLICATION_T *app);
 static UINT32 StopLights(EVENT_STACK_T *ev_st, APPLICATION_T *app);
+
 static UINT32 Rainbow(EVENT_STACK_T *ev_st, APPLICATION_T *app, BOOL random_colors);
+static UINT32 Stroboscope(EVENT_STACK_T *ev_st, APPLICATION_T *app, BOOL flashlight, BOOL color);
 
 static const char g_app_name[APP_NAME_LEN] = "Ambilight";
 
@@ -191,6 +196,8 @@ static const WCHAR g_str_mode_rainbow[] = L"Rainbow";
 static const WCHAR g_str_mode_random[] = L"Random";
 static const WCHAR g_str_mode_stroboscope[] = L"Stroboscope";
 static const WCHAR g_str_mode_strobo_flash[] = L"Strobo Flash";
+static const WCHAR g_str_mode_color[] = L"Color";
+static const WCHAR g_str_mode_color_flash[] = L"Color Flash";
 static const WCHAR g_str_delay[] = L"Delay (in ms):";
 static const WCHAR g_str_e_delay[] = L"Delay (in ms)";
 static const WCHAR g_str_start_ligths[] = L"Start Lights!";
@@ -328,6 +335,7 @@ static UINT32 ApplicationStart(EVENT_STACK_T *ev_st, REG_ID_T reg_id, void *reg_
 		app_instance->color_pattern.g = 0x0;
 		app_instance->color_pattern.b = 0x0;
 		app_instance->rainbow = RAINBOW_RED;
+		app_instance->stroboscope = 0;
 
 		if (DL_FsFFileExist(g_config_file_path)) {
 			ReadFileConfig((APPLICATION_T *) app_instance, g_config_file_path);
@@ -942,6 +950,12 @@ static UINT32 SendSelectItemsToList(EVENT_STACK_T *ev_st, APPLICATION_T *app, UI
 	status |= UIS_MakeContentFromString("q0",
 		&list[APP_SELECT_ITEM_STROBO_FLASH].content.static_entry.text,
 		g_str_mode_strobo_flash);
+	status |= UIS_MakeContentFromString("q0",
+		&list[APP_SELECT_ITEM_COLOR].content.static_entry.text,
+		g_str_mode_color);
+	status |= UIS_MakeContentFromString("q0",
+		&list[APP_SELECT_ITEM_COLOR_FLASH].content.static_entry.text,
+		g_str_mode_strobo_flash);
 
 	status |= APP_UtilAddEvUISListData(ev_st, app, 0, start, APP_SELECT_ITEM_MAX, FBF_LEAVE,
 		sizeof(LIST_ENTRY_T) * APP_SELECT_ITEM_MAX, list);
@@ -973,6 +987,10 @@ static const WCHAR *GetTriggerOptionString(APP_SELECT_ITEM_T item) {
 			return g_str_mode_stroboscope;
 		case APP_SELECT_ITEM_STROBO_FLASH:
 			return g_str_mode_strobo_flash;
+		case APP_SELECT_ITEM_COLOR:
+			return g_str_mode_color;
+		case APP_SELECT_ITEM_COLOR_FLASH:
+			return g_str_mode_color_flash;
 	}
 }
 
@@ -1075,8 +1093,16 @@ static UINT32 ProcessLights(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
 			Rainbow(ev_st, app, TRUE);
 			break;
 		case APP_SELECT_ITEM_STROBOSCOPE:
+			Stroboscope(ev_st, app, FALSE, FALSE);
 			break;
 		case APP_SELECT_ITEM_STROBO_FLASH:
+			Stroboscope(ev_st, app, TRUE, FALSE);
+			break;
+		case APP_SELECT_ITEM_COLOR:
+			Stroboscope(ev_st, app, FALSE, TRUE);
+			break;
+		case APP_SELECT_ITEM_COLOR_FLASH:
+			Stroboscope(ev_st, app, TRUE, TRUE);
 			break;
 		default:
 			break;
@@ -1176,6 +1202,12 @@ static UINT32 Rainbow(EVENT_STACK_T *ev_st, APPLICATION_T *app, BOOL random_colo
 					app_instance->color_pattern.b = 0xF;
 					break;
 				case RAINBOW_VIOLET:
+					app_instance->rainbow = RAINBOW_WHITE;
+					app_instance->color_pattern.r = 0xF;
+					app_instance->color_pattern.g = 0xF;
+					app_instance->color_pattern.b = 0xF;
+					break;
+				case RAINBOW_WHITE:
 					app_instance->rainbow = RAINBOW_RED;
 					app_instance->color_pattern.r = 0xF;
 					app_instance->color_pattern.g = 0x0;
@@ -1191,6 +1223,37 @@ static UINT32 Rainbow(EVENT_STACK_T *ev_st, APPLICATION_T *app, BOOL random_colo
 		0,
 		(app_instance->color_current.r << 8 | app_instance->color_current.g << 4 | app_instance->color_current.b)
 	);
+
+	return status;
+}
+
+static UINT32 Stroboscope(EVENT_STACK_T *ev_st, APPLICATION_T *app, BOOL flashlight, BOOL color) {
+	UINT32 status;
+	APP_INSTANCE_T *app_instance;
+
+	status = RESULT_OK;
+	app_instance = (APP_INSTANCE_T *) app;
+
+	app_instance->stroboscope = !app_instance->stroboscope;
+
+	if (app_instance->stroboscope) {
+		if (color) {
+			HAPI_LP393X_set_tri_color_led(
+				0,
+				((rand() % 16) << 8 | (rand() % 16) << 4 | (rand() % 16))
+			);
+		} else {
+			HAPI_LP393X_set_tri_color_led(0, 0xFFF);
+		}
+		if (flashlight) {
+			HAPI_LP393X_set_tri_color_led(1, 0x888);
+		}
+	} else {
+		HAPI_LP393X_set_tri_color_led(0, 0x000);
+		if (flashlight) {
+			HAPI_LP393X_set_tri_color_led(1, 0x000);
+		}
+	}
 
 	return status;
 }
