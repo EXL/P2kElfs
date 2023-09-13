@@ -19,6 +19,7 @@
 #include <res_def.h>
 #include <utilities.h>
 #include <filesystem.h>
+#include <dl.h>
 
 #define MAX_NUMBER_LENGTH           (6)
 #define MAX_NUMBER_VALUE            (999999)
@@ -547,10 +548,12 @@ static UINT32 HandleEventSelect(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
 				status |= APP_UtilChangeState(APP_STATE_WARNING, ev_st, app);
 			} else {
 				status |= StartLights(ev_st, app);
+				status |= APP_UtilChangeState(APP_STATE_MAIN, ev_st, app);
 			}
 			break;
 		case APP_MENU_ITEM_STOP_LIGHTS:
 			status |= StopLights(ev_st, app);
+			status |= APP_UtilChangeState(APP_STATE_MAIN, ev_st, app);
 			break;
 		case APP_MENU_ITEM_HELP:
 			app_instance->view = APP_VIEW_HELP;
@@ -962,6 +965,7 @@ static UINT32 StartLights(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
 	status = RESULT_OK;
 	app_instance = (APP_INSTANCE_T *) app;
 
+	status |= StopLights(ev_st, app);
 	status |= SetLoopTimer(app, app_instance->options.delay);
 
 	return status;
@@ -969,8 +973,32 @@ static UINT32 StartLights(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
 
 static UINT32 ProcessLights(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
 	UINT32 status;
+	APP_INSTANCE_T *app_instance;
 
 	status = RESULT_OK;
+	app_instance = (APP_INSTANCE_T *) app;
+
+	switch (app_instance->options.mode) {
+		case APP_SELECT_ITEM_AMBILIGHT:
+			HAPI_LP393X_set_tri_color_led(0, 0xFFF);
+			break;
+		case APP_SELECT_ITEM_FLASH_50:
+			HAPI_LP393X_set_tri_color_led(1, 0x888);
+			break;
+		case APP_SELECT_ITEM_FLASH_100:
+			HAPI_LP393X_set_tri_color_led(1, 0xFFF);
+			break;
+		case APP_SELECT_ITEM_RAINBOW:
+			break;
+		case APP_SELECT_ITEM_RANDOM:
+			break;
+		case APP_SELECT_ITEM_STROBOSCOPE:
+			break;
+		case APP_SELECT_ITEM_STROBO_FLASH:
+			break;
+		default:
+			break;
+	}
 
 	return status;
 }
@@ -981,6 +1009,9 @@ static UINT32 StopLights(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
 	status = RESULT_OK;
 
 	status |= SetLoopTimer(app, 0);
+
+	HAPI_LP393X_set_tri_color_led(0, 0x000);
+	HAPI_LP393X_set_tri_color_led(1, 0x000);
 
 	return status;
 }
