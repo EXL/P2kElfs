@@ -315,7 +315,6 @@ static UINT32 ApplicationStop(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
 	FreeResourses(app_instance->resources);
 
 	status |= StopLights(ev_st, app);
-	status |= APP_UtilStopTimer(app);
 
 	status |= APP_Exit(ev_st, app, 0);
 
@@ -393,7 +392,6 @@ static UINT32 HandleStateEnter(EVENT_STACK_T *ev_st, APPLICATION_T *app, ENTER_S
 
 	port = app->port;
 	app_state = app->state;
-	edit_title = app_instance->resources[APP_RESOURCE_STRING_NAME];
 
 	memclr(&content, sizeof(CONTENT_T));
 
@@ -582,12 +580,10 @@ static UINT32 HandleEventKeyPress(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
 	APP_INSTANCE_T *app_instance;
 	EVENT_T *event;
 	UINT8 key;
-	UINT8 dialog;
 
 	app_instance = (APP_INSTANCE_T *) app;
 	event = AFW_GetEv(ev_st);
 	key = event->data.key_pressed;
-	dialog = DialogType_None;
 
 	if (key == g_key_app_menu || key == g_key_app_exit) {
 		app_instance->ms_key_press_start = suPalTicksToMsec(suPalReadTime());
@@ -952,7 +948,7 @@ static UINT32 SetLoopTimer(APPLICATION_T *app, UINT32 period) {
 	}
 
 	if (period != 0) {
-		DL_ClkStartCyclicalTimer(&iface_data, period, APP_TIMER_LOOP);
+		DL_ClkStartCyclicalTimer(&iface_data, period, APP_TIMER_DO_LIGHTS);
 		status |= app_instance->timer_handle = iface_data.handle;
 	}
 
@@ -961,8 +957,12 @@ static UINT32 SetLoopTimer(APPLICATION_T *app, UINT32 period) {
 
 static UINT32 StartLights(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
 	UINT32 status;
+	APP_INSTANCE_T *app_instance;
 
 	status = RESULT_OK;
+	app_instance = (APP_INSTANCE_T *) app;
+
+	status |= SetLoopTimer(app, app_instance->options.delay);
 
 	return status;
 }
@@ -979,6 +979,8 @@ static UINT32 StopLights(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
 	UINT32 status;
 
 	status = RESULT_OK;
+
+	status |= SetLoopTimer(app, 0);
 
 	return status;
 }
