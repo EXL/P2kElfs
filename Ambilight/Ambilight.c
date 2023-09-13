@@ -24,6 +24,8 @@
 #define MAX_NUMBER_LENGTH           (6)
 #define MIN_NUMBER_VALUE            (10)
 #define MAX_NUMBER_VALUE            (60000)
+#define MAX_HEX_LENGTH              (10)
+#define MAX_HEX_VALUE               (0xFFF)
 #define KEY_LONG_PRESS_START_MS     (1000)
 #define KEY_LONG_PRESS_STOP_MS      (2000)
 
@@ -53,6 +55,7 @@ typedef enum {
 	APP_RESOURCE_STRING_NAME,
 	APP_RESOURCE_STRING_MODE,
 	APP_RESOURCE_STRING_DELAY,
+	APP_RESOURCE_STRING_COLOR,
 	APP_RESOURCE_MAX
 } APP_RESOURCES_T;
 
@@ -60,6 +63,7 @@ typedef enum {
 	APP_MENU_ITEM_FIRST,
 	APP_MENU_ITEM_MODE = APP_MENU_ITEM_FIRST,
 	APP_MENU_ITEM_DELAY,
+	APP_MENU_ITEM_COLOR,
 	APP_MENU_ITEM_START_LIGHTS,
 	APP_MENU_ITEM_STOP_LIGHTS,
 	APP_MENU_ITEM_HELP,
@@ -95,9 +99,15 @@ typedef enum {
 	APP_VIEW_ABOUT
 } APP_VIEW_T;
 
+typedef enum {
+	APP_EDIT_DELAY,
+	APP_EDIT_COLOR
+} APP_EDIT_T;
+
 typedef struct {
 	APP_SELECT_ITEM_T mode;
 	UINT32 delay;
+	UINT16 color;
 } APP_OPTIONS_T;
 
 typedef struct {
@@ -124,6 +134,7 @@ typedef struct {
 	RESOURCE_ID resources[APP_RESOURCE_MAX];
 	APP_POPUP_T popup;
 	APP_VIEW_T view;
+	APP_EDIT_T edit;
 	APP_MENU_ITEM_T menu_current_item_index;
 	UINT64 ms_key_press_start;
 	APP_OPTIONS_T options;
@@ -175,6 +186,8 @@ static UINT32 ReadFileConfig(APPLICATION_T *app, const WCHAR *file_config_path);
 static UINT32 SaveFileConfig(APPLICATION_T *app, const WCHAR *file_config_path);
 
 static UINT32 SetLoopTimer(APPLICATION_T *app, UINT32 period);
+static UINT32 ConvertDecToHexColor(UINT32 number, WCHAR *heximal);
+static UINT32 ConvertHexColorToDec(const WCHAR *heximal, UINT32 *number);
 
 static UINT32 StartLights(EVENT_STACK_T *ev_st, APPLICATION_T *app);
 static UINT32 ProcessLights(EVENT_STACK_T *ev_st, APPLICATION_T *app);
@@ -198,6 +211,8 @@ static const WCHAR g_str_mode_rainbow[] = L"Rainbow";
 static const WCHAR g_str_mode_random[] = L"Random";
 static const WCHAR g_str_mode_stroboscope[] = L"Stroboscope";
 static const WCHAR g_str_mode_strobo_color[] = L"Strobo Color";
+static const WCHAR g_str_color[] = L"RGB Color:";
+static const WCHAR g_str_e_color[] = L"HEX Color";
 static const WCHAR g_str_delay[] = L"Delay (in ms):";
 static const WCHAR g_str_e_delay[] = L"Delay (in ms)";
 static const WCHAR g_str_start_ligths[] = L"Start Lights!";
@@ -323,10 +338,12 @@ static UINT32 ApplicationStart(EVENT_STACK_T *ev_st, REG_ID_T reg_id, void *reg_
 		app_instance->state = APP_DISPLAY_HIDE;
 		app_instance->popup = APP_POPUP_CHANGED;
 		app_instance->view = APP_VIEW_HELP;
+		app_instance->edit = APP_EDIT_DELAY;
 		app_instance->menu_current_item_index = APP_MENU_ITEM_FIRST;
 		app_instance->ms_key_press_start = 0LLU;
 		app_instance->options.mode = APP_SELECT_ITEM_AMBILIGHT;
 		app_instance->options.delay = 100; /* 100 ms. */
+		app_instance->options.color = 0xF00; /* Red. */
 		app_instance->is_lights_started = FALSE;
 		app_instance->color_current.r = 0xF;
 		app_instance->color_current.g = 0x0;
@@ -381,6 +398,8 @@ static UINT32 InitResourses(RESOURCE_ID *resources) {
 		(void *) g_str_e_mode, (u_strlen(g_str_e_mode) + 1) * sizeof(WCHAR));
 	status |= DRM_CreateResource(&resources[APP_RESOURCE_STRING_DELAY], RES_TYPE_STRING,
 		(void *) g_str_e_delay, (u_strlen(g_str_e_delay) + 1) * sizeof(WCHAR));
+	status |= DRM_CreateResource(&resources[APP_RESOURCE_STRING_COLOR], RES_TYPE_STRING,
+		(void *) g_str_e_color, (u_strlen(g_str_e_color) + 1) * sizeof(WCHAR));
 
 	return status;
 }
@@ -427,7 +446,7 @@ static UINT32 HandleStateEnter(EVENT_STACK_T *ev_st, APPLICATION_T *app, ENTER_S
 	APP_STATE_T app_state;
 	UINT32 starting_list_item;
 	RESOURCE_ID edit_title;
-	WCHAR edit_number[MAX_NUMBER_LENGTH + 1];
+	WCHAR edit_buffer[MAX_HEX_LENGTH];
 
 	if (state != ENTER_STATE_ENTER) {
 		return RESULT_OK;
@@ -456,10 +475,22 @@ static UINT32 HandleStateEnter(EVENT_STACK_T *ev_st, APPLICATION_T *app, ENTER_S
 			}
 			break;
 		case APP_STATE_EDIT:
-			edit_title = app_instance->resources[APP_RESOURCE_STRING_DELAY];
-			u_ltou(app_instance->options.delay, edit_number);
-			dialog = UIS_CreateCharacterEditor(&port, edit_number, 32 /* Numbers only. */, MAX_NUMBER_LENGTH,
-				FALSE, NULL, edit_title);
+			switch (app_instance->edit) {
+				case APP_EDIT_DELAY:
+					edit_title = app_instance->resources[APP_RESOURCE_STRING_DELAY];
+					u_ltou(app_instance->options.delay, edit_buffer);
+					dialog = UIS_CreateCharacterEditor(&port, edit_buffer, 32 /* Numbers only. */, MAX_NUMBER_LENGTH,
+						FALSE, NULL, edit_title);
+					break;
+				case APP_EDIT_COLOR:
+					edit_title = app_instance->resources[APP_RESOURCE_STRING_COLOR];
+					ConvertDecToHexColor(app_instance->options.color, edit_buffer);
+					dialog = UIS_CreateCharacterEditor(&port, edit_buffer, 5 /* Text. */, MAX_NUMBER_LENGTH,
+						FALSE, NULL, edit_title);
+					break;
+				default:
+					break;
+			}
 			break;
 		case APP_STATE_SELECT:
 			starting_list_item = APP_MENU_ITEM_FIRST;
@@ -593,6 +624,11 @@ static UINT32 HandleEventSelect(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
 			status |= APP_UtilChangeState(APP_STATE_SELECT, ev_st, app);
 			break;
 		case APP_MENU_ITEM_DELAY:
+			app_instance->edit = APP_EDIT_DELAY;
+			status |= APP_UtilChangeState(APP_STATE_EDIT, ev_st, app);
+			break;
+		case APP_MENU_ITEM_COLOR:
+			app_instance->edit = APP_EDIT_COLOR;
 			status |= APP_UtilChangeState(APP_STATE_EDIT, ev_st, app);
 			break;
 		case APP_MENU_ITEM_START_LIGHTS:
@@ -710,16 +746,20 @@ static UINT32 HandleEventEditData(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
 	event = AFW_GetEv(ev_st);
 
 	if (event->attachment != NULL) {
-		data = u_atol(event->attachment);
-		if (data > MAX_NUMBER_VALUE) {
-			data = MAX_NUMBER_VALUE;
-		}
-		if (data < MIN_NUMBER_VALUE) {
-			data = MIN_NUMBER_VALUE;
-		}
-		switch (app_instance->menu_current_item_index) {
-			case APP_MENU_ITEM_DELAY:
+		switch (app_instance->edit) {
+			case APP_EDIT_DELAY:
+				data = u_atol(event->attachment);
+				if (data > MAX_NUMBER_VALUE) {
+					data = MAX_NUMBER_VALUE;
+				}
+				if (data < MIN_NUMBER_VALUE) {
+					data = MIN_NUMBER_VALUE;
+				}
 				app_instance->options.delay = data;
+				break;
+			case APP_EDIT_COLOR:
+				ConvertHexColorToDec(event->attachment, &data);
+				app_instance->options.color = data;
 				break;
 			default:
 				break;
@@ -851,6 +891,7 @@ static UINT32 SendMenuItemsToList(EVENT_STACK_T *ev_st, APPLICATION_T *app, UINT
 	APP_INSTANCE_T *app_instance;
 	UINT32 i;
 	LIST_ENTRY_T *list;
+	WCHAR hex[MAX_HEX_LENGTH];
 
 	status = RESULT_OK;
 	result = RESULT_OK;
@@ -870,12 +911,17 @@ static UINT32 SendMenuItemsToList(EVENT_STACK_T *ev_st, APPLICATION_T *app, UINT
 		list[i].content.static_entry.formatting = TRUE;
 	}
 
+	ConvertDecToHexColor(app_instance->options.color, hex);
+
 	status |= UIS_MakeContentFromString("Mq0Sq1",
 		&list[APP_MENU_ITEM_MODE].content.static_entry.text,
 		g_str_mode, GetTriggerOptionString(app_instance->options.mode));
 	status |= UIS_MakeContentFromString("Mq0Si1",
 		&list[APP_MENU_ITEM_DELAY].content.static_entry.text,
 		g_str_delay, app_instance->options.delay);
+	status |= UIS_MakeContentFromString("Mq0Sq1",
+		&list[APP_MENU_ITEM_COLOR].content.static_entry.text,
+		g_str_color, hex);
 	status |= UIS_MakeContentFromString("Mq0",
 		&list[APP_MENU_ITEM_START_LIGHTS].content.static_entry.text,
 		g_str_start_ligths);
@@ -1046,6 +1092,91 @@ static UINT32 SetLoopTimer(APPLICATION_T *app, UINT32 period) {
 	return status;
 }
 
+static UINT32 ConvertDecToHexColor(UINT32 decimal, WCHAR *heximal) {
+	UINT32 status;
+	UINT16 hex_buf[MAX_HEX_LENGTH];
+	WCHAR hex_str[MAX_HEX_LENGTH];
+	UINT16 length;
+	INT16 i;
+	UINT32 dec;
+
+	status = RESULT_OK;
+	length = 0;
+	dec = decimal;
+
+	if (dec == 0) {
+		heximal[0] = L'0';
+		heximal[1] = L'0';
+		heximal[2] = L'0';
+		heximal[3] = 0;
+		return status;
+	}
+
+	while (dec != 0) {
+		hex_buf[length] = dec % 16;
+		dec = dec / 16;
+		length += 1;
+	}
+
+	length -= 1;
+
+	for (i = length; i >= 0; --i) {
+		if (hex_buf[i] < 10) {
+			hex_str[length - i] = L'0' + hex_buf[i];
+		} else {
+			hex_str[length - i] = L'A' + hex_buf[i] - 10;
+		}
+	}
+
+	switch (length + 1) {
+		case 1:
+			heximal[0] = L'0';
+			heximal[1] = L'0';
+			heximal[2] = hex_str[0];
+			heximal[3] = 0;
+			break;
+		case 2:
+			heximal[0] = L'0';
+			heximal[1] = hex_str[0];
+			heximal[2] = hex_str[1];
+			heximal[3] = 0;
+			break;
+		case 3:
+		default:
+			heximal[0] = hex_str[0];
+			heximal[1] = hex_str[1];
+			heximal[2] = hex_str[2];
+			heximal[3] = 0;
+			break;
+	}
+
+	return status;
+}
+
+static UINT32 ConvertHexColorToDec(const WCHAR *heximal, UINT32 *number) {
+	UINT32 status;
+	UINT32 value;
+	char hex_buf[MAX_HEX_LENGTH];
+
+	status = RESULT_OK;
+
+	u_utoa(heximal, hex_buf);
+
+	value = strtoul(hex_buf, NULL, 16);
+	if (value > MAX_HEX_VALUE) {
+		value = MAX_HEX_VALUE;
+	}
+
+	LOG("Value: %d 0x%03X\n", value, value);
+	LOG("Value R: %d 0x%03X\n", (value >> 8) & 0xF, (value >> 8) & 0xF);
+	LOG("Value G: %d 0x%03X\n", (value >> 4) & 0xF, (value >> 4) & 0xF);
+	LOG("Value B: %d 0x%03X\n", (value >> 0) & 0xF, (value >> 0) & 0xF);
+
+	*number = value;
+
+	return status;
+}
+
 static UINT32 StartLights(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
 	UINT32 status;
 	APP_INSTANCE_T *app_instance;
@@ -1078,13 +1209,7 @@ static UINT32 ProcessLights(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
 			HAPI_LP393X_set_tri_color_led(0, 0xFFF);
 			break;
 		case APP_SELECT_ITEM_COLOR:
-			HAPI_LP393X_set_tri_color_led(
-				0, (
-					app_instance->color_current.r << 8 |
-					app_instance->color_current.g << 4 |
-					app_instance->color_current.b
-				)
-			);
+			HAPI_LP393X_set_tri_color_led(0, app_instance->options.color);
 			break;
 		case APP_SELECT_ITEM_COLOR_BLINK:
 			Stroboscope(ev_st, app, FALSE, TRUE, FALSE);
@@ -1245,18 +1370,9 @@ static UINT32 Stroboscope(EVENT_STACK_T *ev_st, APPLICATION_T *app, BOOL flashli
 	if (app_instance->stroboscope) {
 		if (color) {
 			if (random) {
-				HAPI_LP393X_set_tri_color_led(
-					0,
-					((rand() % 16) << 8 | (rand() % 16) << 4 | (rand() % 16))
-				);
+				HAPI_LP393X_set_tri_color_led(0, ((rand() % 16) << 8 | (rand() % 16) << 4 | (rand() % 16)));
 			} else {
-				HAPI_LP393X_set_tri_color_led(
-					0, (
-						app_instance->color_current.r << 8 |
-						app_instance->color_current.g << 4 |
-						app_instance->color_current.b
-					)
-				);
+				HAPI_LP393X_set_tri_color_led(0, app_instance->options.color);
 			}
 		} else {
 			HAPI_LP393X_set_tri_color_led(0, 0xFFF);
