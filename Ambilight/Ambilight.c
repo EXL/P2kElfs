@@ -22,7 +22,8 @@
 #include <dl.h>
 
 #define MAX_NUMBER_LENGTH           (6)
-#define MAX_NUMBER_VALUE            (999999)
+#define MIN_NUMBER_VALUE            (10)
+#define MAX_NUMBER_VALUE            (60000)
 #define KEY_LONG_PRESS_START_MS     (1000)
 #define KEY_LONG_PRESS_STOP_MS      (2000)
 
@@ -97,6 +98,22 @@ typedef struct {
 } APP_OPTIONS_T;
 
 typedef struct {
+	UINT8 r;
+	UINT8 g;
+	UINT8 b;
+} APP_COLOR_T;
+
+typedef enum {
+	RAINBOW_RED,
+	RAINBOW_ORANGE,
+	RAINBOW_YELLOW,
+	RAINBOW_GREEN,
+	RAINBOW_LIGHT_BLUE,
+	RAINBOW_BLUE,
+	RAINBOW_VIOLET
+} RAINBOW_COLOR_T;
+
+typedef struct {
 	APPLICATION_T app;
 
 	APP_DISPLAY_T state;
@@ -108,6 +125,11 @@ typedef struct {
 	APP_OPTIONS_T options;
 	UINT32 timer_handle;
 	BOOL is_lights_started;
+
+	APP_COLOR_T color_current;
+	APP_COLOR_T color_pattern;
+	RAINBOW_COLOR_T rainbow;
+
 } APP_INSTANCE_T;
 
 UINT32 Register(const char *elf_path_uri, const char *args, UINT32 ev_code);
@@ -153,6 +175,7 @@ static UINT32 SetLoopTimer(APPLICATION_T *app, UINT32 period);
 static UINT32 StartLights(EVENT_STACK_T *ev_st, APPLICATION_T *app);
 static UINT32 ProcessLights(EVENT_STACK_T *ev_st, APPLICATION_T *app);
 static UINT32 StopLights(EVENT_STACK_T *ev_st, APPLICATION_T *app);
+static UINT32 Rainbow(EVENT_STACK_T *ev_st, APPLICATION_T *app, BOOL random_colors);
 
 static const char g_app_name[APP_NAME_LEN] = "Ambilight";
 
@@ -178,9 +201,9 @@ static const WCHAR g_str_exit[] = L"Exit";
 static const WCHAR g_str_changed[] = L"Changed:";
 static const WCHAR g_str_started[] = L"Lights service started!";
 static const WCHAR g_str_stopped[] = L"Lights service stopped!";
-static const WCHAR g_str_warn_activated[] = L"Flash 100% activated, don't use this mode for too long!";
-static const WCHAR g_str_warn_question[] = L"This can be dangerous to flashlight diode, are you sure?";
-static const WCHAR g_str_help_content_p1[] = L"Bias lighting daemon program for Motorola phones.";
+static const WCHAR g_str_warn_activated[] = L"The \"Flash 100%\" mode is activated, don't use this mode for too long!";
+static const WCHAR g_str_warn_question[] = L"This can be dangerous to the phone's flashlight diode, are you sure?";
+static const WCHAR g_str_help_content_p1[] = L"Bias ambilighting daemon program for Motorola P2K phones.";
 static const WCHAR g_str_about_content_p1[] = L"Version: 1.0";
 static const WCHAR g_str_about_content_p2[] = L"\x00A9 EXL, 13-Sep-2023.";
 static const WCHAR g_str_about_content_p3[] = L"https://github.com/EXL/P2kElfs/tree/master/Ambilight";
@@ -296,6 +319,13 @@ static UINT32 ApplicationStart(EVENT_STACK_T *ev_st, REG_ID_T reg_id, void *reg_
 		app_instance->options.mode = APP_SELECT_ITEM_AMBILIGHT;
 		app_instance->options.delay = 100; /* 100 ms. */
 		app_instance->is_lights_started = FALSE;
+		app_instance->color_current.r = 0xF;
+		app_instance->color_current.g = 0x0;
+		app_instance->color_current.b = 0x0;
+		app_instance->color_pattern.r = 0xF;
+		app_instance->color_pattern.g = 0x0;
+		app_instance->color_pattern.b = 0x0;
+		app_instance->rainbow = RAINBOW_RED;
 
 		if (DL_FsFFileExist(g_config_file_path)) {
 			ReadFileConfig((APPLICATION_T *) app_instance, g_config_file_path);
@@ -674,6 +704,9 @@ static UINT32 HandleEventEditData(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
 		if (data > MAX_NUMBER_VALUE) {
 			data = MAX_NUMBER_VALUE;
 		}
+		if (data < MIN_NUMBER_VALUE) {
+			data = MIN_NUMBER_VALUE;
+		}
 		switch (app_instance->menu_current_item_index) {
 			case APP_MENU_ITEM_DELAY:
 				app_instance->options.delay = data;
@@ -683,7 +716,13 @@ static UINT32 HandleEventEditData(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
 		}
 	}
 
-	StopLights(ev_st, app);
+	if (app_instance->is_lights_started) {
+		if (app_instance->options.mode == APP_SELECT_ITEM_FLASH_100) {
+			StopLights(ev_st, app);
+		} else {
+			StartLights(ev_st, app);
+		}
+	}
 
 	status |= SaveFileConfig(app, g_config_file_path);
 	status |= APP_UtilChangeState(APP_STATE_MAIN, ev_st, app);
@@ -721,7 +760,13 @@ static UINT32 HandleEventSelectDone(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
 	app_instance->options.mode = event->data.index - 1;
 	app_instance->popup = APP_POPUP_CHANGED;
 
-	StopLights(ev_st, app);
+	if (app_instance->is_lights_started) {
+		if (app_instance->options.mode == APP_SELECT_ITEM_FLASH_100) {
+			StopLights(ev_st, app);
+		} else {
+			StartLights(ev_st, app);
+		}
+	}
 
 	status |= SaveFileConfig(app, g_config_file_path);
 	status |= APP_UtilChangeState(APP_STATE_POPUP, ev_st, app);
@@ -982,9 +1027,9 @@ static UINT32 StartLights(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
 
 	status = RESULT_OK;
 	app_instance = (APP_INSTANCE_T *) app;
-	app_instance->is_lights_started = TRUE;
 
 	status |= StopLights(ev_st, app);
+	app_instance->is_lights_started = TRUE;
 	status |= SetLoopTimer(app, app_instance->options.delay);
 
 	return status;
@@ -997,6 +1042,12 @@ static UINT32 ProcessLights(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
 	status = RESULT_OK;
 	app_instance = (APP_INSTANCE_T *) app;
 
+	if (!app_instance->is_lights_started) {
+		HAPI_LP393X_set_tri_color_led(0, 0x000);
+		HAPI_LP393X_set_tri_color_led(1, 0x000);
+		return status;
+	}
+
 	switch (app_instance->options.mode) {
 		case APP_SELECT_ITEM_AMBILIGHT:
 			HAPI_LP393X_set_tri_color_led(0, 0xFFF);
@@ -1008,8 +1059,10 @@ static UINT32 ProcessLights(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
 			HAPI_LP393X_set_tri_color_led(1, 0xFFF);
 			break;
 		case APP_SELECT_ITEM_RAINBOW:
+			Rainbow(ev_st, app, FALSE);
 			break;
 		case APP_SELECT_ITEM_RANDOM:
+			Rainbow(ev_st, app, TRUE);
 			break;
 		case APP_SELECT_ITEM_STROBOSCOPE:
 			break;
@@ -1035,6 +1088,99 @@ static UINT32 StopLights(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
 
 	HAPI_LP393X_set_tri_color_led(0, 0x000);
 	HAPI_LP393X_set_tri_color_led(1, 0x000);
+
+	return status;
+}
+
+static UINT32 Rainbow(EVENT_STACK_T *ev_st, APPLICATION_T *app, BOOL random_colors) {
+	UINT32 status;
+	APP_INSTANCE_T *app_instance;
+
+	status = RESULT_OK;
+	app_instance = (APP_INSTANCE_T *) app;
+
+	if (
+		app_instance->color_current.r != app_instance->color_pattern.r ||
+		app_instance->color_current.g != app_instance->color_pattern.g ||
+		app_instance->color_current.b != app_instance->color_pattern.b
+	) {
+		if (app_instance->color_current.r < app_instance->color_pattern.r) {
+			app_instance->color_current.r += 1;
+		}
+		if (app_instance->color_current.r > app_instance->color_pattern.r) {
+			app_instance->color_current.r -= 1;
+		}
+		if (app_instance->color_current.g < app_instance->color_pattern.g) {
+			app_instance->color_current.g += 1;
+		}
+		if (app_instance->color_current.g > app_instance->color_pattern.g) {
+			app_instance->color_current.g -= 1;
+		}
+		if (app_instance->color_current.b < app_instance->color_pattern.b) {
+			app_instance->color_current.b += 1;
+		}
+		if (app_instance->color_current.b > app_instance->color_pattern.b) {
+			app_instance->color_current.b -= 1;
+		}
+	} else {
+		if (random_colors) {
+			app_instance->color_pattern.r = rand() % 16;
+			app_instance->color_pattern.g = rand() % 16;
+			app_instance->color_pattern.b = rand() % 16;
+		} else {
+			switch (app_instance->rainbow) {
+				case RAINBOW_RED:
+					app_instance->rainbow = RAINBOW_ORANGE;
+					app_instance->color_pattern.r = 0xF;
+					app_instance->color_pattern.g = 0xA;
+					app_instance->color_pattern.b = 0x0;
+					break;
+				case RAINBOW_ORANGE:
+					app_instance->rainbow = RAINBOW_YELLOW;
+					app_instance->color_pattern.r = 0xF;
+					app_instance->color_pattern.g = 0xF;
+					app_instance->color_pattern.b = 0x0;
+					break;
+				case RAINBOW_YELLOW:
+					app_instance->rainbow = RAINBOW_GREEN;
+					app_instance->color_pattern.r = 0x0;
+					app_instance->color_pattern.g = 0xF;
+					app_instance->color_pattern.b = 0x0;
+					break;
+				case RAINBOW_GREEN:
+					app_instance->rainbow = RAINBOW_LIGHT_BLUE;
+					app_instance->color_pattern.r = 0x3;
+					app_instance->color_pattern.g = 0xC;
+					app_instance->color_pattern.b = 0xF;
+					break;
+				case RAINBOW_LIGHT_BLUE:
+					app_instance->rainbow = RAINBOW_BLUE;
+					app_instance->color_pattern.r = 0x0;
+					app_instance->color_pattern.g = 0x0;
+					app_instance->color_pattern.b = 0xF;
+					break;
+				case RAINBOW_BLUE:
+					app_instance->rainbow = RAINBOW_VIOLET;
+					app_instance->color_pattern.r = 0x8;
+					app_instance->color_pattern.g = 0x0;
+					app_instance->color_pattern.b = 0xF;
+					break;
+				case RAINBOW_VIOLET:
+					app_instance->rainbow = RAINBOW_RED;
+					app_instance->color_pattern.r = 0xF;
+					app_instance->color_pattern.g = 0x0;
+					app_instance->color_pattern.b = 0x0;
+					break;
+				default:
+					break;
+			}
+		}
+	}
+
+	HAPI_LP393X_set_tri_color_led(
+		0,
+		(app_instance->color_current.r << 8 | app_instance->color_current.g << 4 | app_instance->color_current.b)
+	);
 
 	return status;
 }
