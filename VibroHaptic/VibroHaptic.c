@@ -144,6 +144,7 @@ static UINT32 HandleEventYes(EVENT_STACK_T *ev_st, APPLICATION_T *app);
 static UINT32 HandleEventRequestListItems(EVENT_STACK_T *ev_st, APPLICATION_T *app, APP_STATE_T app_state);
 static UINT32 HandleEventCancel(EVENT_STACK_T *ev_st, APPLICATION_T *app);
 
+static BOOL IsKeyPadLocked(void);
 static UINT32 SendMenuItemsToList(EVENT_STACK_T *ev_st, APPLICATION_T *app, UINT32 start, UINT32 count);
 static UINT32 SendSelectItemsToList(EVENT_STACK_T *ev_st, APPLICATION_T *app, UINT32 start, UINT32 count);
 static const WCHAR *GetTriggerOptionString(APP_SELECT_ITEM_T item);
@@ -690,8 +691,10 @@ static UINT32 HandleEventKeyRelease(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
 		ms_key_release_stop = (UINT32) (suPalTicksToMsec(suPalReadTime()) - app_instance->ms_key_press_start);
 		if ((ms_key_release_stop >= KEY_LONG_PRESS_START_MS) && (ms_key_release_stop <= KEY_LONG_PRESS_STOP_MS)) {
 			if (key == g_key_app_menu) {
-				APP_ConsumeEv(ev_st, app);
-				return HandleEventShow(ev_st, app);
+				if (!IsKeyPadLocked()) {
+					APP_ConsumeEv(ev_st, app);
+					return HandleEventShow(ev_st, app);
+				}
 			} else if (key == g_key_app_exit) {
 #ifdef EXIT_BY_KEY
 				APP_UtilStartTimer(100, APP_TIMER_EXIT, app);
@@ -855,6 +858,13 @@ static UINT32 HandleEventCancel(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
 	status |= APP_UtilChangeState(APP_STATE_MAIN, ev_st, app);
 
 	return status;
+}
+
+static BOOL IsKeyPadLocked(void) {
+	UINT8 keypad_state;
+	DL_DbFeatureGetCurrentState(DB_FEATURE_KEYPAD_STATE, &keypad_state);
+	LOG("keypad_state = %d\n", keypad_state);
+	return (BOOL) keypad_state;
 }
 
 static UINT32 SendMenuItemsToList(EVENT_STACK_T *ev_st, APPLICATION_T *app, UINT32 start, UINT32 count) {
