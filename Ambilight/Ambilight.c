@@ -28,6 +28,7 @@
 #define MAX_HEX_VALUE               (0xFFF)
 #define KEY_LONG_PRESS_START_MS     (1000)
 #define KEY_LONG_PRESS_STOP_MS      (2000)
+#define NETWORK_MS_GAP_CONSTANT     (200)
 
 typedef enum {
 	APP_STATE_ANY,
@@ -80,6 +81,7 @@ typedef enum {
 	APP_SELECT_ITEM_FLASH_25,
 	APP_SELECT_ITEM_FLASH_50,
 	APP_SELECT_ITEM_FLASH_100,
+	APP_SELECT_ITEM_NETWORK,
 	APP_SELECT_ITEM_RAINBOW,
 	APP_SELECT_ITEM_RANDOM,
 	APP_SELECT_ITEM_STROBOSCOPE,
@@ -144,7 +146,7 @@ typedef struct {
 	APP_COLOR_T color_current;
 	APP_COLOR_T color_pattern;
 	RAINBOW_COLOR_T rainbow;
-	UINT32 stroboscope;
+	UINT32 blink;
 } APP_INSTANCE_T;
 
 UINT32 Register(const char *elf_path_uri, const char *args, UINT32 ev_code);
@@ -194,6 +196,7 @@ static UINT32 StartLights(EVENT_STACK_T *ev_st, APPLICATION_T *app);
 static UINT32 ProcessLights(EVENT_STACK_T *ev_st, APPLICATION_T *app);
 static UINT32 StopLights(EVENT_STACK_T *ev_st, APPLICATION_T *app);
 
+static UINT32 Network(EVENT_STACK_T *ev_st, APPLICATION_T *app);
 static UINT32 Rainbow(EVENT_STACK_T *ev_st, APPLICATION_T *app, BOOL random_colors);
 static UINT32 Stroboscope(EVENT_STACK_T *ev_st, APPLICATION_T *app, BOOL flashlight, BOOL color, BOOL random);
 
@@ -208,6 +211,7 @@ static const WCHAR g_str_mode_color_blink[] = L"Color Blink";
 static const WCHAR g_str_mode_flash25[] = L"Flash 25%";
 static const WCHAR g_str_mode_flash50[] = L"Flash 50%";
 static const WCHAR g_str_mode_flash100[] = L"Flash 100%";
+static const WCHAR g_str_mode_network[] = L"Network";
 static const WCHAR g_str_mode_rainbow[] = L"Rainbow";
 static const WCHAR g_str_mode_random[] = L"Random";
 static const WCHAR g_str_mode_stroboscope[] = L"Stroboscope";
@@ -353,7 +357,7 @@ static UINT32 ApplicationStart(EVENT_STACK_T *ev_st, REG_ID_T reg_id, void *reg_
 		app_instance->color_pattern.g = 0x0;
 		app_instance->color_pattern.b = 0x0;
 		app_instance->rainbow = RAINBOW_RED;
-		app_instance->stroboscope = 0;
+		app_instance->blink = 0;
 
 		if (DL_FsFFileExist(g_config_file_path)) {
 			ReadFileConfig((APPLICATION_T *) app_instance, g_config_file_path);
@@ -994,6 +998,9 @@ static UINT32 SendSelectItemsToList(EVENT_STACK_T *ev_st, APPLICATION_T *app, UI
 		&list[APP_SELECT_ITEM_FLASH_100].content.static_entry.text,
 		g_str_mode_flash100);
 	status |= UIS_MakeContentFromString("q0",
+		&list[APP_SELECT_ITEM_NETWORK].content.static_entry.text,
+		g_str_mode_network);
+	status |= UIS_MakeContentFromString("q0",
 		&list[APP_SELECT_ITEM_RAINBOW].content.static_entry.text,
 		g_str_mode_rainbow);
 	status |= UIS_MakeContentFromString("q0",
@@ -1032,6 +1039,8 @@ static const WCHAR *GetTriggerOptionString(APP_SELECT_ITEM_T item) {
 			return g_str_mode_flash50;
 		case APP_SELECT_ITEM_FLASH_100:
 			return g_str_mode_flash100;
+		case APP_SELECT_ITEM_NETWORK:
+			return g_str_mode_network;
 		case APP_SELECT_ITEM_RAINBOW:
 			return g_str_mode_rainbow;
 		case APP_SELECT_ITEM_RANDOM:
@@ -1233,6 +1242,9 @@ static UINT32 ProcessLights(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
 		case APP_SELECT_ITEM_FLASH_100:
 			HAPI_LP393X_set_tri_color_led(1, 0xFFF);
 			break;
+		case APP_SELECT_ITEM_NETWORK:
+			Network(ev_st, app);
+			break;
 		case APP_SELECT_ITEM_RAINBOW:
 			Rainbow(ev_st, app, FALSE);
 			break;
@@ -1259,12 +1271,40 @@ static UINT32 StopLights(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
 	status = RESULT_OK;
 	app_instance = (APP_INSTANCE_T *) app;
 	app_instance->is_lights_started = FALSE;
+	app_instance->blink = 0;
 
 	status |= SetLoopTimer(app, 0);
 	status |= APP_UtilStopTimer(app);
 
 	HAPI_LP393X_set_tri_color_led(0, 0x000);
 	HAPI_LP393X_set_tri_color_led(1, 0x000);
+
+	return status;
+}
+
+static UINT32 Network(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
+	UINT32 status;
+	APP_INSTANCE_T *app_instance;
+
+	status = RESULT_OK;
+	app_instance = (APP_INSTANCE_T *) app;
+
+	app_instance->blink += 1;
+	if (app_instance->blink > NETWORK_MS_GAP_CONSTANT) {
+		SIGNAL_STRENGTH_T signal_strength;
+		DL_SigRegQuerySignalStrength(&signal_strength);
+		if (signal_strength.percent < 30) {
+			HAPI_LP393X_set_tri_color_led(0, 0xF00); /* Red. */
+		} else if (signal_strength.percent < 60) {
+			HAPI_LP393X_set_tri_color_led(0, 0xFF0); /* Yellow. */
+		} else {
+			HAPI_LP393X_set_tri_color_led(0, 0x0F0); /* Green. */
+		}
+		if (app_instance->blink > NETWORK_MS_GAP_CONSTANT + 10) {
+			app_instance->blink = 0;
+			HAPI_LP393X_set_tri_color_led(0, 0x000);
+		}
+	}
 
 	return status;
 }
@@ -1375,9 +1415,9 @@ static UINT32 Stroboscope(EVENT_STACK_T *ev_st, APPLICATION_T *app, BOOL flashli
 	status = RESULT_OK;
 	app_instance = (APP_INSTANCE_T *) app;
 
-	app_instance->stroboscope = !app_instance->stroboscope;
+	app_instance->blink = !app_instance->blink;
 
-	if (app_instance->stroboscope) {
+	if (app_instance->blink) {
 		if (color) {
 			if (random) {
 				HAPI_LP393X_set_tri_color_led(0, ((rand() % 16) << 8 | (rand() % 16) << 4 | (rand() % 16)));
