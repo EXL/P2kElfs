@@ -11,10 +11,29 @@ The "Ambilight" ELF daemon utility with GUI settings for some funlights and bias
 
 ![Screenshot 1 of Ambilight from Motorola ROKR E1](../images/Screenshot_Ambilight_E1_1.png) ![Screenshot 2 of Ambilight from Motorola ROKR E1](../images/Screenshot_Ambilight_E1_2.png) ![Screenshot 3 of Ambilight from Motorola ROKR E1](../images/Screenshot_Ambilight_E1_3.png) ![Screenshot 4 of Ambilight from Motorola ROKR E1](../images/Screenshot_Ambilight_E1_4.png)
 
+## Videos of Motorola ROKR E1
+
+See [Ambilight](https://TODO) video on YouTube.
+
+## Modes
+
+* Ambilight - The side LEDs use the most common color on the screen as source of light.
+* Color - The side LEDs use the specified HEX string with (0xRGB) format as source of light.
+* Color Blink - The side LEDs blink with the specified HEX string with (0xRGB) format as source of light.
+* Flash 25% - The flash LED lights up at 25% brightness of maximum.
+* Flash 50% - The flash LED lights up at 50% brightness of maximum.
+* Flash 100% - The flash LED lights up at maximum brightness. Danger! This mode may damage the flash LED!
+* Network - The side LEDs blink on network signal strength: 0..30% - red, 30..60% - yellow, 60..100% - green.
+* Battery - The side LEDs blink depending on battery: 0..30% - red, 30..60% - yellow, 60..100% - green.
+* Rainbow - Smooth rainbow effect on the side LEDs.
+* Random - Smooth color transitions to random colors.
+* Stroboscope - Strobe mode with side LEDs (white color) and flash LED.
+* Strobo Color - Strobe mode with side LEDs (random color) and flash LED.
+
 ## ELF files
 
-* VibroHaptic.elf (ELF for ElfPack 1.0)
-* VibroHaptic_V600.elf (ELF for ElfPack 1.0, Motorola V600 version)
+* Ambilight.elf (ELF for ElfPack 1.0)
+* Ambilight_V600.elf (ELF for ElfPack 1.0, Motorola V600 version)
 
 ## Additional information
 
