@@ -20,6 +20,8 @@
 
 #include "Benchmark.h"
 
+#include "icons/icon_benchmark_48x48.h"
+
 #define TIMER_FAST_TRIGGER_MS             (1)
 #define TIMER_POPUP_DELAY_MS             (50)
 #define TIMER_EXIT_DELAY_MS             (100)
@@ -41,6 +43,7 @@ typedef enum {
 
 typedef enum {
 	APP_RESOURCE_NAME,
+	APP_RESOURCE_ICON_BENCHMARK,
 	APP_RESOURCE_MAX
 } APP_RESOURCES_T;
 
@@ -123,10 +126,6 @@ static const WCHAR g_str_menu_exit[] = L"Exit";
 static const WCHAR g_str_popup_wait_p1[] = L"Benchmarking in progress!";
 static const WCHAR g_str_popup_wait_p2[] = L"Please wait...";
 static const WCHAR g_str_view_help[] = L"Help";
-static const WCHAR g_str_help_content_p1[] = L"A simple ELF benchmarking application for Motorola P2K phones.";
-static const WCHAR g_str_about_content_p1[] = L"Version: 1.0";
-static const WCHAR g_str_about_content_p2[] = L"\x00A9 EXL, 28-Aug-2023.";
-static const WCHAR g_str_about_content_p3[] = L"https://github.com/EXL/P2kElfs/tree/master/Benchmark";
 static const WCHAR g_str_view_cpu_results[] = L"CPU Results";
 static const WCHAR g_str_view_cpu_bogomips[] = L"BogoMIPS:";
 static const WCHAR g_str_view_cpu_dhrystone[] = L"Dhrystone 2.1:";
@@ -138,6 +137,17 @@ static const WCHAR g_str_view_gpu_results[] = L"GPU Results";
 static const WCHAR g_str_view_gpu_fps[] = L"Average FPS:";
 static const WCHAR g_str_view_gpu_properties[] = L"Properties:";
 static const WCHAR g_str_view_gpu_todo[] = L"Not yet implemented, sorry!";
+static const WCHAR g_str_help_content_p1[] =
+	L"A simple ELF benchmarking application for Motorola P2K phones.\n\n"
+	L"CPU (MCU) - contains two BogoMIPS and Dhrystone benchmarks.\n\n"
+	L"GPU (IPU) - consists a procedural stress Flame test at different resolutions and a video driver information.\n\n"
+	L"RAM (SRAM) - calculates free system memory for ELFs and TOP-6 blocks of maximum size.\n\n"
+	L"HEAP (J2ME) - shows free Java Heap memory for ELFs, test requires Heap functions in the ELF library to work.\n\n"
+	L"This benchmark is convenient to use with the Overclock.elf application.";
+static const WCHAR g_str_about_content_p1[] = L"Version: 1.0";
+static const WCHAR g_str_about_content_p2[] = L"\x00A9 EXL, 28-Aug-2023.";
+static const WCHAR g_str_about_content_p3[] = L"https://github.com/EXL/P2kElfs/tree/master/Benchmark";
+static const WCHAR g_str_about_content_p4[] = L"       "; /* HACK: gap */
 
 #if defined(EP2)
 static ldrElf g_app_elf;
@@ -328,6 +338,9 @@ static UINT32 InitResourses(RESOURCE_ID *resources) {
 	status |= DRM_CreateResource(&resources[APP_RESOURCE_NAME], RES_TYPE_STRING,
 		(void *) g_str_app_name, (u_strlen(g_str_app_name) + 1) * sizeof(WCHAR));
 
+	status |= DRM_CreateResource(&resources[APP_RESOURCE_ICON_BENCHMARK], RES_TYPE_GRAPHICS,
+		(void *) benchmark_48x48_gif, sizeof(benchmark_48x48_gif));
+
 	return status;
 }
 
@@ -408,8 +421,10 @@ static UINT32 HandleStateEnter(EVENT_STACK_T *ev_st, APPLICATION_T *app, ENTER_S
 					UIS_MakeContentFromString("q0Nq1", &content, g_str_view_help, g_str_help_content_p1);
 					break;
 				case APP_VIEW_ABOUT:
-					UIS_MakeContentFromString("q0NMCq1NMCq2NMCq3", &content, g_str_app_name,
-						g_str_about_content_p1, g_str_about_content_p2, g_str_about_content_p3);
+					UIS_MakeContentFromString("q0NMCp1NMCq2NMCq3NMCq4NMCq5NMCq6", &content, g_str_app_name,
+						app_instance->resources[APP_RESOURCE_ICON_BENCHMARK],
+						g_str_about_content_p1, g_str_about_content_p2, g_str_about_content_p3,
+						g_str_about_content_p4, g_str_about_content_p4);
 					break;
 				case APP_VIEW_CPU_RESULTS:
 					UIS_MakeContentFromString(
