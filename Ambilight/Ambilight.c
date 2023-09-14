@@ -29,8 +29,8 @@
 #define MAX_HEX_VALUE               (0xFFF)
 #define KEY_LONG_PRESS_START_MS     (1000)
 #define KEY_LONG_PRESS_STOP_MS      (2000)
-#define NETWORK_MS_GAP_CONSTANT     (200)
-#define AMBILIGHT_RECT_CONSTANT     (8)
+#define NETWORK_MS_GAP_CONSTANT     (80)
+#define AMBILIGHT_RECT_CONSTANT     (16)
 
 typedef enum {
 	APP_STATE_ANY,
@@ -350,9 +350,9 @@ static UINT32 ApplicationStart(EVENT_STACK_T *ev_st, REG_ID_T reg_id, void *reg_
 		app_instance->edit = APP_EDIT_DELAY;
 		app_instance->menu_current_item_index = APP_MENU_ITEM_FIRST;
 		app_instance->ms_key_press_start = 0LLU;
-		app_instance->options.mode = APP_SELECT_ITEM_NETWORK;
-		app_instance->options.delay = 100; /* 100 ms. */
-		app_instance->options.color = 0xF00; /* Red. */
+		app_instance->options.mode = APP_SELECT_ITEM_RAINBOW;
+		app_instance->options.delay = 250; /* 250 ms. */
+		app_instance->options.color = 0x80F; /* Violet. */
 		app_instance->is_lights_started = FALSE;
 		app_instance->color_current.r = 0xF;
 		app_instance->color_current.g = 0x0;
@@ -1304,6 +1304,11 @@ static UINT32 Ambilight(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
 	status = RESULT_OK;
 	result = RESULT_OK;
 
+	if (IsKeyPadLocked()) {
+		HAPI_LP393X_set_tri_color_led(0, 0x000);
+		return status;
+	}
+
 	ahi_driver_info = suAllocMem(sizeof(AHIDRVINFO_T), &result);
 	if (!ahi_driver_info && result) {
 		return RESULT_FAIL;
@@ -1376,7 +1381,7 @@ static UINT32 Network(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
 		} else {
 			HAPI_LP393X_set_tri_color_led(0, 0x0F0); /* Green. */
 		}
-		if (app_instance->blink > NETWORK_MS_GAP_CONSTANT + 10) {
+		if (app_instance->blink > NETWORK_MS_GAP_CONSTANT + 2) {
 			app_instance->blink = 0;
 			HAPI_LP393X_set_tri_color_led(0, 0x000);
 		}
