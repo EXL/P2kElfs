@@ -87,6 +87,7 @@ typedef enum {
 	APP_SELECT_ITEM_FLASH_50,
 	APP_SELECT_ITEM_FLASH_100,
 	APP_SELECT_ITEM_NETWORK,
+	APP_SELECT_ITEM_BATTERY,
 	APP_SELECT_ITEM_RAINBOW,
 	APP_SELECT_ITEM_RANDOM,
 	APP_SELECT_ITEM_STROBOSCOPE,
@@ -202,7 +203,7 @@ static UINT32 ProcessLights(EVENT_STACK_T *ev_st, APPLICATION_T *app);
 static UINT32 StopLights(EVENT_STACK_T *ev_st, APPLICATION_T *app);
 
 static UINT32 Ambilight(EVENT_STACK_T *ev_st, APPLICATION_T *app);
-static UINT32 Network(EVENT_STACK_T *ev_st, APPLICATION_T *app);
+static UINT32 PhoneState(EVENT_STACK_T *ev_st, APPLICATION_T *app, BOOL battery);
 static UINT32 Rainbow(EVENT_STACK_T *ev_st, APPLICATION_T *app, BOOL random_colors);
 static UINT32 Stroboscope(EVENT_STACK_T *ev_st, APPLICATION_T *app, BOOL flashlight, BOOL color, BOOL random);
 static UINT16 GetAverageColorRGB444(EVENT_STACK_T *ev_st, APPLICATION_T *app, UINT16 start, UINT16 size);
@@ -219,6 +220,7 @@ static const WCHAR g_str_mode_flash25[] = L"Flash 25%";
 static const WCHAR g_str_mode_flash50[] = L"Flash 50%";
 static const WCHAR g_str_mode_flash100[] = L"Flash 100%";
 static const WCHAR g_str_mode_network[] = L"Network";
+static const WCHAR g_str_mode_battery[] = L"Battery";
 static const WCHAR g_str_mode_rainbow[] = L"Rainbow";
 static const WCHAR g_str_mode_random[] = L"Random";
 static const WCHAR g_str_mode_stroboscope[] = L"Stroboscope";
@@ -1029,6 +1031,9 @@ static UINT32 SendSelectItemsToList(EVENT_STACK_T *ev_st, APPLICATION_T *app, UI
 		&list[APP_SELECT_ITEM_NETWORK].content.static_entry.text,
 		g_str_mode_network);
 	status |= UIS_MakeContentFromString("q0",
+		&list[APP_SELECT_ITEM_BATTERY].content.static_entry.text,
+		g_str_mode_battery);
+	status |= UIS_MakeContentFromString("q0",
 		&list[APP_SELECT_ITEM_RAINBOW].content.static_entry.text,
 		g_str_mode_rainbow);
 	status |= UIS_MakeContentFromString("q0",
@@ -1069,6 +1074,8 @@ static const WCHAR *GetTriggerOptionString(APP_SELECT_ITEM_T item) {
 			return g_str_mode_flash100;
 		case APP_SELECT_ITEM_NETWORK:
 			return g_str_mode_network;
+		case APP_SELECT_ITEM_BATTERY:
+			return g_str_mode_battery;
 		case APP_SELECT_ITEM_RAINBOW:
 			return g_str_mode_rainbow;
 		case APP_SELECT_ITEM_RANDOM:
@@ -1271,7 +1278,10 @@ static UINT32 ProcessLights(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
 			HAPI_LP393X_set_tri_color_led(1, 0xFFF);
 			break;
 		case APP_SELECT_ITEM_NETWORK:
-			Network(ev_st, app);
+			PhoneState(ev_st, app, FALSE);
+			break;
+		case APP_SELECT_ITEM_BATTERY:
+			PhoneState(ev_st, app, TRUE);
 			break;
 		case APP_SELECT_ITEM_RAINBOW:
 			Rainbow(ev_st, app, FALSE);
@@ -1385,20 +1395,26 @@ static UINT32 Ambilight(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
 	return status;
 }
 
-static UINT32 Network(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
+static UINT32 PhoneState(EVENT_STACK_T *ev_st, APPLICATION_T *app, BOOL battery) {
 	UINT32 status;
 	APP_INSTANCE_T *app_instance;
+	UINT8 percent;
 
 	status = RESULT_OK;
 	app_instance = (APP_INSTANCE_T *) app;
 
 	app_instance->blink += 1;
 	if (app_instance->blink > NETWORK_MS_GAP_CONSTANT) {
-		SIGNAL_STRENGTH_T signal_strength;
-		DL_SigRegQuerySignalStrength(&signal_strength);
-		if (signal_strength.percent < 30) {
+		if (battery) {
+			SIGNAL_STRENGTH_T signal_strength;
+			DL_SigRegQuerySignalStrength(&signal_strength);
+			percent = signal_strength.percent;
+		} else {
+			percent = DL_PwrGetActiveBatteryPercent();
+		}
+		if (percent < 30) {
 			HAPI_LP393X_set_tri_color_led(0, 0xF00); /* Red. */
-		} else if (signal_strength.percent < 60) {
+		} else if (percent < 60) {
 			HAPI_LP393X_set_tri_color_led(0, 0xFF0); /* Yellow. */
 		} else {
 			HAPI_LP393X_set_tri_color_led(0, 0x0F0); /* Green. */
