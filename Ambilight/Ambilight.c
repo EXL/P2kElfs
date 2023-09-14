@@ -20,6 +20,7 @@
 #include <utilities.h>
 #include <filesystem.h>
 #include <dl.h>
+#include <ati.h>
 
 #define MAX_NUMBER_LENGTH           (6)
 #define MIN_NUMBER_VALUE            (10)
@@ -29,6 +30,7 @@
 #define KEY_LONG_PRESS_START_MS     (1000)
 #define KEY_LONG_PRESS_STOP_MS      (2000)
 #define NETWORK_MS_GAP_CONSTANT     (200)
+#define AMBILIGHT_RECT_CONSTANT     (8)
 
 typedef enum {
 	APP_STATE_ANY,
@@ -196,9 +198,11 @@ static UINT32 StartLights(EVENT_STACK_T *ev_st, APPLICATION_T *app);
 static UINT32 ProcessLights(EVENT_STACK_T *ev_st, APPLICATION_T *app);
 static UINT32 StopLights(EVENT_STACK_T *ev_st, APPLICATION_T *app);
 
+static UINT32 Ambilight(EVENT_STACK_T *ev_st, APPLICATION_T *app);
 static UINT32 Network(EVENT_STACK_T *ev_st, APPLICATION_T *app);
 static UINT32 Rainbow(EVENT_STACK_T *ev_st, APPLICATION_T *app, BOOL random_colors);
 static UINT32 Stroboscope(EVENT_STACK_T *ev_st, APPLICATION_T *app, BOOL flashlight, BOOL color, BOOL random);
+static UINT16 GetAverageColorRGB444(EVENT_STACK_T *ev_st, APPLICATION_T *app, UINT16 start, UINT16 size);
 
 static const char g_app_name[APP_NAME_LEN] = "Ambilight";
 
@@ -346,7 +350,7 @@ static UINT32 ApplicationStart(EVENT_STACK_T *ev_st, REG_ID_T reg_id, void *reg_
 		app_instance->edit = APP_EDIT_DELAY;
 		app_instance->menu_current_item_index = APP_MENU_ITEM_FIRST;
 		app_instance->ms_key_press_start = 0LLU;
-		app_instance->options.mode = APP_SELECT_ITEM_AMBILIGHT;
+		app_instance->options.mode = APP_SELECT_ITEM_NETWORK;
 		app_instance->options.delay = 100; /* 100 ms. */
 		app_instance->options.color = 0xF00; /* Red. */
 		app_instance->is_lights_started = FALSE;
@@ -1227,7 +1231,7 @@ static UINT32 ProcessLights(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
 
 	switch (app_instance->options.mode) {
 		case APP_SELECT_ITEM_AMBILIGHT:
-			HAPI_LP393X_set_tri_color_led(0, 0xFFF);
+			Ambilight(ev_st, app);
 			break;
 		case APP_SELECT_ITEM_COLOR:
 			HAPI_LP393X_set_tri_color_led(0, app_instance->options.color);
@@ -1280,6 +1284,76 @@ static UINT32 StopLights(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
 
 	HAPI_LP393X_set_tri_color_led(0, 0x000);
 	HAPI_LP393X_set_tri_color_led(1, 0x000);
+
+	return status;
+}
+
+static UINT32 Ambilight(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
+	UINT32 status;
+	INT32 result;
+	AHIDRVINFO_T *ahi_driver_info;
+	AHIDEVICE_T ahi_device;
+	AHIDEVCONTEXT_T ahi_device_context;
+	AHISURFACE_T ahi_surface;
+	AHISURFINFO_T ahi_surface_info;
+	AHIBITMAP_T ahi_bitmap;
+	AHIRECT_T ahi_rect;
+	AHIPOINT_T ahi_point;
+	UINT16 rgb444;
+
+	status = RESULT_OK;
+	result = RESULT_OK;
+
+	ahi_driver_info = suAllocMem(sizeof(AHIDRVINFO_T), &result);
+	if (!ahi_driver_info && result) {
+		return RESULT_FAIL;
+	}
+	status |= AhiDevEnum(&ahi_device, ahi_driver_info, 0);
+	if (status != RESULT_OK) {
+		return RESULT_FAIL;
+	}
+	status |= AhiDevOpen(&ahi_device_context, ahi_device, "Ambilight", 0);
+	if (status != RESULT_OK) {
+		return RESULT_FAIL;
+	}
+
+	status |= AhiDispSurfGet(ahi_device_context, &ahi_surface);
+	status |= AhiDrawSurfDstSet(ahi_device_context, ahi_surface, 0);
+	status |= AhiDrawClipDstSet(ahi_device_context, NULL);
+	status |= AhiDrawClipSrcSet(ahi_device_context, NULL);
+
+	status |= AhiSurfInfo(ahi_device_context, ahi_surface, &ahi_surface_info);
+
+	ahi_bitmap.width = ahi_surface_info.width;
+	ahi_bitmap.height = ahi_surface_info.height;
+	ahi_bitmap.stride =
+		ahi_surface_info.width * (ahi_surface_info.byteSize / (ahi_surface_info.width * ahi_surface_info.height));
+	ahi_bitmap.format = AHIFMT_16BPP_565;
+	ahi_bitmap.image  = (void *) display_source_buffer;
+
+	ahi_rect.x1 = 0;
+	ahi_rect.y1 = 0;
+	ahi_rect.x2 = 0 + ahi_surface_info.width;
+	ahi_rect.y2 = 0 + 1; /* 1-pixel line. */
+
+	ahi_point.x = 0;
+	ahi_point.y = 0;
+
+	status |= AhiSurfCopy(ahi_device_context, ahi_surface, &ahi_bitmap, &ahi_rect, &ahi_point, 0, AHIFLAG_COPYFROM);
+
+	rgb444 = GetAverageColorRGB444(
+		ev_st,
+		app,
+		(AMBILIGHT_RECT_CONSTANT * 2),
+		ahi_surface_info.width - (AMBILIGHT_RECT_CONSTANT * 2) * 2
+	);
+
+	HAPI_LP393X_set_tri_color_led(0, rgb444);
+
+	status |= AhiDevClose(ahi_device_context);
+	if (ahi_driver_info) {
+		suFreeMem(ahi_driver_info);
+	}
 
 	return status;
 }
@@ -1440,4 +1514,39 @@ static UINT32 Stroboscope(EVENT_STACK_T *ev_st, APPLICATION_T *app, BOOL flashli
 	}
 
 	return status;
+}
+
+static UINT16 GetAverageColorRGB444(EVENT_STACK_T *ev_st, APPLICATION_T *app, UINT16 start, UINT16 size) {
+	UINT16 rgb565;
+	UINT16 rgb444;
+	UINT32 r;
+	UINT32 g;
+	UINT32 b;
+	UINT16 i;
+
+	r = 0;
+	g = 0;
+	b = 0;
+
+	for (i = start; i < start + size; ++i) {
+		rgb565 = ((UINT16 *) display_source_buffer)[i];
+
+		D("Color RGB565: 0x%04X\n", rgb565);
+
+		r += ((rgb565 & 0xF800) >> 11) << 3;
+		g += ((rgb565 & 0x07E0) >>  5) << 2;
+		b += ((rgb565 & 0x001F) <<  3) << 0;
+	}
+
+	r /= size;
+	g /= size;
+	b /= size;
+
+	D("Average RGB565: 0x%02X 0x%02X 0x%02X\n", r, g, b);
+
+	rgb444 = (((r & 0xF0) >> 4) << 8) | (((g & 0xF0) >> 4) << 4) | (((b & 0xF0) >> 4) << 0);
+
+	D("Color RGB444: 0x%03X\n", rgb444);
+
+	return rgb444;
 }
