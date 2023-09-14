@@ -19,6 +19,7 @@
 #include <utilities.h>
 
 #include "Overclock.h"
+
 #include "icons/icon_overclock_48x48.h"
 
 #define TIMER_FAST_TRIGGER_MS             (1)
