@@ -22,13 +22,15 @@
 #include <dl.h>
 #include <ati.h>
 
+#include "icons/icon_ambilight_48x48.h"
+
 #define MAX_NUMBER_LENGTH           (6)
 #define MIN_NUMBER_VALUE            (10)
 #define MAX_NUMBER_VALUE            (60000)
 #define MAX_HEX_LENGTH              (10)
 #define MAX_HEX_VALUE               (0xFFF)
-#define KEY_LONG_PRESS_START_MS     (1000)
-#define KEY_LONG_PRESS_STOP_MS      (2000)
+#define KEY_LONG_PRESS_START_MS     (1500)
+#define KEY_LONG_PRESS_STOP_MS      (2500)
 #define NETWORK_MS_GAP_CONSTANT     (80)
 #define AMBILIGHT_RECT_CONSTANT     (16)
 
@@ -56,6 +58,7 @@ typedef enum {
 
 typedef enum {
 	APP_RESOURCE_STRING_NAME,
+	APP_RESOURCE_ICON_AMBILIGHT,
 	APP_RESOURCE_STRING_MODE,
 	APP_RESOURCE_STRING_DELAY,
 	APP_RESOURCE_STRING_COLOR,
@@ -236,7 +239,24 @@ static const WCHAR g_str_started[] = L"Lights service started!";
 static const WCHAR g_str_stopped[] = L"Lights service stopped!";
 static const WCHAR g_str_warn_activated[] = L"The \"Flash 100%\" mode is activated, don't use this mode for too long!";
 static const WCHAR g_str_warn_question[] = L"This can be dangerous to the phone's flash diode, are you sure?";
-static const WCHAR g_str_help_content_p1[] = L"Bias lighting (ambilight) daemon program for Motorola P2K phones.";
+static const WCHAR g_str_help_content_p1[] =
+	L"Bias lighting (ambilight) daemon program for Motorola P2K phones.\n\n"
+	L"Press and hold the right soft key for 1.5-2.5 seconds to bring up the main application menu.\n\n"
+	L"The following modes are available for use:\n\n"
+	L"Ambilight - The side LEDs use the most common color on the screen as source of light.\n\n"
+	L"Color - The side LEDs use the specified HEX string with (0xRGB) format as source of light.\n\n"
+	L"Color Blink - The side LEDs blink with the specified HEX string with (0xRGB) format as source of light.\n\n"
+	L"Flash 25% - The flash LED lights up at 25% brightness of maximum.\n\n"
+	L"Flash 50% - The flash LED lights up at 50% brightness of maximum.\n\n"
+	L"Flash 100% - The flash LED lights up at maximum brightness. Danger! This mode may damage the flash LED!\n\n"
+	L"Network - The side LEDs blink on network signal strength: 0..30% - red, 30..60% - yellow, 60..100% - green\n\n"
+	L"Battery - The side LEDs blink depending on battery: 0..30% - red, 30..60% - yellow, 60..100% - green\n\n"
+	L"Rainbow - Smooth rainbow effect on the side LEDs.\n\n"
+	L"Random - Smooth color transitions to random colors.\n\n"
+	L"Stroboscope - Strobe mode with side LEDs (white color) and flash LED.\n\n"
+	L"Strobo Color - Strobe mode with side LEDs (random color) and flash LED.\n\n"
+	L"Some modes require setting the delay and the color.\n\n"
+	L"Managing of lighting services is available in the main menu of the ELF application.\n";
 static const WCHAR g_str_about_content_p1[] = L"Version: 1.0";
 static const WCHAR g_str_about_content_p2[] = L"\x00A9 EXL, 13-Sep-2023.";
 static const WCHAR g_str_about_content_p3[] = L"https://github.com/EXL/P2kElfs/tree/master/Ambilight";
@@ -412,6 +432,9 @@ static UINT32 InitResourses(RESOURCE_ID *resources) {
 	status |= DRM_CreateResource(&resources[APP_RESOURCE_STRING_COLOR], RES_TYPE_STRING,
 		(void *) g_str_e_color, (u_strlen(g_str_e_color) + 1) * sizeof(WCHAR));
 
+	status |= DRM_CreateResource(&resources[APP_RESOURCE_ICON_AMBILIGHT], RES_TYPE_GRAPHICS,
+		(void *) ambilight_48x48_gif, sizeof(ambilight_48x48_gif));
+
 	return status;
 }
 
@@ -541,8 +564,7 @@ static UINT32 HandleStateEnter(EVENT_STACK_T *ev_st, APPLICATION_T *app, ENTER_S
 					break;
 				case APP_VIEW_ABOUT:
 					UIS_MakeContentFromString("q0NMCp1NMCq2NMCq3NMCq4NMCq5NMCq6", &content, g_str_app_name,
-//						app_instance->resources[APP_RESOURCE_ICON_OVERCLOCK],
-						NULL,
+						app_instance->resources[APP_RESOURCE_ICON_AMBILIGHT],
 						g_str_about_content_p1, g_str_about_content_p2, g_str_about_content_p3,
 						g_str_about_content_p4, g_str_about_content_p4);
 					break;
