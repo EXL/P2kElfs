@@ -367,6 +367,8 @@ static UINT32 ApplicationStart(EVENT_STACK_T *ev_st, REG_ID_T reg_id, void *reg_
 
 		status = APP_Start(ev_st, &app_instance->app, APP_STATE_INIT,
 			g_state_table_hdls, HandleEventHide, g_app_name, 0);
+
+		StartLights(ev_st, (APPLICATION_T *) app_instance);
 	}
 
 	return status;
