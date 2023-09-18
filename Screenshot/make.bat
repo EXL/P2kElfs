@@ -19,7 +19,7 @@ set LIB_MAIN=Lib.o
 
 :: Defines.
 set DEFINES=-D__P2K__ -DEP1
-:: set DEFINES=-D__P2K__ -DEP1 -DFTR_V600
+:: set DEFINES=-D__P2K__ -DEP1 -DFTR_V600 -DNO_PACKED
 
 :: ELF name.
 set ELF_NAME=Screenshot

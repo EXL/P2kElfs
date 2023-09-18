@@ -177,7 +177,7 @@ static __inline UINT32 SwapUINT32(UINT32 value) {
 }
 
 static __inline void InsertData(UINT8 *start_address, UINT32 start_offset, UINT32 value) {
-#if !defined(FTR_V600)
+#if !defined(NO_PACKED)
 	*((__packed UINT32 *) &start_address[start_offset]) = SwapUINT32(value);
 #else
 	/*

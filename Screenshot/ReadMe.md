@@ -18,7 +18,8 @@ The "Screenshot" ELF daemon utility with GUI to fast take screenshots.
 ## ELF files
 
 * Screenshot.elf (ELF for ElfPack 1.0)
-* Screenshot_V600.elf (ELF for ElfPack 1.0, Motorola V600 version)
+* Screenshot_NP.elf (ELF for ElfPack 1.0, NoPacked version)
+* Screenshot_V600.elf (ELF for ElfPack 1.0, Motorola V600 + NoPacked version)
 
 ## Additional information
 
