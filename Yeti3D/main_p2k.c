@@ -650,6 +650,7 @@ static UINT32 ATI_Driver_Set_Display_Mode(APPLICATION_T *app, AHIROTATE_T mode) 
 //	search_region = 0x07FFFFFF; /* 8 MB RAM */
 	start_addr = (UINT32) Class_dal;
 	search_region = 0x00000100;
+//	search_region = 0x00100000; /* Damn! This can be 0x100000 for Motorola RAZR V3r! */
 	surface_block_offset = Find_Surface_Addresses_In_RAM(app, start_addr, search_region);
 
 	status |= AhiDispModeGet(appi->ahi.context, &display_mode);
