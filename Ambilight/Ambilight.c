@@ -1236,10 +1236,10 @@ static UINT32 ConvertHexColorToDec(const WCHAR *heximal, UINT32 *number) {
 		value = MAX_HEX_VALUE;
 	}
 
-	LOG("Value: %d 0x%03X\n", value, value);
-	LOG("Value R: %d 0x%03X\n", (value >> 8) & 0xF, (value >> 8) & 0xF);
-	LOG("Value G: %d 0x%03X\n", (value >> 4) & 0xF, (value >> 4) & 0xF);
-	LOG("Value B: %d 0x%03X\n", (value >> 0) & 0xF, (value >> 0) & 0xF);
+	D("Value: %d 0x%03X\n", value, value);
+	D("Value R: %d 0x%03X\n", (value >> 8) & 0xF, (value >> 8) & 0xF);
+	D("Value G: %d 0x%03X\n", (value >> 4) & 0xF, (value >> 4) & 0xF);
+	D("Value B: %d 0x%03X\n", (value >> 0) & 0xF, (value >> 0) & 0xF);
 
 	*number = value;
 
@@ -1442,7 +1442,7 @@ static UINT32 PhoneState(EVENT_STACK_T *ev_st, APPLICATION_T *app, PHONE_STATE_T
 		if (percent < 5) {
 			HAPI_LP393X_set_tri_color_led(0, 0xF00); /* Red. */
 		} else if (percent < 20) {
-			HAPI_LP393X_set_tri_color_led(0, 0xFA0); /* Orange. */
+			HAPI_LP393X_set_tri_color_led(0, 0xF50); /* Orange. */
 		} else if (percent < 60) {
 			HAPI_LP393X_set_tri_color_led(0, 0xFF0); /* Yellow. */
 		} else {
@@ -1497,7 +1497,7 @@ static UINT32 Rainbow(EVENT_STACK_T *ev_st, APPLICATION_T *app, BOOL random_colo
 				case RAINBOW_RED:
 					app_instance->rainbow = RAINBOW_ORANGE;
 					app_instance->color_pattern.r = 0xF;
-					app_instance->color_pattern.g = 0xA;
+					app_instance->color_pattern.g = 0x5;
 					app_instance->color_pattern.b = 0x0;
 					break;
 				case RAINBOW_ORANGE:
