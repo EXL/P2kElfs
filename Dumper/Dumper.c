@@ -22,6 +22,8 @@
 #include <time_date.h>
 #include <mme.h>
 
+#include "icons/icon_dumper_48x48.h"
+
 #define TIMER_FAST_TRIGGER_MS             (1)
 #define TIMER_POPUP_DELAY_MS             (50)
 #define TIMER_EXIT_DELAY_MS             (100)
@@ -46,6 +48,7 @@ typedef enum {
 
 typedef enum {
 	APP_RESOURCE_NAME,
+	APP_RESOURCE_ICON_DUMPER,
 	APP_RESOURCE_MAX
 } APP_RESOURCES_T;
 
@@ -164,6 +167,7 @@ static const WCHAR g_str_help_content_p2[] = L"ELF utility for dumping various m
 static const WCHAR g_str_about_content_p1[] = L"Version: 1.0";
 static const WCHAR g_str_about_content_p2[] = L"\x00A9 EXL, 02-Jun-2023.";
 static const WCHAR g_str_about_content_p3[] = L"https://github.com/EXL/P2kElfs/tree/master/Dumper";
+static const WCHAR g_str_about_content_p4[] = L"       "; /* HACK: gap */
 
 static const WCHAR g_file_dump_boot[]        = L"D_BOOT_HWCFG.bin";
 static const WCHAR g_file_dump_pds[]         = L"D_PDS.bin";
@@ -468,6 +472,9 @@ static UINT32 InitResourses(RESOURCE_ID *resources) {
 	status |= DRM_CreateResource(&resources[APP_RESOURCE_NAME], RES_TYPE_STRING,
 		(void *) g_str_app_name, (u_strlen(g_str_app_name) + 1) * sizeof(WCHAR));
 
+	status |= DRM_CreateResource(&resources[APP_RESOURCE_ICON_DUMPER], RES_TYPE_GRAPHICS,
+		(void *) dumper_48x48_gif, sizeof(dumper_48x48_gif));
+
 	return status;
 }
 
@@ -560,8 +567,10 @@ static UINT32 HandleStateEnter(EVENT_STACK_T *ev_st, APPLICATION_T *app, ENTER_S
 						g_str_help_content_p1, g_str_help_content_p2);
 					break;
 				case APP_VIEW_ABOUT:
-					UIS_MakeContentFromString("q0NMCq1NMCq2NMCq3", &content, g_str_app_name,
-						g_str_about_content_p1, g_str_about_content_p2, g_str_about_content_p3);
+					UIS_MakeContentFromString("q0NMCp1NMCq2NMCq3NMCq4NMCq5NMCq6", &content, g_str_app_name,
+						app_instance->resources[APP_RESOURCE_ICON_DUMPER],
+						g_str_about_content_p1, g_str_about_content_p2, g_str_about_content_p3,
+						g_str_about_content_p4, g_str_about_content_p4);
 					break;
 			}
 			dialog = UIS_CreateViewer(&port, &content, NULL);
