@@ -29,5 +29,6 @@ The ELF-application has been tested on the following phones and firmware:
 * Motorola ROKR E1: R373_G_0E.30.49R
 * Motorola V600: TRIPLETS_G_0B.09.72R
 * Motorola V235: R3512_G_0A.30.6CR
+* Motorola RAZR V3r: R4515_G_08.BD.D3R
 
 Application type: GUI + Deamon.
