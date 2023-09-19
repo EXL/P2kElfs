@@ -1405,15 +1405,17 @@ static UINT32 PhoneState(EVENT_STACK_T *ev_st, APPLICATION_T *app, BOOL battery)
 
 	app_instance->blink += 1;
 	if (app_instance->blink > NETWORK_MS_GAP_CONSTANT) {
-		if (battery) {
+		if (!battery) {
 			SIGNAL_STRENGTH_T signal_strength;
 			DL_SigRegQuerySignalStrength(&signal_strength);
 			percent = signal_strength.percent;
 		} else {
 			percent = DL_PwrGetActiveBatteryPercent();
 		}
-		if (percent < 30) {
+		if (percent < 20) {
 			HAPI_LP393X_set_tri_color_led(0, 0xF00); /* Red. */
+		} else if (percent < 40) {
+			HAPI_LP393X_set_tri_color_led(0, 0xFA0); /* Orange. */
 		} else if (percent < 60) {
 			HAPI_LP393X_set_tri_color_led(0, 0xFF0); /* Yellow. */
 		} else {
