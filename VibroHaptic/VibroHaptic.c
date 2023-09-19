@@ -21,6 +21,8 @@
 #include <utilities.h>
 #include <filesystem.h>
 
+#include "icons/icon_vibrohaptic_48x48.h"
+
 #define MAX_NUMBER_LENGTH           (6)
 #define MAX_NUMBER_VALUE            (999999)
 #define KEY_LONG_PRESS_START_MS     (3000)
@@ -49,6 +51,7 @@ typedef enum {
 
 typedef enum {
 	APP_RESOURCE_STRING_NAME,
+	APP_RESOURCE_ICON_VIBROHAPTIC,
 	APP_RESOURCE_STRING_TRIGGER,
 	APP_RESOURCE_STRING_VIBRO_SIGNAL,
 	APP_RESOURCE_STRING_VIBRO_DELAY,
@@ -185,10 +188,10 @@ static const WCHAR g_str_help_content_p5[] = L"343/343 - Display backlight.";
 static const WCHAR g_str_help_content_p6[] = L"721/735 - Vibration motor.";
 static const WCHAR g_str_help_content_p7[] = L"736/750 - Sounds to speaker.";
 static const WCHAR g_str_help_content_p8[] = L"688/702 - Vibrator voltage level.";
-static const WCHAR g_str_about_content_p1[] = L"Vibration haptic daemon program for Motorola phones.";
-static const WCHAR g_str_about_content_p2[] = L"Source code:";
+static const WCHAR g_str_about_content_p1[] = L"Version: 1.0";
+static const WCHAR g_str_about_content_p2[] = L"\x00A9 EXL, 09-Jan-2023.";
 static const WCHAR g_str_about_content_p3[] = L"https://github.com/EXL/P2kElfs/tree/master/VibroHaptic";
-static const WCHAR g_str_about_content_p4[] = L"\x00A9 EXL, 09-Jan-2023.";
+static const WCHAR g_str_about_content_p4[] = L"       "; /* HACK: gap */
 
 static const UINT8 g_key_app_menu = KEY_SOFT_LEFT;
 static const UINT8 g_key_app_exit = KEY_STAR;
@@ -355,6 +358,9 @@ static UINT32 InitResourses(RESOURCE_ID *resources) {
 	status |= DRM_CreateResource(&resources[APP_RESOURCE_STRING_VIBRO_VOLTAGE_LEVEL], RES_TYPE_STRING,
 		(void *) g_str_e_vibro_voltage_level, (u_strlen(g_str_e_vibro_voltage_level) + 1) * sizeof(WCHAR));
 
+	status |= DRM_CreateResource(&resources[APP_RESOURCE_ICON_VIBROHAPTIC], RES_TYPE_GRAPHICS,
+		(void *) vibrohaptic_48x48_gif, sizeof(vibrohaptic_48x48_gif));
+
 	return status;
 }
 
@@ -484,8 +490,10 @@ static UINT32 HandleStateEnter(EVENT_STACK_T *ev_st, APPLICATION_T *app, ENTER_S
 						g_str_help_content_p5, g_str_help_content_p6, g_str_help_content_p7, g_str_help_content_p8);
 					break;
 				case APP_VIEW_ABOUT:
-					UIS_MakeContentFromString("q0Nq1N Nq2Nq3N Nq4", &content, g_str_e_about,
-						g_str_about_content_p1, g_str_about_content_p2, g_str_about_content_p3, g_str_about_content_p4);
+					UIS_MakeContentFromString("q0NMCp1NMCq2NMCq3NMCq4NMCq5NMCq6", &content, g_str_app_name,
+						app_instance->resources[APP_RESOURCE_ICON_VIBROHAPTIC],
+						g_str_about_content_p1, g_str_about_content_p2, g_str_about_content_p3,
+						g_str_about_content_p4, g_str_about_content_p4);
 					break;
 			}
 			dialog = UIS_CreateViewer(&port, &content, NULL);
