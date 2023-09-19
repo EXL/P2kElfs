@@ -92,10 +92,11 @@ See [Overclock](../Overclock) project documents for overclocking Yeti3D comparis
 * D (4th) - Debug test version with some unique patches like screen buffer in Java Heap and FPS output, works without using `Class_dal` constant.
 * J (4th) - A special optimized versions with creating screen buffer in Java Heap also, for weak phones like Motorola V600.
 * F (4th) - A special versions with FPS meter.
+* L (4th) - A special versions with long search range for Motorola RAZR V3r.
 
 ### Summary
 
-* 8 ELFs + 8 ElfPack 2.0 ELFs + 4 Task and Semaphores ELFs + 1 Debug ELF + 3 J-weak V600 ELFs + 8 FPS meter ELFs = 32 ELFs.
+* 8 ELFs + 8 ElfPack 2.0 ELFs + 4 Task and Semaphores ELFs + 1 Debug ELF + 3 J-weak V600 ELFs + 8 FPS meter ELFs + 2 V3r ELFs = 34 ELFs.
 
 ## Additional information
 
@@ -108,6 +109,7 @@ The ELF-application has been tested on the following phones and firmware:
 * Motorola V235: R3512_G_0A.30.6CR
 * Motorola SLVR L7: R4513_G_08.B7.E0R_RB
 * Motorola RAZR V3i: R4441D_G_08.01.03R
+* Motorola RAZR V3r: R4515_G_08.BD.D3R
 * Motorola SLVR L7e: R452D_G_08.01.0AR (some bugs)
 * Motorola KRZR K1:  R452F_G_08.03.08R (some bugs)
 
