@@ -29,6 +29,7 @@ See [Ambilight](https://TODO) video on YouTube.
 * Random - Smooth color transitions to random colors.
 * Stroboscope - Strobe mode with side LEDs (white color) and flash LED.
 * Strobo Color - Strobe mode with side LEDs (random color) and flash LED.
+* Backlight - Smooth change in backlight brightness based on the Light Sensor.
 
 ## ELF files
 

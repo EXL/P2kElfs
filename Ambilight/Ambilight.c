@@ -33,6 +33,7 @@
 #define KEY_LONG_PRESS_STOP_MS      (2500)
 #define NETWORK_MS_GAP_CONSTANT     (80)
 #define AMBILIGHT_RECT_CONSTANT     (16)
+#define LIGHT_SENSOR_MAX_VALUE      (0xE2)
 
 typedef enum {
 	APP_STATE_ANY,
@@ -92,6 +93,7 @@ typedef enum {
 	APP_SELECT_ITEM_RANDOM,
 	APP_SELECT_ITEM_STROBOSCOPE,
 	APP_SELECT_ITEM_STROBO_COLOR,
+	APP_SELECT_ITEM_BACKLIGHT,
 	APP_SELECT_ITEM_MAX
 } APP_SELECT_ITEM_T;
 
@@ -134,6 +136,11 @@ typedef enum {
 	RAINBOW_VIOLET,
 	RAINBOW_WHITE
 } RAINBOW_COLOR_T;
+
+typedef enum {
+	STATE_NETWORK_SIGNAL,
+	STATE_BATTERY
+} PHONE_STATE_T;
 
 typedef struct {
 	APPLICATION_T app;
@@ -203,10 +210,11 @@ static UINT32 ProcessLights(EVENT_STACK_T *ev_st, APPLICATION_T *app);
 static UINT32 StopLights(EVENT_STACK_T *ev_st, APPLICATION_T *app);
 
 static UINT32 Ambilight(EVENT_STACK_T *ev_st, APPLICATION_T *app);
-static UINT32 PhoneState(EVENT_STACK_T *ev_st, APPLICATION_T *app, BOOL battery);
+static UINT32 PhoneState(EVENT_STACK_T *ev_st, APPLICATION_T *app, PHONE_STATE_T state);
 static UINT32 Rainbow(EVENT_STACK_T *ev_st, APPLICATION_T *app, BOOL random_colors);
 static UINT32 Stroboscope(EVENT_STACK_T *ev_st, APPLICATION_T *app, BOOL flashlight, BOOL color, BOOL random);
 static UINT16 GetAverageColorRGB444(EVENT_STACK_T *ev_st, APPLICATION_T *app, UINT16 start, UINT16 size);
+static UINT32 Backlight(EVENT_STACK_T *ev_st, APPLICATION_T *app);
 
 static const char g_app_name[APP_NAME_LEN] = "Ambilight";
 
@@ -225,6 +233,7 @@ static const WCHAR g_str_mode_rainbow[] = L"Rainbow";
 static const WCHAR g_str_mode_random[] = L"Random";
 static const WCHAR g_str_mode_stroboscope[] = L"Stroboscope";
 static const WCHAR g_str_mode_strobo_color[] = L"Strobo Color";
+static const WCHAR g_str_mode_backlight[] = L"Backlight";
 static const WCHAR g_str_color[] = L"RGB Color:";
 static const WCHAR g_str_e_color[] = L"HEX Color";
 static const WCHAR g_str_delay[] = L"Delay (in ms):";
@@ -257,6 +266,7 @@ static const WCHAR g_str_help_content_p1[] =
 	L"Random - Smooth color transitions to random colors.\n\n"
 	L"Stroboscope - Strobe mode with side LEDs (white color) and flash LED.\n\n"
 	L"Strobo Color - Strobe mode with side LEDs (random color) and flash LED.\n\n"
+	L"Backlight - Smooth change in backlight brightness based on the Light Sensor.\n\n"
 	L"Some modes require setting the delay and the color.\n\n"
 	L"Managing of lighting services is available in the main menu of the ELF application.\n";
 static const WCHAR g_str_about_content_p1[] = L"Version: 1.0";
@@ -1045,6 +1055,9 @@ static UINT32 SendSelectItemsToList(EVENT_STACK_T *ev_st, APPLICATION_T *app, UI
 	status |= UIS_MakeContentFromString("q0",
 		&list[APP_SELECT_ITEM_STROBO_COLOR].content.static_entry.text,
 		g_str_mode_strobo_color);
+	status |= UIS_MakeContentFromString("q0",
+		&list[APP_SELECT_ITEM_BACKLIGHT].content.static_entry.text,
+		g_str_mode_backlight);
 
 	status |= APP_UtilAddEvUISListData(ev_st, app, 0, start, APP_SELECT_ITEM_MAX, FBF_LEAVE,
 		sizeof(LIST_ENTRY_T) * APP_SELECT_ITEM_MAX, list);
@@ -1084,6 +1097,8 @@ static const WCHAR *GetTriggerOptionString(APP_SELECT_ITEM_T item) {
 			return g_str_mode_stroboscope;
 		case APP_SELECT_ITEM_STROBO_COLOR:
 			return g_str_mode_strobo_color;
+		case APP_SELECT_ITEM_BACKLIGHT:
+			return g_str_mode_backlight;
 	}
 }
 
@@ -1120,7 +1135,7 @@ static UINT32 SaveFileConfig(APPLICATION_T *app, const WCHAR *file_config_path) 
 static BOOL IsKeyPadLocked(void) {
 	UINT8 keypad_state;
 	DL_DbFeatureGetCurrentState(DB_FEATURE_KEYPAD_STATE, &keypad_state);
-	LOG("keypad_state = %d\n", keypad_state);
+	D("keypad_state = %d\n", keypad_state);
 	return (BOOL) keypad_state;
 }
 
@@ -1295,6 +1310,9 @@ static UINT32 ProcessLights(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
 		case APP_SELECT_ITEM_STROBO_COLOR:
 			Stroboscope(ev_st, app, TRUE, TRUE, TRUE);
 			break;
+		case APP_SELECT_ITEM_BACKLIGHT:
+			Backlight(ev_st, app);
+			break;
 		default:
 			break;
 	}
@@ -1395,7 +1413,7 @@ static UINT32 Ambilight(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
 	return status;
 }
 
-static UINT32 PhoneState(EVENT_STACK_T *ev_st, APPLICATION_T *app, BOOL battery) {
+static UINT32 PhoneState(EVENT_STACK_T *ev_st, APPLICATION_T *app, PHONE_STATE_T state) {
 	UINT32 status;
 	APP_INSTANCE_T *app_instance;
 	UINT8 percent;
@@ -1405,16 +1423,25 @@ static UINT32 PhoneState(EVENT_STACK_T *ev_st, APPLICATION_T *app, BOOL battery)
 
 	app_instance->blink += 1;
 	if (app_instance->blink > NETWORK_MS_GAP_CONSTANT) {
-		if (!battery) {
-			SIGNAL_STRENGTH_T signal_strength;
-			DL_SigRegQuerySignalStrength(&signal_strength);
-			percent = signal_strength.percent;
-		} else {
-			percent = DL_PwrGetActiveBatteryPercent();
+		switch (state) {
+			case STATE_NETWORK_SIGNAL: {
+					SIGNAL_STRENGTH_T signal_strength;
+					DL_SigRegQuerySignalStrength(&signal_strength);
+					percent = signal_strength.percent;
+				}
+				break;
+			case STATE_BATTERY:
+				percent = DL_PwrGetActiveBatteryPercent();
+				break;
+			default:
+				break;
 		}
-		if (percent < 20) {
+
+		D("state=%d, percent=%d\n", state, percent);
+
+		if (percent < 5) {
 			HAPI_LP393X_set_tri_color_led(0, 0xF00); /* Red. */
-		} else if (percent < 40) {
+		} else if (percent < 20) {
 			HAPI_LP393X_set_tri_color_led(0, 0xFA0); /* Orange. */
 		} else if (percent < 60) {
 			HAPI_LP393X_set_tri_color_led(0, 0xFF0); /* Yellow. */
@@ -1594,4 +1621,24 @@ static UINT16 GetAverageColorRGB444(EVENT_STACK_T *ev_st, APPLICATION_T *app, UI
 	D("Color RGB444: 0x%03X\n", rgb444);
 
 	return rgb444;
+}
+
+static UINT32 Backlight(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
+	UINT32 status;
+	UINT8 light;
+	UINT8 brightness;
+
+	status = RESULT_OK;
+
+	if (IsKeyPadLocked()) {
+		return status;
+	}
+
+	light = HAPI_ATOD_convert_ambient_light_sensor();
+	brightness = (light * 100) / LIGHT_SENSOR_MAX_VALUE;
+	D("light=%d (0x%02X), brightness=%d\n", light, light, brightness);
+
+	HAPI_LP393X_disp_backlight_intensity(100 - brightness);
+
+	return status;
 }
