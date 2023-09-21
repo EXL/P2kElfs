@@ -56,8 +56,8 @@ See [Overclocking and Benchmakring old Motorola P2K phones (52 MHz to 65 MHz)](h
 | V360     | 65 MHz | 1035 ms <br /> 4.04 BMIPS <br /> 1524 ms <br /> 7.46 DMIPS | ? <br /> ? <br /> ? <br /> ? <br /> ? <br /> ?                                         | ? <br /> ? <br /> ? <br /> ?                         | ? <br /> ?                 |
 | RAZR V3i | 52 MHz | 1313 ms <br /> 3.17 BMIPS <br /> 1929 ms <br /> 5.90 DMIPS | 3947 ms <br /> 55.5 FPS <br /> 6888 ms <br /> 35.1 FPS <br /> 13768 ms <br /> 15.9 FPS | 71 ms <br /> 1091584 B <br /> 5 ms <br /> 112384 B   | 5.44 sec <br /> 1192.0 KiB |
 | RAZR V3i | 65 MHz | 1067 ms <br /> 3.91 BMIPS <br /> 1563 ms <br /> 7.28 DMIPS | 3905 ms <br /> 55.5 FPS <br /> 6688 ms <br /> 35.1 FPS <br /> 10763 ms <br /> 22.7 FPS | 46 ms <br /> 960512 B <br /> 4 ms <br /> 112384 B    | ? <br /> ?                 |
-| RAZR V3r | 52 MHz | 1304 ms <br /> 3.21 BMIPS <br /> 1914 ms <br /> 5.94 DMIPS | 4461 ms <br /> 51.5 FPS <br /> 6054 ms <br /> 42.5 FPS <br /> 13234 ms <br /> 19.0 FPS | 28 ms <br /> 385280 B <br /> 4 ms <br /> 77312 B     | 1.48 <br /> 572.0 KiB      |
-| RAZR V3r | 65 MHz | 1042 ms <br /> 4.01 BMIPS <br /> 1534 ms <br /> 7.42 DMIPS | 2641 ms <br /> 83.3 FPS <br /> 4814 ms <br /> 53.5 FPS <br /> 11046 ms <br /> 23.7 FPS | 22 ms <br /> 385280 B <br /> 3 ms <br /> 77312 B     | ? <br /> ?                 |
+| RAZR V3r | 52 MHz | 1304 ms <br /> 3.21 BMIPS <br /> 1914 ms <br /> 5.94 DMIPS | 4461 ms <br /> 51.5 FPS <br /> 6054 ms <br /> 42.5 FPS <br /> 13234 ms <br /> 19.0 FPS | 28 ms <br /> 385280 B <br /> 4 ms <br /> 77312 B     | 5.21 sec <br /> 1280.0 KiB |
+| RAZR V3r | 65 MHz | 1042 ms <br /> 4.01 BMIPS <br /> 1534 ms <br /> 7.42 DMIPS | 2641 ms <br /> 83.3 FPS <br /> 4814 ms <br /> 53.5 FPS <br /> 11046 ms <br /> 23.7 FPS | 22 ms <br /> 385280 B <br /> 3 ms <br /> 77312 B     | 4.15 sec <br /> 1280.0 KiB |
 
 See [Benchmark](../Benchmark) project documents for more stock results.
 
