@@ -1521,6 +1521,10 @@ static UINT32 Rainbow(EVENT_STACK_T *ev_st, APPLICATION_T *app, BOOL random_colo
 	status = RESULT_OK;
 	app_instance = (APP_INSTANCE_T *) app;
 
+	if (IsKeyPadLocked()) {
+		return status;
+	}
+
 	if (
 		app_instance->color_current.r != app_instance->color_pattern.r ||
 		app_instance->color_current.g != app_instance->color_pattern.g ||
