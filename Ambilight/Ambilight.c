@@ -917,13 +917,14 @@ static UINT32 HandleEventYes(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
 		default:
 		case APP_WARNING_FLASH:
 			app_instance->popup = APP_POPUP_WARNING;
-			StartLights(ev_st, app);
 			break;
 		case APP_WARNING_RESET:
 			app_instance->popup = APP_POPUP_RESETED;
 			ResetSettingsToDefaultValues(app);
 			break;
 	}
+
+	StartLights(ev_st, app);
 
 	status |= SaveFileConfig(app, g_config_file_path);
 	status |= APP_UtilChangeState(APP_STATE_POPUP, ev_st, app);
@@ -1522,6 +1523,7 @@ static UINT32 Rainbow(EVENT_STACK_T *ev_st, APPLICATION_T *app, BOOL random_colo
 	app_instance = (APP_INSTANCE_T *) app;
 
 	if (IsKeyPadLocked()) {
+		HAPI_LP393X_set_tri_color_led(0, 0x000);
 		return status;
 	}
 
