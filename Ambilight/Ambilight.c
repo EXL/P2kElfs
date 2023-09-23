@@ -73,6 +73,7 @@ typedef enum {
 	APP_MENU_ITEM_COLOR,
 	APP_MENU_ITEM_START_LIGHTS,
 	APP_MENU_ITEM_STOP_LIGHTS,
+	APP_MENU_ITEM_RESET,
 	APP_MENU_ITEM_HELP,
 	APP_MENU_ITEM_ABOUT,
 	APP_MENU_ITEM_EXIT,
@@ -101,8 +102,14 @@ typedef enum {
 	APP_POPUP_CHANGED,
 	APP_POPUP_WARNING,
 	APP_POPUP_STARTED,
-	APP_POPUP_STOPPED
+	APP_POPUP_STOPPED,
+	APP_POPUP_RESETED
 } APP_POPUP_T;
+
+typedef enum {
+	APP_WARNING_FLASH,
+	APP_WARNING_RESET
+} APP_WARNING_T;
 
 typedef enum {
 	APP_VIEW_HELP,
@@ -145,14 +152,18 @@ typedef enum {
 typedef struct {
 	APPLICATION_T app;
 
-	APP_DISPLAY_T state;
 	RESOURCE_ID resources[APP_RESOURCE_MAX];
+
+	APP_DISPLAY_T state;
 	APP_POPUP_T popup;
 	APP_VIEW_T view;
 	APP_EDIT_T edit;
 	APP_MENU_ITEM_T menu_current_item_index;
-	UINT64 ms_key_press_start;
+	APP_WARNING_T warning;
+
 	APP_OPTIONS_T options;
+
+	UINT64 ms_key_press_start;
 	UINT32 timer_handle;
 	BOOL is_lights_started;
 
@@ -197,6 +208,7 @@ static UINT32 HandleEventCancel(EVENT_STACK_T *ev_st, APPLICATION_T *app);
 static UINT32 SendMenuItemsToList(EVENT_STACK_T *ev_st, APPLICATION_T *app, UINT32 start, UINT32 count);
 static UINT32 SendSelectItemsToList(EVENT_STACK_T *ev_st, APPLICATION_T *app, UINT32 start, UINT32 count);
 static const WCHAR *GetTriggerOptionString(APP_SELECT_ITEM_T item);
+static UINT32 ResetSettingsToDefaultValues(APPLICATION_T *app);
 static UINT32 ReadFileConfig(APPLICATION_T *app, const WCHAR *file_config_path);
 static UINT32 SaveFileConfig(APPLICATION_T *app, const WCHAR *file_config_path);
 
@@ -240,6 +252,7 @@ static const WCHAR g_str_delay[] = L"Delay (in ms):";
 static const WCHAR g_str_e_delay[] = L"Delay (in ms)";
 static const WCHAR g_str_start_ligths[] = L"Start Lights!";
 static const WCHAR g_str_stop_ligths[] = L"Stop Lights!";
+static const WCHAR g_str_reset[] = L"Reset to default";
 static const WCHAR g_str_help[] = L"Help...";
 static const WCHAR g_str_e_help[] = L"Help";
 static const WCHAR g_str_about[] = L"About...";
@@ -249,7 +262,9 @@ static const WCHAR g_str_changed[] = L"Changed:";
 static const WCHAR g_str_started[] = L"Lights service started!";
 static const WCHAR g_str_stopped[] = L"Lights service stopped!";
 static const WCHAR g_str_warn_activated[] = L"The \"Flash 100%\" mode is activated, don't use this mode for too long!";
-static const WCHAR g_str_warn_question[] = L"This can be dangerous to the phone's flash diode, are you sure?";
+static const WCHAR g_str_warn_flash[] = L"This can be dangerous to the phone's flash diode, are you sure?";
+static const WCHAR g_str_reseted[] = L"All settings have been reset to default values!";
+static const WCHAR g_str_warn_reset[] = L"Do you want to reset settings to default?";
 static const WCHAR g_str_help_content_p1[] =
 	L"Bias lighting (ambilight) daemon program for Motorola P2K phones.\n\n"
 	L"Press and hold the right soft key for 1.5-2.5 seconds to bring up the main application menu.\n\n"
@@ -380,11 +395,9 @@ static UINT32 ApplicationStart(EVENT_STACK_T *ev_st, REG_ID_T reg_id, void *reg_
 		app_instance->popup = APP_POPUP_CHANGED;
 		app_instance->view = APP_VIEW_HELP;
 		app_instance->edit = APP_EDIT_DELAY;
+		app_instance->warning = APP_WARNING_FLASH;
 		app_instance->menu_current_item_index = APP_MENU_ITEM_FIRST;
 		app_instance->ms_key_press_start = 0LLU;
-		app_instance->options.mode = APP_SELECT_ITEM_RAINBOW;
-		app_instance->options.delay = 250; /* 250 ms. */
-		app_instance->options.color = 0x80F; /* Violet. */
 		app_instance->is_lights_started = FALSE;
 		app_instance->color_current.r = 0xF;
 		app_instance->color_current.g = 0x0;
@@ -394,6 +407,8 @@ static UINT32 ApplicationStart(EVENT_STACK_T *ev_st, REG_ID_T reg_id, void *reg_
 		app_instance->color_pattern.b = 0x0;
 		app_instance->rainbow = RAINBOW_RED;
 		app_instance->blink = 0;
+
+		ResetSettingsToDefaultValues((APPLICATION_T *) app_instance);
 
 		if (DL_FsFFileExist(g_config_file_path)) {
 			ReadFileConfig((APPLICATION_T *) app_instance, g_config_file_path);
@@ -559,11 +574,22 @@ static UINT32 HandleStateEnter(EVENT_STACK_T *ev_st, APPLICATION_T *app, ENTER_S
 				case APP_POPUP_STOPPED:
 					UIS_MakeContentFromString("MCq0", &content, g_str_stopped);
 					break;
+				case APP_POPUP_RESETED:
+					UIS_MakeContentFromString("MCq0", &content, g_str_reseted);
+					break;
 			}
 			dialog = UIS_CreateTransientNotice(&port, &content, NOTICE_TYPE_OK);
 			break;
 		case APP_STATE_WARNING:
-			UIS_MakeContentFromString("MCq0", &content, g_str_warn_question);
+			switch (app_instance->warning) {
+				default:
+				case APP_WARNING_FLASH:
+					UIS_MakeContentFromString("MCq0", &content, g_str_warn_flash);
+					break;
+				case APP_WARNING_RESET:
+					UIS_MakeContentFromString("MCq0", &content, g_str_warn_reset);
+					break;
+			}
 			dialog = UIS_CreateConfirmation(&port, &content);
 			break;
 		case APP_STATE_VIEW:
@@ -678,6 +704,7 @@ static UINT32 HandleEventSelect(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
 			break;
 		case APP_MENU_ITEM_START_LIGHTS:
 			if (app_instance->options.mode == APP_SELECT_ITEM_FLASH_100) {
+				app_instance->warning = APP_WARNING_FLASH;
 				status |= APP_UtilChangeState(APP_STATE_WARNING, ev_st, app);
 			} else {
 				app_instance->popup = APP_POPUP_STARTED;
@@ -689,6 +716,10 @@ static UINT32 HandleEventSelect(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
 			app_instance->popup = APP_POPUP_STOPPED;
 			StopLights(ev_st, app);
 			status |= APP_UtilChangeState(APP_STATE_POPUP, ev_st, app);
+			break;
+		case APP_MENU_ITEM_RESET:
+			app_instance->warning = APP_WARNING_RESET;
+			status |= APP_UtilChangeState(APP_STATE_WARNING, ev_st, app);
 			break;
 		case APP_MENU_ITEM_HELP:
 			app_instance->view = APP_VIEW_HELP;
@@ -881,9 +912,18 @@ static UINT32 HandleEventYes(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
 
 	status = RESULT_OK;
 	app_instance = (APP_INSTANCE_T *) app;
-	app_instance->popup = APP_POPUP_WARNING;
 
-	StartLights(ev_st, app);
+	switch (app_instance->warning) {
+		default:
+		case APP_WARNING_FLASH:
+			app_instance->popup = APP_POPUP_WARNING;
+			StartLights(ev_st, app);
+			break;
+		case APP_WARNING_RESET:
+			app_instance->popup = APP_POPUP_RESETED;
+			ResetSettingsToDefaultValues(app);
+			break;
+	}
 
 	status |= SaveFileConfig(app, g_config_file_path);
 	status |= APP_UtilChangeState(APP_STATE_POPUP, ev_st, app);
@@ -975,6 +1015,9 @@ static UINT32 SendMenuItemsToList(EVENT_STACK_T *ev_st, APPLICATION_T *app, UINT
 	status |= UIS_MakeContentFromString("Mq0",
 		&list[APP_MENU_ITEM_STOP_LIGHTS].content.static_entry.text,
 		g_str_stop_ligths);
+	status |= UIS_MakeContentFromString("Mq0",
+		&list[APP_MENU_ITEM_RESET].content.static_entry.text,
+		g_str_reset);
 	status |= UIS_MakeContentFromString("Mq0",
 		&list[APP_MENU_ITEM_HELP].content.static_entry.text,
 		g_str_help);
@@ -1100,6 +1143,20 @@ static const WCHAR *GetTriggerOptionString(APP_SELECT_ITEM_T item) {
 		case APP_SELECT_ITEM_BACKLIGHT:
 			return g_str_mode_backlight;
 	}
+}
+
+static UINT32 ResetSettingsToDefaultValues(APPLICATION_T *app) {
+	UINT32 status;
+	APP_INSTANCE_T *app_instance;
+
+	status = RESULT_OK;
+	app_instance = (APP_INSTANCE_T *) app;
+
+	app_instance->options.mode = APP_SELECT_ITEM_RAINBOW;
+	app_instance->options.delay = 250; /* 250 ms. */
+	app_instance->options.color = 0x80F; /* Violet. */
+
+	return status;
 }
 
 static UINT32 ReadFileConfig(APPLICATION_T *app, const WCHAR *file_config_path) {
