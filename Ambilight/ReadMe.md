@@ -13,7 +13,7 @@ The "Ambilight" ELF daemon utility with GUI settings for some funlights and bias
 
 ## Videos of Motorola ROKR E1
 
-See [Ambilight](https://TODO) video on YouTube.
+See [Ambilight (Bias lighting) ELF application for Motorola P2K phones (ROKR E1, E398, V600, V80)](https://www.youtube.com/watch?v=ilhGiRITd8U) video on YouTube.
 
 ## Modes
 
