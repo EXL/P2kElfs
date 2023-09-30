@@ -39,6 +39,9 @@ set(SOURCE_FILES
 
 add_executable(${PROJECT_NAME} ${SOURCE_FILES})
 
+include("${P2K_EP2_TOOLCHAIN_ROOT}/cmake/PreLink.cmake")
+redefine_sym("memcpy" "__rt_memcpy" "CMakeFiles/Perlin.dir/Engine.c.obj")
+
 ########################################################################################################################
 # Linking and postlinking section
 #
