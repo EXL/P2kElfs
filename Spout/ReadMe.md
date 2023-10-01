@@ -41,7 +41,7 @@ See [Some ELF demos/games on Motorola P2K phones using ATI Imageon W2240/W2250 v
 
 ## Other versions
 
-* Version with long sight tail. See [spout_feature_long_tail](https://github.com/EXL/P2kElfs/tree/spout_feature_long_tail) branch in this repository.
+* Version with long sight tail. See [long_tail](long_tail) utility project in this directory.
 
 ## ELF files
 
