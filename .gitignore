@@ -1,4 +1,7 @@
-# QtCreator IDE garbage.
+# Visual Studio Code.
+.vscode/
+
+# QtCreator IDE.
 .qtc
 .qtc_clangd
 *.user*
