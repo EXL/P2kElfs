@@ -26,8 +26,6 @@ endif()
 #
 project(Yeti3D LANGUAGES C VERSION "1.0.0")
 
-set(TASKS Off)
-
 include_directories(${PROJECT_SOURCE_DIR})
 
 add_definitions("-DROT_90")
