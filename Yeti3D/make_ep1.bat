@@ -1,9 +1,17 @@
-:: This make.bat script was edited by EXL, 23-Apr-2023.
+:: This make.bat script was created by EXL, 23-Apr-2023.
 :: Default platform is Motorola P2K, ElfPack v1.x, ADS1.2 [Build 848] on Windows.
 :: Warning: `-nodebug` flag option for `armlink` is buggy.
 
-:: Uncomment it for verbose output.
+:: Uncomment it for disable verbose output.
 :: @echo off
+
+if /I "%1"=="clean" (
+	if exist *.o    del *.o
+	if exist *.obj  del *.obj
+	if exist *.elfp del *.elfp
+	if exist *.elf  del *.elf
+	exit /b 0
+)
 
 :: Compiler path.
 set ARM_PATH=C:\ARM
@@ -26,7 +34,7 @@ set DEFINES=-D__P2K__ -DEP1 -DROT_90 -DFPS_30
 :: set DEFINES=-DMEMORY_MANUAL_ALLOCATION
 :: set DEFINES=-DSEARCH_LONG_RANGE
 
-:: ELF name.
+:: Project/ELF name.
 set ELF_NAME=Yeti3D
 
 :: Compiling step.
@@ -38,8 +46,3 @@ set ELF_NAME=Yeti3D
 :: Linking step.
 %ARM_PATH%\armlink -nolocals -reloc -first %LIB_MAIN%(Lib) draw.o game.o yeti.o main_p2k.o ^
 	%LIB_PATH%\%LIB_MAIN% %LIB_PATH%\armlib\armlib.o -o %ELF_NAME%.elf
-
-if /I "%1"=="clean" (
-	del *.o
-	del *.elf
-)
