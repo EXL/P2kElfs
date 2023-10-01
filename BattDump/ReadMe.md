@@ -13,7 +13,7 @@ The "Batt Dump" ELF utility for dumping battery ROM by 1-Wire interface.
 
 ## Other versions
 
-* Example of using `UIS_CreateExtendedNotice()` function. See [sample_extended_notice](https://github.com/EXL/P2kElfs/tree/sample_extended_notice) branch in this repository.
+* Example of using `UIS_CreateExtendedNotice()` function. See [extended_notice](extended_notice) utitlity project in this directory.
 
 ## ELF files
 
