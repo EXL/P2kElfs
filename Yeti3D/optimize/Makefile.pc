@@ -1,0 +1,38 @@
+# This Makefile was created by EXL, 23-Apr-2023.
+# Default platform is Linux, Ubuntu 22.04 LTS.
+
+CC=gcc
+STRIP=strip
+CFLAGS=`sdl-config --cflags` -O2 -D__SDL__ -Wall -pedantic -Wno-maybe-uninitialized -Wno-misleading-indentation
+LFLAGS=`sdl-config --libs`
+NAME=yeti3d
+ifeq ($(OS), Windows_NT)
+	EXECUTABLE=$(NAME).exe
+else
+	EXECUTABLE=$(NAME).elf
+endif
+
+all: $(EXECUTABLE)
+
+$(EXECUTABLE): draw.o game.o yeti.o main_sdl.o
+	$(CC) $(CFLAGS) \
+		draw.o game.o yeti.o main_sdl.o -o \
+		$(EXECUTABLE) $(LFLAGS)
+	$(STRIP) -s $(EXECUTABLE)
+
+clean:
+	-rm -f *.o
+	-rm -f *.elf
+	-rm -f *.exe
+
+draw.o: Makefile.pc draw.c yeti.h viewports.h
+	$(CC) $(CFLAGS) -c draw.c -o draw.o
+
+game.o: Makefile.pc game.c game.h yeti.h viewports.h
+	$(CC) $(CFLAGS) -c game.c -o game.o
+
+yeti.o: Makefile.pc yeti.c yeti.h viewports.h
+	$(CC) $(CFLAGS) -c yeti.c -o yeti.o
+
+main_sdl.o: Makefile.pc main_sdl.c game.h yeti.h viewports.h
+	$(CC) $(CFLAGS) -c main_sdl.c -o main_sdl.o

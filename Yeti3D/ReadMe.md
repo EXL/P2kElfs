@@ -53,7 +53,7 @@ See [Yeti3D Engine port to ELF for Motorola P2K phones](https://www.youtube.com/
 
 ## Other versions
 
-* Slightly optimized version without sprites, enemy logic code and with reduced draw distance. See [yeti3d_memory_optimize](https://github.com/EXL/P2kElfs/tree/yeti3d_memory_optimize) branch in this repository.
+* Slightly optimized version without sprites, enemy logic code and with reduced draw distance. See [optimize](optimize) utility project in this directory.
 
 ## ELF files
 
