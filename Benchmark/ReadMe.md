@@ -39,9 +39,9 @@ See [Overclock](../Overclock) project documents for overclocking Benchmark compa
 
 ## Other versions
 
-* Various signal e.g. vibromotor finding version using binary search. See [find_vibromotor_signal](https://github.com/EXL/P2kElfs/tree/find_vibromotor_signal) branch in this repository.
-* Some deprecated overclocking MCU hacks. See [overclock_cpu](https://github.com/EXL/P2kElfs/tree/overclock_cpu) branch in this repository.
-* Strange reboot case for Motorola SLVR L7e by pressing "5" button. See [l7e_debug](https://github.com/EXL/P2kElfs/tree/l7e_debug) branch in this repository.
+* Various signal e.g. vibromotor finding version using binary search. See [misc/VibroSignal](misc/VibroSignal) utility project in this directory.
+* Some deprecated overclocking MCU hacks. See [misc/OverclockCpu](misc/OverclockCpu) utility project in this directory.
+* Strange reboot case for Motorola SLVR L7e by pressing "5" button. See [misc/DebugL7e](misc/DebugL7e) utility project in this directory.
 
 ## ELF files
 
@@ -52,9 +52,9 @@ See [Overclock](../Overclock) project documents for overclocking Benchmark compa
 * Benchmark_EM2.elf (ELF for ElfPack 2.0, M·CORE)
 * Benchmark_L7e.elf (ELF for ElfPack 1.0, thumb, Motorola SLVR L7e version)
 * Benchmark_V600.elf (ELF for ElfPack 1.0, thumb, Motorola V600, version)
-* FindVibroSignal.elf (ELF for ElfPack 1.0)
-* OverclockCPU.elf (ELF for ElfPack 1.0)
-* Debug_L7e.elf (ELF for ElfPack 1.0)
+* VibroSignal.elf (ELF for ElfPack 1.0)
+* OverclockCpu.elf (ELF for ElfPack 1.0)
+* DebugL7e.elf (ELF for ElfPack 1.0)
 
 ## Additional information
 
