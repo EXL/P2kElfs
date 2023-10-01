@@ -28,7 +28,7 @@ set LIB_MAIN=std.sa
 set LIB_LIBC=libc.a
 
 :: Defines.
-set DEFINES=-D__P2K__ -DEP2 -DROT_90 -DFPS_30
+set DEFINES=-D__P2K__ -DEP2 -DROT_90 -DFPS_30 -DVIEWPORT_WIDTH=82 -DVIEWPORT_HEIGHT=122
 
 :: Includes.
 set INCLUDES=-I.

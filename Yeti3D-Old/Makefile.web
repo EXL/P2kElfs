@@ -2,7 +2,7 @@
 # Default platform is Web, Emscripten & WASM.
 
 all:
-	emcc -O2 -DPLATFORM_SDL2 \
+	emcc -O2 -DPLATFORM_SDL2 -DVIEWPORT_WIDTH=176 -DVIEWPORT_HEIGHT=220 \
 		-Wall -pedantic -Wno-empty-body -Wno-incompatible-pointer-types-discards-qualifiers \
 		data.c draw.c main_sdl2.c yeti.c \
 		-s USE_SDL=2 \
@@ -10,7 +10,7 @@ all:
 	emstrip -s Yeti3D.wasm
 
 linux:
-	gcc -O2 -DPLATFORM_SDL2 \
+	gcc -O2 -DPLATFORM_SDL2 -DVIEWPORT_WIDTH=176 -DVIEWPORT_HEIGHT=220 \
 		-Wall -Wno-strict-aliasing -Wno-misleading-indentation -Wno-maybe-uninitialized \
 		-Wno-discarded-array-qualifiers \
 		data.c draw.c main_sdl2.c yeti.c \

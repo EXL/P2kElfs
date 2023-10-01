@@ -282,8 +282,12 @@ inline void matrix_rotate_object(matrix_t m, int alp, int bet, int gam)
 #define VIEWPORT_WIDTH 176
 #define VIEWPORT_HEIGHT 220
 #else
-#define VIEWPORT_WIDTH 82
-#define VIEWPORT_HEIGHT 122
+  #if !defined(VIEWPORT_WIDTH)
+    #define VIEWPORT_WIDTH 82
+  #endif
+  #if !defined(VIEWPORT_HEIGHT)
+    #define VIEWPORT_HEIGHT 122
+  #endif
 #endif
 
 #define VIEWPORT_X1 0

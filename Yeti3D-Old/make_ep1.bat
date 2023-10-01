@@ -26,7 +26,7 @@ set LIB_PATH=%ARM_PATH%\lib
 set LIB_MAIN=Lib.o
 
 :: Defines.
-set DEFINES=-D__P2K__ -DEP1 -DROT_90 -DFPS_30
+set DEFINES=-D__P2K__ -DEP1 -DROT_90 -DFPS_30 -DVIEWPORT_WIDTH=82 -DVIEWPORT_HEIGHT=122
 
 :: Project/ELF name.
 set ELF_NAME=Yeti3D

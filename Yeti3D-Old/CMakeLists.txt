@@ -30,6 +30,8 @@ include_directories(${PROJECT_SOURCE_DIR})
 
 add_definitions("-DROT_90")
 add_definitions("-DFPS_30")
+add_definitions("-DVIEWPORT_WIDTH=82")
+add_definitions("-DVIEWPORT_HEIGHT=122")
 
 set(SOURCE_FILES
 	data.c
