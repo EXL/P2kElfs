@@ -22,6 +22,9 @@ elseif(ELFPACK STREQUAL "EM2") # ElfPack v2.x, M*CORE, mcore-elf-gcc (GCC) 3.4.6
 	set(CMAKE_TOOLCHAIN_FILE "C:/MCORE_EM2/cmake/P2K_EM2_Toolchain.cmake")
 endif()
 
+########################################################################################################################
+# Project section: General
+#
 project(P2kElfs)
 
 add_subdirectory(Ambilight)
