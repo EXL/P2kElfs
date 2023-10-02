@@ -1,4 +1,4 @@
-# This Makefile was edited by EXL, 20-Apr-2023.
+# This Makefile was created by EXL, 20-Apr-2023.
 # Default platform is Motorola P2K, ElfPack v1.x, ADS1.2 [Build 848] on Linux.
 # Warning: `-nodebug` flag option for `armlink` is buggy.
 
@@ -17,7 +17,7 @@ LIB_MAIN = Lib.o
 # Defines.
 DEFINES = -D__P2K__ -DEP1 -DROT_90 -DFPS_30 -DVIEWPORT_WIDTH=82 -DVIEWPORT_HEIGHT=122
 
-# ELF name.
+# Project/ELF name.
 ELF_NAME = Yeti3D
 
 all:
@@ -30,4 +30,6 @@ all:
 
 clean:
 	-rm -f *.o
+	-rm -f *.obj
+	-rm -f *.elfp
 	-rm -f *.elf

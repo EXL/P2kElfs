@@ -27,8 +27,8 @@ set LIB_MAIN=Lib.o
 
 :: Defines.
 set DEFINES=-D__P2K__ -DEP1 -DROT_90 -DFPS_30
-:: set DEFINES=-D__P2K__ -DEP1 -DJAVA_HEAP
-:: set DEFINES=-D__P2K__ -DEP1 -DFTR_V600 -DJAVA_HEAP
+:: set DEFINES=-D__P2K__ -DEP1 -DROT_90 -DFPS_30 -DJAVA_HEAP
+:: set DEFINES=-D__P2K__ -DEP1 -DROT_90 -DFPS_30 -DJAVA_HEAP -DFTR_V600
 
 :: Project/ELF name.
 set ELF_NAME=Spout
@@ -38,4 +38,4 @@ set ELF_NAME=Spout
 %ARM_PATH%\tcc -I%SDK_PATH% %DEFINES% -bigend -apcs /interwork -O2 -c %ELF_NAME%.c -o %ELF_NAME%.o
 
 :: Linking step.
-%ARM_PATH%\armlink -nolocals -reloc -first %LIB_MAIN%(Lib) %ELF_NAME%.o Piece.o %LIB_PATH%\%LIB_MAIN% -o %ELF_NAME%.elf
+%ARM_PATH%\armlink -nolocals -reloc -first %LIB_MAIN%(Lib) Piece.o %ELF_NAME%.o %LIB_PATH%\%LIB_MAIN% -o %ELF_NAME%.elf
