@@ -9,6 +9,12 @@ A simple ELF benchmarking application for Motorola P2K phones.
 
 ![Screenshot of Benchmark from Motorola L6 5](../images/Screenshot_Benchmark_L6_5.png) ![Screenshot of Benchmark from Motorola L6 6](../images/Screenshot_Benchmark_L6_6.png) ![Screenshot of Benchmark from Motorola L6 7](../images/Screenshot_Benchmark_L6_7.png) ![Screenshot of Benchmark from Motorola L6 8](../images/Screenshot_Benchmark_L6_8.png)
 
+## Screenshots from Motorola V600
+
+![Screenshot of Benchmark from Motorola V600 1](../images/Screenshot_Benchmark_V600_1.png) ![Screenshot of Benchmark from Motorola V600 2](../images/Screenshot_Benchmark_V600_2.png) ![Screenshot of Benchmark from Motorola V600 3](../images/Screenshot_Benchmark_V600_3.png) ![Screenshot of Benchmark from Motorola V600 4](../images/Screenshot_Benchmark_V600_4.png)
+
+![Screenshot of Benchmark from Motorola V600 5](../images/Screenshot_Benchmark_V600_5.png) ![Screenshot of Benchmark from Motorola V600 6](../images/Screenshot_Benchmark_V600_6.png) ![Screenshot of Benchmark from Motorola V600 7](../images/Screenshot_Benchmark_V600_7.png)
+
 ## Screenshots from Motorola ROKR E1
 
 ![Screenshot of Benchmark from Motorola E1 1](../images/Screenshot_Benchmark_E1_1.png) ![Screenshot of Benchmark from Motorola E1 2](../images/Screenshot_Benchmark_E1_2.png) ![Screenshot of Benchmark from Motorola E1 3](../images/Screenshot_Benchmark_E1_3.png) ![Screenshot of Benchmark from Motorola E1 4](../images/Screenshot_Benchmark_E1_4.png)
