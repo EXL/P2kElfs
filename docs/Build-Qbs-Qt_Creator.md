@@ -3,16 +3,16 @@ Build with Qbs and Qt Creator IDE
 
 Thanks to [@denis-shienkov](https://github.com/denis-shienkov) | [@kuzulis](https://www.linux.org.ru/people/kuzulis/profile) for using Qbs manual.
 
-1. Add the `tcc` or `tcc.exe` as a custom C language compiler from the "Edit => Preferences => Kits => Compilers" with the "Thumb C Compiler, ADS1.2 [Build 848]" name.
+1. Add the `/opt/arm/bin/tcc` or `C:\ARM\tcc.exe` as a custom C language compiler from the "Edit => Preferences => Kits => Compilers" with the "Thumb C Compiler, ADS1.2 [Build 848]" name.
 2. Change the ABI to "arm-unknown-unknown-unknown-unknown".
 3. Set the error parser as "GCC".
 4. Click on "Apply" button.
 5. Go to "Edit => Preferences => Kits => Kits` tab and add a new kit named as "Motorola P2K ARM".
 6. Configure the "Motorola P2K ARM" kit with the following properties:
 
-   * Device type: "Desktop".
-   * Run device: "Local PC".
-   * Build device: "Local PC".
+   * Run device type: "Desktop".
+   * Run device: "Local PC" or "Desktop".
+   * Build device: "Local PC" or "Desktop".
 
    (or you can choose the bare metal device instead, it is irrelevant).
 
