@@ -23,7 +23,7 @@ Thanks to @The_g00d and @fkcoder for some help.
 
 4. Reset CMake cache and Reload project.
 
-   Use this function every time you change the toolchain, also check/uncheck "Custome Compiler" option, it only makes sense for ADS compiler.
+    Use this function every time you change the toolchain, also check/uncheck "Custome Compiler" option, it only makes sense for ADS compiler.
 
     Tools => CMake => Reset Cache and Reload Project.
 
