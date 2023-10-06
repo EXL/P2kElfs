@@ -3,11 +3,17 @@ Build with CMake and CLion
 
 Thanks to @The_g00d and @fkcoder for some help.
 
-1. Create and configure various toolchains as in the image below.
+1. Create and configure various toolchains as in the image below. If you are using some Linux disto then only one "ARM ADS 1.2" toolchain is available on your platform which needs to be installed to the `/opt/arm` directory.
 
     ![CMake & CLion Toolchains](../images/CMake_CLion_Toolchains.png)
 
     File => Settings => Build, Execution, Deployment => Toolchains.
+
+    1. [ARM ADS 1.2 ElfPack 1.x SDK for Windows](https://github.com/MotoFanRu/ELFKIT_EP1_Windows)
+    2. [ARM ADS 1.2 ElfPack 1.x SDK for Linux](https://github.com/MotoFanRu/ELFKIT_EP1_Linux)
+    3. [ARM GCC 4.4.0 ElfPack 2.x SDK for Windows](https://github.com/MotoFanRu/ELFKIT_EP2_Windows)
+    4. [M\*CORE GCC 3.4.6 ElfPack 1.x SDK for Windows](https://github.com/MotoFanRu/ELFKIT_EM1_Windows)
+    5. [M\*CORE GCC 3.4.6 ElfPack 2.x SDK for Windows](https://github.com/MotoFanRu/ELFKIT_EM2_Windows)
 
 2. Open or create project and choose proper toolchain, then configure project as in the image below.
 
