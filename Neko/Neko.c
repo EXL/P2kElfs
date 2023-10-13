@@ -1,3 +1,836 @@
+#include <apps.h>
+#include <loader.h>
+#include <ati.h>
+#include <dal.h>
+#include <mem.h>
+#include <dl.h>
+
+//#include "bmp_types.h"
+//#include "bmp.h"
+
+/* Состояния приложения */
+enum APP_STATES_ENUM
+{
+	APP_STATE_ANY, /* ANY-state всегда первым */
+
+	APP_STATE_MAIN,
+
+	APP_STATE_MAX /* Для удобства */
+};
+typedef UINT8 APP_STATES_T;
+
+typedef struct
+{
+	AHIBITMAP_T		bm;
+	UINT32			*pal;
+	UINT16			color_key;
+} AHIIMAGE_T;
+
+////////////////////////////////////////////////////////////////////////////////
+
+
+static UINT32 AppStart( EVENT_STACK_T *ev_st,  REG_ID_T reg_id,  UINT32 param2 );
+static UINT32 AppExit( EVENT_STACK_T *ev_st,  APPLICATION_T *app );
+
+static UINT32 MainStateEnter( EVENT_STACK_T *ev_st,  APPLICATION_T *app, ENTER_STATE_TYPE_T type );
+static UINT32 MainStateExit( EVENT_STACK_T *ev_st,  APPLICATION_T *app, EXIT_STATE_TYPE_T type );
+
+static UINT32 HandleTimerExpiried( EVENT_STACK_T *ev_st,  APPLICATION_T *app );
+static UINT32 HandleKeypress( EVENT_STACK_T *ev_st,  APPLICATION_T *app );
+static UINT32 HandleExit( EVENT_STACK_T *ev_st,  APPLICATION_T *app );
+
+static UINT32 FreeResources( void );
+static UINT32 InitResources( const WCHAR * dir );
+
+static UINT32 RenderImg( AHIIMAGE_T * im );
+static UINT32 RestoreBG( AHIIMAGE_T * im );
+
+////////////////////////////////////////////////////////////////////////////////
+
+#define ELF_NAME "ELF"
+/* Название приложения. Длина строки именно такая и никакая иначе */
+const char	app_name[APP_NAME_LEN+1] = ELF_NAME;
+
+UINT32			evcode_base;
+//ldrElf			elf;
+IFACE_DATA_T	iface;
+
+AHIBITMAP_T		cache_bmp;
+AHIIMAGE_T		img;
+
+#define TIMER_PERIOD (1*200)
+#define TIMER_ID 0x9FA20
+UINT32			timer;
+INT32			ticks, sign;
+
+////////////////////////////////////////////////////////////////////////////////
+
+
+// Обработчики событий для каждого state-а
+
+/* Обработчики событий для APP_STATE_ANY (используется в любом state) */
+static EVENT_HANDLER_ENTRY_T any_state_handlers[] =
+	{
+//		{ EV_PM_API_EXIT,		HandleExit },	// PM API: cmd EXIT
+		{ EV_KEY_PRESS,			HandleKeypress },
+
+		// Список всегда должен заканчиватся такой записью
+		{ STATE_HANDLERS_END,			NULL }
+};
+
+
+static EVENT_HANDLER_ENTRY_T main_state_handlers[] =
+	{
+		{ EV_TIMER_EXPIRED,		HandleTimerExpiried },
+		{ STATE_HANDLERS_END,			NULL }
+};
+
+
+////////////////////////////////////////////////////////////////////////////////
+
+
+/* Таблица соответствий обработчиков, состояний и функций входа-выхода из состояния.
+	Порядок состояний такой же, как в enum-e */
+static const STATE_HANDLERS_ENTRY_T state_handling_table[] =
+	{
+		{ APP_STATE_ANY,				// State
+			NULL,						// Обработчик входа в state
+			NULL,						// Обработчик выхода из state
+			any_state_handlers		  // Список обработчиков событий
+		},
+
+		{ APP_STATE_MAIN,
+			MainStateEnter,
+			MainStateExit,
+			main_state_handlers
+		}
+
+};
+
+UINT32				sts;
+AHIDEVICE_T			device;
+AHIDRVINFO_T	*dInfo;
+//AHISURFINFO_T		sInfo;
+
+AHIDEVCONTEXT_T		dCtx;
+AHISURFACE_T		sDraw;
+AHISURFACE_T		sDisp;
+
+AHIRECT_T			rScreen = {0,0, DISPLAY_WIDTH,DISPLAY_HEIGHT};
+
+BOOL				ahgInited;
+
+
+FS_HANDLE_T FILE_Open( const WCHAR * file, UINT8 mode )
+{
+	return DL_FsOpenFile( file, mode, 0 );
+}
+
+
+UINT32 FILE_Close( FS_HANDLE_T fh )
+{
+	FS_RESULT_T		fr;
+
+	fr = DL_FsCloseFile( fh );
+	return (fr == RESULT_OK) ? RESULT_OK : RESULT_FAIL;
+}
+
+// перейти на оффест относительно начала файла
+UINT32 FILE_Seek(  FS_HANDLE_T fh, FS_SEEK_OFFSET_T offset )
+{
+	FS_RESULT_T		fr;
+
+	fr = DL_FsFSeekFile( fh, offset, SEEK_WHENCE_SET );
+	return (fr == RESULT_OK) ? RESULT_OK : RESULT_FAIL;
+}
+
+
+UINT32 FILE_Read( FS_HANDLE_T fh, void * data, FS_COUNT_T size )
+{
+	FS_RESULT_T		fr;
+	FS_COUNT_T		fc;
+
+	if ( fh == FS_HANDLE_INVALID || !data || !size ) return RESULT_FAIL;
+
+	fr = DL_FsReadFile( data, size, 1, fh, &fc );
+	if ( fr != RESULT_OK || fc != 1 ) return RESULT_FAIL;
+
+	return RESULT_OK;
+}
+
+UINT32 AHG_Init()
+{
+	ahgInited = FALSE;
+
+	dInfo = suAllocMem(sizeof(AHIDRVINFO_T), NULL);
+	AhiDevEnum(&device, dInfo, 0);
+
+//	device = ldrGetAhiDevice();
+
+	sts = AhiDevOpen( &dCtx, device, "Matrix", 0 );
+	if ( sts != 0 ) return sts;
+	LOG("AHG_Init: dCtx = 0x%08x\n", dCtx);
+
+	sDraw = DAL_GetDrawingSurface( DISPLAY_MAIN );
+	LOG("AHG_Init: sDraw = 0x%08x\n", sDraw);
+
+	sts |= AhiDispSurfGet( dCtx, &sDisp );
+	LOG("AHG_Init: sDisp = 0x%08x\n", sDisp);
+
+	AhiDrawSurfDstSet( dCtx, sDisp, 0 );
+	AhiDrawSurfSrcSet( dCtx, sDraw, 0 );
+	AhiDrawClipDstSet( dCtx, NULL );
+	AhiDrawClipSrcSet( dCtx, NULL );
+
+	ahgInited = TRUE;
+	return sts;
+}
+
+UINT32 AHG_Done()
+{
+	if ( ahgInited ) {
+		AhiDevClose( dCtx );
+		suFreeMem(dInfo);
+	}
+
+	ahgInited = FALSE;
+	return 0;
+}
+
+UINT32 Register(const char *elf_path_uri, const char *args, UINT32 ev_code) {
+	UINT32 status;
+	UINT32 ev_code_base;
+	int			i;
+	WCHAR		dir[ 100 + 1 ];
+	WCHAR		uri[ 100 + 1 ];
+
+	ev_code_base = ev_code;
+
+	P();
+
+	status = AHG_Init();
+	LOG(ELF_NAME": AHG_Init, sts = 0x%x", status);
+	if ( status != RESULT_OK ) return NULL;
+
+	P();
+
+	u_atou(elf_path_uri, uri);
+	i = u_strlen( uri ) - 1;
+	while ( i >= 0 && uri[i] != L'/' ) i--;
+	u_strncpy( dir, uri, i ); // without '/'
+
+	P();
+
+	status = InitResources( dir );
+	if ( status != RESULT_OK )
+	{
+		LOG("%s\n", ELF_NAME":\x84 init res-s failed");
+		return NULL;
+	}
+
+	P();
+
+	status = APP_Register(&ev_code_base, 1, state_handling_table, APP_STATE_MAX, (void *) AppStart);
+
+	LOG(ELF_NAME":Register: status = %d", status);
+
+	LdrStartApp(ev_code_base);
+
+	return status;
+}
+
+static const WCHAR		fs_prefix[] = {'f','i','l','e',':','/',0};
+
+// Склеивает dir и str, вставляя если нужно "file:/" и слэши
+// Возвращает указатель на последний ноль символ в строке, чтоб добавить если нужно слэш
+// Работает быстрее чем последовательность u_strcpy, u_strcat
+WCHAR * u_mkpath( WCHAR * dst, const WCHAR * dir, const WCHAR * str, BOOL fsprefix )
+{
+	if ( fsprefix && u_strncmp(dir, fs_prefix, 6) != 0 ) {
+		const WCHAR * tmp;
+		tmp = fs_prefix;
+		while ( *tmp != 0 )
+			*dst++ = *tmp++;
+	}
+	while ( *dir != 0 )
+		*dst++ = *dir++;
+	if ( *(dst-1) != '/' )
+		*dst++ = '/';
+	if ( *str == '/' )
+		str++;
+	while ( *str != 0 )
+		*dst++ = *str++;
+	*dst = 0;
+
+	return dst;
+}
+
+UINT32 IMAGE_Init( AHIIMAGE_T * im )
+{
+	memclr( im, sizeof(AHIIMAGE_T) );
+
+	return RESULT_OK;
+}
+
+UINT32 IMAGE_LoadFromBMP( const WCHAR * file, AHIIMAGE_T * im )
+{
+	UINT32 status;
+	char name[100];
+	FS_HANDLE_T f1, f2;
+	const WCHAR *raw = L"file://c/Elf/8.raw";
+	const WCHAR *pal = L"file://c/Elf/8.pal";
+
+	f1 = FILE_Open(raw, FILE_READ_MODE);
+
+	img.bm.format = AHIFMT_8BPP;
+	img.bm.height = 40;
+	img.bm.width = 600;
+	img.bm.stride = img.bm.width;
+
+	img.bm.image = suAllocMem(img.bm.width * img.bm.height, NULL);
+	status = FILE_Read(f1, img.bm.image, img.bm.width * img.bm.height);
+	LOG("sssssssssss = %d\n", status);
+	FILE_Close(f1);
+
+	f2 = FILE_Open(pal, FILE_READ_MODE);
+	img.pal = suAllocMem(256 * 2, NULL);
+	status = FILE_Read(f2, img.pal, 256 * 2);
+	LOG("sssssssssss = %d\n", status);
+	FILE_Close(f2);
+
+	u_utoa(file, name);
+
+	LOG("Name: %s\n", name);
+	LOG("Name: %d\n", im);
+
+	status = RESULT_OK;
+
+	//status = BMP_LoadFromFileEx( file, &im->bm, &im->pal );
+
+
+	if ( status == RESULT_OK )
+	{
+		if ( im->pal )
+			im->color_key = im->pal[ *(UINT8*)im->bm.image ];
+		else
+			im->color_key = *(UINT16*)im->bm.image;
+	}
+	return status;
+}
+
+
+#define IMAGE_USE_COLOR_KEY		1
+#define IMAGE_FLIP_X			2
+typedef UINT32 IMAGE_FLAGS_T;
+
+
+UINT32 UTIL_RenderWithPal(	AHIIMAGE_T * im,
+						  AHIRECT_T * rcSrc, AHIPOINT_T * ptDst,
+						  AHIBITMAP_T * bmp2, IMAGE_FLAGS_T flags )
+{
+	AHIBITMAP_T		*bmp1 = &im->bm;
+	UINT32			*pal = im->pal;
+	UINT8			*p1, *r1;
+	UINT8			*p2, *r2;
+	UINT16			clr;
+	UINT32			x, y;
+	UINT32			w = rcSrc->x2 - rcSrc->x1;
+	UINT32			h = rcSrc->y2 - rcSrc->y1;
+
+	if ( rcSrc->x2 > bmp1->width ) w = bmp1->width - rcSrc->x1;
+	if ( rcSrc->y2 > bmp1->height ) h = bmp1->height - rcSrc->y1;
+
+	if ( ptDst->x + w > bmp2->width ) w = bmp2->width - ptDst->x;
+	if ( ptDst->y + h > bmp2->height ) h = bmp2->height - ptDst->y;
+
+	r1 = (UINT8*)bmp1->image + bmp1->stride * rcSrc->y1 + 1 * rcSrc->x1;
+	r2 = (UINT8*)bmp2->image + bmp2->stride * ptDst->y  + 2 * ptDst->x;
+	if ( flags & IMAGE_FLIP_X ) r1 += w - 1;
+
+	for ( y = 0; y < h; y++, r1 += bmp1->stride, r2 += bmp2->stride )
+	{
+		p1 = r1;
+		p2 = r2;
+		if ( flags & IMAGE_USE_COLOR_KEY )
+		{
+			if ( flags & IMAGE_FLIP_X )
+			{
+				for ( x = 0; x < w; x++, p1 -= 1, p2 += 2 )
+				{
+					clr = pal[ *p1 ];
+					if ( im->color_key != clr )
+						*(UINT16*)p2 = clr;
+				}
+			}
+			else // no IMAGE_FLIP_X
+			{
+				for ( x = 0; x < w; x++, p1 += 1, p2 += 2 )
+				{
+					clr = pal[ *p1 ];
+					if ( im->color_key != clr )
+						*(UINT16*)p2 = clr;
+				}
+			}
+		}
+		else // no color_key
+		{
+			if ( flags & IMAGE_FLIP_X )
+			{
+				for ( x = 0; x < w; x++, p1 -= 1, p2 += 2 )
+					*(UINT16*)p2 = pal[ *p1 ];
+			}
+			else // no IMAGE_FLIP_X
+			{
+				for ( x = 0; x < w; x++, p1 += 1, p2 += 2 )
+					*(UINT16*)p2 = pal[ *p1 ];
+			}
+		}
+	}
+
+	return RESULT_OK;
+}
+
+
+UINT32 UTIL_RenderWithoutPal(	AHIIMAGE_T * im,
+							 AHIRECT_T * rcSrc, AHIPOINT_T * ptDst,
+							 AHIBITMAP_T * bmp2, IMAGE_FLAGS_T flags )
+{
+	AHIBITMAP_T		*bmp1 = &im->bm;
+	UINT8			*p1, *r1;
+	UINT8			*p2, *r2;
+	UINT16			clr;
+	UINT32			x, y;
+	UINT32			w = rcSrc->x2 - rcSrc->x1;
+	UINT32			h = rcSrc->y2 - rcSrc->y1;
+
+	if ( rcSrc->x2 > bmp1->width ) w = bmp1->width - rcSrc->x1;
+	if ( rcSrc->y2 > bmp1->height ) h = bmp1->height - rcSrc->y1;
+
+	if ( ptDst->x + w > bmp2->width ) w = bmp2->width - ptDst->x;
+	if ( ptDst->y + h > bmp2->height ) h = bmp2->height - ptDst->y;
+
+	r1 = (UINT8*)bmp1->image + bmp1->stride * rcSrc->y1 + 2 * rcSrc->x1;
+	r2 = (UINT8*)bmp2->image + bmp2->stride * ptDst->y  + 2 * ptDst->x;
+	//if ( flags & IMAGE_FLIP_X ) r2 += w - 1;
+
+	for ( y = 0; y < h; y++, r1 += bmp1->stride, r2 += bmp2->stride )
+	{
+		p1 = r1;
+		p2 = r2;
+		if ( flags & IMAGE_USE_COLOR_KEY )
+		{
+			for ( x = 0; x < w; x++, p1 += 2, p2 += 2 )
+			{
+				clr = *(UINT16*)p1;
+				if ( im->color_key != clr )
+					*(UINT16*)p2 = clr;
+			}
+		}
+		else // no color_key
+		{
+			for ( x = 0; x < w; x++, p1 += 2, p2 += 2 )
+				*(UINT16*)p2 = *(UINT16*)p1;
+		}
+	}
+
+	return RESULT_OK;
+}
+
+// only pal256 and rgb565
+UINT32 IMAGE_Render(	AHIIMAGE_T * im, AHIRECT_T * rcSrc, AHIPOINT_T * ptDst,
+					AHIBITMAP_T * bmp, IMAGE_FLAGS_T flags )
+{
+	if ( im->pal )
+		UTIL_RenderWithPal( im, rcSrc, ptDst, bmp, flags );
+	else
+		UTIL_RenderWithoutPal( im, rcSrc, ptDst, bmp, flags );
+
+	return RESULT_OK;
+}
+
+
+UINT32 IMAGE_Free( AHIIMAGE_T * im )
+{
+	if ( im->bm.image ) mfree( im->bm.image );
+	if ( im->pal ) mfree( im->pal );
+
+	memclr( im, sizeof(AHIIMAGE_T) );
+
+	return RESULT_OK;
+}
+
+UINT32 InitResources( const WCHAR * dir )
+{
+	UINT32			status;
+	WCHAR			wpath[100 + 1];
+
+	IMAGE_Init( &img );
+	u_mkpath( wpath, dir, L"8.bmp", TRUE );
+	status = IMAGE_LoadFromBMP( wpath, &img );
+	LOG("InitResources: IMAGE_LoadFromBMP(img), status = 0x%x", status);
+	if ( status != RESULT_OK ) return status;
+
+	cache_bmp.width = img.bm.height; // square frame
+	cache_bmp.height = img.bm.height;
+	cache_bmp.format = AHIFMT_16BPP_565;
+	cache_bmp.stride = (cache_bmp.width * 2 + 3) & (~3);
+	cache_bmp.image = malloc( cache_bmp.stride * cache_bmp.height );
+	if ( !cache_bmp.image )
+	{
+		IMAGE_Free( &img );
+		return RESULT_FAIL;
+	}
+
+	return RESULT_OK;
+}
+
+UINT32 FreeResources( void )
+{
+	IMAGE_Free( &img );
+
+	if ( cache_bmp.image )
+	{
+		mfree( cache_bmp.image );
+		cache_bmp.image = NULL;
+	}
+
+	return RESULT_OK;
+}
+
+/* Функция вызываемая при старте приложения */
+UINT32 AppStart( EVENT_STACK_T *ev_st,  REG_ID_T reg_id,  UINT32 param2 )
+{
+	APPLICATION_T			*app = NULL;
+	UINT32					status = RESULT_OK;
+
+
+	LOG("%s\n", ELF_NAME":AppStart: Enter");
+
+	// Инициализация для фоновых приложений
+	app = (APPLICATION_T*)APP_InitAppData(	(void *)APP_HandleEventPrepost, // Обработчик для фоновых приложений
+											sizeof(APPLICATION_T), // Размер структуры приложения
+											reg_id,
+											0, 0,
+											1,
+											AFW_APP_CENTRICITY_NONE,
+											AFW_PREPROCESSING,
+											AFW_POSITION_TOP );
+
+	LOG(ELF_NAME": APP_InitAppData 0x%X", app);
+	if ( !app )
+	{
+		LOG("%s\n", ELF_NAME ": Init Failed!\n");
+//		return ldrUnloadElf();
+		return RESULT_FAIL;
+	}
+
+	iface.port = app->port;
+	iface.handle = NULL;
+
+	status = APP_Start(	ev_st, app,
+					   APP_STATE_MAIN, // Начальное состояние
+					   state_handling_table,
+					   AppExit,
+					   app_name,
+					   0 );
+
+	LOG(ELF_NAME": APP_Start, status = 0x%X", status);
+	if ( status == RESULT_OK )
+	{
+//		elf.app = app;
+		LOG("%s\n", ELF_NAME ": Started\n");
+	}
+	else
+	{
+		LOG("%s\n", ELF_NAME ": Start Failed!\n");
+		APP_HandleFailedAppStart( ev_st, app, 0 );
+		return RESULT_FAIL;
+	}
+
+	return RESULT_OK;
+}
+
+
+/* Функция выхода из приложения */
+UINT32 AppExit( EVENT_STACK_T *ev_st,  APPLICATION_T *app )
+{
+	UINT32  status;
+
+	LOG("%s\n", "\0x82"ELF_NAME": AppExit\n");
+
+	FreeResources();
+	AHG_Done();
+
+	/* Завершаем работу приложения */
+	status = APP_ExitStateAndApp( ev_st, app, 0 );
+
+	/* Выгружаем эльф */
+//	return ldrUnloadElf();
+
+	LdrUnloadELF(&Lib);
+
+	return status;
+}
+
+enum {
+	ttSimple,
+	ttCyclical
+};
+typedef UINT8 TIMER_TYPE_T;
+
+UINT32 StartTimer( UINT32 period, UINT32 id, UINT8 type, void *app )
+{
+	UINT32 status;
+	IFACE_DATA_T  iface;
+
+	if (!app) return 0;
+
+	iface.port = ((APPLICATION_T*)app)->port;
+	iface.handle = 0;
+
+	if (type==0) {
+		status = DL_ClkStartTimer( &iface, period, id );
+	} else {
+		status = DL_ClkStartCyclicalTimer( &iface, period, id );
+	}
+
+	return iface.handle;
+}
+
+
+UINT32 StopTimer( UINT32 *handle, void *app )
+{
+	IFACE_DATA_T	iface;
+
+	if (!handle || !app) return RESULT_FAIL;
+
+	iface.port = ((APPLICATION_T*)app)->port;
+	iface.handle = *handle;
+	*handle = 0;
+	return DL_ClkStopTimer( &iface );
+}
+
+
+/* Обработчик входа в state */
+UINT32 MainStateEnter( EVENT_STACK_T *ev_st,  APPLICATION_T *app, ENTER_STATE_TYPE_T type )
+{
+	LOG(ELF_NAME": MainStateEnter, type = %d", type);
+
+
+
+	if ( type != ENTER_STATE_ENTER ) return RESULT_OK;
+
+	ticks = 0;
+	sign = +1;
+	timer = StartTimer( TIMER_PERIOD, TIMER_ID, ttCyclical, app );
+
+	return RESULT_OK;
+}
+
+
+UINT32 MainStateExit( EVENT_STACK_T *ev_st,  APPLICATION_T *app, EXIT_STATE_TYPE_T type )
+{
+	LOG(ELF_NAME": MainStateExit, type = %d", type);
+	if ( type != EXIT_STATE_EXIT ) return RESULT_OK;
+
+	if ( timer )
+	{
+		StopTimer( &timer, app );
+	}
+
+	return RESULT_OK;
+}
+
+
+UINT32 HandleTimerExpiried( EVENT_STACK_T * ev_st, APPLICATION_T * app )
+{
+	//CLK_TIME_T		t;
+
+	P();
+
+	if ( GET_TIMER_ID(ev_st) == TIMER_ID )
+	{
+		APP_ConsumeEv( ev_st, app );
+
+		//DL_ClkGetTime( &t );
+		LOG(ELF_NAME": timer, ticks = %d", ticks);
+
+		RenderImg( &img );
+	}
+
+	return RESULT_OK;
+}
+
+
+UINT32 RestoreBG( AHIIMAGE_T * im )
+{
+	/*
+	AHIRECT_T		r;
+
+	r.x1 = (int)DISPLAY_WIDTH/2 + (int)(ticks-7) * (int)im->bm.height / 8; // square frame
+	r.y1 = DISPLAY_HEIGHT - 20 - im->bm.height;
+	r.x2 = r.x1 + im->bm.height; // square frame
+	r.y2 = r.y1 + im->bm.height;
+
+	return AHG_FlushEx( &r );
+	*/
+	return RESULT_OK;
+}
+
+UINT32 AHG_CopyFromSurf( AHIBITMAP_T * bitmap, AHISURFACE_T surf, AHIPOINT_T * ptSrc )
+{
+	AHIRECT_T		rcDst;
+	//AHIPOINT_T		ptSrc;
+
+	rcDst.x1 = 0;
+	rcDst.y1 = 0;
+	rcDst.x2 = bitmap->width;
+	rcDst.y2 = bitmap->height;
+
+	sts = AhiSurfCopy( dCtx, surf, bitmap, &rcDst, ptSrc, 0, AHIFLAG_COPYFROM );
+
+	return sts;
+}
+
+
+UINT32 AHG_FlushEx( AHIRECT_T * rc )
+{
+	AHIPOINT_T		ptDst;
+
+
+	ptDst.x = rc->x1;
+	ptDst.y = rc->y1;
+
+	AhiDrawSurfSrcSet( dCtx, sDraw, 0 );
+	AhiDrawSurfDstSet( dCtx, sDisp, 0 );
+
+	AhiDrawClipSrcSet( dCtx, NULL );
+	AhiDrawClipDstSet( dCtx, NULL );
+
+	AhiDrawRopSet( dCtx, AHIROP3(AHIROP_SRCCOPY) );
+
+	AhiDispWaitVBlank( dCtx, 0 );
+	sts = AhiDrawBitBlt( dCtx, rc, &ptDst );
+
+	return sts;
+}
+
+
+UINT32 AHG_Flush( void )
+{
+	return AHG_FlushEx( &rScreen );
+}
+
+UINT32 RenderImg( AHIIMAGE_T * im )
+{
+	AHIPOINT_T		p;
+	AHIRECT_T		r, rbg, rs;
+
+	rbg.x1 = (int)(DISPLAY_WIDTH - im->bm.height)/2 + (int)(ticks-7) * (int)im->bm.height / 4; // square frame
+	rbg.y1 = DISPLAY_HEIGHT - 20 - im->bm.height;
+	rbg.x2 = rbg.x1 + im->bm.height; // square frame
+	rbg.y2 = rbg.y1 + im->bm.height;
+
+
+	ticks += sign;
+	if ( ticks <= 0 )
+	{
+		sign = +1;
+		ticks = 0;
+	}
+	if ( ticks >= 14 )
+	{
+		sign = -1;
+		ticks = 14;
+	}
+
+	rs.x1 = (int)(DISPLAY_WIDTH - im->bm.height)/2 + (int)(ticks-7) * (int)im->bm.height / 4; // square frame
+	rs.y1 = DISPLAY_HEIGHT - 20 - im->bm.height;
+	rs.x2 = rs.x1 + im->bm.height; // square frame
+	rs.y2 = rs.y1 + im->bm.height;
+
+	p.x = rs.x1;
+	p.y = rs.y1;
+
+	sts = AHG_CopyFromSurf( &cache_bmp, sDraw, &p );
+	LOG(ELF_NAME": RenderImg: AHG_CopyFromSurf, sts = 0x%x", sts);
+
+	// src
+	r.x1 = im->bm.height * (ticks); // square frame
+	r.y1 = 0;
+	r.x2 = r.x1 + im->bm.height; // square frame
+	r.y2 = r.y1 + im->bm.height;
+
+	// dst
+	p.x = 0;
+	p.y = 0;
+
+	LOG("IMAGE_Render: (%d,%d,%d,%d)", r.x1, r.x2, r.y1, r.y2);
+	IMAGE_Render( im, &r, &p, &cache_bmp, IMAGE_USE_COLOR_KEY | IMAGE_FLIP_X ); // r -> p
+
+	// dst
+	/*r.x1 = (int)DISPLAY_WIDTH/2 + (int)(ticks-7) * (int)im->bm.height / 8; // square frame
+	r.y1 = DISPLAY_HEIGHT - 20 - im->bm.height;
+	r.x2 = r.x1 + im->bm.height; // square frame
+	r.y2 = r.y1 + im->bm.height;*/
+	//r = rbg;
+
+	// src
+	p.x = 0;
+	p.y = 0;
+
+	AhiDispWaitVBlank( dCtx, 0 );
+	AHG_FlushEx( &rbg );
+
+	AhiDrawSurfDstSet( dCtx, sDisp, 0 );
+	AhiDrawRopSet( dCtx, AHIROP3(AHIROP_SRCCOPY) );
+
+	LOG("AhiDrawBitmapBlt: (%d,%d,%d,%d)", rs.x1, rs.x2, rs.y1, rs.y2);
+	sts = AhiDrawBitmapBlt( dCtx, &rs, &p, &cache_bmp, NULL, 0 ); // p -> r
+	LOG(ELF_NAME": RenderImg: AhiDrawBitmapBlt, sts = 0x%x", sts);
+
+	return RESULT_OK;
+}
+
+/* Обработчик события, EV_KEY_PRESS в данном случае */
+UINT32 HandleKeypress( EVENT_STACK_T *ev_st,  APPLICATION_T *app )
+{
+	UINT8		key = GET_KEY( ev_st );
+
+	P();
+
+	LOG(ELF_NAME": HandleKeypress: key = 0x%X", key);
+
+	if (key == KEY_STAR )//|| key == KEY_RED)
+	{
+		app->exit_status = TRUE;
+		return RESULT_OK;
+	}
+
+	if (key == KEY_POUND)
+	{
+		// do somethink
+		APP_ConsumeEv( ev_st, app );
+		return RESULT_OK;
+	}
+
+	//if (key < 12) DL_AudPlayTone( key, 3 );
+
+	return RESULT_OK;
+}
+
+
+UINT32 HandleExit( EVENT_STACK_T *ev_st,  APPLICATION_T *app )
+{
+	LOG("%s\n", "HandleExit\n");
+//	cprint("\0x82"ELF_NAME": HandleExit\n");
+
+	APP_ConsumeEv( ev_st, app );
+	app->exit_status = TRUE;
+
+	return RESULT_OK;
+}
+
 
 
 #if 0
