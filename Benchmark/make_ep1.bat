@@ -35,7 +35,7 @@ set DEFINES=-D__P2K__ -DEP1 -DLINUX_BOGOMIPS
 set ELF_NAME=Benchmark
 
 :: Compiling step.
-%ARM_PATH%\armasm -32 -bi -apcs /interwork delay_armv4t_ADS.s delay_armv4t_ADS.o
+%ARM_PATH%\armasm -32 -bi -apcs /interwork delay_armv4t_ADS.S delay_armv4t_ADS.o
 %ARM_PATH%\tcc -I%SDK_PATH% %DEFINES% -bigend -apcs /interwork -O2 -c dhry_1.c -o dhry_1.o
 %ARM_PATH%\tcc -I%SDK_PATH% %DEFINES% -bigend -apcs /interwork -O2 -c dhry_2.c -o dhry_2.o
 %ARM_PATH%\tcc -I%SDK_PATH% %DEFINES% -bigend -apcs /interwork -O2 -c Phases.c -o Phases.o

@@ -43,9 +43,9 @@ set(SOURCE_FILES
 	Benchmark.c)
 
 if(ELFPACK STREQUAL "EP1")
-	list(APPEND SOURCE_FILES delay_armv4t_ADS.s)
+	list(APPEND SOURCE_FILES delay_armv4t_ADS.S)
 elseif(ELFPACK STREQUAL "EP2")
-	list(APPEND SOURCE_FILES delay_armv4t_GCC.s)
+	list(APPEND SOURCE_FILES delay_armv4t_GCC.S)
 endif()
 
 add_executable(${PROJECT_NAME} ${SOURCE_FILES})

@@ -45,7 +45,7 @@ set ELF_NAME=Benchmark
 :: Compiling step.
 %ARM_PATH%\bin\arm-eabi-gcc -c -Wall -mbig-endian -marm -mthumb-interwork -nostdlib ^
 	-fshort-wchar -fshort-enums -fpack-struct=4 -fno-builtin -fvisibility=hidden ^
-	-I%SDK_PATH% %INCLUDES% %DEFINES% %OPTIM% delay_armv4t_GCC.s -o delay_armv4t_GCC.o
+	-I%SDK_PATH% %INCLUDES% %DEFINES% %OPTIM% delay_armv4t_GCC.S -o delay_armv4t_GCC.o
 %ARM_PATH%\bin\arm-eabi-gcc -c -Wall -mbig-endian -mthumb -mthumb-interwork -nostdlib ^
 	-fshort-wchar -fshort-enums -fpack-struct=4 -fno-builtin -fvisibility=hidden ^
 	-I%SDK_PATH% %INCLUDES% %DEFINES% %OPTIM% dhry_1.c -o dhry_1.o

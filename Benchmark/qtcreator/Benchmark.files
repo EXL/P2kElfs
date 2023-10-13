@@ -1,8 +1,8 @@
 ../Benchmark.c
 ../Benchmark.h
 ../Phases.c
-../delay_armv4t_ADS.s
-../delay_armv4t_GCC.s
+../delay_armv4t_ADS.S
+../delay_armv4t_GCC.S
 ../dhry_1.c
 ../dhry_2.c
 ../Makefile
