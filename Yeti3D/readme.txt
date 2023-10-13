@@ -7,10 +7,10 @@ How to compile
 You will need to download and install GCC for the GBA. I currently use 
 DevKit Advanced: http://devkitadv.sourceforge.net/index.html
 
-Once you have GCC installed, run the make.bat script to create a new build.
+Once you have GCC installed, run the make_gba.bat script to create a new build.
 
 I have GCC installed in the folder "C:\devkitadv\", so if you install somewhere
-else then you will need to change the make.bat script a little.
+else then you will need to change the make_gba.bat script a little.
 
 Contacts
 ========
