@@ -5,9 +5,6 @@
 #include <mem.h>
 #include <dl.h>
 
-//#include "bmp_types.h"
-//#include "bmp.h"
-
 /* Состояния приложения */
 enum APP_STATES_ENUM
 {
@@ -107,6 +104,11 @@ static const STATE_HANDLERS_ENTRY_T state_handling_table[] =
 
 };
 
+//#define DDDW (128)
+//#define DDDH (160)
+#define DDDW (176)
+#define DDDH (220)
+
 UINT32				sts;
 AHIDEVICE_T			device;
 AHIDRVINFO_T	*dInfo;
@@ -116,7 +118,7 @@ AHIDEVCONTEXT_T		dCtx;
 AHISURFACE_T		sDraw;
 AHISURFACE_T		sDisp;
 
-AHIRECT_T			rScreen = {0,0, DISPLAY_WIDTH,DISPLAY_HEIGHT};
+AHIRECT_T			rScreen = {0,0, DDDW,DDDH};
 
 BOOL				ahgInited;
 
@@ -726,8 +728,8 @@ UINT32 RenderImg( AHIIMAGE_T * im )
 	AHIPOINT_T		p;
 	AHIRECT_T		r, rbg, rs;
 
-	rbg.x1 = (int)(DISPLAY_WIDTH - im->bm.height)/2 + (int)(ticks-7) * (int)im->bm.height / 4; // square frame
-	rbg.y1 = DISPLAY_HEIGHT - 20 - im->bm.height;
+	rbg.x1 = (int)(DDDW - im->bm.height)/2 + (int)(ticks-7) * (int)im->bm.height / 4; // square frame
+	rbg.y1 = DDDH - 20 - im->bm.height;
 	rbg.x2 = rbg.x1 + im->bm.height; // square frame
 	rbg.y2 = rbg.y1 + im->bm.height;
 
@@ -744,8 +746,8 @@ UINT32 RenderImg( AHIIMAGE_T * im )
 		ticks = 14;
 	}
 
-	rs.x1 = (int)(DISPLAY_WIDTH - im->bm.height)/2 + (int)(ticks-7) * (int)im->bm.height / 4; // square frame
-	rs.y1 = DISPLAY_HEIGHT - 20 - im->bm.height;
+	rs.x1 = (int)(DDDW - im->bm.height)/2 + (int)(ticks-7) * (int)im->bm.height / 4; // square frame
+	rs.y1 = DDDH - 20 - im->bm.height;
 	rs.x2 = rs.x1 + im->bm.height; // square frame
 	rs.y2 = rs.y1 + im->bm.height;
 
