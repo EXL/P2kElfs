@@ -1,4 +1,9 @@
 ../ElfBox.c
 ../Makefile
 ../make_ep1.bat
+../icons/icon_disk_15x15.h
+../icons/icon_elf_15x15.h
+../icons/icon_elfbox_48x48.h
+../icons/icon_file_15x15.h
+../icons/icon_folder_15x15.h
 ../ReadMe.md

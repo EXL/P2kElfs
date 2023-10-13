@@ -3,4 +3,5 @@
 ../Clock.c
 ../Makefile
 ../make_ep1.bat
+../icons/icon_overclock_48x48.h
 ../ReadMe.md
