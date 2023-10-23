@@ -54,9 +54,9 @@ add_executable(${PROJECT_NAME} ${SOURCE_FILES})
 # Linking and postlinking section
 #
 if(ELFPACK STREQUAL "EP1")
-	target_link_libraries(${PROJECT_NAME} "${P2K_DIRECTORY_LIBRARIES}/dbg/dbg.o")
+	#target_link_libraries(${PROJECT_NAME} "${P2K_DIRECTORY_LIBRARIES}/dbg/dbg.o")
 elseif(ELFPACK STREQUAL "EP2")
-	target_link_libraries(${PROJECT_NAME} "${P2K_DIRECTORY_LIBRARIES}/libgfx.a")
+	#target_link_libraries(${PROJECT_NAME} "${P2K_DIRECTORY_LIBRARIES}/libgfx.a")
 	include("${P2K_EP2_TOOLCHAIN_ROOT}/cmake/PostLink.cmake")
 elseif(ELFPACK STREQUAL "EM1")
 	#target_link_libraries(${PROJECT_NAME} "${P2K_DIRECTORY_LIBRARIES}/libc.a")
