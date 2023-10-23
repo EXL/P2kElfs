@@ -31,7 +31,7 @@ See [Some ELF demos/games on Motorola P2K phones using ATI Imageon W2240/W2250 v
 ## ELF files
 
 | Phone   | Screen  | Flags | Viewport            | Fixed FPS  | FPS (avg, min-max) | ELF filename   |
-| ---     | ---     | ---   | ---                 | ---        | ---                |---             |
+|---------|---------|-------|---------------------|------------|--------------------|----------------|
 | SLVR L6 | 128x160 | ROT90 | 64x48 (rotozoom)    | 30.0       | 15.94, 12.8-22.7   | FireEffect.elf |
 | ROKR E1 | 176x220 | ROT90 | 64x48 (rotozoom)    | 30.0       | 18.29, 15.1-30.3   | FireEffect.elf |
 

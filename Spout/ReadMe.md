@@ -46,7 +46,7 @@ See [Some ELF demos/games on Motorola P2K phones using ATI Imageon W2240/W2250 v
 ## ELF files
 
 | Phone   | Screen  | Flags | Viewport            | Fixed FPS  | FPS (avg, min-max) | ELF filename   |
-| ---     | ---     | ---   | ---                 | ---        | ---                |---             |
+|---------|---------|-------|---------------------|------------|--------------------|----------------|
 | SLVR L6 | 128x160 | ROT90 | 128x88 (rotozoom)   | 15.0       | 15.38, 14.9-16.9   | Spout_RL1.elf  |
 | SLVR L6 | 128x160 | ROT0  | 128x88 (original)   | 15.0       | 15.29, 14.7-15.8   | Spout_OL1.elf  |
 | ROKR E1 | 176x220 | ROT90 | 128x88 (rotozoom)   | 15.0       | 15.20, 15.1-15.3   | Spout_RL1.elf  |

@@ -32,7 +32,7 @@ See [Yeti3D Engine (old version) port to ELF for Motorola P2K phones](https://ww
 ## ELF files
 
 | Phone   | Screen  | Flags | Viewport           | Fixed FPS  | FPS (avg, min-max) | ELF filename        |
-| ---     | ---     | ---   | ---                | ---        | ---                |---                  |
+|---------|---------|-------|--------------------|------------|--------------------|---------------------|
 | SLVR L6 | 128x160 | ROT0  | 160x128 (original) | 30.0       | 3.18, 3.1-3.6      | Y3DO_O1_160x128.elf |
 | SLVR L6 | 128x160 | ROT90 | 122x82 (zoom)      | 30.0       | 4.21, 3.9-4.6      | Y3DO_Z1_122x82.elf  |
 | SLVR L6 | 128x160 | ROT90 | 96x64 (zoom)       | 30.0       | 4.49, 4.2-4.7      | Y3DO_Z1_96x64.elf   |
