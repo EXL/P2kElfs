@@ -1,838 +1,477 @@
 #include <apps.h>
-#include <loader.h>
+#include <canvas.h>
+#include <uis.h>
+
 #include <ati.h>
 #include <dal.h>
+#include <filesystem.h>
+#include <loader.h>
 #include <mem.h>
-#include <dl.h>
+#include <sms.h>
 
-/* Состояния приложения */
-enum APP_STATES_ENUM
-{
-	APP_STATE_ANY, /* ANY-state всегда первым */
-
-	APP_STATE_MAIN,
-
-	APP_STATE_MAX /* Для удобства */
-};
-typedef UINT8 APP_STATES_T;
+#if defined(FTR_L6)
+#define RECTSURF_W 128
+#define RECTSURF_H 160
+#define x_t (UINT8)(60)
+#define y_t (UINT8)(102)
+#else
+#define RECTSURF_W 176
+#define RECTSURF_H 220
+#define x_t (UINT8)(100)
+#define y_t (UINT8)(157)
+#endif
 
 typedef struct
 {
-	AHIBITMAP_T		bm;
-	UINT32			*pal;
-	UINT16			color_key;
-} AHIIMAGE_T;
+	APPLICATION_T apt;
+} APP_ATI_T;
 
-////////////////////////////////////////////////////////////////////////////////
+typedef enum
+{
+	HW_STATE_ANY,
+	HW_STATE_MAX
+} HW_STATES_T;
 
+UINT32 Register(char *file_uri, char *param, UINT32 reserve);
+UINT32 startApp(EVENT_STACK_T *ev_st, REG_ID_T reg_id, UINT32 param2);
+UINT32 destroyApp(EVENT_STACK_T *ev_st, APPLICATION_T *app);
+UINT32 MainStateEnter(EVENT_STACK_T *ev_st, APPLICATION_T *app, ENTER_STATE_TYPE_T type);
+UINT32 HandleKeypress(EVENT_STACK_T *ev_st, APPLICATION_T *app);
+UINT32 Timer(EVENT_STACK_T *ev_st, APPLICATION_T *app);
+UINT32 addcall(EVENT_STACK_T *ev_st, APPLICATION_T *app);
+UINT32 delcall(EVENT_STACK_T *ev_st, APPLICATION_T *app);
+UINT32 paint(void);
 
-static UINT32 AppStart( EVENT_STACK_T *ev_st,  REG_ID_T reg_id,  UINT32 param2 );
-static UINT32 AppExit( EVENT_STACK_T *ev_st,  APPLICATION_T *app );
+#define a(b, c) (UINT8)((b == c) ? (1) : (0))
+#define b(t1, t2, t3, t4) (UINT8)((t1 << 3) + (t2 << 2) + (t3 << 1) + t4)
+#define color_t (UINT32)(ATI_565RGB(0, 0, 255))
 
-static UINT32 MainStateEnter( EVENT_STACK_T *ev_st,  APPLICATION_T *app, ENTER_STATE_TYPE_T type );
-static UINT32 MainStateExit( EVENT_STACK_T *ev_st,  APPLICATION_T *app, EXIT_STATE_TYPE_T type );
+UIS_DIALOG_T dialog = 0xFFFFFF;
+SU_PORT_T su_port = 0xFFFFFF;
 
-static UINT32 HandleTimerExpiried( EVENT_STACK_T *ev_st,  APPLICATION_T *app );
-static UINT32 HandleKeypress( EVENT_STACK_T *ev_st,  APPLICATION_T *app );
-static UINT32 HandleExit( EVENT_STACK_T *ev_st,  APPLICATION_T *app );
+typedef struct
+{
+	UINT8 r, g, b;
+} TColor;
+typedef struct
+{
+	INT8 x, y;
+} TPoint;
+UINT8 ccall = 0, _count[1] = {0}, s_d = 0, cpp = 0, pred_d = 0;
+INT8 d = 3;
+INT8 x = 4;
+TColor *color;
+char *arr, *bin;
+FILE file;
+UINT32 r;
+BOOL new = 1, exit = 0;
+TPoint s[1];
+AHIBITMAP_T bm, bmp;
+AHIDEVCONTEXT_T dCtx;
+AHISURFACE_T sDraw;
+AHISURFACE_T sDisp;
+AHIPOINT_T pSurf = {0, 0};
+AHIRECT_T rectSurf = {0, 0, RECTSURF_W, RECTSURF_H};
 
-static UINT32 FreeResources( void );
-static UINT32 InitResources( const WCHAR * dir );
+void TextColorRGB(UINT8 r, UINT8 g, UINT8 b)
+{
+	AhiDrawFgColorSet(dCtx, ATI_565RGB(r, g, b));
+}
 
-static UINT32 RenderImg( AHIIMAGE_T * im );
-static UINT32 RestoreBG( AHIIMAGE_T * im );
+UINT8 two2bin(UINT8 b1, UINT8 b2, UINT8 b3, UINT8 b4, UINT8 c, UINT8 n)
+{
+	UINT8 t1, t2, t3, t4, t5, t6, t7, t8;
+	t1 = (b1 >> 4);
+	t2 = b1 - (t1 << 4);
+	t3 = (b2 >> 4);
+	t4 = b2 - (t3 << 4);
+	t5 = (b3 >> 4);
+	t6 = b3 - (t5 << 4);
+	t7 = (b4 >> 4);
+	t8 = b4 - (t7 << 4);
+	return (n == 0) ? ((b(a(t1, c), a(t2, c), a(t3, c), a(t4, c)) << 4) + b(a(t5, c), a(t6, c), a(t7, c), a(t8, c)))
+					: ((b(a(t8, c), a(t7, c), a(t6, c), a(t5, c)) << 4) + b(a(t4, c), a(t3, c), a(t2, c), a(t1, c)));
+}
 
-////////////////////////////////////////////////////////////////////////////////
-
-#define ELF_NAME "ELF"
-/* Название приложения. Длина строки именно такая и никакая иначе */
-const char	app_name[APP_NAME_LEN+1] = ELF_NAME;
-
-UINT32			evcode_base;
-//ldrElf			elf;
-IFACE_DATA_T	iface;
-
-AHIBITMAP_T		cache_bmp;
-AHIIMAGE_T		img;
-
-#define TIMER_PERIOD (1*200)
-#define TIMER_ID 0x9FA20
-UINT32			timer;
-INT32			ticks, sign;
-
-////////////////////////////////////////////////////////////////////////////////
-
-
-// Обработчики событий для каждого state-а
-
-/* Обработчики событий для APP_STATE_ANY (используется в любом state) */
-static EVENT_HANDLER_ENTRY_T any_state_handlers[] =
+void FreeBin()
+{
+	if (arr)
 	{
-//		{ EV_PM_API_EXIT,		HandleExit },	// PM API: cmd EXIT
-		{ EV_KEY_PRESS,			HandleKeypress },
-
-		// Список всегда должен заканчиватся такой записью
-		{ STATE_HANDLERS_END,			NULL }
-};
-
-
-static EVENT_HANDLER_ENTRY_T main_state_handlers[] =
+		mfree(arr);
+	}
+	if (bin)
 	{
-		{ EV_TIMER_EXPIRED,		HandleTimerExpiried },
-		{ STATE_HANDLERS_END,			NULL }
-};
-
-
-////////////////////////////////////////////////////////////////////////////////
-
-
-/* Таблица соответствий обработчиков, состояний и функций входа-выхода из состояния.
-	Порядок состояний такой же, как в enum-e */
-static const STATE_HANDLERS_ENTRY_T state_handling_table[] =
+		mfree(bin);
+	}
+	if (color)
 	{
-		{ APP_STATE_ANY,				// State
-			NULL,						// Обработчик входа в state
-			NULL,						// Обработчик выхода из state
-			any_state_handlers		  // Список обработчиков событий
-		},
+		mfree(color);
+	}
+}
 
-		{ APP_STATE_MAIN,
-			MainStateEnter,
-			MainStateExit,
-			main_state_handlers
+void OpenBin(UINT8 l)
+{
+	file = DL_FsOpenFile(L"file://c/Elf/sheep.ani", FILE_READ_MODE, 0);
+	if (_count[0] < 1)
+	{
+		FreeBin();
+		DL_FsReadFile(_count, 1, 1, file, &r);
+		color = malloc(3 * _count[0]);
+		DL_FsReadFile(color, 1, 3 * _count[0], file, &r);
+		DL_FsReadFile(s, 1, 2, file, &r);
+		arr = malloc(s[0].y * s[0].x);
+		bin = malloc(s[0].y * s[0].x / 4);
+	}
+	// 3 * (15 + 1) + 1 * 20 * 40
+	DL_FsFSeekFile(file, 3 * (_count[0] + 1) + l * s[0].x * s[0].y, 0);
+	DL_FsReadFile(arr, 1, s[0].y * s[0].x, file, &r);
+	DL_FsCloseFile(file);
+	bmp.stride = s[0].x >> 2;
+	bmp.width = (UINT32)(s[0].x * 2);
+	bmp.height = (UINT32)(s[0].y);
+}
+
+void WriteBin(UINT8 x, UINT8 y, UINT8 u)
+{
+	UINT16 i, i2;
+	UINT8 c, _x, _y;
+	AHIPOINT_T p;
+	AHIRECT_T r;
+	p.x = 0;
+	p.y = 0;
+	r.x1 = x;
+	r.y1 = y;
+	r.x2 = x + bmp.width;
+	r.y2 = y + bmp.height;
+	pred_d = u;
+	AhiDrawSurfDstSet(dCtx, sDraw, 0);
+	for (c = 0; c < _count[0]; c++)
+	{
+		for (_y = 0; _y < s[0].y; _y++)
+		{
+			for (_x = 0; _x < (s[0].x) >> 2; _x++)
+			{
+				if (u == 0)
+				{
+					i = _y * (s[0].x >> 2) + _x;
+					bin[i] = two2bin(arr[i << 2], arr[(i << 2) + 1], arr[(i << 2) + 2], arr[(i << 2) + 3], c, 0);
+				}
+				else if (u == 1)
+				{
+					i = _y * (s[0].x >> 2) + _x;
+					i2 = (_y * s[0].x >> 2) + ((s[0].x >> 2) - _x - 1);
+					bin[i] = two2bin(arr[i2 << 2], arr[(i2 << 2) + 1], arr[(i2 << 2) + 2], arr[(i2 << 2) + 3], c, 1);
+				}
+			}
 		}
-
-};
-
-//#define DDDW (128)
-//#define DDDH (160)
-#define DDDW (176)
-#define DDDH (220)
-
-UINT32				sts;
-AHIDEVICE_T			device;
-AHIDRVINFO_T	*dInfo;
-//AHISURFINFO_T		sInfo;
-
-AHIDEVCONTEXT_T		dCtx;
-AHISURFACE_T		sDraw;
-AHISURFACE_T		sDisp;
-
-AHIRECT_T			rScreen = {0,0, DDDW,DDDH};
-
-BOOL				ahgInited;
-
-
-FS_HANDLE_T FILE_Open( const WCHAR * file, UINT8 mode )
-{
-	return DL_FsOpenFile( file, mode, 0 );
-}
-
-
-UINT32 FILE_Close( FS_HANDLE_T fh )
-{
-	FS_RESULT_T		fr;
-
-	fr = DL_FsCloseFile( fh );
-	return (fr == RESULT_OK) ? RESULT_OK : RESULT_FAIL;
-}
-
-// перейти на оффест относительно начала файла
-UINT32 FILE_Seek(  FS_HANDLE_T fh, FS_SEEK_OFFSET_T offset )
-{
-	FS_RESULT_T		fr;
-
-	fr = DL_FsFSeekFile( fh, offset, SEEK_WHENCE_SET );
-	return (fr == RESULT_OK) ? RESULT_OK : RESULT_FAIL;
-}
-
-
-UINT32 FILE_Read( FS_HANDLE_T fh, void * data, FS_COUNT_T size )
-{
-	FS_RESULT_T		fr;
-	FS_COUNT_T		fc;
-
-	if ( fh == FS_HANDLE_INVALID || !data || !size ) return RESULT_FAIL;
-
-	fr = DL_FsReadFile( data, size, 1, fh, &fc );
-	if ( fr != RESULT_OK || fc != 1 ) return RESULT_FAIL;
-
-	return RESULT_OK;
-}
-
-UINT32 AHG_Init()
-{
-	ahgInited = FALSE;
-
-	dInfo = suAllocMem(sizeof(AHIDRVINFO_T), NULL);
-	AhiDevEnum(&device, dInfo, 0);
-
-//	device = ldrGetAhiDevice();
-
-	sts = AhiDevOpen( &dCtx, device, "Matrix", 0 );
-	if ( sts != 0 ) return sts;
-	LOG("AHG_Init: dCtx = 0x%08x\n", dCtx);
-
-	sDraw = DAL_GetDrawingSurface( DISPLAY_MAIN );
-	LOG("AHG_Init: sDraw = 0x%08x\n", sDraw);
-
-	sts |= AhiDispSurfGet( dCtx, &sDisp );
-	LOG("AHG_Init: sDisp = 0x%08x\n", sDisp);
-
-	AhiDrawSurfDstSet( dCtx, sDisp, 0 );
-	AhiDrawSurfSrcSet( dCtx, sDraw, 0 );
-	AhiDrawClipDstSet( dCtx, NULL );
-	AhiDrawClipSrcSet( dCtx, NULL );
-
-	ahgInited = TRUE;
-	return sts;
-}
-
-UINT32 AHG_Done()
-{
-	if ( ahgInited ) {
-		AhiDevClose( dCtx );
-		suFreeMem(dInfo);
+		bmp.image = (void *)(bin);
+		TextColorRGB(color[c].r, color[c].g, color[c].b);
+		if (ATI_565RGB(color[c].r, color[c].g, color[c].b) != color_t)
+		{
+			AhiDrawBitmapBlt(dCtx, &r, &p, &bmp, NULL, 1);
+		}
 	}
-
-	ahgInited = FALSE;
-	return 0;
 }
 
-UINT32 Register(const char *elf_path_uri, const char *args, UINT32 ev_code) {
-	UINT32 status;
-	UINT32 ev_code_base;
-	int			i;
-	WCHAR		dir[ 100 + 1 ];
-	WCHAR		uri[ 100 + 1 ];
+void AHG_Init()
+{
+	dCtx = DAL_GetDeviceContext(0);
+	sDraw = DAL_GetDrawingSurface(0);
+	AhiDispSurfGet(dCtx, &sDisp);
+	AhiDrawSurfDstSet(dCtx, sDisp, 0);
+	AhiDrawSurfSrcSet(dCtx, sDraw, 0);
+	AhiDrawClipSrcSet(dCtx, NULL);
+	AhiDrawClipDstSet(dCtx, NULL);
+}
 
-	ev_code_base = ev_code;
+void AHG_Flush()
+{
+	AHIUPDATEPARAMS_T update_params;
+	update_params.size = sizeof(AHIUPDATEPARAMS_T);
+	update_params.sync = FALSE;
+	update_params.rect.x1 = 0;
+	update_params.rect.y1 = 0;
+	update_params.rect.x2 = 0 + RECTSURF_W;
+	update_params.rect.y2 = 0 + RECTSURF_H;
 
-	P();
+	AhiDrawSurfSrcSet(dCtx, sDraw, 0);
+	AhiDrawSurfDstSet(dCtx, sDisp, 0);
+	AhiDrawClipSrcSet(dCtx, NULL);
+	AhiDrawClipDstSet(dCtx, NULL);
+	AhiDrawRopSet(dCtx, AHIROP3(AHIROP_SRCCOPY));
+	AhiDrawBitBlt(dCtx, &rectSurf, &pSurf);
 
-	status = AHG_Init();
-	LOG(ELF_NAME": AHG_Init, sts = 0x%x", status);
-	if ( status != RESULT_OK ) return NULL;
+//	AhiDispWaitVBlank(dCtx, 0);
+	AhiDispUpdate(dCtx, &update_params);
+}
 
-	P();
+BOOL KeypadLock()
+{
+	BOOL keypad_statate;
+	DL_DbFeatureGetCurrentState(*KEYPAD_STATE, &keypad_statate);
+	return keypad_statate;
+}
+BOOL WorkingTable()
+{
+	UINT8 res;
+	UIS_GetActiveDialogType(&res);
+	return (res == 0xE) ? (true) : (false);
+}
+BOOL sms()
+{
+	UINT16 t = 0;
+	MsgUtilGetUnreadMsgsInAllFolders(&t);
+	return (t > 0) ? (true) : (false);
+}
+BOOL call()
+{
+	return (ccall > 0) ? (true) : (false);
+}
+BOOL sleep()
+{
+	CLK_TIME_T time;
+	DL_ClkGetTime(&time);
+	return (time.hour > 22 || time.hour < 6) ? (true) : (false);
+}
+// BOOL JavaApp() {UINT8 res; UIS_GetActiveDialogType(&res);return (res == DialogType_GameAni)?(true):(false);}
 
-	u_atou(elf_path_uri, uri);
-	i = u_strlen( uri ) - 1;
-	while ( i >= 0 && uri[i] != L'/' ) i--;
-	u_strncpy( dir, uri, i ); // without '/'
-
-	P();
-
-	status = InitResources( dir );
-	if ( status != RESULT_OK )
+void copy(UINT8 x, UINT8 y, UINT8 bk)
+{
+	AHIPOINT_T pt;
+	AHIRECT_T rt;
+	if (bk == 1)
 	{
-		LOG("%s\n", ELF_NAME":\x84 init res-s failed");
-		return NULL;
+		pt.x = x;
+		pt.y = y;
+		rt.x1 = 0;
+		rt.y1 = 0;
+		rt.x2 = 40;
+		rt.y2 = 40;
+		AhiSurfCopy(dCtx, sDraw, &bm, &rt, &pt, NULL, 1);
 	}
-
-	P();
-
-	status = APP_Register(&ev_code_base, 1, state_handling_table, APP_STATE_MAX, (void *) AppStart);
-
-	LOG(ELF_NAME":Register: status = %d", status);
-
-	LdrStartApp(ev_code_base);
-
-	return status;
-}
-
-static const WCHAR		fs_prefix[] = {'f','i','l','e',':','/',0};
-
-// Склеивает dir и str, вставляя если нужно "file:/" и слэши
-// Возвращает указатель на последний ноль символ в строке, чтоб добавить если нужно слэш
-// Работает быстрее чем последовательность u_strcpy, u_strcat
-WCHAR * u_mkpath( WCHAR * dst, const WCHAR * dir, const WCHAR * str, BOOL fsprefix )
-{
-	if ( fsprefix && u_strncmp(dir, fs_prefix, 6) != 0 ) {
-		const WCHAR * tmp;
-		tmp = fs_prefix;
-		while ( *tmp != 0 )
-			*dst++ = *tmp++;
-	}
-	while ( *dir != 0 )
-		*dst++ = *dir++;
-	if ( *(dst-1) != '/' )
-		*dst++ = '/';
-	if ( *str == '/' )
-		str++;
-	while ( *str != 0 )
-		*dst++ = *str++;
-	*dst = 0;
-
-	return dst;
-}
-
-UINT32 IMAGE_Init( AHIIMAGE_T * im )
-{
-	memclr( im, sizeof(AHIIMAGE_T) );
-
-	return RESULT_OK;
-}
-
-UINT32 IMAGE_LoadFromBMP( const WCHAR * file, AHIIMAGE_T * im )
-{
-	UINT32 status;
-	char name[100];
-	FS_HANDLE_T f1, f2;
-	const WCHAR *raw = L"file://c/Elf/8.raw";
-	const WCHAR *pal = L"file://c/Elf/8.pal";
-
-	f1 = FILE_Open(raw, FILE_READ_MODE);
-
-	img.bm.format = AHIFMT_8BPP;
-	img.bm.height = 40;
-	img.bm.width = 600;
-	img.bm.stride = img.bm.width;
-
-	img.bm.image = suAllocMem(img.bm.width * img.bm.height, NULL);
-	status = FILE_Read(f1, img.bm.image, img.bm.width * img.bm.height);
-	LOG("sssssssssss = %d\n", status);
-	FILE_Close(f1);
-
-	f2 = FILE_Open(pal, FILE_READ_MODE);
-	img.pal = suAllocMem(256 * 2, NULL);
-	status = FILE_Read(f2, img.pal, 256 * 2);
-	LOG("sssssssssss = %d\n", status);
-	FILE_Close(f2);
-
-	u_utoa(file, name);
-
-	LOG("Name: %s\n", name);
-	LOG("Name: %d\n", im);
-
-	status = RESULT_OK;
-
-	//status = BMP_LoadFromFileEx( file, &im->bm, &im->pal );
-
-
-	if ( status == RESULT_OK )
+	else
 	{
-		if ( im->pal )
-			im->color_key = im->pal[ *(UINT8*)im->bm.image ];
+		pt.x = 0;
+		pt.y = 0;
+		rt.x1 = x;
+		rt.y1 = y;
+		rt.x2 = x + 40;
+		rt.y2 = y + 40;
+		AhiSurfCopy(dCtx, sDraw, &bm, &rt, &pt, NULL, 0);
+	}
+}
+
+void _time()
+{
+	UINT8 count[12] = {1, 3, 3, 3, 3, 3, 3, 5, 3, 3, 5, 1}, start[12] = {0, 1, 1, 4, 4, 6, 9, 12, 9, 17, 20, 0},
+		u[12] = {0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1};
+	INT8 px[12] = {0, -2, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+	if (!bm.image)
+	{
+		bm.image = (void *)malloc(40 * 40 * 2);
+		copy((UINT8)(x), y_t, 1);
+	}
+	else
+	{
+		copy((UINT8)(x), y_t, 0);
+	}
+	if (sms())
+	{
+		d = 10;
+	}
+	else if (call())
+	{
+		d = 9;
+	}
+	else if (sleep())
+	{
+		d = 0;
+	}
+	if (new)
+	{
+		if (s_d == count[d] - 1)
+		{
+			new = false;
+			s_d = 0;
+		}
 		else
-			im->color_key = *(UINT16*)im->bm.image;
-	}
-	return status;
-}
-
-
-#define IMAGE_USE_COLOR_KEY		1
-#define IMAGE_FLIP_X			2
-typedef UINT32 IMAGE_FLAGS_T;
-
-
-UINT32 UTIL_RenderWithPal(	AHIIMAGE_T * im,
-						  AHIRECT_T * rcSrc, AHIPOINT_T * ptDst,
-						  AHIBITMAP_T * bmp2, IMAGE_FLAGS_T flags )
-{
-	AHIBITMAP_T		*bmp1 = &im->bm;
-	UINT32			*pal = im->pal;
-	UINT8			*p1, *r1;
-	UINT8			*p2, *r2;
-	UINT16			clr;
-	UINT32			x, y;
-	UINT32			w = rcSrc->x2 - rcSrc->x1;
-	UINT32			h = rcSrc->y2 - rcSrc->y1;
-
-	if ( rcSrc->x2 > bmp1->width ) w = bmp1->width - rcSrc->x1;
-	if ( rcSrc->y2 > bmp1->height ) h = bmp1->height - rcSrc->y1;
-
-	if ( ptDst->x + w > bmp2->width ) w = bmp2->width - ptDst->x;
-	if ( ptDst->y + h > bmp2->height ) h = bmp2->height - ptDst->y;
-
-	r1 = (UINT8*)bmp1->image + bmp1->stride * rcSrc->y1 + 1 * rcSrc->x1;
-	r2 = (UINT8*)bmp2->image + bmp2->stride * ptDst->y  + 2 * ptDst->x;
-	if ( flags & IMAGE_FLIP_X ) r1 += w - 1;
-
-	for ( y = 0; y < h; y++, r1 += bmp1->stride, r2 += bmp2->stride )
-	{
-		p1 = r1;
-		p2 = r2;
-		if ( flags & IMAGE_USE_COLOR_KEY )
 		{
-			if ( flags & IMAGE_FLIP_X )
-			{
-				for ( x = 0; x < w; x++, p1 -= 1, p2 += 2 )
-				{
-					clr = pal[ *p1 ];
-					if ( im->color_key != clr )
-						*(UINT16*)p2 = clr;
-				}
-			}
-			else // no IMAGE_FLIP_X
-			{
-				for ( x = 0; x < w; x++, p1 += 1, p2 += 2 )
-				{
-					clr = pal[ *p1 ];
-					if ( im->color_key != clr )
-						*(UINT16*)p2 = clr;
-				}
-			}
+			s_d++;
+			x = x + count[d] * px[d];
 		}
-		else // no color_key
-		{
-			if ( flags & IMAGE_FLIP_X )
-			{
-				for ( x = 0; x < w; x++, p1 -= 1, p2 += 2 )
-					*(UINT16*)p2 = pal[ *p1 ];
-			}
-			else // no IMAGE_FLIP_X
-			{
-				for ( x = 0; x < w; x++, p1 += 1, p2 += 2 )
-					*(UINT16*)p2 = pal[ *p1 ];
-			}
-		}
-	}
-
-	return RESULT_OK;
-}
-
-
-UINT32 UTIL_RenderWithoutPal(	AHIIMAGE_T * im,
-							 AHIRECT_T * rcSrc, AHIPOINT_T * ptDst,
-							 AHIBITMAP_T * bmp2, IMAGE_FLAGS_T flags )
-{
-	AHIBITMAP_T		*bmp1 = &im->bm;
-	UINT8			*p1, *r1;
-	UINT8			*p2, *r2;
-	UINT16			clr;
-	UINT32			x, y;
-	UINT32			w = rcSrc->x2 - rcSrc->x1;
-	UINT32			h = rcSrc->y2 - rcSrc->y1;
-
-	if ( rcSrc->x2 > bmp1->width ) w = bmp1->width - rcSrc->x1;
-	if ( rcSrc->y2 > bmp1->height ) h = bmp1->height - rcSrc->y1;
-
-	if ( ptDst->x + w > bmp2->width ) w = bmp2->width - ptDst->x;
-	if ( ptDst->y + h > bmp2->height ) h = bmp2->height - ptDst->y;
-
-	r1 = (UINT8*)bmp1->image + bmp1->stride * rcSrc->y1 + 2 * rcSrc->x1;
-	r2 = (UINT8*)bmp2->image + bmp2->stride * ptDst->y  + 2 * ptDst->x;
-	//if ( flags & IMAGE_FLIP_X ) r2 += w - 1;
-
-	for ( y = 0; y < h; y++, r1 += bmp1->stride, r2 += bmp2->stride )
-	{
-		p1 = r1;
-		p2 = r2;
-		if ( flags & IMAGE_USE_COLOR_KEY )
-		{
-			for ( x = 0; x < w; x++, p1 += 2, p2 += 2 )
-			{
-				clr = *(UINT16*)p1;
-				if ( im->color_key != clr )
-					*(UINT16*)p2 = clr;
-			}
-		}
-		else // no color_key
-		{
-			for ( x = 0; x < w; x++, p1 += 2, p2 += 2 )
-				*(UINT16*)p2 = *(UINT16*)p1;
-		}
-	}
-
-	return RESULT_OK;
-}
-
-// only pal256 and rgb565
-UINT32 IMAGE_Render(	AHIIMAGE_T * im, AHIRECT_T * rcSrc, AHIPOINT_T * ptDst,
-					AHIBITMAP_T * bmp, IMAGE_FLAGS_T flags )
-{
-	if ( im->pal )
-		UTIL_RenderWithPal( im, rcSrc, ptDst, bmp, flags );
-	else
-		UTIL_RenderWithoutPal( im, rcSrc, ptDst, bmp, flags );
-
-	return RESULT_OK;
-}
-
-
-UINT32 IMAGE_Free( AHIIMAGE_T * im )
-{
-	if ( im->bm.image ) mfree( im->bm.image );
-	if ( im->pal ) mfree( im->pal );
-
-	memclr( im, sizeof(AHIIMAGE_T) );
-
-	return RESULT_OK;
-}
-
-UINT32 InitResources( const WCHAR * dir )
-{
-	UINT32			status;
-	WCHAR			wpath[100 + 1];
-
-	IMAGE_Init( &img );
-	u_mkpath( wpath, dir, L"8.bmp", TRUE );
-	status = IMAGE_LoadFromBMP( wpath, &img );
-	LOG("InitResources: IMAGE_LoadFromBMP(img), status = 0x%x", status);
-	if ( status != RESULT_OK ) return status;
-
-	cache_bmp.width = img.bm.height; // square frame
-	cache_bmp.height = img.bm.height;
-	cache_bmp.format = AHIFMT_16BPP_565;
-	cache_bmp.stride = (cache_bmp.width * 2 + 3) & (~3);
-	cache_bmp.image = malloc( cache_bmp.stride * cache_bmp.height );
-	if ( !cache_bmp.image )
-	{
-		IMAGE_Free( &img );
-		return RESULT_FAIL;
-	}
-
-	return RESULT_OK;
-}
-
-UINT32 FreeResources( void )
-{
-	IMAGE_Free( &img );
-
-	if ( cache_bmp.image )
-	{
-		mfree( cache_bmp.image );
-		cache_bmp.image = NULL;
-	}
-
-	return RESULT_OK;
-}
-
-/* Функция вызываемая при старте приложения */
-UINT32 AppStart( EVENT_STACK_T *ev_st,  REG_ID_T reg_id,  UINT32 param2 )
-{
-	APPLICATION_T			*app = NULL;
-	UINT32					status = RESULT_OK;
-
-
-	LOG("%s\n", ELF_NAME":AppStart: Enter");
-
-	// Инициализация для фоновых приложений
-	app = (APPLICATION_T*)APP_InitAppData(	(void *)APP_HandleEventPrepost, // Обработчик для фоновых приложений
-											sizeof(APPLICATION_T), // Размер структуры приложения
-											reg_id,
-											0, 0,
-											1,
-											AFW_APP_CENTRICITY_NONE,
-											AFW_PREPROCESSING,
-											AFW_POSITION_TOP );
-
-	LOG(ELF_NAME": APP_InitAppData 0x%X", app);
-	if ( !app )
-	{
-		LOG("%s\n", ELF_NAME ": Init Failed!\n");
-//		return ldrUnloadElf();
-		return RESULT_FAIL;
-	}
-
-	iface.port = app->port;
-	iface.handle = NULL;
-
-	status = APP_Start(	ev_st, app,
-					   APP_STATE_MAIN, // Начальное состояние
-					   state_handling_table,
-					   AppExit,
-					   app_name,
-					   0 );
-
-	LOG(ELF_NAME": APP_Start, status = 0x%X", status);
-	if ( status == RESULT_OK )
-	{
-//		elf.app = app;
-		LOG("%s\n", ELF_NAME ": Started\n");
 	}
 	else
 	{
-		LOG("%s\n", ELF_NAME ": Start Failed!\n");
-		APP_HandleFailedAppStart( ev_st, app, 0 );
-		return RESULT_FAIL;
+		if (count[d] * px[d] + x < 5)
+		{
+			d = 2;
+		}
+		else if (count[d] * px[d] + x > x_t)
+		{
+			d = 1;
+		}
+		else
+		{
+			d = random(20);
+			if (d > 8)
+			{
+				while (d > 2)
+				{
+					d -= 5;
+				}
+			}
+			if (d < 0)
+			{
+				d = 0;
+			}
+		}
+		new = true;
 	}
-
-	return RESULT_OK;
+	if (sms())
+	{
+		d = 10;
+	}
+	else if (call())
+	{
+		d = 9;
+	}
+	else if (sleep())
+	{
+		d = 0;
+	}
+	copy((UINT8)(x), y_t, 1);
+	OpenBin(start[d] + s_d);
+	WriteBin((UINT8)(x), y_t, (d != 0) ? (u[d]) : (pred_d));
 }
 
+const EVENT_HANDLER_ENTRY_T any_state_handlers[] = {
+	{0x8201B, addcall},        {0x0398, delcall},          {EV_KEY_PRESS, HandleKeypress},
+	{EV_TIMER_EXPIRED, Timer}, {STATE_HANDLERS_END, NULL},
+	};
 
-/* Функция выхода из приложения */
-UINT32 AppExit( EVENT_STACK_T *ev_st,  APPLICATION_T *app )
+const STATE_HANDLERS_ENTRY_T state_handling_table[] = {{HW_STATE_ANY, MainStateEnter, NULL, any_state_handlers}};
+
+UINT32 Register(char *file_uri, char *param, UINT32 reserve)
 {
-	UINT32  status;
-
-	LOG("%s\n", "\0x82"ELF_NAME": AppExit\n");
-
-	FreeResources();
-	AHG_Done();
-
-	/* Завершаем работу приложения */
-	status = APP_ExitStateAndApp( ev_st, app, 0 );
-
-	/* Выгружаем эльф */
-//	return ldrUnloadElf();
-
-	LdrUnloadELF(&Lib);
-
-	return status;
+	UINT32 status, e_b = reserve;
+	// any_state_handlers[0].code = EV_CALLS_TERMINATED;//EV_CALLS_MISSED;
+	bm.format = AHIFMT_16BPP_565;
+	bm.width = 40;
+	bm.height = 40;
+	bm.stride = 40 * 2;
+	bmp.format = AHIFMT_1BPP;
+	status = APP_Register(&e_b, 1, state_handling_table, HW_STATE_MAX, (void *)startApp);
+	LdrStartApp(e_b);
+	return 1;
 }
 
-enum {
-	ttSimple,
-	ttCyclical
-};
-typedef UINT8 TIMER_TYPE_T;
-
-UINT32 StartTimer( UINT32 period, UINT32 id, UINT8 type, void *app )
+UINT32 startApp(EVENT_STACK_T *ev_st, REG_ID_T reg_id, UINT32 param2)
 {
+	char app_name[APP_NAME_LEN] = "sheep";
 	UINT32 status;
-	IFACE_DATA_T  iface;
-
-	if (!app) return 0;
-
-	iface.port = ((APPLICATION_T*)app)->port;
-	iface.handle = 0;
-
-	if (type==0) {
-		status = DL_ClkStartTimer( &iface, period, id );
-	} else {
-		status = DL_ClkStartCyclicalTimer( &iface, period, id );
-	}
-
-	return iface.handle;
-}
-
-
-UINT32 StopTimer( UINT32 *handle, void *app )
-{
-	IFACE_DATA_T	iface;
-
-	if (!handle || !app) return RESULT_FAIL;
-
-	iface.port = ((APPLICATION_T*)app)->port;
-	iface.handle = *handle;
-	*handle = 0;
-	return DL_ClkStopTimer( &iface );
-}
-
-
-/* Обработчик входа в state */
-UINT32 MainStateEnter( EVENT_STACK_T *ev_st,  APPLICATION_T *app, ENTER_STATE_TYPE_T type )
-{
-	LOG(ELF_NAME": MainStateEnter, type = %d", type);
-
-
-
-	if ( type != ENTER_STATE_ENTER ) return RESULT_OK;
-
-	ticks = 0;
-	sign = +1;
-	timer = StartTimer( TIMER_PERIOD, TIMER_ID, ttCyclical, app );
-
+	APP_ATI_T *app = NULL;
+	randomize();
+	AHG_Init();
+	app = (APP_ATI_T *)APP_InitAppData((void *)APP_HandleEvent, sizeof(APP_ATI_T), reg_id, 0, 1, 1, 2, 0, 0);
+	status = APP_Start(ev_st, &app->apt, HW_STATE_ANY, state_handling_table, destroyApp, app_name, 0);
 	return RESULT_OK;
 }
 
-
-UINT32 MainStateExit( EVENT_STACK_T *ev_st,  APPLICATION_T *app, EXIT_STATE_TYPE_T type )
+UINT32 destroyApp(EVENT_STACK_T *ev_st, APPLICATION_T *app)
 {
-	LOG(ELF_NAME": MainStateExit, type = %d", type);
-	if ( type != EXIT_STATE_EXIT ) return RESULT_OK;
-
-	if ( timer )
+	APPLICATION_T *papp = (APPLICATION_T *)app;
+	if (exit)
 	{
-		StopTimer( &timer, app );
+		APP_UtilStopTimer(app);
+		APP_UtilUISDialogDelete(&papp->dialog);
+		if (bm.image)
+		{
+			mfree(bm.image);
+		}
+		APP_Exit(ev_st, app, 0);
+		LdrUnloadELF(&Lib);
 	}
-
 	return RESULT_OK;
 }
 
-
-UINT32 HandleTimerExpiried( EVENT_STACK_T * ev_st, APPLICATION_T * app )
+UINT32 MainStateEnter(EVENT_STACK_T *ev_st, APPLICATION_T *app, ENTER_STATE_TYPE_T type)
 {
-	//CLK_TIME_T		t;
-
-	P();
-
-	if ( GET_TIMER_ID(ev_st) == TIMER_ID )
+	APPLICATION_T *papp = (APPLICATION_T *)app;
+	SU_PORT_T port = papp->port;
+	if (type != ENTER_STATE_ENTER)
 	{
-		APP_ConsumeEv( ev_st, app );
-
-		//DL_ClkGetTime( &t );
-		LOG(ELF_NAME": timer, ticks = %d", ticks);
-
-		RenderImg( &img );
-	}
-
-	return RESULT_OK;
-}
-
-
-UINT32 RestoreBG( AHIIMAGE_T * im )
-{
-	/*
-	AHIRECT_T		r;
-
-	r.x1 = (int)DISPLAY_WIDTH/2 + (int)(ticks-7) * (int)im->bm.height / 8; // square frame
-	r.y1 = DISPLAY_HEIGHT - 20 - im->bm.height;
-	r.x2 = r.x1 + im->bm.height; // square frame
-	r.y2 = r.y1 + im->bm.height;
-
-	return AHG_FlushEx( &r );
-	*/
-	return RESULT_OK;
-}
-
-UINT32 AHG_CopyFromSurf( AHIBITMAP_T * bitmap, AHISURFACE_T surf, AHIPOINT_T * ptSrc )
-{
-	AHIRECT_T		rcDst;
-	//AHIPOINT_T		ptSrc;
-
-	rcDst.x1 = 0;
-	rcDst.y1 = 0;
-	rcDst.x2 = bitmap->width;
-	rcDst.y2 = bitmap->height;
-
-	sts = AhiSurfCopy( dCtx, surf, bitmap, &rcDst, ptSrc, 0, AHIFLAG_COPYFROM );
-
-	return sts;
-}
-
-
-UINT32 AHG_FlushEx( AHIRECT_T * rc )
-{
-	AHIPOINT_T		ptDst;
-
-
-	ptDst.x = rc->x1;
-	ptDst.y = rc->y1;
-
-	AhiDrawSurfSrcSet( dCtx, sDraw, 0 );
-	AhiDrawSurfDstSet( dCtx, sDisp, 0 );
-
-	AhiDrawClipSrcSet( dCtx, NULL );
-	AhiDrawClipDstSet( dCtx, NULL );
-
-	AhiDrawRopSet( dCtx, AHIROP3(AHIROP_SRCCOPY) );
-
-	AhiDispWaitVBlank( dCtx, 0 );
-	sts = AhiDrawBitBlt( dCtx, rc, &ptDst );
-
-	return sts;
-}
-
-
-UINT32 AHG_Flush( void )
-{
-	return AHG_FlushEx( &rScreen );
-}
-
-UINT32 RenderImg( AHIIMAGE_T * im )
-{
-	AHIPOINT_T		p;
-	AHIRECT_T		r, rbg, rs;
-
-	rbg.x1 = (int)(DDDW - im->bm.height)/2 + (int)(ticks-7) * (int)im->bm.height / 4; // square frame
-	rbg.y1 = DDDH - 20 - im->bm.height;
-	rbg.x2 = rbg.x1 + im->bm.height; // square frame
-	rbg.y2 = rbg.y1 + im->bm.height;
-
-
-	ticks += sign;
-	if ( ticks <= 0 )
-	{
-		sign = +1;
-		ticks = 0;
-	}
-	if ( ticks >= 14 )
-	{
-		sign = -1;
-		ticks = 14;
-	}
-
-	rs.x1 = (int)(DDDW - im->bm.height)/2 + (int)(ticks-7) * (int)im->bm.height / 4; // square frame
-	rs.y1 = DDDH - 20 - im->bm.height;
-	rs.x2 = rs.x1 + im->bm.height; // square frame
-	rs.y2 = rs.y1 + im->bm.height;
-
-	p.x = rs.x1;
-	p.y = rs.y1;
-
-	sts = AHG_CopyFromSurf( &cache_bmp, sDraw, &p );
-	LOG(ELF_NAME": RenderImg: AHG_CopyFromSurf, sts = 0x%x", sts);
-
-	// src
-	r.x1 = im->bm.height * (ticks); // square frame
-	r.y1 = 0;
-	r.x2 = r.x1 + im->bm.height; // square frame
-	r.y2 = r.y1 + im->bm.height;
-
-	// dst
-	p.x = 0;
-	p.y = 0;
-
-	LOG("IMAGE_Render: (%d,%d,%d,%d)", r.x1, r.x2, r.y1, r.y2);
-	IMAGE_Render( im, &r, &p, &cache_bmp, IMAGE_USE_COLOR_KEY | IMAGE_FLIP_X ); // r -> p
-
-	// dst
-	/*r.x1 = (int)DISPLAY_WIDTH/2 + (int)(ticks-7) * (int)im->bm.height / 8; // square frame
-	r.y1 = DISPLAY_HEIGHT - 20 - im->bm.height;
-	r.x2 = r.x1 + im->bm.height; // square frame
-	r.y2 = r.y1 + im->bm.height;*/
-	//r = rbg;
-
-	// src
-	p.x = 0;
-	p.y = 0;
-
-	AhiDispWaitVBlank( dCtx, 0 );
-	AHG_FlushEx( &rbg );
-
-	AhiDrawSurfDstSet( dCtx, sDisp, 0 );
-	AhiDrawRopSet( dCtx, AHIROP3(AHIROP_SRCCOPY) );
-
-	LOG("AhiDrawBitmapBlt: (%d,%d,%d,%d)", rs.x1, rs.x2, rs.y1, rs.y2);
-	sts = AhiDrawBitmapBlt( dCtx, &rs, &p, &cache_bmp, NULL, 0 ); // p -> r
-	LOG(ELF_NAME": RenderImg: AhiDrawBitmapBlt, sts = 0x%x", sts);
-
-	return RESULT_OK;
-}
-
-/* Обработчик события, EV_KEY_PRESS в данном случае */
-UINT32 HandleKeypress( EVENT_STACK_T *ev_st,  APPLICATION_T *app )
-{
-	UINT8		key = GET_KEY( ev_st );
-
-	P();
-
-	LOG(ELF_NAME": HandleKeypress: key = 0x%X", key);
-
-	if (key == KEY_STAR )//|| key == KEY_RED)
-	{
-		app->exit_status = TRUE;
 		return RESULT_OK;
 	}
+	// dialog = UIS_CreateColorCanvasWithWallpaper(&port, &bufd, 0, 0);
+	// dialog = UIS_CreateColorCanvas ( &port, &bufd, TRUE ); // б®§¤ с¬ Є ­ў б
+	su_port = port;
+	papp->port = su_port;
+	papp->dialog = dialog;
 
-	if (key == KEY_POUND)
-	{
-		// do somethink
-		APP_ConsumeEv( ev_st, app );
-		return RESULT_OK;
-	}
-
-	//if (key < 12) DL_AudPlayTone( key, 3 );
-
+	APP_UtilStartCyclicalTimer(200, 0, app);
 	return RESULT_OK;
 }
 
-
-UINT32 HandleExit( EVENT_STACK_T *ev_st,  APPLICATION_T *app )
+UINT32 HandleKeypress(EVENT_STACK_T *ev_st, APPLICATION_T *app)
 {
-	LOG("%s\n", "HandleExit\n");
-//	cprint("\0x82"ELF_NAME": HandleExit\n");
-
-	APP_ConsumeEv( ev_st, app );
-	app->exit_status = TRUE;
-
+	// EVENT_T *event = AFW_GetEv(ev_st);
+	// UINT32 key = AFW_GetEv(ev_st)->data.key_pressed;
+	if (AFW_GetEv(ev_st)->data.key_pressed == KEY_STAR)
+	{
+		cpp++;
+	}
+	else
+	{
+		cpp = 0;
+	}
+	if (cpp == 4)
+	{
+		exit = 1;
+		return destroyApp(ev_st, app);
+	}
 	return RESULT_OK;
 }
 
+UINT32 paint(void)
+{
+	_time();
+	AHG_Flush();
+	return RESULT_OK;
+}
+UINT32 Timer(EVENT_STACK_T *ev_st, APPLICATION_T *app)
+{
+	if (WorkingTable() && !KeypadLock())
+	{
+		paint();
+	}
+	return RESULT_OK;
+}
+UINT32 addcall(EVENT_STACK_T *ev_st, APPLICATION_T *app)
+{
+	ccall = 1;
+	return RESULT_OK;
+}
+UINT32 delcall(EVENT_STACK_T *ev_st, APPLICATION_T *app)
+{
+	ccall = 0;
+	return RESULT_OK;
+}
+
+// UINT32 Show(EVENT_STACK_T *ev_st, void *app, BOOL show){
+// return APP_ChangeRoutingStack(app,ev_st,
+//(void*)(show?APP_HandleEvent:APP_HandleEventPrepost),
+//(show?1:0),(show?0:1),1,(show?1:2));}
+
+// UINT32 Tim (EVENT_STACK_T *ev_st, void *app) {
+// inFocus = true;
+// paint();
+// return RESULT_OK; }
+
+// UINT32 NoTim (EVENT_STACK_T *ev_st, void *app) {
+// inFocus = false;
+// APP_UtilChangeState(HW_STATE_ANY,ev_st,app);
+// Show(ev_st,app,true);
+// return RESULT_OK; }
 
 
 #if 0
