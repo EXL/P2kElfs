@@ -27,7 +27,7 @@
 //#include "icons/icon_ambilight_48x48.h"
 
 #define MAX_DELAY_LENGTH            (6)
-#define MIN_DELAY_VALUE             (10)
+#define MIN_DELAY_VALUE             (100)
 #define MAX_DELAY_VALUE             (10000)
 #define KEY_LONG_PRESS_START_MS     (2500)
 #define KEY_LONG_PRESS_STOP_MS      (3500)
@@ -176,6 +176,14 @@ static void DeinitBitmap(void);
 static UINT32 paint(void);
 static UINT32 add_call(EVENT_STACK_T *ev_st, APPLICATION_T *app);
 static UINT32 del_call(EVENT_STACK_T *ev_st, APPLICATION_T *app);
+static UINT32 dsk_lose(EVENT_STACK_T *ev_st, APPLICATION_T *app);
+static UINT32 dsk_gain(EVENT_STACK_T *ev_st, APPLICATION_T *app);
+static UINT32 act_lose(EVENT_STACK_T *ev_st, APPLICATION_T *app);
+static UINT32 act_gain(EVENT_STACK_T *ev_st, APPLICATION_T *app);
+
+UINT32 desk;
+UINT32 activ = 1;
+UINT32 g_key = 0;
 
 static const char g_app_name[APP_NAME_LEN] = "Neko";
 
@@ -221,6 +229,10 @@ static const EVENT_HANDLER_ENTRY_T g_state_any_hdls[] = {
 	{ EV_TIMER_EXPIRED, HandleEventTimerExpired },
 	{0x8201B, add_call}, /* TODO: Add it to SDK. */
 	{0x0398, del_call}, /* TODO: Add it to SDK. */
+	{0x0768, dsk_lose },
+	{ 0x0767, dsk_gain },
+	{ 0x07F2, act_lose },
+	{ 0x07F1, act_gain },
 	{ STATE_HANDLERS_END, NULL }
 };
 
@@ -617,6 +629,15 @@ static UINT32 HandleEventKeyPress(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
 	event = AFW_GetEv(ev_st);
 	key = event->data.key_pressed;
 
+	if (key == KEY_6) {
+		g_key = 1;
+		activ = 1;
+	}
+	if (key == KEY_4) {
+		g_key = 0;
+		activ = 1;
+	}
+
 	if (key == g_key_app_menu || key == g_key_app_exit) {
 		app_instance->ms_key_press_start = suPalTicksToMsec(suPalReadTime());
 	}
@@ -1003,8 +1024,14 @@ static UINT32 ProcessWidget(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
 	status = RESULT_OK;
 	app_instance = (APP_INSTANCE_T *) app;
 
-	if (WorkingTable() && !KeypadLock()) {
-		paint();
+	if (WorkingTable() && !KeypadLock() && desk && activ) {
+		if (g_key > 3) {
+			paint();
+			D("%s\n", "Paint!");
+		} else {
+			D("%s\n", "Damn!");
+			g_key++;
+		}
 	}
 
 	return status;
@@ -1283,7 +1310,7 @@ static BOOL call(void) {
 static BOOL sleep(void) {
 	CLK_TIME_T time;
 	DL_ClkGetTime(&time);
-	return (time.hour > 22 || time.hour < 6) ? (true) : (false);
+	return (time.hour > 23 || time.hour < 6) ? (true) : (false);
 }
 
 static void copy(UINT8 x, UINT8 y, UINT8 bk) {
@@ -1396,5 +1423,38 @@ static UINT32 add_call(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
 
 static UINT32 del_call(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
 	ccall = 0;
+	return RESULT_OK;
+}
+
+static UINT32 dsk_lose(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
+	desk = 0;
+
+	P();
+
+	return RESULT_OK;
+}
+
+static UINT32 dsk_gain(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
+	desk = 1;
+	g_key = 0;
+
+	P();
+
+	return RESULT_OK;
+}
+
+static UINT32 act_lose(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
+	activ = 0;
+
+	P();
+
+	return RESULT_OK;
+}
+
+static UINT32 act_gain(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
+	activ = 1;
+
+	P();
+
 	return RESULT_OK;
 }
