@@ -50,7 +50,7 @@ typedef enum {
 } APP_DISPLAY_T;
 
 typedef enum {
-	APP_TIMER_EXIT = 0xC651,
+	APP_TIMER_EXIT = 0xE680,
 	APP_TIMER_DO_WIDGET_LOOP
 } APP_TIMER_T;
 
@@ -151,12 +151,31 @@ static UINT32 ResetSettingsToDefaultValues(APPLICATION_T *app);
 static UINT32 ReadFileConfig(APPLICATION_T *app, const WCHAR *file_config_path);
 static UINT32 SaveFileConfig(APPLICATION_T *app, const WCHAR *file_config_path);
 
-static BOOL IsKeyPadLocked(void);
 static UINT32 SetLoopTimer(APPLICATION_T *app, UINT32 period);
 
 static UINT32 StartWidget(EVENT_STACK_T *ev_st, APPLICATION_T *app);
 static UINT32 ProcessWidget(EVENT_STACK_T *ev_st, APPLICATION_T *app);
 static UINT32 StopWidget(EVENT_STACK_T *ev_st, APPLICATION_T *app);
+
+static UINT8 two2bin(UINT8 b1, UINT8 b2, UINT8 b3, UINT8 b4, UINT8 c, UINT8 n);
+static void FreeBin(void);
+static void OpenBin(UINT8 l);
+static void WriteBin(UINT8 x, UINT8 y, UINT8 u);
+static void AHG_Init(void);
+static void AHG_Flush(void);
+
+static BOOL KeypadLock(void);
+static BOOL WorkingTable(void);
+static BOOL call(void);
+static BOOL sms(void);
+static BOOL sleep(void);
+static void copy(UINT8 x, UINT8 y, UINT8 bk);
+static void _time(void);
+static void InitBitmap(void);
+static void DeinitBitmap(void);
+static UINT32 paint(void);
+static UINT32 add_call(EVENT_STACK_T *ev_st, APPLICATION_T *app);
+static UINT32 del_call(EVENT_STACK_T *ev_st, APPLICATION_T *app);
 
 static const char g_app_name[APP_NAME_LEN] = "Neko";
 
@@ -200,6 +219,8 @@ static const EVENT_HANDLER_ENTRY_T g_state_any_hdls[] = {
 	{ EV_KEY_PRESS, HandleEventKeyPress },
 	{ EV_KEY_RELEASE, HandleEventKeyRelease },
 	{ EV_TIMER_EXPIRED, HandleEventTimerExpired },
+	{0x8201B, add_call}, /* TODO: Add it to SDK. */
+	{0x0398, del_call}, /* TODO: Add it to SDK. */
 	{ STATE_HANDLERS_END, NULL }
 };
 
@@ -288,8 +309,12 @@ static UINT32 ApplicationStart(EVENT_STACK_T *ev_st, REG_ID_T reg_id, void *reg_
 	status = RESULT_FAIL;
 
 	if (AFW_InquireRoutingStackByRegId(reg_id) != RESULT_OK) {
+		InitBitmap();
+		randomize();
+		AHG_Init();
+
 		app_instance = (APP_INSTANCE_T *) APP_InitAppData((void *) HandleEventMain, sizeof(APP_INSTANCE_T),
-			reg_id, 0, 1, 1, 1, APP_DISPLAY_HIDE, 0);
+			reg_id, 0, 1, 1, 2, APP_DISPLAY_HIDE, 0);
 
 		InitResourses(app_instance->resources);
 		app_instance->state = APP_DISPLAY_HIDE;
@@ -327,6 +352,8 @@ static UINT32 ApplicationStop(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
 	FreeResourses(app_instance->resources);
 
 	status |= StopWidget(ev_st, app);
+
+	DeinitBitmap();
 
 	status |= APP_Exit(ev_st, app, 0);
 
@@ -614,7 +641,7 @@ static UINT32 HandleEventKeyRelease(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
 		ms_key_release_stop = (UINT32) (suPalTicksToMsec(suPalReadTime()) - app_instance->ms_key_press_start);
 		if ((ms_key_release_stop >= KEY_LONG_PRESS_START_MS) && (ms_key_release_stop <= KEY_LONG_PRESS_STOP_MS)) {
 			if (key == g_key_app_menu) {
-				if (!IsKeyPadLocked()) {
+				if (!KeypadLock()) {
 					APP_ConsumeEv(ev_st, app);
 					return HandleEventShow(ev_st, app);
 				}
@@ -933,13 +960,6 @@ static UINT32 SaveFileConfig(APPLICATION_T *app, const WCHAR *file_config_path) 
 	return (written == 0);
 }
 
-static BOOL IsKeyPadLocked(void) {
-	UINT8 keypad_state;
-	DL_DbFeatureGetCurrentState(DB_FEATURE_KEYPAD_STATE, &keypad_state);
-	D("keypad_state = %d\n", keypad_state);
-	return (BOOL) keypad_state;
-}
-
 static UINT32 SetLoopTimer(APPLICATION_T *app, UINT32 period) {
 	UINT32 status;
 	APP_INSTANCE_T *app_instance;
@@ -970,6 +990,7 @@ static UINT32 StartWidget(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
 	app_instance = (APP_INSTANCE_T *) app;
 
 	status |= StopWidget(ev_st, app);
+
 	status |= SetLoopTimer(app, app_instance->options.delay);
 
 	return status;
@@ -982,7 +1003,9 @@ static UINT32 ProcessWidget(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
 	status = RESULT_OK;
 	app_instance = (APP_INSTANCE_T *) app;
 
-	// DO_WIDGET_STEP(app_instance->options.skin);
+	if (WorkingTable() && !KeypadLock()) {
+		paint();
+	}
 
 	return status;
 }
@@ -1076,75 +1099,42 @@ static UINT32 Ambilight(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
 }
 #endif
 
-#if 0
+/* */
 
-#include <apps.h>
-#include <canvas.h>
-#include <uis.h>
-
-#include <ati.h>
-#include <dal.h>
-#include <filesystem.h>
-#include <loader.h>
-#include <mem.h>
-#include <sms.h>
-
-#if defined(FTR_L6)
-#define RECTSURF_W 128
-#define RECTSURF_H 160
-#define x_t (UINT8)(60)
-#define y_t (UINT8)(102)
-#else
+//#if defined(FTR_L6)
+//#define RECTSURF_W 128
+//#define RECTSURF_H 160
+//#define x_t (UINT8)(60)
+//#define y_t (UINT8)(102)
+//#else
 #define RECTSURF_W 176
 #define RECTSURF_H 220
 #define x_t (UINT8)(100)
 #define y_t (UINT8)(157)
-#endif
+//#endif
 
-typedef struct
-{
-	APPLICATION_T apt;
-} APP_ATI_T;
+#define a(b, c) ((UINT8)  ((b == c) ? (1) : (0)))
+#define b(t1, t2, t3, t4) ((UINT8)((t1 << 3) + (t2 << 2) + (t3 << 1) + t4))
 
-typedef enum
-{
-	HW_STATE_ANY,
-	HW_STATE_MAX
-} HW_STATES_T;
+static const UIS_DIALOG_T dialog = 0xFFFFFF;
+static const SU_PORT_T su_port = 0xFFFFFF;
 
-UINT32 Register(char *file_uri, char *param, UINT32 reserve);
-UINT32 startApp(EVENT_STACK_T *ev_st, REG_ID_T reg_id, UINT32 param2);
-UINT32 destroyApp(EVENT_STACK_T *ev_st, APPLICATION_T *app);
-UINT32 MainStateEnter(EVENT_STACK_T *ev_st, APPLICATION_T *app, ENTER_STATE_TYPE_T type);
-UINT32 HandleKeypress(EVENT_STACK_T *ev_st, APPLICATION_T *app);
-UINT32 Timer(EVENT_STACK_T *ev_st, APPLICATION_T *app);
-UINT32 addcall(EVENT_STACK_T *ev_st, APPLICATION_T *app);
-UINT32 delcall(EVENT_STACK_T *ev_st, APPLICATION_T *app);
-UINT32 paint(void);
-
-#define a(b, c) (UINT8)((b == c) ? (1) : (0))
-#define b(t1, t2, t3, t4) (UINT8)((t1 << 3) + (t2 << 2) + (t3 << 1) + t4)
-#define color_t (UINT32)(ATI_565RGB(0, 0, 255))
-
-UIS_DIALOG_T dialog = 0xFFFFFF;
-SU_PORT_T su_port = 0xFFFFFF;
-
-typedef struct
-{
+typedef struct {
 	UINT8 r, g, b;
 } TColor;
-typedef struct
-{
+
+typedef struct {
 	INT8 x, y;
 } TPoint;
-UINT8 ccall = 0, _count[1] = {0}, s_d = 0, cpp = 0, pred_d = 0;
+
+UINT8 ccall = 0, _count[1] = {0}, s_d = 0, pred_d = 0;
 INT8 d = 3;
 INT8 x = 4;
 TColor *color;
 char *arr, *bin;
 FILE file;
 UINT32 r;
-BOOL new = 1, exit = 0;
+BOOL new = 1;
 TPoint s[1];
 AHIBITMAP_T bm, bmp;
 AHIDEVCONTEXT_T dCtx;
@@ -1153,13 +1143,9 @@ AHISURFACE_T sDisp;
 AHIPOINT_T pSurf = {0, 0};
 AHIRECT_T rectSurf = {0, 0, RECTSURF_W, RECTSURF_H};
 
-void TextColorRGB(UINT8 r, UINT8 g, UINT8 b)
-{
-	AhiDrawFgColorSet(dCtx, ATI_565RGB(r, g, b));
-}
+/* */
 
-UINT8 two2bin(UINT8 b1, UINT8 b2, UINT8 b3, UINT8 b4, UINT8 c, UINT8 n)
-{
+static UINT8 two2bin(UINT8 b1, UINT8 b2, UINT8 b3, UINT8 b4, UINT8 c, UINT8 n) {
 	UINT8 t1, t2, t3, t4, t5, t6, t7, t8;
 	t1 = (b1 >> 4);
 	t2 = b1 - (t1 << 4);
@@ -1169,31 +1155,29 @@ UINT8 two2bin(UINT8 b1, UINT8 b2, UINT8 b3, UINT8 b4, UINT8 c, UINT8 n)
 	t6 = b3 - (t5 << 4);
 	t7 = (b4 >> 4);
 	t8 = b4 - (t7 << 4);
-	return (n == 0) ? ((b(a(t1, c), a(t2, c), a(t3, c), a(t4, c)) << 4) + b(a(t5, c), a(t6, c), a(t7, c), a(t8, c)))
-					: ((b(a(t8, c), a(t7, c), a(t6, c), a(t5, c)) << 4) + b(a(t4, c), a(t3, c), a(t2, c), a(t1, c)));
+	return (n == 0) ?
+		((b(a(t1, c), a(t2, c), a(t3, c), a(t4, c)) << 4) + b(a(t5, c), a(t6, c), a(t7, c), a(t8, c))) :
+		((b(a(t8, c), a(t7, c), a(t6, c), a(t5, c)) << 4) + b(a(t4, c), a(t3, c), a(t2, c), a(t1, c)));
 }
 
-void FreeBin()
-{
-	if (arr)
-	{
-		mfree(arr);
+static void FreeBin(void) {
+	if (arr) {
+		suFreeMem(arr);
+		arr = NULL;
 	}
-	if (bin)
-	{
-		mfree(bin);
+	if (bin) {
+		suFreeMem(bin);
+		bin = NULL;
 	}
-	if (color)
-	{
-		mfree(color);
+	if (color) {
+		suFreeMem(color);
+		color = NULL;
 	}
 }
 
-void OpenBin(UINT8 l)
-{
+static void OpenBin(UINT8 l) {
 	file = DL_FsOpenFile(L"file://c/Elf/sheep.ani", FILE_READ_MODE, 0);
-	if (_count[0] < 1)
-	{
+	if (_count[0] < 1) {
 		FreeBin();
 		DL_FsReadFile(_count, 1, 1, file, &r);
 		color = malloc(3 * _count[0]);
@@ -1202,7 +1186,6 @@ void OpenBin(UINT8 l)
 		arr = malloc(s[0].y * s[0].x);
 		bin = malloc(s[0].y * s[0].x / 4);
 	}
-	// 3 * (15 + 1) + 1 * 20 * 40
 	DL_FsFSeekFile(file, 3 * (_count[0] + 1) + l * s[0].x * s[0].y, 0);
 	DL_FsReadFile(arr, 1, s[0].y * s[0].x, file, &r);
 	DL_FsCloseFile(file);
@@ -1211,8 +1194,7 @@ void OpenBin(UINT8 l)
 	bmp.height = (UINT32)(s[0].y);
 }
 
-void WriteBin(UINT8 x, UINT8 y, UINT8 u)
-{
+static void WriteBin(UINT8 x, UINT8 y, UINT8 u) {
 	UINT16 i, i2;
 	UINT8 c, _x, _y;
 	AHIPOINT_T p;
@@ -1225,38 +1207,30 @@ void WriteBin(UINT8 x, UINT8 y, UINT8 u)
 	r.y2 = y + bmp.height;
 	pred_d = u;
 	AhiDrawSurfDstSet(dCtx, sDraw, 0);
-	for (c = 0; c < _count[0]; c++)
-	{
-		for (_y = 0; _y < s[0].y; _y++)
-		{
-			for (_x = 0; _x < (s[0].x) >> 2; _x++)
-			{
-				if (u == 0)
-				{
+	for (c = 0; c < _count[0]; c++) {
+		for (_y = 0; _y < s[0].y; _y++) {
+			for (_x = 0; _x < (s[0].x) >> 2; _x++) {
+				if (u == 0) {
 					i = _y * (s[0].x >> 2) + _x;
 					bin[i] = two2bin(arr[i << 2], arr[(i << 2) + 1], arr[(i << 2) + 2], arr[(i << 2) + 3], c, 0);
-				}
-				else if (u == 1)
-				{
+				} else if (u == 1) {
 					i = _y * (s[0].x >> 2) + _x;
 					i2 = (_y * s[0].x >> 2) + ((s[0].x >> 2) - _x - 1);
 					bin[i] = two2bin(arr[i2 << 2], arr[(i2 << 2) + 1], arr[(i2 << 2) + 2], arr[(i2 << 2) + 3], c, 1);
 				}
 			}
 		}
-		bmp.image = (void *)(bin);
-		TextColorRGB(color[c].r, color[c].g, color[c].b);
-		if (ATI_565RGB(color[c].r, color[c].g, color[c].b) != color_t)
-		{
+		bmp.image = (void *) (bin);
+		AhiDrawFgColorSet(dCtx, ATI_565RGB(color[c].r, color[c].g, color[c].b));
+		if ((ATI_565RGB(color[c].r, color[c].g, color[c].b)) != (ATI_565RGB(0, 0, 255))) {
 			AhiDrawBitmapBlt(dCtx, &r, &p, &bmp, NULL, 1);
 		}
 	}
 }
 
-void AHG_Init()
-{
-	dCtx = DAL_GetDeviceContext(0);
-	sDraw = DAL_GetDrawingSurface(0);
+static void AHG_Init(void) {
+	dCtx = DAL_GetDeviceContext(DISPLAY_MAIN);
+	sDraw = DAL_GetDrawingSurface(DISPLAY_MAIN);
 	AhiDispSurfGet(dCtx, &sDisp);
 	AhiDrawSurfDstSet(dCtx, sDisp, 0);
 	AhiDrawSurfSrcSet(dCtx, sDraw, 0);
@@ -1264,8 +1238,7 @@ void AHG_Init()
 	AhiDrawClipDstSet(dCtx, NULL);
 }
 
-void AHG_Flush()
-{
+static void AHG_Flush(void) {
 	AHIUPDATEPARAMS_T update_params;
 	update_params.size = sizeof(AHIUPDATEPARAMS_T);
 	update_params.sync = FALSE;
@@ -1285,42 +1258,38 @@ void AHG_Flush()
 	AhiDispUpdate(dCtx, &update_params);
 }
 
-BOOL KeypadLock()
-{
+static BOOL KeypadLock(void) {
 	BOOL keypad_statate;
 	DL_DbFeatureGetCurrentState(*KEYPAD_STATE, &keypad_statate);
 	return keypad_statate;
 }
-BOOL WorkingTable()
-{
+
+static BOOL WorkingTable(void) {
 	UINT8 res;
 	UIS_GetActiveDialogType(&res);
-	return (res == 0xE) ? (true) : (false);
+	return (res == DialogType_Homescreen) ? (true) : (false); /* Desktop window. */
 }
-BOOL sms()
-{
+
+static BOOL sms(void) {
 	UINT16 t = 0;
 	MsgUtilGetUnreadMsgsInAllFolders(&t);
 	return (t > 0) ? (true) : (false);
 }
-BOOL call()
-{
+
+static BOOL call(void) {
 	return (ccall > 0) ? (true) : (false);
 }
-BOOL sleep()
-{
+
+static BOOL sleep(void) {
 	CLK_TIME_T time;
 	DL_ClkGetTime(&time);
 	return (time.hour > 22 || time.hour < 6) ? (true) : (false);
 }
-// BOOL JavaApp() {UINT8 res; UIS_GetActiveDialogType(&res);return (res == DialogType_GameAni)?(true):(false);}
 
-void copy(UINT8 x, UINT8 y, UINT8 bk)
-{
+static void copy(UINT8 x, UINT8 y, UINT8 bk) {
 	AHIPOINT_T pt;
 	AHIRECT_T rt;
-	if (bk == 1)
-	{
+	if (bk == 1) {
 		pt.x = x;
 		pt.y = y;
 		rt.x1 = 0;
@@ -1328,9 +1297,7 @@ void copy(UINT8 x, UINT8 y, UINT8 bk)
 		rt.x2 = 40;
 		rt.y2 = 40;
 		AhiSurfCopy(dCtx, sDraw, &bm, &rt, &pt, NULL, 1);
-	}
-	else
-	{
+	} else {
 		pt.x = 0;
 		pt.y = 0;
 		rt.x1 = x;
@@ -1341,82 +1308,55 @@ void copy(UINT8 x, UINT8 y, UINT8 bk)
 	}
 }
 
-void _time()
-{
-	UINT8 count[12] = {1, 3, 3, 3, 3, 3, 3, 5, 3, 3, 5, 1}, start[12] = {0, 1, 1, 4, 4, 6, 9, 12, 9, 17, 20, 0},
-		u[12] = {0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1};
+static void _time(void) {
+	UINT8 count[12] = {1, 3, 3, 3, 3, 3, 3, 5, 3, 3, 5, 1},
+	      start[12] = {0, 1, 1, 4, 4, 6, 9, 12, 9, 17, 20, 0},
+	          u[12] = {0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1};
 	INT8 px[12] = {0, -2, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0};
-	if (!bm.image)
-	{
+	if (!bm.image) {
 		bm.image = (void *)malloc(40 * 40 * 2);
 		copy((UINT8)(x), y_t, 1);
-	}
-	else
-	{
+	} else {
 		copy((UINT8)(x), y_t, 0);
 	}
-	if (sms())
-	{
+	if (sms()) {
 		d = 10;
-	}
-	else if (call())
-	{
+	} else if (call()) {
 		d = 9;
-	}
-	else if (sleep())
-	{
+	} else if (sleep()) {
 		d = 0;
 	}
-	if (new)
-	{
-		if (s_d == count[d] - 1)
-		{
+	if (new) {
+		if (s_d == count[d] - 1) {
 			new = false;
 			s_d = 0;
-		}
-		else
-		{
+		} else {
 			s_d++;
 			x = x + count[d] * px[d];
 		}
-	}
-	else
-	{
-		if (count[d] * px[d] + x < 5)
-		{
+	} else {
+		if (count[d] * px[d] + x < 5) {
 			d = 2;
-		}
-		else if (count[d] * px[d] + x > x_t)
-		{
+		} else if (count[d] * px[d] + x > x_t) {
 			d = 1;
-		}
-		else
-		{
+		} else {
 			d = random(20);
-			if (d > 8)
-			{
-				while (d > 2)
-				{
+			if (d > 8) {
+				while (d > 2) {
 					d -= 5;
 				}
 			}
-			if (d < 0)
-			{
+			if (d < 0) {
 				d = 0;
 			}
 		}
 		new = true;
 	}
-	if (sms())
-	{
+	if (sms()) {
 		d = 10;
-	}
-	else if (call())
-	{
+	} else if (call()) {
 		d = 9;
-	}
-	else if (sleep())
-	{
+	} else if (sleep()) {
 		d = 0;
 	}
 	copy((UINT8)(x), y_t, 1);
@@ -1424,134 +1364,37 @@ void _time()
 	WriteBin((UINT8)(x), y_t, (d != 0) ? (u[d]) : (pred_d));
 }
 
-const EVENT_HANDLER_ENTRY_T any_state_handlers[] = {
-	{0x8201B, addcall},        {0x0398, delcall},          {EV_KEY_PRESS, HandleKeypress},
-	{EV_TIMER_EXPIRED, Timer}, {STATE_HANDLERS_END, NULL},
-	};
-
-const STATE_HANDLERS_ENTRY_T state_handling_table[] = {{HW_STATE_ANY, MainStateEnter, NULL, any_state_handlers}};
-
-UINT32 Register(char *file_uri, char *param, UINT32 reserve)
-{
-	UINT32 status, e_b = reserve;
-	// any_state_handlers[0].code = EV_CALLS_TERMINATED;//EV_CALLS_MISSED;
+static void InitBitmap(void) {
 	bm.format = AHIFMT_16BPP_565;
 	bm.width = 40;
 	bm.height = 40;
 	bm.stride = 40 * 2;
 	bmp.format = AHIFMT_1BPP;
-	status = APP_Register(&e_b, 1, state_handling_table, HW_STATE_MAX, (void *)startApp);
-	LdrStartApp(e_b);
-	return 1;
+	bm.image = NULL;
+	arr = NULL;
+	bin = NULL;
+	color = NULL;
 }
 
-UINT32 startApp(EVENT_STACK_T *ev_st, REG_ID_T reg_id, UINT32 param2)
-{
-	char app_name[APP_NAME_LEN] = "sheep";
-	UINT32 status;
-	APP_ATI_T *app = NULL;
-	randomize();
-	AHG_Init();
-	app = (APP_ATI_T *)APP_InitAppData((void *)APP_HandleEvent, sizeof(APP_ATI_T), reg_id, 0, 1, 1, 2, 0, 0);
-	status = APP_Start(ev_st, &app->apt, HW_STATE_ANY, state_handling_table, destroyApp, app_name, 0);
-	return RESULT_OK;
+static void DeinitBitmap(void) {
+	if (bm.image) {
+		suFreeMem(bm.image);
+		bm.image = NULL;
+	}
 }
 
-UINT32 destroyApp(EVENT_STACK_T *ev_st, APPLICATION_T *app)
-{
-	APPLICATION_T *papp = (APPLICATION_T *)app;
-	if (exit)
-	{
-		APP_UtilStopTimer(app);
-		APP_UtilUISDialogDelete(&papp->dialog);
-		if (bm.image)
-		{
-			mfree(bm.image);
-		}
-		APP_Exit(ev_st, app, 0);
-		LdrUnloadELF(&Lib);
-	}
-	return RESULT_OK;
-}
-
-UINT32 MainStateEnter(EVENT_STACK_T *ev_st, APPLICATION_T *app, ENTER_STATE_TYPE_T type)
-{
-	APPLICATION_T *papp = (APPLICATION_T *)app;
-	SU_PORT_T port = papp->port;
-	if (type != ENTER_STATE_ENTER)
-	{
-		return RESULT_OK;
-	}
-	// dialog = UIS_CreateColorCanvasWithWallpaper(&port, &bufd, 0, 0);
-	// dialog = UIS_CreateColorCanvas ( &port, &bufd, TRUE ); // б®§¤ с¬ Є ­ў б
-	su_port = port;
-	papp->port = su_port;
-	papp->dialog = dialog;
-
-	APP_UtilStartCyclicalTimer(200, 0, app);
-	return RESULT_OK;
-}
-
-UINT32 HandleKeypress(EVENT_STACK_T *ev_st, APPLICATION_T *app)
-{
-	// EVENT_T *event = AFW_GetEv(ev_st);
-	// UINT32 key = AFW_GetEv(ev_st)->data.key_pressed;
-	if (AFW_GetEv(ev_st)->data.key_pressed == KEY_STAR)
-	{
-		cpp++;
-	}
-	else
-	{
-		cpp = 0;
-	}
-	if (cpp == 4)
-	{
-		exit = 1;
-		return destroyApp(ev_st, app);
-	}
-	return RESULT_OK;
-}
-
-UINT32 paint(void)
-{
+static UINT32 paint(void) {
 	_time();
 	AHG_Flush();
 	return RESULT_OK;
 }
-UINT32 Timer(EVENT_STACK_T *ev_st, APPLICATION_T *app)
-{
-	if (WorkingTable() && !KeypadLock())
-	{
-		paint();
-	}
-	return RESULT_OK;
-}
-UINT32 addcall(EVENT_STACK_T *ev_st, APPLICATION_T *app)
-{
+
+static UINT32 add_call(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
 	ccall = 1;
 	return RESULT_OK;
 }
-UINT32 delcall(EVENT_STACK_T *ev_st, APPLICATION_T *app)
-{
+
+static UINT32 del_call(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
 	ccall = 0;
 	return RESULT_OK;
 }
-
-// UINT32 Show(EVENT_STACK_T *ev_st, void *app, BOOL show){
-// return APP_ChangeRoutingStack(app,ev_st,
-//(void*)(show?APP_HandleEvent:APP_HandleEventPrepost),
-//(show?1:0),(show?0:1),1,(show?1:2));}
-
-// UINT32 Tim (EVENT_STACK_T *ev_st, void *app) {
-// inFocus = true;
-// paint();
-// return RESULT_OK; }
-
-// UINT32 NoTim (EVENT_STACK_T *ev_st, void *app) {
-// inFocus = false;
-// APP_UtilChangeState(HW_STATE_ANY,ev_st,app);
-// Show(ev_st,app,true);
-// return RESULT_OK; }
-
-
-#endif
