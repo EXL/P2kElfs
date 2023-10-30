@@ -1,6 +1,6 @@
 /*
  * About:
- *   Fun animated widget for desktop screen.
+ *   Fun animated widget for desktop screen with skin support.
  *
  * Author:
  *   baat, EXL
@@ -24,13 +24,13 @@
 #include <ati.h>
 #include <sms.h>
 
-//#include "icons/icon_ambilight_48x48.h"
+#include "icons/icon_neko_48x48.h"
 
 #define MAX_DELAY_LENGTH            (6)
 #define MIN_DELAY_VALUE             (100)
 #define MAX_DELAY_VALUE             (10000)
-#define KEY_LONG_PRESS_START_MS     (2500)
-#define KEY_LONG_PRESS_STOP_MS      (3500)
+#define KEY_LONG_PRESS_START_MS     (500)
+#define KEY_LONG_PRESS_STOP_MS      (1500)
 
 typedef enum {
 	APP_STATE_ANY,
@@ -157,33 +157,16 @@ static UINT32 StartWidget(EVENT_STACK_T *ev_st, APPLICATION_T *app);
 static UINT32 ProcessWidget(EVENT_STACK_T *ev_st, APPLICATION_T *app);
 static UINT32 StopWidget(EVENT_STACK_T *ev_st, APPLICATION_T *app);
 
-static UINT8 two2bin(UINT8 b1, UINT8 b2, UINT8 b3, UINT8 b4, UINT8 c, UINT8 n);
-static void FreeBin(void);
-static void OpenBin(UINT8 l);
-static void WriteBin(UINT8 x, UINT8 y, UINT8 u);
 static void AHG_Init(void);
-static void AHG_Flush(void);
-
+static UINT32 paint(void);
 static BOOL KeypadLock(void);
 static BOOL WorkingTable(void);
-static BOOL call(void);
-static BOOL sms(void);
-static BOOL sleep(void);
-static void copy(UINT8 x, UINT8 y, UINT8 bk);
-static void _time(void);
 static void InitBitmap(void);
 static void DeinitBitmap(void);
-static UINT32 paint(void);
 static UINT32 add_call(EVENT_STACK_T *ev_st, APPLICATION_T *app);
 static UINT32 del_call(EVENT_STACK_T *ev_st, APPLICATION_T *app);
-static UINT32 dsk_lose(EVENT_STACK_T *ev_st, APPLICATION_T *app);
-static UINT32 dsk_gain(EVENT_STACK_T *ev_st, APPLICATION_T *app);
-static UINT32 act_lose(EVENT_STACK_T *ev_st, APPLICATION_T *app);
-static UINT32 act_gain(EVENT_STACK_T *ev_st, APPLICATION_T *app);
-
-UINT32 desk;
-UINT32 activ = 1;
-UINT32 g_key = 0;
+static UINT32 HandleEventTimeOutInactivities(EVENT_STACK_T *ev_st, APPLICATION_T *app);
+static UINT32 HandleEventTimeOutUserActivity(EVENT_STACK_T *ev_st, APPLICATION_T *app);
 
 static const char g_app_name[APP_NAME_LEN] = "Neko";
 
@@ -222,17 +205,20 @@ static const UINT8 g_key_app_exit = KEY_0;
 
 static WCHAR g_config_file_path[FS_MAX_URI_NAME_LENGTH]; /* TODO: Can it be non-global? */
 
+static BOOL user_activity = TRUE;
+
 static const EVENT_HANDLER_ENTRY_T g_state_any_hdls[] = {
 	{ EV_REVOKE_TOKEN, APP_HandleUITokenRevoked },
 	{ EV_KEY_PRESS, HandleEventKeyPress },
 	{ EV_KEY_RELEASE, HandleEventKeyRelease },
 	{ EV_TIMER_EXPIRED, HandleEventTimerExpired },
-	{0x8201B, add_call}, /* TODO: Add it to SDK. */
-	{0x0398, del_call}, /* TODO: Add it to SDK. */
-	{0x0768, dsk_lose },
-	{ 0x0767, dsk_gain },
-	{ 0x07F2, act_lose },
-	{ 0x07F1, act_gain },
+	{ 0x8201B, add_call}, /* TODO: Add it to SDK. */
+	{ 0x0398, del_call}, /* TODO: Add it to SDK. */
+	{ EV_USER_ACTIVITY_TIMEOUT, HandleEventTimeOutUserActivity },
+	{ EV_SCREENSAVER_TIMEOUT, HandleEventTimeOutInactivities },
+	{ EV_DISPLAY_TIMEOUT, HandleEventTimeOutInactivities },
+	{ EV_BACKLIGHT_TIMEOUT, HandleEventTimeOutInactivities },
+	{ EV_INACTIVITY_TIMEOUT, HandleEventTimeOutInactivities },
 	{ STATE_HANDLERS_END, NULL }
 };
 
@@ -321,12 +307,8 @@ static UINT32 ApplicationStart(EVENT_STACK_T *ev_st, REG_ID_T reg_id, void *reg_
 	status = RESULT_FAIL;
 
 	if (AFW_InquireRoutingStackByRegId(reg_id) != RESULT_OK) {
-		InitBitmap();
-		randomize();
-		AHG_Init();
-
 		app_instance = (APP_INSTANCE_T *) APP_InitAppData((void *) HandleEventMain, sizeof(APP_INSTANCE_T),
-			reg_id, 0, 1, 1, 2, APP_DISPLAY_HIDE, 0);
+			reg_id, 0, 1, 1, 1, APP_DISPLAY_HIDE, 0);
 
 		InitResourses(app_instance->resources);
 		app_instance->state = APP_DISPLAY_HIDE;
@@ -364,9 +346,6 @@ static UINT32 ApplicationStop(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
 	FreeResourses(app_instance->resources);
 
 	status |= StopWidget(ev_st, app);
-
-	DeinitBitmap();
-
 	status |= APP_Exit(ev_st, app, 0);
 
 	LdrUnloadELF(&Lib);
@@ -386,8 +365,8 @@ static UINT32 InitResourses(RESOURCE_ID *resources) {
 	status |= DRM_CreateResource(&resources[APP_RESOURCE_STRING_DELAY], RES_TYPE_STRING,
 		(void *) g_str_e_delay, (u_strlen(g_str_e_delay) + 1) * sizeof(WCHAR));
 
-//	status |= DRM_CreateResource(&resources[APP_RESOURCE_ICON_AMBILIGHT], RES_TYPE_GRAPHICS,
-//		(void *) ambilight_48x48_gif, sizeof(ambilight_48x48_gif));
+	status |= DRM_CreateResource(&resources[APP_RESOURCE_ICON_NEKO], RES_TYPE_GRAPHICS,
+		(void *) neko_48x48_gif, sizeof(neko_48x48_gif));
 
 	return status;
 }
@@ -498,7 +477,7 @@ static UINT32 HandleStateEnter(EVENT_STACK_T *ev_st, APPLICATION_T *app, ENTER_S
 					break;
 				case APP_VIEW_ABOUT:
 					UIS_MakeContentFromString("q0NMCp1NMCq2NMCq3NMCq4NMCq5NMCq6", &content, g_str_app_name,
-						NULL,/*app_instance->resources[APP_RESOURCE_ICON_AMBILIGHT],*/
+						app_instance->resources[APP_RESOURCE_ICON_NEKO],
 						g_str_about_content_p1, g_str_about_content_p2, g_str_about_content_p3,
 						g_str_about_content_p4, g_str_about_content_p4);
 					break;
@@ -628,15 +607,6 @@ static UINT32 HandleEventKeyPress(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
 	app_instance = (APP_INSTANCE_T *) app;
 	event = AFW_GetEv(ev_st);
 	key = event->data.key_pressed;
-
-	if (key == KEY_6) {
-		g_key = 1;
-		activ = 1;
-	}
-	if (key == KEY_4) {
-		g_key = 0;
-		activ = 1;
-	}
 
 	if (key == g_key_app_menu || key == g_key_app_exit) {
 		app_instance->ms_key_press_start = suPalTicksToMsec(suPalReadTime());
@@ -1012,6 +982,10 @@ static UINT32 StartWidget(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
 
 	status |= StopWidget(ev_st, app);
 
+	InitBitmap();
+	randomize();
+	AHG_Init();
+
 	status |= SetLoopTimer(app, app_instance->options.delay);
 
 	return status;
@@ -1024,14 +998,9 @@ static UINT32 ProcessWidget(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
 	status = RESULT_OK;
 	app_instance = (APP_INSTANCE_T *) app;
 
-	if (WorkingTable() && !KeypadLock() && desk && activ) {
-		if (g_key > 3) {
-			paint();
-			D("%s\n", "Paint!");
-		} else {
-			D("%s\n", "Damn!");
-			g_key++;
-		}
+	if (WorkingTable() && !KeypadLock() && user_activity) {
+		paint();
+		D("%s\n", "Paint!");
 	}
 
 	return status;
@@ -1047,104 +1016,31 @@ static UINT32 StopWidget(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
 	status |= SetLoopTimer(app, 0);
 	status |= APP_UtilStopTimer(app);
 
-	return status;
-}
-#if 0
-static UINT32 Ambilight(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
-	UINT32 status;
-	INT32 result;
-	AHIDRVINFO_T *ahi_driver_info;
-	AHIDEVICE_T ahi_device;
-	AHIDEVCONTEXT_T ahi_device_context;
-	AHISURFACE_T ahi_surface;
-	AHISURFINFO_T ahi_surface_info;
-	AHIBITMAP_T ahi_bitmap;
-	AHIRECT_T ahi_rect;
-	AHIPOINT_T ahi_point;
-	UINT16 rgb444;
-
-	status = RESULT_OK;
-	result = RESULT_OK;
-
-	if (IsKeyPadLocked()) {
-		HAPI_LP393X_set_tri_color_led(0, 0x000);
-		return status;
-	}
-
-	ahi_driver_info = suAllocMem(sizeof(AHIDRVINFO_T), &result);
-	if (!ahi_driver_info && result) {
-		return RESULT_FAIL;
-	}
-	status |= AhiDevEnum(&ahi_device, ahi_driver_info, 0);
-	if (status != RESULT_OK) {
-		return RESULT_FAIL;
-	}
-	status |= AhiDevOpen(&ahi_device_context, ahi_device, "Ambilight", 0);
-	if (status != RESULT_OK) {
-		return RESULT_FAIL;
-	}
-
-	status |= AhiDispSurfGet(ahi_device_context, &ahi_surface);
-	status |= AhiDrawSurfDstSet(ahi_device_context, ahi_surface, 0);
-	status |= AhiDrawClipDstSet(ahi_device_context, NULL);
-	status |= AhiDrawClipSrcSet(ahi_device_context, NULL);
-
-	status |= AhiSurfInfo(ahi_device_context, ahi_surface, &ahi_surface_info);
-
-	ahi_bitmap.width = ahi_surface_info.width;
-	ahi_bitmap.height = ahi_surface_info.height;
-	ahi_bitmap.stride =
-		ahi_surface_info.width * (ahi_surface_info.byteSize / (ahi_surface_info.width * ahi_surface_info.height));
-	ahi_bitmap.format = AHIFMT_16BPP_565;
-	ahi_bitmap.image  = (void *) display_source_buffer;
-
-	ahi_rect.x1 = 0;
-	ahi_rect.y1 = 0;
-	ahi_rect.x2 = 0 + ahi_surface_info.width;
-	ahi_rect.y2 = 0 + 1; /* 1-pixel line. */
-
-	ahi_point.x = 0;
-	ahi_point.y = 0;
-
-	status |= AhiSurfCopy(ahi_device_context, ahi_surface, &ahi_bitmap, &ahi_rect, &ahi_point, 0, AHIFLAG_COPYFROM);
-
-	rgb444 = GetAverageColorRGB444(
-		ev_st,
-		app,
-		(AMBILIGHT_RECT_CONSTANT * 2),
-		ahi_surface_info.width - (AMBILIGHT_RECT_CONSTANT * 2) * 2
-		);
-
-	HAPI_LP393X_set_tri_color_led(0, rgb444);
-
-	status |= AhiDevClose(ahi_device_context);
-	if (ahi_driver_info) {
-		suFreeMem(ahi_driver_info);
-	}
+	DeinitBitmap();
 
 	return status;
 }
-#endif
 
-/* */
-
-//#if defined(FTR_L6)
-//#define RECTSURF_W 128
-//#define RECTSURF_H 160
-//#define x_t (UINT8)(60)
-//#define y_t (UINT8)(102)
-//#else
-#define RECTSURF_W 176
-#define RECTSURF_H 220
-#define x_t (UINT8)(100)
-#define y_t (UINT8)(157)
-//#endif
+static UINT8 RECTSURF_W = DISPLAY_WIDTH;
+static UINT8 RECTSURF_H = DISPLAY_HEIGHT;
+static UINT8 x_t = 100;
+static UINT8 y_t = 157;
+static BOOL is_cSTN_128p_DISPLAY = FALSE;
 
 #define a(b, c) ((UINT8)  ((b == c) ? (1) : (0)))
 #define b(t1, t2, t3, t4) ((UINT8)((t1 << 3) + (t2 << 2) + (t3 << 1) + t4))
 
-static const UIS_DIALOG_T dialog = 0xFFFFFF;
-static const SU_PORT_T su_port = 0xFFFFFF;
+static UINT8 two2bin(UINT8 b1, UINT8 b2, UINT8 b3, UINT8 b4, UINT8 c, UINT8 n);
+static void FreeBin(void);
+static void OpenBin(UINT8 l);
+static void WriteBin(UINT8 x, UINT8 y, UINT8 u);
+static void AHG_Flush(void);
+
+static BOOL call(void);
+static BOOL sms(void);
+static BOOL sleep(void);
+static void copy(UINT8 x, UINT8 y, UINT8 bk);
+static void _time(void);
 
 typedef struct {
 	UINT8 r, g, b;
@@ -1154,23 +1050,21 @@ typedef struct {
 	INT8 x, y;
 } TPoint;
 
-UINT8 ccall = 0, _count[1] = {0}, s_d = 0, pred_d = 0;
-INT8 d = 3;
-INT8 x = 4;
-TColor *color;
-char *arr, *bin;
-FILE file;
-UINT32 r;
-BOOL new = 1;
-TPoint s[1];
-AHIBITMAP_T bm, bmp;
-AHIDEVCONTEXT_T dCtx;
-AHISURFACE_T sDraw;
-AHISURFACE_T sDisp;
-AHIPOINT_T pSurf = {0, 0};
-AHIRECT_T rectSurf = {0, 0, RECTSURF_W, RECTSURF_H};
-
-/* */
+static UINT8 ccall = 0, _count[1] = {0}, s_d = 0, pred_d = 0;
+static INT8 d = 3;
+static INT8 x = 4;
+static TColor *color = NULL;
+static char *arr = NULL, *bin = NULL;
+static FILE file = NULL;
+static UINT32 r = 0;
+static BOOL new = 1;
+static TPoint s[1] = {0};
+static AHIBITMAP_T bm, bmp;
+static AHIDEVCONTEXT_T dCtx = 0;
+static AHISURFACE_T sDraw = 0;
+static AHISURFACE_T sDisp = 0;
+static AHIPOINT_T pSurf = {0, 0};
+static AHIRECT_T rectSurf = {0, 0, 0, 0};
 
 static UINT8 two2bin(UINT8 b1, UINT8 b2, UINT8 b3, UINT8 b4, UINT8 c, UINT8 n) {
 	UINT8 t1, t2, t3, t4, t5, t6, t7, t8;
@@ -1256,8 +1150,28 @@ static void WriteBin(UINT8 x, UINT8 y, UINT8 u) {
 }
 
 static void AHG_Init(void) {
+	AHIDISPMODE_T mode;
 	dCtx = DAL_GetDeviceContext(DISPLAY_MAIN);
 	sDraw = DAL_GetDrawingSurface(DISPLAY_MAIN);
+
+	AhiDispModeGet(dCtx, &mode);
+	is_cSTN_128p_DISPLAY = (mode.size.x == 128);
+	if (is_cSTN_128p_DISPLAY) {
+		RECTSURF_W = 128;
+		RECTSURF_H = 160;
+		x_t = 60;
+		y_t = 102;
+	} else {
+		RECTSURF_W = DISPLAY_WIDTH;
+		RECTSURF_H = DISPLAY_HEIGHT;
+		x_t = 100;
+		y_t = 157;
+	}
+	rectSurf.x1 = 0;
+	rectSurf.y1 = 0;
+	rectSurf.x2 = RECTSURF_W;
+	rectSurf.y2 = RECTSURF_H;
+
 	AhiDispSurfGet(dCtx, &sDisp);
 	AhiDrawSurfDstSet(dCtx, sDisp, 0);
 	AhiDrawSurfSrcSet(dCtx, sDraw, 0);
@@ -1266,14 +1180,6 @@ static void AHG_Init(void) {
 }
 
 static void AHG_Flush(void) {
-	AHIUPDATEPARAMS_T update_params;
-	update_params.size = sizeof(AHIUPDATEPARAMS_T);
-	update_params.sync = FALSE;
-	update_params.rect.x1 = 0;
-	update_params.rect.y1 = 0;
-	update_params.rect.x2 = 0 + RECTSURF_W;
-	update_params.rect.y2 = 0 + RECTSURF_H;
-
 	AhiDrawSurfSrcSet(dCtx, sDraw, 0);
 	AhiDrawSurfDstSet(dCtx, sDisp, 0);
 	AhiDrawClipSrcSet(dCtx, NULL);
@@ -1281,8 +1187,19 @@ static void AHG_Flush(void) {
 	AhiDrawRopSet(dCtx, AHIROP3(AHIROP_SRCCOPY));
 	AhiDrawBitBlt(dCtx, &rectSurf, &pSurf);
 
-//	AhiDispWaitVBlank(dCtx, 0);
-	AhiDispUpdate(dCtx, &update_params);
+	/* TODO: Is this even necessary? */
+	/* AhiDispWaitVBlank(dCtx, 0); */
+
+	if (is_cSTN_128p_DISPLAY) {
+		AHIUPDATEPARAMS_T update_params;
+		update_params.size = sizeof(AHIUPDATEPARAMS_T);
+		update_params.sync = FALSE;
+		update_params.rect.x1 = 0;
+		update_params.rect.y1 = 0;
+		update_params.rect.x2 = 0 + RECTSURF_W;
+		update_params.rect.y2 = 0 + RECTSURF_H;
+		AhiDispUpdate(dCtx, &update_params);
+	}
 }
 
 static BOOL KeypadLock(void) {
@@ -1426,33 +1343,53 @@ static UINT32 del_call(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
 	return RESULT_OK;
 }
 
-static UINT32 dsk_lose(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
-	desk = 0;
+/*
+ *  APP_EV_INACTIVITYTIMERMANAGER_UIS_TIMEOUT, /7EC
+ *  APP_EV_INACTIVITYTIMERMANAGER_UIS_ACTIVITY, /7ED
+ *  APP_EV_USER_ACTIVITY, / 7EE
+ *  APP_EV_ACTIVATE_BACKLIGHT, / 7EF
+ *
+ *  APP_EV_SS_TIMEOUT, / 7F0
+ *  APP_EV_DISPLAY_TIMEOUT, / 7F1
+ *  APP_EV_BACKLIGHT_TIMEOUT, / 7F2
+ *  APP_EV_INACTIVITY_TIMEOUT, / 7F3
+ *
+ * Screensaver enter.
+ * e7ec:1364: Debug Line!
+ * e7f0:1392: Debug Line!
+ * e7f2:1406: Debug Line!
+ * e7ed:1371: Debug Line!
+ *
+ * Inactivity screen with time enter.
+ * e7f1:1399: Debug Line!
+ * e7f2:1406: Debug Line!
+ * e7ed:1371: Debug Line!
+ * DATAFLOW ERROR: 20, 64
+ *
+ * Inactivity screen with time exit.
+ * e7ed:1371: Debug Line!
+ * e7ee:1378: Debug Line!
+ */
+
+/*
+ * APP_EV_USER_ACTIVITY, / 7EE
+ */
+static UINT32 HandleEventTimeOutUserActivity(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
+	user_activity = TRUE;
 
 	P();
 
 	return RESULT_OK;
 }
 
-static UINT32 dsk_gain(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
-	desk = 1;
-	g_key = 0;
-
-	P();
-
-	return RESULT_OK;
-}
-
-static UINT32 act_lose(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
-	activ = 0;
-
-	P();
-
-	return RESULT_OK;
-}
-
-static UINT32 act_gain(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
-	activ = 1;
+/*
+ * APP_EV_SS_TIMEOUT, / 7F0
+ * APP_EV_DISPLAY_TIMEOUT, / 7F1
+ * APP_EV_BACKLIGHT_TIMEOUT, / 7F2
+ * APP_EV_INACTIVITY_TIMEOUT, / 7F3
+ */
+static UINT32 HandleEventTimeOutInactivities(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
+	user_activity = FALSE;
 
 	P();
 
