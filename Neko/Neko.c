@@ -196,7 +196,7 @@ static const WCHAR g_str_help_content_p1[] =
 	L"Sheep - The Sheep.\n\n"
 	L"You can set refresh delay of widget on desktop screen.\n";
 static const WCHAR g_str_about_content_p1[] = L"Version: 1.0";
-static const WCHAR g_str_about_content_p2[] = L"\x00A9 EXL, 29-Oct-2023.";
+static const WCHAR g_str_about_content_p2[] = L"\x00A9 baat & EXL, 2010, 29-Oct-2023.";
 static const WCHAR g_str_about_content_p3[] = L"https://github.com/EXL/P2kElfs/tree/master/Neko";
 static const WCHAR g_str_about_content_p4[] = L"       "; /* HACK: gap */
 
@@ -1240,7 +1240,7 @@ static void copy(UINT8 x, UINT8 y, UINT8 bk) {
 		rt.y1 = 0;
 		rt.x2 = 40;
 		rt.y2 = 40;
-		AhiSurfCopy(dCtx, sDraw, &bm, &rt, &pt, NULL, 1);
+		AhiSurfCopy(dCtx, sDraw, &bm, &rt, &pt, NULL, AHIFLAG_COPYFROM);
 	} else {
 		pt.x = 0;
 		pt.y = 0;
@@ -1248,7 +1248,7 @@ static void copy(UINT8 x, UINT8 y, UINT8 bk) {
 		rt.y1 = y;
 		rt.x2 = x + 40;
 		rt.y2 = y + 40;
-		AhiSurfCopy(dCtx, sDraw, &bm, &rt, &pt, NULL, 0);
+		AhiSurfCopy(dCtx, sDraw, &bm, &rt, &pt, NULL, AHIFLAG_COPYTO);
 	}
 }
 
@@ -1325,6 +1325,7 @@ static void DeinitBitmap(void) {
 		suFreeMem(bm.image);
 		bm.image = NULL;
 	}
+	_count[0] = 0;
 }
 
 static UINT32 paint(void) {
