@@ -80,6 +80,7 @@ typedef enum {
 	APP_SELECT_ITEM_NEKO = APP_SELECT_ITEM_FIRST,
 	APP_SELECT_ITEM_KITTY,
 	APP_SELECT_ITEM_SHEEP,
+	APP_SELECT_ITEM_PEPE,
 	APP_SELECT_ITEM_MAX
 } APP_SELECT_ITEM_T;
 
@@ -174,10 +175,11 @@ static const char g_app_name[APP_NAME_LEN] = "Neko";
 
 static const WCHAR g_str_app_name[] = L"Neko";
 static const WCHAR g_str_skin[] = L"Skin:";
-static const WCHAR g_str_e_skin[] = L"Skin";
+static const WCHAR g_str_e_skin[] = L"Choose skin";
 static const WCHAR g_str_skin_neko[] = L"Neko";
 static const WCHAR g_str_skin_kitty[] = L"Kitty";
 static const WCHAR g_str_skin_sheep[] = L"Sheep";
+static const WCHAR g_str_skin_pepe[] = L"Pepe";
 static const WCHAR g_str_delay[] = L"Delay (in ms):";
 static const WCHAR g_str_e_delay[] = L"Delay (in ms)";
 static const WCHAR g_str_reset[] = L"Reset to default";
@@ -211,7 +213,8 @@ static WCHAR g_ani_files[APP_SELECT_ITEM_MAX][MAX_PATH_LENGTH];
 static const WCHAR g_ani_file_names[APP_SELECT_ITEM_MAX][MAX_NAME_LENGTH] = {
 	L"Neko.ani",
 	L"Kitty.ani",
-	L"Sheep.ani"
+	L"Sheep.ani",
+	L"Pepe.ani"
 };
 
 static BOOL g_user_activity = TRUE;
@@ -905,6 +908,9 @@ static UINT32 SendSelectItemsToList(EVENT_STACK_T *ev_st, APPLICATION_T *app, UI
 	status |= UIS_MakeContentFromString("q0",
 		&list[APP_SELECT_ITEM_SHEEP].content.static_entry.text,
 		g_str_skin_sheep);
+	status |= UIS_MakeContentFromString("q0",
+		&list[APP_SELECT_ITEM_PEPE].content.static_entry.text,
+		g_str_skin_pepe);
 
 	status |= APP_UtilAddEvUISListData(ev_st, app, 0, start, APP_SELECT_ITEM_MAX, FBF_LEAVE,
 		sizeof(LIST_ENTRY_T) * APP_SELECT_ITEM_MAX, list);
@@ -926,6 +932,8 @@ static const WCHAR *GetTriggerOptionString(APP_SELECT_ITEM_T item) {
 			return g_str_skin_kitty;
 		case APP_SELECT_ITEM_SHEEP:
 			return g_str_skin_sheep;
+		case APP_SELECT_ITEM_PEPE:
+			return g_str_skin_pepe;
 	}
 }
 
@@ -1189,7 +1197,7 @@ static void AHG_Init(void) {
 		RECTSURF_W = DISPLAY_WIDTH;
 		RECTSURF_H = DISPLAY_HEIGHT;
 		x_t = 100;
-		y_t = 157;
+		y_t = 158;
 	}
 	rectSurf.x1 = 0;
 	rectSurf.y1 = 0;
