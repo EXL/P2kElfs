@@ -223,8 +223,8 @@ static const EVENT_HANDLER_ENTRY_T g_state_any_hdls[] = {
 	{ EV_KEY_PRESS, HandleEventKeyPress },
 	{ EV_KEY_RELEASE, HandleEventKeyRelease },
 	{ EV_TIMER_EXPIRED, HandleEventTimerExpired },
-	{ 0x8201B, add_call}, /* TODO: Add it to SDK. */
-	{ 0x0398, del_call}, /* TODO: Add it to SDK. */
+	{ EV_ADD_MISSED_CALL, add_call},
+	{ EV_REMOVE_MISSED_CALL, del_call},
 	{ EV_USER_ACTIVITY_TIMEOUT, HandleEventTimeOutUserActivity },
 	{ EV_SCREENSAVER_TIMEOUT, HandleEventTimeOutInactivities },
 	{ EV_DISPLAY_TIMEOUT, HandleEventTimeOutInactivities },
