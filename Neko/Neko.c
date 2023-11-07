@@ -27,8 +27,10 @@
 #include "icons/icon_neko_48x48.h"
 
 #define MAX_DELAY_LENGTH            (6)
-#define MIN_DELAY_VALUE             (100)
+#define MIN_DELAY_VALUE             (200)
 #define MAX_DELAY_VALUE             (10000)
+#define MAX_PATH_LENGTH             (FS_MAX_URI_NAME_LENGTH / 3) /* 88*2 bytes is enough. */
+#define MAX_NAME_LENGTH             (32)
 #define KEY_LONG_PRESS_START_MS     (500)
 #define KEY_LONG_PRESS_STOP_MS      (1500)
 
@@ -205,7 +207,16 @@ static const UINT8 g_key_app_exit = KEY_0;
 
 static WCHAR g_config_file_path[FS_MAX_URI_NAME_LENGTH]; /* TODO: Can it be non-global? */
 
-static BOOL user_activity = TRUE;
+static WCHAR g_ani_files[APP_SELECT_ITEM_MAX][MAX_PATH_LENGTH];
+static const WCHAR g_ani_file_names[APP_SELECT_ITEM_MAX][MAX_NAME_LENGTH] = {
+	L"Neko.ani",
+	L"Kitty.ani",
+	L"Sheep.ani"
+};
+
+static BOOL g_user_activity = TRUE;
+static BOOL g_ani_file_is_ok = FALSE;
+static APP_SELECT_ITEM_T selected_skin = APP_SELECT_ITEM_NEKO;
 
 static const EVENT_HANDLER_ENTRY_T g_state_any_hdls[] = {
 	{ EV_REVOKE_TOKEN, APP_HandleUITokenRevoked },
@@ -286,6 +297,7 @@ static const STATE_HANDLERS_ENTRY_T g_state_table_hdls[] = {
 UINT32 Register(const char *elf_path_uri, const char *args, UINT32 ev_code) {
 	UINT32 status;
 	UINT32 ev_code_base;
+	UINT32 i;
 
 	ev_code_base = ev_code;
 
@@ -294,6 +306,12 @@ UINT32 Register(const char *elf_path_uri, const char *args, UINT32 ev_code) {
 	u_atou(elf_path_uri, g_config_file_path);
 	g_config_file_path[u_strlen(g_config_file_path) - 3] = '\0';
 	u_strcat(g_config_file_path, L"cfg");
+
+	for (i = 0; i < APP_SELECT_ITEM_MAX; ++i) {
+		u_atou(elf_path_uri, g_ani_files[i]);
+		*(u_strrchr(g_ani_files[i], L'/') + 1) = '\0';
+		u_strcat(g_ani_files[i], g_ani_file_names[i]);
+	}
 
 	LdrStartApp(ev_code_base);
 
@@ -726,6 +744,9 @@ static UINT32 HandleEventSelectDone(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
 	app_instance->options.skin = event->data.index - 1;
 	app_instance->popup = APP_POPUP_CHANGED;
 
+	selected_skin = app_instance->options.skin;
+	g_ani_file_is_ok = DL_FsFFileExist(g_ani_files[selected_skin]);
+
 	StartWidget(ev_st, app);
 
 	status |= SaveFileConfig(app, g_config_file_path);
@@ -933,6 +954,9 @@ static UINT32 ReadFileConfig(APPLICATION_T *app, const WCHAR *file_config_path) 
 	DL_FsReadFile(&app_instance->options, sizeof(APP_OPTIONS_T), 1, file_config, &readen);
 	DL_FsCloseFile(file_config);
 
+	selected_skin = app_instance->options.skin;
+	g_ani_file_is_ok = DL_FsFFileExist(g_ani_files[selected_skin]);
+
 	return (readen == 0);
 }
 
@@ -998,7 +1022,7 @@ static UINT32 ProcessWidget(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
 	status = RESULT_OK;
 	app_instance = (APP_INSTANCE_T *) app;
 
-	if (WorkingTable() && !KeypadLock() && user_activity) {
+	if (WorkingTable() && !KeypadLock() && g_user_activity && g_ani_file_is_ok) {
 		paint();
 		D("%s\n", "Paint!");
 	}
@@ -1097,7 +1121,7 @@ static void FreeBin(void) {
 }
 
 static void OpenBin(UINT8 l) {
-	file = DL_FsOpenFile(L"file://c/Elf/sheep.ani", FILE_READ_MODE, 0);
+	file = DL_FsOpenFile(g_ani_files[selected_skin], FILE_READ_MODE, 0);
 	if (_count[0] < 1) {
 		FreeBin();
 		DL_FsReadFile(_count, 1, 1, file, &r);
@@ -1376,7 +1400,7 @@ static UINT32 del_call(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
  * APP_EV_USER_ACTIVITY, / 7EE
  */
 static UINT32 HandleEventTimeOutUserActivity(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
-	user_activity = TRUE;
+	g_user_activity = TRUE;
 
 	P();
 
@@ -1390,7 +1414,7 @@ static UINT32 HandleEventTimeOutUserActivity(EVENT_STACK_T *ev_st, APPLICATION_T
  * APP_EV_INACTIVITY_TIMEOUT, / 7F3
  */
 static UINT32 HandleEventTimeOutInactivities(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
-	user_activity = FALSE;
+	g_user_activity = FALSE;
 
 	P();
 
