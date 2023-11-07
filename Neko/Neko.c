@@ -1166,8 +1166,8 @@ static void WriteBin(UINT8 x, UINT8 y, UINT8 u) {
 			}
 		}
 		bmp.image = (void *) (bin);
-		AhiDrawFgColorSet(dCtx, ATI_565RGB(color[c].r, color[c].g, color[c].b));
 		if ((ATI_565RGB(color[c].r, color[c].g, color[c].b)) != (ATI_565RGB(0, 0, 255))) {
+			AhiDrawFgColorSet(dCtx, ATI_565RGB(color[c].r, color[c].g, color[c].b));
 			AhiDrawBitmapBlt(dCtx, &r, &p, &bmp, NULL, 1);
 		}
 	}
@@ -1251,7 +1251,7 @@ static BOOL call(void) {
 static BOOL sleep(void) {
 	CLK_TIME_T time;
 	DL_ClkGetTime(&time);
-	return (time.hour > 23 || time.hour < 6) ? (true) : (false);
+	return (time.hour > 22 || time.hour < 6) ? (true) : (false);
 }
 
 static void copy(UINT8 x, UINT8 y, UINT8 bk) {

@@ -21,9 +21,10 @@ import PIL
 from PIL import Image
 
 def print_help():
-	print('Usage:\n\t./bmp2ani.py [filename].[ani|bmp]')
+	print('Usage:\n\t./bmp2ani.py [filename].[ani|bmp|bm4]')
 	print('Example:\n\t./bmp2ani.py sheep.ani')
-	print('Example:\n\t./bmp2ani.py sheep.bmp')
+	print('\t./bmp2ani.py sheep.bmp')
+	print('\t./bmp2ani.py sheep.bm4')
 
 def convert_bmp_palette_to_ani_palette(bmp_palette):
 	ani_palette = bytearray()
