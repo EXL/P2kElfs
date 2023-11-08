@@ -179,7 +179,7 @@ static const WCHAR g_str_e_skin[] = L"Skin";
 static const WCHAR g_str_skin_neko[] = L"Neko-Arc";
 static const WCHAR g_str_skin_kitty[] = L"Kitty";
 static const WCHAR g_str_skin_sheep[] = L"Sheep";
-static const WCHAR g_str_skin_pepe[] = L"Pepe the Frog";
+static const WCHAR g_str_skin_pepe[] = L"PepeD";
 static const WCHAR g_str_delay[] = L"Delay (in ms):";
 static const WCHAR g_str_e_delay[] = L"Delay (in ms)";
 static const WCHAR g_str_reset[] = L"Reset to default";
@@ -198,7 +198,7 @@ static const WCHAR g_str_help_content_p1[] =
 	L"1. Neko-Arc.\n"
 	L"2. Kitty.\n"
 	L"3. Sheep.\n"
-	L"4. Pepe the Frog.\n\n"
+	L"4. PepeD.\n\n"
 	L"You can set refresh delay in 0.2-10 sec. of widget on desktop screen.\n";
 static const WCHAR g_str_about_content_p1[] = L"Version: 1.0";
 static const WCHAR g_str_about_content_p2[] = L"\x00A9 baat & EXL, 2010, 29-Oct-2023.";
@@ -230,7 +230,7 @@ static const EVENT_HANDLER_ENTRY_T g_state_any_hdls[] = {
 	{ EV_USER_ACTIVITY_TIMEOUT, HandleEventTimeOutUserActivity },
 	{ EV_SCREENSAVER_TIMEOUT, HandleEventTimeOutInactivities },
 	{ EV_DISPLAY_TIMEOUT, HandleEventTimeOutInactivities },
-	{ EV_BACKLIGHT_TIMEOUT, HandleEventTimeOutInactivities },
+	/* { EV_BACKLIGHT_TIMEOUT, HandleEventTimeOutInactivities }, */
 	{ EV_INACTIVITY_TIMEOUT, HandleEventTimeOutInactivities },
 	{ EV_ADD_MISSED_CALL, add_call},
 	{ EV_REMOVE_MISSED_CALL, del_call},
