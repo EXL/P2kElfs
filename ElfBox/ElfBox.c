@@ -9,7 +9,7 @@
  *   MIT
  *
  * Application type:
- *   GUI
+ *   GUI + ElfLoader
  */
 
 #include <loader.h>
