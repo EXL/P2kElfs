@@ -1,4 +1,4 @@
-:: This make_ep1.bat script was created by EXL, 13-Oct-2023.
+:: This make_ep1.bat script was created by EXL, 29-Oct-2023.
 :: Default platform is Motorola P2K, ElfPack v1.x, ADS1.2 [Build 848] on Windows.
 :: Warning: `-nodebug` flag option for `armlink` is buggy.
 
@@ -26,8 +26,7 @@ set LIB_PATH=%ARM_PATH%\lib
 set LIB_MAIN=Lib.o
 
 :: Defines.
-set DEFINES=-D__P2K__ -DEP1 -DDEBUG
-:: -DFTR_L6
+set DEFINES=-D__P2K__ -DEP1
 :: set DEFINES=-D__P2K__ -DEP1 -DFTR_V600
 
 :: Project/ELF name.

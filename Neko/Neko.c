@@ -176,10 +176,10 @@ static const char g_app_name[APP_NAME_LEN] = "Neko";
 static const WCHAR g_str_app_name[] = L"Neko";
 static const WCHAR g_str_skin[] = L"Skin:";
 static const WCHAR g_str_e_skin[] = L"Skin";
-static const WCHAR g_str_skin_neko[] = L"Neko";
+static const WCHAR g_str_skin_neko[] = L"Neko-Arc";
 static const WCHAR g_str_skin_kitty[] = L"Kitty";
 static const WCHAR g_str_skin_sheep[] = L"Sheep";
-static const WCHAR g_str_skin_pepe[] = L"Pepe Frog";
+static const WCHAR g_str_skin_pepe[] = L"Pepe the Frog";
 static const WCHAR g_str_delay[] = L"Delay (in ms):";
 static const WCHAR g_str_e_delay[] = L"Delay (in ms)";
 static const WCHAR g_str_reset[] = L"Reset to default";
@@ -192,13 +192,14 @@ static const WCHAR g_str_changed[] = L"Changed:";
 static const WCHAR g_str_reseted[] = L"All settings have been reset to default values!";
 static const WCHAR g_str_warn_reset[] = L"Do you want to reset settings to default?";
 static const WCHAR g_str_help_content_p1[] =
-	L"Some widget application.\n\n"
+	L"Fun animated widget for desktop screen with skin support.\n\n"
 	L"Press and hold the right soft key for 2.5-3.5 seconds to bring up the main application menu.\n\n"
-	L"The following skins are available for use:\n\n"
-	L"Neko - The Neko arc.\n\n"
-	L"Kitty - The Kitty.\n\n"
-	L"Sheep - The Sheep.\n\n"
-	L"You can set refresh delay of widget on desktop screen.\n";
+	L"The following skins are available for use:\n"
+	L"1. Neko-Arc.\n"
+	L"2. Kitty.\n"
+	L"3. Sheep.\n"
+	L"4. Pepe the Frog.\n\n"
+	L"You can set refresh delay in 0.2-10 sec. of widget on desktop screen.\n";
 static const WCHAR g_str_about_content_p1[] = L"Version: 1.0";
 static const WCHAR g_str_about_content_p2[] = L"\x00A9 baat & EXL, 2010, 29-Oct-2023.";
 static const WCHAR g_str_about_content_p3[] = L"https://github.com/EXL/P2kElfs/tree/master/Neko";
@@ -219,20 +220,20 @@ static const WCHAR g_ani_file_names[APP_SELECT_ITEM_MAX][MAX_NAME_LENGTH] = {
 
 static BOOL g_user_activity = TRUE;
 static BOOL g_ani_file_is_ok = FALSE;
-static APP_SELECT_ITEM_T selected_skin = APP_SELECT_ITEM_NEKO;
+static APP_SELECT_ITEM_T g_selected_skin = APP_SELECT_ITEM_NEKO;
 
 static const EVENT_HANDLER_ENTRY_T g_state_any_hdls[] = {
 	{ EV_REVOKE_TOKEN, APP_HandleUITokenRevoked },
 	{ EV_KEY_PRESS, HandleEventKeyPress },
 	{ EV_KEY_RELEASE, HandleEventKeyRelease },
 	{ EV_TIMER_EXPIRED, HandleEventTimerExpired },
-	{ EV_ADD_MISSED_CALL, add_call},
-	{ EV_REMOVE_MISSED_CALL, del_call},
 	{ EV_USER_ACTIVITY_TIMEOUT, HandleEventTimeOutUserActivity },
 	{ EV_SCREENSAVER_TIMEOUT, HandleEventTimeOutInactivities },
 	{ EV_DISPLAY_TIMEOUT, HandleEventTimeOutInactivities },
 	{ EV_BACKLIGHT_TIMEOUT, HandleEventTimeOutInactivities },
 	{ EV_INACTIVITY_TIMEOUT, HandleEventTimeOutInactivities },
+	{ EV_ADD_MISSED_CALL, add_call},
+	{ EV_REMOVE_MISSED_CALL, del_call},
 	{ STATE_HANDLERS_END, NULL }
 };
 
@@ -747,8 +748,8 @@ static UINT32 HandleEventSelectDone(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
 	app_instance->options.skin = event->data.index - 1;
 	app_instance->popup = APP_POPUP_CHANGED;
 
-	selected_skin = app_instance->options.skin;
-	g_ani_file_is_ok = DL_FsFFileExist(g_ani_files[selected_skin]);
+	g_selected_skin = app_instance->options.skin;
+	g_ani_file_is_ok = DL_FsFFileExist(g_ani_files[g_selected_skin]);
 
 	StartWidget(ev_st, app);
 
@@ -962,8 +963,8 @@ static UINT32 ReadFileConfig(APPLICATION_T *app, const WCHAR *file_config_path) 
 	DL_FsReadFile(&app_instance->options, sizeof(APP_OPTIONS_T), 1, file_config, &readen);
 	DL_FsCloseFile(file_config);
 
-	selected_skin = app_instance->options.skin;
-	g_ani_file_is_ok = DL_FsFFileExist(g_ani_files[selected_skin]);
+	g_selected_skin = app_instance->options.skin;
+	g_ani_file_is_ok = DL_FsFFileExist(g_ani_files[g_selected_skin]);
 
 	return (readen == 0);
 }
@@ -1129,7 +1130,7 @@ static void FreeBin(void) {
 }
 
 static void OpenBin(UINT8 l) {
-	file = DL_FsOpenFile(g_ani_files[selected_skin], FILE_READ_MODE, 0);
+	file = DL_FsOpenFile(g_ani_files[g_selected_skin], FILE_READ_MODE, 0);
 	if (_count[0] < 1) {
 		FreeBin();
 		DL_FsReadFile(_count, 1, 1, file, &r);

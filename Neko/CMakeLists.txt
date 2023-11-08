@@ -1,5 +1,5 @@
 ########################################################################################################################
-# CMake build script for Motorola P2K ELFs: 13-Oct-2023
+# CMake build script for Motorola P2K ELFs: 29-Oct-2023
 #
 cmake_minimum_required(VERSION 3.16)
 if(NOT ELFPACK)
