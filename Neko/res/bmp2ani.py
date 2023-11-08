@@ -3,10 +3,16 @@
 """
 Converter BMP to ANI and ANI to BMP using Python 3 and PIL library.
 
-python -m pip install --upgrade pip
-python -m pip install --upgrade Pillow
+Dependencies:
+	python -m pip install --upgrade pip
+	python -m pip install --upgrade Pillow
 
-ANI header format:
+Usage:
+	./bmp2ani.py Sheep.ani (convert ANI-image to BMP-image)
+	./bmp2ani.py Sheep.bmp (convert BMP-image to ANI-image)
+	./bmp2ani.py Sheep.bm4 (convert BMP 4 bpp image to BMP 8 bpp image)
+
+ANI header format spec:
 	uint8_t palette_colors             : count of palette colors
 	(uint8_t r, g, b) * palette_colors : palette in rgb (uint8_t) colors
 	uint8_t frame_width                : bitmap_width / 2
@@ -22,9 +28,9 @@ from PIL import Image
 
 def print_help():
 	print('Usage:\n\t./bmp2ani.py [filename].[ani|bmp|bm4]')
-	print('Example:\n\t./bmp2ani.py sheep.ani')
-	print('\t./bmp2ani.py sheep.bmp')
-	print('\t./bmp2ani.py sheep.bm4')
+	print('Example:\n\t./bmp2ani.py Sheep.ani')
+	print('\t./bmp2ani.py Sheep.bmp')
+	print('\t./bmp2ani.py Sheep.bm4')
 
 def convert_bmp_palette_to_ani_palette(bmp_palette):
 	ani_palette = bytearray()
