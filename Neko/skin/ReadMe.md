@@ -55,11 +55,18 @@ python -m pip install --upgrade Pillow
 
 ## Skin Authors
 
-* **Neko-Arc** -- Tostinoo.
+* **Neko-Arc**: Tostinoo.
+
     [Additional Information](https://www.reddit.com/r/meltyblood/comments/xh6rt2/neko_arc_gifs/).
-* **Kitty** -- Pop Shop Packs.
+
+* **Kitty**: Pop Shop Packs.
+
     [Additional Information](https://pop-shop-packs.itch.io/cats-pixel-asset-pack).
-* **Sheep** -- baat & voyager.
+
+* **Sheep**: baat & voyager.
+
     [Additional Information](https://forum.motofan.ru/index.php?s=&showtopic=165504&view=findpost&p=1371628).
-* **PepeD** -- garych.
+
+* **PepeD**: garych.
+
     [Additional Information](https://knowyourmeme.com/memes/peped).
