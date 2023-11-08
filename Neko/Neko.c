@@ -175,11 +175,11 @@ static const char g_app_name[APP_NAME_LEN] = "Neko";
 
 static const WCHAR g_str_app_name[] = L"Neko";
 static const WCHAR g_str_skin[] = L"Skin:";
-static const WCHAR g_str_e_skin[] = L"Choose skin";
+static const WCHAR g_str_e_skin[] = L"Skin";
 static const WCHAR g_str_skin_neko[] = L"Neko";
 static const WCHAR g_str_skin_kitty[] = L"Kitty";
 static const WCHAR g_str_skin_sheep[] = L"Sheep";
-static const WCHAR g_str_skin_pepe[] = L"Pepe";
+static const WCHAR g_str_skin_pepe[] = L"Pepe Frog";
 static const WCHAR g_str_delay[] = L"Delay (in ms):";
 static const WCHAR g_str_e_delay[] = L"Delay (in ms)";
 static const WCHAR g_str_reset[] = L"Reset to default";
