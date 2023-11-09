@@ -948,6 +948,8 @@ static UINT32 ResetSettingsToDefaultValues(APPLICATION_T *app) {
 	app_instance->options.skin = APP_SELECT_ITEM_NEKO;
 	app_instance->options.delay = 200; /* 200 ms. */
 
+	g_ani_file_is_ok = DL_FsFFileExist(g_ani_files[g_selected_skin]);
+
 	return status;
 }
 
