@@ -31,8 +31,8 @@
 #define MAX_DELAY_VALUE             (10000)
 #define MAX_PATH_LENGTH             (FS_MAX_URI_NAME_LENGTH / 3) /* 88*2 bytes is enough. */
 #define MAX_NAME_LENGTH             (32)
-#define KEY_LONG_PRESS_START_MS     (500)
-#define KEY_LONG_PRESS_STOP_MS      (1500)
+#define KEY_LONG_PRESS_START_MS     (2500)
+#define KEY_LONG_PRESS_STOP_MS      (3500)
 
 typedef enum {
 	APP_STATE_ANY,
