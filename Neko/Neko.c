@@ -176,7 +176,7 @@ static const char g_app_name[APP_NAME_LEN] = "Neko";
 static const WCHAR g_str_app_name[] = L"Neko";
 static const WCHAR g_str_skin[] = L"Skin:";
 static const WCHAR g_str_e_skin[] = L"Skin";
-static const WCHAR g_str_skin_neko[] = L"Neko-Arc";
+static const WCHAR g_str_skin_neko[] = L"Neco-Arc";
 static const WCHAR g_str_skin_kitty[] = L"Kitty";
 static const WCHAR g_str_skin_sheep[] = L"Sheep";
 static const WCHAR g_str_skin_pepe[] = L"PepeD";
@@ -195,7 +195,7 @@ static const WCHAR g_str_help_content_p1[] =
 	L"Fun animated widget for desktop screen with skin support.\n\n"
 	L"Press and hold the right soft key for 2.5-3.5 seconds to bring up the main application menu.\n\n"
 	L"The following skins are available for use:\n"
-	L"1. Neko-Arc.\n"
+	L"1. Neco-Arc.\n"
 	L"2. Kitty.\n"
 	L"3. Sheep.\n"
 	L"4. PepeD.\n\n"
@@ -212,7 +212,7 @@ static WCHAR g_config_file_path[FS_MAX_URI_NAME_LENGTH]; /* TODO: Can it be non-
 
 static WCHAR g_ani_files[APP_SELECT_ITEM_MAX][MAX_PATH_LENGTH];
 static const WCHAR g_ani_file_names[APP_SELECT_ITEM_MAX][MAX_NAME_LENGTH] = {
-	L"Neko.ani",
+	L"Neco.ani",
 	L"Kitty.ani",
 	L"Sheep.ani",
 	L"Pepe.ani"

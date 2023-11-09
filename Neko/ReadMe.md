@@ -29,7 +29,7 @@ See [Neko Widget ELF application for Motorola P2K phones](TODO) video on YouTube
 
 ANI skin files should be located next to the `Neko.elf` application. List of the default ANI-skins:
 
-1. Neko-Arc.
+1. Neco-Arc.
 2. Kitty.
 3. Sheep.
 4. PepeD.

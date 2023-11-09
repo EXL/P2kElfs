@@ -31,7 +31,7 @@ Neko skins
 
 ## Convertion "bmp2ani" tool
 
-All sprites are limited to any 16 colors from RGB565 color space, most tested with 15 colors.
+All sprites are limited to any 16 colors from RGB565 color space, most tested with 15 colors. Max tested sprite resolution is 40x40 pixels. The characters' face should be directed to the left side.
 
 ### Dependencies
 
@@ -55,9 +55,9 @@ python -m pip install --upgrade Pillow
 
 ## Skin Authors
 
-* **Neko-Arc**: Tostinoo.
+* **Neco-Arc**: Type-Moon, French-Bread, ECOLE, Random Talking Bush, etc.
 
-    [Additional Information](https://www.reddit.com/r/meltyblood/comments/xh6rt2/neko_arc_gifs/).
+    [Additional Information](https://www.spriters-resource.com/playstation_2/mbaa/sheet/28104/).
 
 * **Kitty**: Pop Shop Packs.
 
