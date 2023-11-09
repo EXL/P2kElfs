@@ -1,4 +1,4 @@
-Neko skins
+Neko Skins
 ==========
 
 ## Animation map (25 frames/sprites)
@@ -59,9 +59,9 @@ python -m pip install --upgrade Pillow
 
     [Additional Information](https://www.spriters-resource.com/playstation_2/mbaa/sheet/28104/).
 
-* **Kitty**: Pop Shop Packs.
+* **Kitty**: Dazz, GenericNPC, MapleStory game developers
 
-    [Additional Information](https://pop-shop-packs.itch.io/cats-pixel-asset-pack).
+    [Additional Information](https://www.spriters-resource.com/pc_computer/maplestory/sheet/21897/).
 
 * **Sheep**: baat & voyager.
 
