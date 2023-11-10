@@ -34,7 +34,7 @@ ANI skin files should be located next to the `Neko.elf` application. List of the
 3. Sheep.
 4. PepeD.
 
-Additional information about creating and editing ANI-skins see [here](skin).
+Additional information about creating and editing ANI-skins see [here](skins).
 
 ## ELF files
 
