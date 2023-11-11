@@ -1336,12 +1336,14 @@ static void _time(void) {
 	} else {
 		copy((UINT8)(x), y_t, 0);
 	}
+	if (sleep()) {
+		d = 0;
+	}
 	if (sms()) {
 		d = 10;
-	} else if (call()) {
+	}
+	if (call()) {
 		d = 9;
-	} else if (sleep()) {
-		d = 0;
 	}
 	if (new) {
 		if (s_d == count[d] - 1) {
@@ -1369,12 +1371,14 @@ static void _time(void) {
 		}
 		new = true;
 	}
+	if (sleep()) {
+		d = 0;
+	}
 	if (sms()) {
 		d = 10;
-	} else if (call()) {
+	}
+	if (call()) {
 		d = 9;
-	} else if (sleep()) {
-		d = 0;
 	}
 	copy((UINT8)(x), y_t, 1);
 	OpenBin(start[d] + s_d);
