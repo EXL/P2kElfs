@@ -59,7 +59,7 @@ python -m pip install --upgrade Pillow
 
     [Additional Information](https://www.spriters-resource.com/playstation_2/mbaa/sheet/28104/).
 
-* **Kitty**: Dazz, GenericNPC, MapleStory game developers
+* **Kitty**: Dazz, GenericNPC, MapleStory game developers.
 
     [Additional Information](https://www.spriters-resource.com/pc_computer/maplestory/sheet/21897/).
 
