@@ -1251,7 +1251,45 @@ static BOOL WorkingTable(void) {
 
 static BOOL sms(void) {
 	UINT16 t = 0;
+#if defined(FTR_V600)
+	MSG_ATTR_T attrs;
+
+	memclr(&attrs, sizeof(MSG_ATTR_T));
+
+	attrs.mask = MSG_ATTR_READ_FLAG_VALID;
+
+//	arm br 0x10CBC408 - UtilLogString()
+//	arm br 0x10213FA4 - DL_DbMessageGenericGetTotalMessage()
+//	arm br 0x1016BF18 - PreprocessMsggIdle()
+//
+//		13, 14
+//
+//		R00: 0000000b  R01: 01000000  R02: 00000000  R03: 00000000
+//		R04: 1205d6cc  R05: 00000000  R06: 1205d6cc  R07: 1205d6cc
+//		R08: 00000000  R09: 00000000  R10: 00000000  R11: 00000000
+//		R12: 00000000  R13: 03ffa804  R14: 1016bf7f  R15: 10213fa8
+//
+//		R00: 0000000b  R01: 01000000  R02: 00000000  R03: 00000000
+//		R04: 1205d6cc  R05: 00000000  R06: 1205d6cc  R07: 1205d6cc
+//		R08: 00000000  R09: 00000000  R10: 00000000  R11: 00000000
+//		R12: 00000000  R13: 03ffa7e4  R14: 1016bf7f  R15: 10213faa
+//
+//		R00: 00000000  R01: 00010000  R02: 00000000  R03: 00000000
+//		R04: 00000000  R05: 120a4364  R06: 12025538  R07: 00000000
+//		R08: 00000000  R09: 00000000  R10: 00000000  R11: 00000000
+//		R12: 10213fa5  R13: 03ffa7ac  R14: 120a24e3  R15: 10213fa8
+//
+//		R00: 00000000  R01: 00010000  R02: 00000000  R03: 00000000
+//		R04: 00000000  R05: 120a4364  R06: 12025538  R07: 00000000
+//		R08: 00000000  R09: 00000000  R10: 00000000  R11: 00000000
+//		R12: 10213fa5  R13: 03ffa78c  R14: 120a24e3  R15: 10213faa
+
+	DL_DbMessageGenericGetTotalMessage(MSG_FOLDER_INBOX, attrs, &t, MSG_MEM_UNSPECIFIED);
+
+	D("New Messages Count = %d\n", t);
+#else
 	MsgUtilGetUnreadMsgsInAllFolders(&t);
+#endif
 	return (t > 0) ? (true) : (false);
 }
 
