@@ -554,6 +554,40 @@ static void HandleEventMain(EVENT_STACK_T *ev_st, APPLICATION_T *app, APP_ID_T a
 
 	app_instance = (APP_INSTANCE_T *) app;
 
+	/* A simple event logger for debugging purpose. */
+#if defined(DEBUG)
+	{
+		// Filter activity/inactivity events.
+		#define FILTER_EVENT_MIN (0x00000700)
+		#define FILTER_EVENT_MAX (0x000007FF)
+
+		// Filter missed calls events.
+//		#define FILTER_EVENT_MIN (0x00000200)
+//		#define FILTER_EVENT_MAX (0x00000400)
+
+//		#define FILTER_EVENT_MIN (0x00081000)
+//		#define FILTER_EVENT_MAX (0x00083000)
+
+		// Ban event flood.
+		#define BAN_EVENT_FIRST  (0x0008205A)
+		#define BAN_EVENT_SECOND (0x0008205A)
+
+		EVENT_T *event = AFW_GetEv(ev_st);
+
+		if ((event->code >= FILTER_EVENT_MIN) && (event->code <= FILTER_EVENT_MAX)) {
+			if ((event->code != BAN_EVENT_FIRST) && (event->code != BAN_EVENT_SECOND)) {
+				if (event->att_size > 0) {
+					/* Event with attach. */
+					D("EVT_D: 0x%08X (%d) att_size=%d\n", event->code, event->code, event->att_size);
+				} else {
+					/* Event without attach. */
+					D("EVT_N: 0x%08X (%d)\n", event->code, event->code);
+				}
+			}
+		}
+	}
+#endif
+
 	if (app_instance->state == APP_DISPLAY_SHOW) {
 		APP_HandleEvent(ev_st, app, app_id, reg_id);
 	} else {
@@ -1422,35 +1456,78 @@ static UINT32 del_call(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
 }
 
 /*
- *  APP_EV_INACTIVITYTIMERMANAGER_UIS_TIMEOUT, /7EC
- *  APP_EV_INACTIVITYTIMERMANAGER_UIS_ACTIVITY, /7ED
- *  APP_EV_USER_ACTIVITY, / 7EE
- *  APP_EV_ACTIVATE_BACKLIGHT, / 7EF
+ * APP_EV_INACTIVITYTIMERMANAGER_UIS_TIMEOUT, / 7EC
+ * APP_EV_INACTIVITYTIMERMANAGER_UIS_ACTIVITY, / 7ED
+ * APP_EV_USER_ACTIVITY, / 7EE, 74F (V600)
+ * APP_EV_ACTIVATE_BACKLIGHT, / 7EF
  *
- *  APP_EV_SS_TIMEOUT, / 7F0
- *  APP_EV_DISPLAY_TIMEOUT, / 7F1
- *  APP_EV_BACKLIGHT_TIMEOUT, / 7F2
- *  APP_EV_INACTIVITY_TIMEOUT, / 7F3
+ * APP_EV_SS_TIMEOUT, / 7F0, 751 (V600)
+ * APP_EV_DISPLAY_TIMEOUT, / 7F1, 752 (V600)
+ * APP_EV_BACKLIGHT_TIMEOUT, / 7F2, 753 (V600)
+ * APP_EV_INACTIVITY_TIMEOUT, / 7F3
+ *
+ *
+ * Motorola ROKR E1:
+ * Motorola SLVR L6i:
+ *
+ * Backlight off.
+ * HandleEventMain:571: EVT_N: 0x000007EC (2028)
+ * HandleEventMain:571: EVT_N: 0x000007F2 (2034)                                     <== APP_EV_BACKLIGHT_TIMEOUT
  *
  * Screensaver enter.
- * e7ec:1364: Debug Line!
- * e7f0:1392: Debug Line!
- * e7f2:1406: Debug Line!
- * e7ed:1371: Debug Line!
+ * HandleEventMain:571: EVT_N: 0x000007F0 (2032)                                     <== APP_EV_SS_TIMEOUT
+ * HandleEventMain:571: EVT_N: 0x00000726 (1830)
+ * HandleEventMain:581: EVT_D: 0x000007EB (2027) att_size=8
+ * HandleEventMain:581: EVT_D: 0x000007EB (2027) att_size=8
+ * HandleEventMain:571: EVT_N: 0x000007ED (2029)
+ *
+ * Backlight off again?
+ * HandleEventMain:571: EVT_N: 0x000007F2 (2034)                                     <== APP_EV_BACKLIGHT_TIMEOUT
  *
  * Inactivity screen with time enter.
- * e7f1:1399: Debug Line!
- * e7f2:1406: Debug Line!
- * e7ed:1371: Debug Line!
- * DATAFLOW ERROR: 20, 64
+ * HandleEventMain:571: EVT_N: 0x000007F1 (2033)                                     <== APP_EV_DISPLAY_TIMEOUT
+ * HandleEventMain:571: EVT_N: 0x000007ED (2029)
+ *
+ * User activity.
+ * HandleEventMain:571: EVT_N: 0x000007ED (2029)
+ * HandleEventMain:571: EVT_N: 0x000007EE (2030)                                     <== APP_EV_USER_ACTIVITY
+ *
+ * Call missed right after END pushed on other phone.
+ * HandleEventMain:581: EVT_D: 0x0008201B (532507) att_size=4                        <== EV_ADD_MISSED_CALL
+ *
+ * Missed call disappear.
+ * HandleEventMain:577: EVT_N: 0x00000398 (920)                                      <== EV_REMOVE_MISSED_CALL
+ *
+ *
+ * Motorola V600:
+ *
+ * Backlight off.
+ * HandleEventMain:571: EVT_N: 0x0000074D (1869)
+ * HandleEventMain:571: EVT_N: 0x00000753 (1875)                                     <== APP_EV_BACKLIGHT_TIMEOUT
+ *
+ * Screensaver enter.
+ * HandleEventMain:571: EVT_N: 0x00000751 (1873)                                     <== APP_EV_SS_TIMEOUT
+ * HandleEventMain:571: EVT_N: 0x0000074E (1870)
+ *
+ * Inactivity screen with time enter.
+ * HandleEventMain:571: EVT_N: 0x00000752 (1874)                                     <== APP_EV_DISPLAY_TIMEOUT
+ * HandleEventMain:571: EVT_N: 0x0000074E (1870)
  *
  * Inactivity screen with time exit.
- * e7ed:1371: Debug Line!
- * e7ee:1378: Debug Line!
+ * HandleEventMain:571: EVT_N: 0x0000074E (1870)
+ * HandleEventMain:571: EVT_N: 0x0000074F (1871)                                     <== APP_EV_USER_ACTIVITY
+ *
+ * Call missed right after END pushed on other phone.
+ * HandleEventMain:581: EVT_D: 0x0008201B (532507) att_size=4                        <== EV_REMOVE_MISSED_CALL
+ * HandleEventMain:581: EVT_D: 0x0008201B (532507) att_size=4
+ *
+ * Missed call disappear.
+ * HandleEventMain:584: EVT_N: 0x00000398 (920)                                      <== EV_REMOVE_MISSED_CALL
+ * HandleEventMain:584: EVT_N: 0x00000398 (920)
  */
 
 /*
- * APP_EV_USER_ACTIVITY, / 7EE
+ * APP_EV_USER_ACTIVITY, / 7EE, 74F (V600)
  */
 static UINT32 HandleEventTimeOutUserActivity(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
 	g_user_activity = TRUE;
@@ -1461,10 +1538,10 @@ static UINT32 HandleEventTimeOutUserActivity(EVENT_STACK_T *ev_st, APPLICATION_T
 }
 
 /*
- * APP_EV_SS_TIMEOUT, / 7F0
- * APP_EV_DISPLAY_TIMEOUT, / 7F1
- * APP_EV_BACKLIGHT_TIMEOUT, / 7F2
- * APP_EV_INACTIVITY_TIMEOUT, / 7F3
+ * APP_EV_SS_TIMEOUT, / 7F0, 751 (V600)
+ * APP_EV_DISPLAY_TIMEOUT, / 7F1, 752 (V600)
+ * APP_EV_BACKLIGHT_TIMEOUT, / 7F2, 753 (V600)                                       <== Unused.
+ * APP_EV_INACTIVITY_TIMEOUT, / 7F3, 754 (V600)
  */
 static UINT32 HandleEventTimeOutInactivities(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
 	g_user_activity = FALSE;
