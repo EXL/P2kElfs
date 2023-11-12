@@ -1069,7 +1069,6 @@ static UINT32 ProcessWidget(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
 
 	if (WorkingTable() && !KeypadLock() && g_user_activity && g_ani_file_is_ok) {
 		paint();
-		D("%s\n", "Paint!");
 	}
 
 	return status;
@@ -1370,14 +1369,13 @@ static void _time(void) {
 	} else {
 		copy((UINT8)(x), y_t, 0);
 	}
-	if (sleep()) {
-		d = 0;
-	}
 	if (sms()) {
 		d = 10;
-	}
-	if (call()) {
+	} else if (call()) {
 		d = 9;
+	} else if (sleep()) {
+		d = 0;
+		s_d = 0;
 	}
 	if (new) {
 		if (s_d == count[d] - 1) {
@@ -1405,14 +1403,13 @@ static void _time(void) {
 		}
 		new = true;
 	}
-	if (sleep()) {
-		d = 0;
-	}
 	if (sms()) {
 		d = 10;
-	}
-	if (call()) {
+	} else if (call()) {
 		d = 9;
+	} else if (sleep()) {
+		d = 0;
+		s_d = 0;
 	}
 	copy((UINT8)(x), y_t, 1);
 	OpenBin(start[d] + s_d);
@@ -1439,7 +1436,58 @@ static void DeinitBitmap(void) {
 	_count[0] = 0;
 }
 
+/*
+ * 1). 0, 0, 1, 2, ...bug seq!
+ * paint:1438: Paint! d=9 pred_d=0, s_d=0
+ * paint:1438: Paint! d=9 pred_d=0, s_d=0
+ * paint:1438: Paint! d=9 pred_d=0, s_d=1
+ * paint:1438: Paint! d=9 pred_d=0, s_d=2
+ * paint:1438: Paint! d=9 pred_d=0, s_d=0
+ * paint:1438: Paint! d=9 pred_d=0, s_d=0
+ * HandleEventMain:581: EVT_D: 0x00000398 (920) att_size=8
+ * paint:1438: Paint! d=9 pred_d=0, s_d=1
+ * paint:1438: Paint! d=0 pred_d=0, s_d=2
+ * paint:1438: Paint! d=0 pred_d=0, s_d=3
+ * paint:1438: Paint! d=0 pred_d=0, s_d=4
+ *
+ * 2). 0, 1, 2, 3, ...bug seq!
+ * paint:1438: Paint! d=9 pred_d=0, s_d=0
+ * paint:1438: Paint! d=9 pred_d=0, s_d=0
+ * paint:1438: Paint! d=9 pred_d=0, s_d=1
+ * paint:1438: Paint! d=9 pred_d=0, s_d=2
+ * paint:1438: Paint! d=9 pred_d=0, s_d=0
+ * paint:1438: Paint! d=9 pred_d=0, s_d=0
+ * paint:1438: Paint! d=9 pred_d=0, s_d=1
+ * HandleEventMain:581: EVT_D: 0x00000398 (920) att_size=8
+ * paint:1438: Paint! d=9 pred_d=0, s_d=2
+ * paint:1438: Paint! d=0 pred_d=0, s_d=3
+ * paint:1438: Paint! d=0 pred_d=0, s_d=4
+ * paint:1438: Paint! d=0 pred_d=0, s_d=5
+ *
+ * 3). 1, 2, 0, 0, ... no bug seq!
+ * paint:1438: Paint! d=9 pred_d=0, s_d=0
+ * paint:1438: Paint! d=9 pred_d=0, s_d=0
+ * paint:1438: Paint! d=9 pred_d=0, s_d=1
+ * paint:1438: Paint! d=9 pred_d=0, s_d=2
+ * HandleEventMain:581: EVT_D: 0x00000398 (920) att_size=8
+ * paint:1438: Paint! d=9 pred_d=0, s_d=0
+ * paint:1438: Paint! d=0 pred_d=0, s_d=0
+ * paint:1438: Paint! d=0 pred_d=0, s_d=0
+ *
+ * 4). 2, 0, 0, 0, ... no bug seq!
+ * paint:1438: Paint! d=9 pred_d=0, s_d=0
+ * paint:1438: Paint! d=9 pred_d=0, s_d=1
+ * paint:1438: Paint! d=9 pred_d=0, s_d=2
+ * paint:1438: Paint! d=9 pred_d=0, s_d=0
+ * HandleEventMain:581: EVT_D: 0x00000398 (920) att_size=8
+ * paint:1438: Paint! d=9 pred_d=0, s_d=0
+ * paint:1438: Paint! d=0 pred_d=0, s_d=0
+ * paint:1438: Paint! d=0 pred_d=0, s_d=0
+ *
+ */
+
 static UINT32 paint(void) {
+	D("Paint! d=%d pred_d=%d, s_d=%d\n", d, pred_d, s_d);
 	_time();
 	AHG_Flush();
 	return RESULT_OK;
@@ -1519,11 +1567,9 @@ static UINT32 del_call(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
  *
  * Call missed right after END pushed on other phone.
  * HandleEventMain:581: EVT_D: 0x0008201B (532507) att_size=4                        <== EV_REMOVE_MISSED_CALL
- * HandleEventMain:581: EVT_D: 0x0008201B (532507) att_size=4
  *
  * Missed call disappear.
  * HandleEventMain:584: EVT_N: 0x00000398 (920)                                      <== EV_REMOVE_MISSED_CALL
- * HandleEventMain:584: EVT_N: 0x00000398 (920)
  */
 
 /*
