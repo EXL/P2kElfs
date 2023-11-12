@@ -170,6 +170,8 @@ static UINT32 add_call(EVENT_STACK_T *ev_st, APPLICATION_T *app);
 static UINT32 del_call(EVENT_STACK_T *ev_st, APPLICATION_T *app);
 static UINT32 HandleEventTimeOutInactivities(EVENT_STACK_T *ev_st, APPLICATION_T *app);
 static UINT32 HandleEventTimeOutUserActivity(EVENT_STACK_T *ev_st, APPLICATION_T *app);
+static UINT32 HandleEventFlipClosed(EVENT_STACK_T *ev_st, APPLICATION_T *app);
+static UINT32 HandleEventFlipOpened(EVENT_STACK_T *ev_st, APPLICATION_T *app);
 
 static const char g_app_name[APP_NAME_LEN] = "Neko";
 
@@ -219,6 +221,7 @@ static const WCHAR g_ani_file_names[APP_SELECT_ITEM_MAX][MAX_NAME_LENGTH] = {
 };
 
 static BOOL g_user_activity = TRUE;
+static BOOL g_flip_opened = TRUE;
 static BOOL g_ani_file_is_ok = FALSE;
 static APP_SELECT_ITEM_T g_selected_skin = APP_SELECT_ITEM_NEKO;
 
@@ -230,6 +233,10 @@ static const EVENT_HANDLER_ENTRY_T g_state_any_hdls[] = {
 	{ EV_USER_ACTIVITY_TIMEOUT, HandleEventTimeOutUserActivity },
 	{ EV_SCREENSAVER_TIMEOUT, HandleEventTimeOutInactivities },
 	{ EV_DISPLAY_TIMEOUT, HandleEventTimeOutInactivities },
+#if defined(FTR_V600)
+	{ EV_FLIP_CLOSED, HandleEventFlipClosed },
+	{ EV_FLIP_OPENED, HandleEventFlipOpened },
+#endif
 	/* { EV_BACKLIGHT_TIMEOUT, HandleEventTimeOutInactivities }, */
 	{ EV_INACTIVITY_TIMEOUT, HandleEventTimeOutInactivities },
 	{ EV_ADD_MISSED_CALL, add_call},
@@ -567,6 +574,10 @@ static void HandleEventMain(EVENT_STACK_T *ev_st, APPLICATION_T *app, APP_ID_T a
 
 //		#define FILTER_EVENT_MIN (0x00081000)
 //		#define FILTER_EVENT_MAX (0x00083000)
+
+		// Filter flip events.
+//		#define FILTER_EVENT_MIN (0x00001000)
+//		#define FILTER_EVENT_MAX (0x00003000)
 
 		// Ban event flood.
 		#define BAN_EVENT_FIRST  (0x0008205A)
@@ -1576,7 +1587,9 @@ static UINT32 del_call(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
  * APP_EV_USER_ACTIVITY, / 7EE, 74F (V600)
  */
 static UINT32 HandleEventTimeOutUserActivity(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
-	g_user_activity = TRUE;
+	if (g_flip_opened) {
+		g_user_activity = TRUE;
+	}
 
 	P();
 
@@ -1591,6 +1604,29 @@ static UINT32 HandleEventTimeOutUserActivity(EVENT_STACK_T *ev_st, APPLICATION_T
  */
 static UINT32 HandleEventTimeOutInactivities(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
 	g_user_activity = FALSE;
+
+	P();
+
+	return RESULT_OK;
+}
+
+/*
+ * EV_FLIP_CLOSED 0x20BE (V600)
+ */
+static UINT32 HandleEventFlipClosed(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
+	g_user_activity = FALSE;
+	g_flip_opened = FALSE;
+
+	P();
+
+	return RESULT_OK;
+}
+
+/*
+ * EV_FLIP_OPENED 0x20BF (V600)
+ */
+static UINT32 HandleEventFlipOpened(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
+	g_flip_opened = TRUE;
 
 	P();
 
