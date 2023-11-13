@@ -45,9 +45,9 @@ See [Yeti3D Engine (old version) port to ELF for Motorola P2K phones](https://ww
 ### Legend
 
 * O (1st) - Original screens resolution without any transformations.
-* Z (1st) - ATI hardware rootation or zoom surface e.g. 122x82 => 176x220, 96x64 => 128x160, etc.
-* 1 (2nd) - Elf for ElfPack 1.0, tested with.
-* 2 (2nd) - Elf for ElfPack 2.0, tested with.
+* Z (1st) - ATI hardware zoom surface e.g. 82x122 => 176x220, 64x96 => 128x160, etc.
+* 1 (2nd) - ELF for ElfPack 1.0, tested with.
+* 2 (2nd) - ELF for ElfPack 2.0, tested with.
 
 ### Summary
 
