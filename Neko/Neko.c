@@ -233,10 +233,8 @@ static const EVENT_HANDLER_ENTRY_T g_state_any_hdls[] = {
 	{ EV_USER_ACTIVITY_TIMEOUT, HandleEventTimeOutUserActivity },
 	{ EV_SCREENSAVER_TIMEOUT, HandleEventTimeOutInactivities },
 	{ EV_DISPLAY_TIMEOUT, HandleEventTimeOutInactivities },
-#if defined(FTR_V600)
 	{ EV_FLIP_CLOSED, HandleEventFlipClosed },
 	{ EV_FLIP_OPENED, HandleEventFlipOpened },
-#endif
 	/* { EV_BACKLIGHT_TIMEOUT, HandleEventTimeOutInactivities }, */
 	{ EV_INACTIVITY_TIMEOUT, HandleEventTimeOutInactivities },
 	{ EV_ADD_MISSED_CALL, add_call},
