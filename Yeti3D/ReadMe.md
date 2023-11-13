@@ -86,9 +86,9 @@ See [Overclock](../Overclock) project documents for overclocking Yeti3D comparis
 * R (1st) - ATI hardware rootation and zoom surface e.g. 120x80 => 176x220, 96x64 => 128x160, etc.
 * N (2nd) - Non-optimized version with sprites and entities logic.
 * O (2nd) - Optimized version with no sprites and entities logic.
-* 1 (3rd) - Elf for ElfPack 1.0, tested with.
-* 2 (3rd) - Elf for ElfPack 2.0, tested with.
-* T (4th) - Elf for ElfPack 2.0, with using Tasks and Semaphores.
+* 1 (3rd) - ELF for ElfPack 1.0, tested with.
+* 2 (3rd) - ELF for ElfPack 2.0, tested with.
+* T (4th) - ELF for ElfPack 2.0, with using Tasks and Semaphores.
 * D (4th) - Debug test version with some unique patches like screen buffer in Java Heap and FPS output, works without using `Class_dal` constant.
 * J (4th) - A special optimized versions with creating screen buffer in Java Heap also, for weak phones like Motorola V600.
 * F (4th) - A special versions with FPS meter.
