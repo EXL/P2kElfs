@@ -60,12 +60,12 @@ See [Some ELF demos/games on Motorola P2K phones using ATI Imageon W2240/W2250 v
 
 ### Legend
 
-* R (1st) - ATI hardware rootation and zoom surface e.g. 128x88 => 176x220, 128x88 => 128x160, etc.
+* R (1st) - ATI hardware rootation and zoom surface e.g. 128x88 => 220x176, 128x88 => 160x128, etc.
 * O (1st) - Original screens resolution without any transformations.
 * L (2nd) - Low, 15 FPS timer ticks.
 * H (2nd) - High, 30 FPS timer ticks.
-* 1 (3rd) - Elf for ElfPack 1.0, tested with.
-* 2 (3rd) - Elf for ElfPack 2.0, tested with.
+* 1 (3rd) - ELF for ElfPack 1.0, tested with.
+* 2 (3rd) - ELF for ElfPack 2.0, tested with.
 * J (4th) - Use Java Heap instead of System Heap for phones with small amount of RAM (needs suspended Java application before ELF launch).
 * L (4th) - Long tail version.
 
