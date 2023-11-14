@@ -301,10 +301,10 @@ static UINT32 ApplicationStart(EVENT_STACK_T *ev_st, REG_ID_T reg_id, void *reg_
 		app_instance->menu_current_item_index = APP_MENU_ITEM_FIRST;
 		app_instance->ms_key_press_start = 0LLU;
 		app_instance->options.trigger = 0; /* 0: Menus, 1: Lists, 2: Menus and Lists. */
-		app_instance->options.vibro_motor_signal = 735; /* R3443H: 735, R3551: 721. */
+		app_instance->options.vibro_motor_signal = 735; /* R3443H: 735, R3511: 721. */
 		app_instance->options.vibro_motor_send_on = 1;
 		app_instance->options.vibro_motor_send_off = 0;
-		app_instance->options.vibro_voltage_signal = 702; /* R3443H: 702, R3551: 688. */
+		app_instance->options.vibro_voltage_signal = 702; /* R3443H: 702, R3511: 688. */
 		app_instance->options.vibro_voltage_level_on = 0;
 		app_instance->options.vibro_voltage_level_off = 0;
 		app_instance->options.vibro_delay = 30;

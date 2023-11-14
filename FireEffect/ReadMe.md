@@ -30,10 +30,10 @@ See [Some ELF demos/games on Motorola P2K phones using ATI Imageon W2240/W2250 v
 
 ## ELF files
 
-| Phone   | Screen  | Flags | Viewport            | Fixed FPS  | FPS (avg, min-max) | ELF filename   |
-|---------|---------|-------|---------------------|------------|--------------------|----------------|
-| SLVR L6 | 128x160 | ROT90 | 64x48 (rotozoom)    | 30.0       | 15.94, 12.8-22.7   | FireEffect.elf |
-| ROKR E1 | 176x220 | ROT90 | 64x48 (rotozoom)    | 30.0       | 18.29, 15.1-30.3   | FireEffect.elf |
+| Phone    | Screen  | Flags | Viewport            | Fixed FPS  | FPS (avg, min-max) | ELF filename   |
+|----------|---------|-------|---------------------|------------|--------------------|----------------|
+| SLVR L6i | 128x160 | ROT90 | 64x48 (rotozoom)    | 30.0       | 15.94, 12.8-22.7   | FireEffect.elf |
+| ROKR E1  | 176x220 | ROT90 | 64x48 (rotozoom)    | 30.0       | 18.29, 15.1-30.3   | FireEffect.elf |
 
 * FireEffect.elf (ELF for ElfPack 1.0)
 * FireEffect_V600.elf (ELF for ElfPack 1.0, Motorola V600 version)
@@ -44,7 +44,8 @@ See [Some ELF demos/games on Motorola P2K phones using ATI Imageon W2240/W2250 v
 
 The ELF-application has been tested on the following phones and firmware:
 
-* Motorola SLVR L6: R3443H1_G_0A.65.0BR
+* Motorola SLVR L6: R3511_G_0A.52.45R_A
+* Motorola SLVR L6i: R3443H1_G_0A.65.0BR
 * Motorola ROKR E1: R373_G_0E.30.49R
 * Motorola V600: TRIPLETS_G_0B.09.72R
 * Motorola V360: R4513_G_08.B7.ACR

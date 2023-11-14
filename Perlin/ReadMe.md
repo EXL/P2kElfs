@@ -35,12 +35,12 @@ See [Some ELF demos/games on Motorola P2K phones using ATI Imageon W2240/W2250 v
 
 ## ELF files
 
-| Phone   | Screen  | Flags | Viewport            | Demo   | Fixed FPS  | FPS (avg, min-max) | ELF filename |
-|---------|---------|-------|---------------------|--------|------------|--------------------|--------------|
-| SLVR L6 | 128x160 | ROT90 | 84x48 (rotozoom)    | Plasma | 15.0       | 12.13, 11.4-12.8   | Perlin.elf   |
-| ROKR E1 | 176x220 | ROT90 | 84x48 (rotozoom)    | Plasma | 15.0       | 13.72, 12.6-15.1   | Perlin.elf   |
-| SLVR L6 | 128x160 | ROT90 | 84x48 (rotozoom)    | Fire   | 15.0       | 1.88, 1.8-1.9      | Perlin.elf   |
-| ROKR E1 | 176x220 | ROT90 | 84x48 (rotozoom)    | Fire   | 15.0       | 1.93, 1.7-2.0      | Perlin.elf   |
+| Phone    | Screen  | Flags | Viewport            | Demo   | Fixed FPS  | FPS (avg, min-max) | ELF filename |
+|----------|---------|-------|---------------------|--------|------------|--------------------|--------------|
+| SLVR L6i | 128x160 | ROT90 | 84x48 (rotozoom)    | Plasma | 15.0       | 12.13, 11.4-12.8   | Perlin.elf   |
+| ROKR E1  | 176x220 | ROT90 | 84x48 (rotozoom)    | Plasma | 15.0       | 13.72, 12.6-15.1   | Perlin.elf   |
+| SLVR L6i | 128x160 | ROT90 | 84x48 (rotozoom)    | Fire   | 15.0       | 1.88, 1.8-1.9      | Perlin.elf   |
+| ROKR E1  | 176x220 | ROT90 | 84x48 (rotozoom)    | Fire   | 15.0       | 1.93, 1.7-2.0      | Perlin.elf   |
 
 * Perlin.elf (ELF for ElfPack 1.0)
 * Perlin_V600.elf (ELF for ElfPack 1.0, Motorola V600 version)
@@ -50,7 +50,8 @@ See [Some ELF demos/games on Motorola P2K phones using ATI Imageon W2240/W2250 v
 
 The ELF-application has been tested on the following phones and firmware:
 
-* Motorola SLVR L6: R3443H1_G_0A.65.0BR
+* Motorola SLVR L6: R3511_G_0A.52.45R_A
+* Motorola SLVR L6i: R3443H1_G_0A.65.0BR
 * Motorola ROKR E1: R373_G_0E.30.49R
 * Motorola V600: TRIPLETS_G_0B.09.72R
 * Motorola V360: R4513_G_08.B7.ACR
