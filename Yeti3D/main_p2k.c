@@ -805,7 +805,11 @@ static UINT32 ATI_Driver_Start(APPLICATION_T *app) {
 			(display_mode.size.y < DISPLAY_HEIGHT);
 
 #if defined(NO_STRETCH)
+#if defined(FTR_L6)
+	status |= ATI_Driver_Set_Display_Mode(app, AHIROT_90);
+#else
 	status |= ATI_Driver_Set_Display_Mode(app, (appi->is_CSTN_display) ? AHIROT_270 : AHIROT_90);
+#endif
 #endif
 
 	status |= AhiDrawClipDstSet(appi->ahi.context, NULL);
@@ -880,7 +884,11 @@ static UINT32 ATI_Driver_Stop(APPLICATION_T *app) {
 	app_instance = (APP_INSTANCE_T *) app;
 
 #if defined(NO_STRETCH)
+#if defined(FTR_L6)
+	status |= ATI_Driver_Set_Display_Mode(app, AHIROT_0);
+#else
 	status |= ATI_Driver_Set_Display_Mode(app, (app_instance->is_CSTN_display) ? AHIROT_180 : AHIROT_0);
+#endif
 #endif
 
 	if (app_instance->p_bitmap) {
