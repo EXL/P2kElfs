@@ -36,6 +36,9 @@
 #define TIMER_FAST_UPDATE_MS              (1000 / 30) /* ~30 FPS. */
 #endif
 
+#define ZLIB_IN_BUF_SIZE                  (4 * 1024)
+#define ZLIB_OUT_BUF_SIZE                 (ZLIB_IN_BUF_SIZE * 2)
+
 typedef enum {
 	APP_STATE_ANY,
 	APP_STATE_INIT,
@@ -84,6 +87,7 @@ typedef struct {
 	FBM_HEADER_T fbm_head;
 	UINT8 *fbm_buffer;
 	UINT16 fbm_frame;
+	UINT8 *zlib_buffer;
 
 	APP_AHI_T ahi;
 	APP_KEYBOARD_T keys;
@@ -123,6 +127,12 @@ static UINT32 GFX_Draw_Step(APPLICATION_T *app);
 static UINT32 MME_PlayHandler(EVENT_STACK_T *ev_st, APPLICATION_T *app);
 static UINT32 MME_StopHandler(EVENT_STACK_T *ev_st, APPLICATION_T *app);
 
+static void *zcalloc(void *opaque, UINT32 items, UINT32 size);
+static void zcfree(void *opaque, void *ptr);
+
+static UINT32 ZLIB_Start(APPLICATION_T *app);
+static UINT32 ZLIB_Stop(APPLICATION_T *app);
+
 static const char g_app_name[APP_NAME_LEN] = "BadApple";
 
 #if defined(EP2)
@@ -132,6 +142,7 @@ static ldrElf g_app_elf;
 static WCHAR g_res_file_path[FS_MAX_URI_NAME_LENGTH];
 static FILE_HANDLE_T file_handle;
 static MME_GC_MEDIA_FILE mme_media_file;
+static z_stream d_stream;
 
 static EVENT_HANDLER_ENTRY_T g_state_any_hdls[] = {
 	{ EV_REVOKE_TOKEN, APP_HandleUITokenRevoked },
@@ -603,7 +614,7 @@ static UINT32 ATI_Driver_Start(APPLICATION_T *app) {
 	appi->ahi.bitmap.height = appi->fbm_head.height;
 	appi->ahi.bitmap.stride = appi->fbm_head.frame_size / appi->fbm_head.height; /* (width * bpp) */
 	appi->ahi.bitmap.format = AHIFMT_1BPP;
-	appi->ahi.bitmap.image = suAllocMem(appi->fbm_head.frame_size, &result);
+	appi->ahi.bitmap.image = suAllocMem(ZLIB_OUT_BUF_SIZE, &result);
 	if (result) {
 		return RESULT_FAIL;
 	}
@@ -659,27 +670,20 @@ static UINT32 ATI_Driver_Flush(APPLICATION_T *app) {
 static UINT32 GFX_Draw_Start(APPLICATION_T *app) {
 	APP_INSTANCE_T *appi;
 	IFACE_DATA_T if_data;
-	UINT32 ind;
-	WCHAR media_path[FS_MAX_PATH_NAME_LENGTH];
 
 	appi = (APP_INSTANCE_T *) app;
 	if_data.port = app->port;
-	ind = 0;
 
 	*(u_strrchr(g_res_file_path, L'/') + 1) = '\0';
 	u_strcat(g_res_file_path, L"BadApple.m4a");
-	u_strcpy(media_path, ((const WCHAR *) g_res_file_path) + 6);
-
-	LOG("mme_media_file=%d\n", mme_media_file);
-
 	mme_media_file = MME_GC_playback_create(&if_data, g_res_file_path, NULL, 0, NULL, 0, 0, NULL, NULL);
-
-	LOG("mme_media_file=%d\n", mme_media_file);
 
 	appi->fbm_buffer = (UINT8 *) appi->ahi.bitmap.image;
 
 	/* Fill screen to black. */
 	memset(appi->fbm_buffer, 0, appi->fbm_head.frame_size);
+
+	ZLIB_Start(app);
 
 	return RESULT_OK;
 }
@@ -688,6 +692,8 @@ static UINT32 GFX_Draw_Stop(APPLICATION_T *app) {
 	APP_INSTANCE_T *appi;
 
 	appi = (APP_INSTANCE_T *) app;
+
+	ZLIB_Stop(app);
 
 	MME_StopHandler(NULL, app);
 
@@ -702,19 +708,30 @@ static UINT32 GFX_Draw_Stop(APPLICATION_T *app) {
 }
 
 static UINT32 GFX_Draw_Step(APPLICATION_T *app) {
-	APP_INSTANCE_T *appi;
+	UINT32 zl_size;
 	UINT32 readen;
+	APP_INSTANCE_T *appi;
 
 	appi = (APP_INSTANCE_T *) app;
 
-	if (appi->fbm_frame <= appi->fbm_head.frames) {
-		DL_FsReadFile(appi->fbm_buffer, appi->fbm_head.frame_size, 1, file_handle, &readen);
-		appi->fbm_frame += 1;
-	} else {
-		DL_FsFSeekFile(file_handle, 0 + sizeof(FBM_HEADER_T), 0);
-		appi->fbm_frame = 0;
+	DL_FsReadFile(&zl_size, 1, sizeof(UINT32), file_handle, &readen);
+	DL_FsReadFile(appi->zlib_buffer, 1, zl_size, file_handle, &readen);
+
+	d_stream.next_in = (BYTE *) appi->zlib_buffer;
+	d_stream.avail_in = readen;
+
+	d_stream.next_out	= (BYTE *) appi->fbm_buffer;
+	d_stream.avail_out	= ZLIB_OUT_BUF_SIZE;
+
+	inflate(&d_stream, Z_SYNC_FLUSH);
+
+	appi->fbm_frame += 1;
+
+	if (appi->fbm_frame > appi->fbm_head.frames) {
 		app->exit_status = TRUE;
 	}
+
+	inflateReset(&d_stream);
 
 	return RESULT_OK;
 }
@@ -732,6 +749,82 @@ static UINT32 MME_StopHandler(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
 
 	MME_GC_playback_stop(mme_media_file);
 	MME_GC_playback_delete(mme_media_file);
+
+	return RESULT_OK;
+}
+
+static void *zcalloc(void *opaque, UINT32 items, UINT32 size) {
+	INT32 err;
+	UINT32 sz;
+	void *p;
+
+	sz = items * size;
+	p = suAllocMem(sz, &err);
+	if (err != RESULT_OK) {
+		return NULL;
+	}
+	return p;
+}
+
+static void zcfree(void *opaque, void *ptr) {
+	suFreeMem(ptr);
+}
+
+static UINT32 ZLIB_Start(APPLICATION_T *app) {
+	int err;
+	UINT32 zl_size;
+	UINT32 readen;
+	APP_INSTANCE_T *appi;
+
+	err = 0;
+	appi = (APP_INSTANCE_T *) app;
+
+	appi->zlib_buffer = (UINT8 *) malloc(ZLIB_IN_BUF_SIZE);
+	memclr(appi->zlib_buffer, ZLIB_IN_BUF_SIZE);
+
+	d_stream.zalloc_func = (void *) zcalloc;
+	d_stream.zfree_func = (void *) zcfree;
+	d_stream.opaque_func = NULL;
+
+	DL_FsReadFile(&zl_size, 1, sizeof(UINT32), file_handle, &readen);
+	DL_FsReadFile(appi->zlib_buffer, 1, zl_size, file_handle, &readen);
+	d_stream.next_in = (BYTE *) appi->zlib_buffer;
+	d_stream.avail_in = readen;
+	err = inflateInit2(&d_stream, -MAX_WBITS);
+	LOG("inflateInit2 DONE, err = %d, zl_size = %d\n", err, zl_size);
+
+	d_stream.next_out	= (BYTE *) appi->fbm_buffer;
+	d_stream.avail_out	= ZLIB_OUT_BUF_SIZE;
+
+	LOG("avail_in = %d, next_in = 0x%p\n", d_stream.avail_in, d_stream.next_in);
+	LOG("avail_out = %d, next_out = 0x%p\n", d_stream.avail_out, d_stream.next_out);
+	err = inflate(&d_stream, Z_SYNC_FLUSH);
+	LOG("inflate DONE, err = %d\n", err);
+	LOG("avail_in = %d, total_in = %d\n", d_stream.avail_in, d_stream.total_in);
+	LOG("avail_out = %d, total_out = %d\n", d_stream.avail_out, d_stream.total_out);
+
+	appi->fbm_frame += 1;
+
+#if 0
+	{
+		FILE_HANDLE_T a, b;
+		a = DL_FsOpenFile(L"/c/Elf/1.d", FILE_WRITE_MODE, 0);
+		DL_FsWriteFile(appi->zlib_buffer, ZLIB_IN_BUF_SIZE, 1, a, &readen);
+		DL_FsCloseFile(a);
+
+		b = DL_FsOpenFile(L"/c/Elf/2.d", FILE_WRITE_MODE, 0);
+		DL_FsWriteFile(appi->fbm_buffer, ZLIB_OUT_BUF_SIZE, 1, b, &readen);
+		DL_FsCloseFile(b);
+	}
+#endif
+
+	return RESULT_OK;
+}
+
+static UINT32 ZLIB_Stop(APPLICATION_T *app) {
+	P();
+
+	inflateEnd(&d_stream);
 
 	return RESULT_OK;
 }
