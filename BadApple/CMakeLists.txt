@@ -29,8 +29,7 @@ project(BadApple LANGUAGES C VERSION "1.0.0")
 
 include_directories(${PROJECT_SOURCE_DIR})
 
-add_definitions("-DROT_90")
-add_definitions("-DFPS_15")
+add_definitions("-DFPS_30")
 #add_definitions("-DFTR_V600")
 
 set(SOURCE_FILES
