@@ -33,14 +33,14 @@ def convert_bmp_to_fbm(bitmaps_directory):
 			bmp = Image.open(bitmap).transpose(PIL.Image.FLIP_TOP_BOTTOM)
 
 			if first_time:
-				file_out.write(bmp.width.to_bytes(2, byteorder='big'))
-				file_out.write(bmp.height.to_bytes(2, byteorder='big'))
+				file_out.write(bmp_width.to_bytes(2, byteorder='big'))
+				file_out.write(bmp_height.to_bytes(2, byteorder='big'))
 				file_out.write(len(bitmap_names).to_bytes(2, byteorder='big'))
 				file_out.write((0).to_bytes(2, byteorder='big')) # max_compressed_size
 				file_out.write((1).to_bytes(2, byteorder='big')) # 1bpp
 
-			flip_bmp = bmp.resize((bmp.width, bmp.height))
-			flip_bmp = bmp.convert('1')
+			flip_bmp = bmp.resize((bmp_width, bmp_height))
+			flip_bmp = flip_bmp.convert('1')
 			flip_bmp.save(directory + '/' + os.path.basename(bitmap))
 
 			with open(directory + '/' + os.path.basename(bitmap), 'rb') as file_in:
