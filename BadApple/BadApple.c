@@ -1,6 +1,6 @@
 /*
  * About:
- *   The "Fire Effect" demo is a port of Doom PSX fire splash screen implemented as ELF application.
+ *   The implementation of the popular "Bad Apple" demo for the Motorola P2K platform encoded as 1bpp compressed frames.
  *
  * Author:
  *   EXL
@@ -9,11 +9,11 @@
  *   MIT
  *
  * Additional information:
- *   https://fabiensanglard.net/doom_fire_psx
- *   https://github.com/EXL/Stuff/tree/master/Sandbox/SDL/doom_fire_demo
+ *   https://habr.com/ru/articles/645085/
+ *   https://en.wikipedia.org/wiki/Bad_Apple!!#Use_as_a_graphical_and_audio_test
  *
  * Application type:
- *   GUI + ATI
+ *   GUI + ATI + zlib
  */
 
 #include <loader.h>

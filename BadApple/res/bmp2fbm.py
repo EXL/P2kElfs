@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 """
-Generate frame bitmaps map *.fbm 1bpp file from *.bmp.
+Generate frame bitmaps map *.fbm 1bpp file from *.bmp frames.
 
 python -m pip install --upgrade pip
 python -m pip install --upgrade Pillow
