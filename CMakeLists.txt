@@ -28,6 +28,7 @@ endif()
 project(P2kElfs)
 
 add_subdirectory(Ambilight)
+add_subdirectory(BadApple)
 add_subdirectory(BattDump)
 add_subdirectory(Benchmark)
 add_subdirectory(Dumper)

@@ -96,6 +96,11 @@ Ready-to-run ELF build are available in the [Release](https://github.com/EXL/P2k
     Port of the heavy optimized "Yeti3D" 3D engine demo by **Derek J. Evans** from [Nintendo Game Boy Advance](https://en.wikipedia.org/wiki/Game_Boy_Advance) (GBA) to the Motorola P2K phones platform.\
     Application type: GUI + ATI + Java Heap + Videomode + Tasks (in the Task version).
 
+18. **[Bad Apple](BadApple)**
+
+    The implementation of the popular "[Bad Apple](https://en.wikipedia.org/wiki/Bad_Apple!!#Use_as_a_graphical_and_audio_test)" demo for the Motorola P2K platform encoded as 1bpp compressed frames.\
+    Application type: GUI + ATI + zlib
+
 ## Infromation
 
 * [ELFs by EXL](https://forum.motofan.ru/index.php?showtopic=1742337): A thread on the MotoFan.Ru forum with my ELF projects and additional information.
