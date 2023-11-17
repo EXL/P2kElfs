@@ -16,9 +16,9 @@
  *   GUI + ATI
  */
 
-#include <mme_other.h>
 #include <loader.h>
 #include <ati.h>
+#include <mme_other.h>
 #include <apps.h>
 #include <dl.h>
 #include <dal.h>
@@ -66,9 +66,10 @@ typedef struct {
 } APP_AHI_T;
 
 typedef struct {
-	UINT32 width;
-	UINT32 height;
-	UINT32 frames;
+	UINT16 width;
+	UINT16 height;
+	UINT16 frames;
+	UINT16 max_compressed_size;
 	UINT16 bpp;
 	UINT16 frame_size;
 } FBM_HEADER_T;
@@ -95,11 +96,7 @@ typedef struct {
 	UINT8 keyboard_volume_level;
 } APP_INSTANCE_T;
 
-#if defined(EP1)
 UINT32 Register(const char *elf_path_uri, const char *args, UINT32 ev_code); /* ElfPack 1.x entry point. */
-#elif defined(EP2)
-ldrElf *_start(WCHAR *uri, WCHAR *arguments);                                /* ElfPack 2.x entry point. */
-#endif
 
 static UINT32 ApplicationStart(EVENT_STACK_T *ev_st, REG_ID_T reg_id, void *reg_hdl);
 static UINT32 ApplicationStop(EVENT_STACK_T *ev_st, APPLICATION_T *app);
@@ -135,10 +132,6 @@ static UINT32 ZLIB_Stop(APPLICATION_T *app);
 
 static const char g_app_name[APP_NAME_LEN] = "BadApple";
 
-#if defined(EP2)
-static ldrElf g_app_elf;
-#endif
-
 static WCHAR g_res_file_path[FS_MAX_URI_NAME_LENGTH];
 static FILE_HANDLE_T file_handle;
 static MME_GC_MEDIA_FILE mme_media_file;
@@ -169,7 +162,6 @@ static const STATE_HANDLERS_ENTRY_T g_state_table_hdls[] = {
 	{ APP_STATE_MAIN, HandleStateEnter, HandleStateExit, g_state_main_hdls }
 };
 
-#if defined(EP1)
 UINT32 Register(const char *elf_path_uri, const char *args, UINT32 ev_code) {
 	UINT32 status;
 	UINT32 ev_code_base;
@@ -184,34 +176,6 @@ UINT32 Register(const char *elf_path_uri, const char *args, UINT32 ev_code) {
 
 	return status;
 }
-#elif defined(EP2)
-ldrElf *_start(WCHAR *uri, WCHAR *arguments) {
-	UINT32 status;
-	UINT32 ev_code_base;
-	UINT32 reserve;
-
-	if (ldrIsLoaded(g_app_name)) {
-		cprint("BadApple: Error! Application has already been loaded!\n");
-		return NULL;
-	}
-
-	status = RESULT_OK;
-	ev_code_base = ldrRequestEventBase();
-	reserve = ev_code_base + 1;
-	reserve = ldrInitEventHandlersTbl(g_state_any_hdls, reserve);
-	reserve = ldrInitEventHandlersTbl(g_state_init_hdls, reserve);
-	reserve = ldrInitEventHandlersTbl(g_state_main_hdls, reserve);
-
-	status |= APP_Register(&ev_code_base, 1, g_state_table_hdls, APP_STATE_MAX, (void *) ApplicationStart);
-
-	u_strcpy(g_res_file_path, uri);
-
-	status |= ldrSendEvent(ev_code_base);
-	g_app_elf.name = (char *) g_app_name;
-
-	return (status == RESULT_OK) ? &g_app_elf : NULL;
-}
-#endif
 
 static UINT32 ApplicationStart(EVENT_STACK_T *ev_st, REG_ID_T reg_id, void *reg_hdl) {
 	UINT32 status;
@@ -237,6 +201,7 @@ static UINT32 ApplicationStart(EVENT_STACK_T *ev_st, REG_ID_T reg_id, void *reg_
 		LOG("fbm_head.width=%d\n", app_instance->fbm_head.width);
 		LOG("fbm_head.height=%d\n", app_instance->fbm_head.height);
 		LOG("fbm_head.frames=%d\n", app_instance->fbm_head.frames);
+		LOG("fbm_head.max_compressed_size=%d\n", app_instance->fbm_head.max_compressed_size);
 		LOG("fbm_head.bpp=%d\n", app_instance->fbm_head.bpp);
 		LOG("fbm_head.frame_size=%d\n", app_instance->fbm_head.frame_size);
 
@@ -255,10 +220,6 @@ static UINT32 ApplicationStart(EVENT_STACK_T *ev_st, REG_ID_T reg_id, void *reg_
 
 		status |= APP_Start(ev_st, &app_instance->app, APP_STATE_MAIN,
 			g_state_table_hdls, ApplicationStop, g_app_name, 0);
-
-#if defined(EP2)
-		g_app_elf.app = (APPLICATION_T *) app_instance;
-#endif
 	}
 
 	return status;
@@ -280,11 +241,7 @@ static UINT32 ApplicationStop(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
 	status |= ATI_Driver_Stop(app);
 	status |= APP_Exit(ev_st, app, 0);
 
-#if defined(EP1)
 	LdrUnloadELF(&Lib);
-#elif defined(EP2)
-	ldrUnloadElf();
-#endif
 
 	return status;
 }
@@ -509,9 +466,6 @@ static void FPS_Meter(void) {
 	if (one > 30) {
 		UtilLogStringData("FPS: %d.%d\n", fps / 10, fps % 10);
 		PFprintf("FPS: %d.%d\n", fps / 10, fps % 10);
-#if defined(EP2)
-		cprintf("FPS: %d.%d\n", fps / 10, fps % 10);
-#endif
 		one = 0;
 	}
 	one++;
@@ -676,6 +630,11 @@ static UINT32 GFX_Draw_Start(APPLICATION_T *app) {
 
 	*(u_strrchr(g_res_file_path, L'/') + 1) = '\0';
 	u_strcat(g_res_file_path, L"BadApple.m4a");
+	if (!DL_FsFFileExist(g_res_file_path)) {
+		*(u_strrchr(g_res_file_path, L'/') + 1) = '\0';
+		u_strcat(g_res_file_path, L"BadApple.mp3");
+	}
+
 	mme_media_file = MME_GC_playback_create(&if_data, g_res_file_path, NULL, 0, NULL, 0, 0, NULL, NULL);
 
 	appi->fbm_buffer = (UINT8 *) appi->ahi.bitmap.image;
@@ -714,24 +673,23 @@ static UINT32 GFX_Draw_Step(APPLICATION_T *app) {
 
 	appi = (APP_INSTANCE_T *) app;
 
+	inflateReset(&d_stream);
+
+	appi->fbm_frame += 1;
+	if (appi->fbm_frame > appi->fbm_head.frames) {
+		app->exit_status = TRUE;
+	}
+
 	DL_FsReadFile(&zl_size, 1, sizeof(UINT32), file_handle, &readen);
 	DL_FsReadFile(appi->zlib_buffer, 1, zl_size, file_handle, &readen);
 
 	d_stream.next_in = (BYTE *) appi->zlib_buffer;
 	d_stream.avail_in = readen;
 
-	d_stream.next_out	= (BYTE *) appi->fbm_buffer;
-	d_stream.avail_out	= ZLIB_OUT_BUF_SIZE;
+	d_stream.next_out = (BYTE *) appi->fbm_buffer;
+	d_stream.avail_out = ZLIB_OUT_BUF_SIZE;
 
 	inflate(&d_stream, Z_SYNC_FLUSH);
-
-	appi->fbm_frame += 1;
-
-	if (appi->fbm_frame > appi->fbm_head.frames) {
-		app->exit_status = TRUE;
-	}
-
-	inflateReset(&d_stream);
 
 	return RESULT_OK;
 }
@@ -793,8 +751,8 @@ static UINT32 ZLIB_Start(APPLICATION_T *app) {
 	err = inflateInit2(&d_stream, -MAX_WBITS);
 	LOG("inflateInit2 DONE, err = %d, zl_size = %d\n", err, zl_size);
 
-	d_stream.next_out	= (BYTE *) appi->fbm_buffer;
-	d_stream.avail_out	= ZLIB_OUT_BUF_SIZE;
+	d_stream.next_out = (BYTE *) appi->fbm_buffer;
+	d_stream.avail_out = ZLIB_OUT_BUF_SIZE;
 
 	LOG("avail_in = %d, next_in = 0x%p\n", d_stream.avail_in, d_stream.next_in);
 	LOG("avail_out = %d, next_out = 0x%p\n", d_stream.avail_out, d_stream.next_out);
@@ -808,11 +766,11 @@ static UINT32 ZLIB_Start(APPLICATION_T *app) {
 #if 0
 	{
 		FILE_HANDLE_T a, b;
-		a = DL_FsOpenFile(L"/c/Elf/1.d", FILE_WRITE_MODE, 0);
+		a = DL_FsOpenFile(L"/c/Elf/1.dump", FILE_WRITE_MODE, 0);
 		DL_FsWriteFile(appi->zlib_buffer, ZLIB_IN_BUF_SIZE, 1, a, &readen);
 		DL_FsCloseFile(a);
 
-		b = DL_FsOpenFile(L"/c/Elf/2.d", FILE_WRITE_MODE, 0);
+		b = DL_FsOpenFile(L"/c/Elf/2.dump", FILE_WRITE_MODE, 0);
 		DL_FsWriteFile(appi->fbm_buffer, ZLIB_OUT_BUF_SIZE, 1, b, &readen);
 		DL_FsCloseFile(b);
 	}
