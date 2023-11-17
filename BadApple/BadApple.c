@@ -181,7 +181,6 @@ static UINT32 ApplicationStart(EVENT_STACK_T *ev_st, REG_ID_T reg_id, void *reg_
 	UINT32 status;
 	UINT32 readen;
 	APP_INSTANCE_T *app_instance;
-	GRAPHIC_POINT_T p;
 
 	status = RESULT_OK;
 
@@ -189,11 +188,10 @@ static UINT32 ApplicationStart(EVENT_STACK_T *ev_st, REG_ID_T reg_id, void *reg_
 		app_instance = (APP_INSTANCE_T *) APP_InitAppData((void *) APP_HandleEvent, sizeof(APP_INSTANCE_T),
 			reg_id, 0, 0, 1, 1, 1, 0);
 
-		p = UIS_CanvasGetDisplaySize();
 		*(u_strrchr(g_res_file_path, L'/') + 1) = '\0';
-		if ((p.x < DISPLAY_WIDTH) || (p.y < DISPLAY_HEIGHT)) { /* Motorola L6 */
-			u_strcat(g_res_file_path, L"BadApple_160p.fbm");
-		} else {
+		u_strcat(g_res_file_path, L"BadApple_160p.fbm");
+		if (!DL_FsFFileExist(g_res_file_path)) {
+			*(u_strrchr(g_res_file_path, L'/') + 1) = '\0';
 			u_strcat(g_res_file_path, L"BadApple_220p.fbm");
 		}
 		file_handle = DL_FsOpenFile(g_res_file_path, FILE_READ_MODE, 0);
@@ -766,8 +764,6 @@ static UINT32 ZLIB_Start(APPLICATION_T *app) {
 	LOG("inflate DONE, err = %d\n", err);
 	LOG("avail_in = %d, total_in = %d\n", d_stream.avail_in, d_stream.total_in);
 	LOG("avail_out = %d, total_out = %d\n", d_stream.avail_out, d_stream.total_out);
-
-	appi->fbm_frame += 1;
 
 #if 0
 	{
