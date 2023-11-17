@@ -17,8 +17,7 @@ Port of the Doom PSX fire effect demo splash screen to the Motorola P2K phones p
 
 ## Videos
 
-See [Some ELF demos/games on Motorola P2K phones using ATI Imageon W2240/W2250 videochip
-](https://www.youtube.com/watch?v=DsYLWXPgmsU&t=180s) video on YouTube.
+See [Some ELF demos/games on Motorola P2K phones using ATI Imageon W2240/W2250 videochip](https://www.youtube.com/watch?v=DsYLWXPgmsU&t=180s) video on YouTube.
 
 ## Key controls
 
