@@ -23,7 +23,7 @@ Fun animated widget for desktop screen with skin support.
 
 ## Videos of Motorola ROKR E1 and Motorola SLVR L6
 
-See [Neko Widget ELF application for Motorola P2K phones](TODO) video on YouTube.
+See [Neko Widget ELF application for Motorola P2K phones](https://youtu.be/WXta2V28utI) video on YouTube.
 
 ## Skins
 
