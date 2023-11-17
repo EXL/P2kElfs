@@ -181,6 +181,7 @@ static UINT32 ApplicationStart(EVENT_STACK_T *ev_st, REG_ID_T reg_id, void *reg_
 	UINT32 status;
 	UINT32 readen;
 	APP_INSTANCE_T *app_instance;
+	GRAPHIC_POINT_T p;
 
 	status = RESULT_OK;
 
@@ -188,8 +189,13 @@ static UINT32 ApplicationStart(EVENT_STACK_T *ev_st, REG_ID_T reg_id, void *reg_
 		app_instance = (APP_INSTANCE_T *) APP_InitAppData((void *) APP_HandleEvent, sizeof(APP_INSTANCE_T),
 			reg_id, 0, 0, 1, 1, 1, 0);
 
+		p = UIS_CanvasGetDisplaySize();
 		*(u_strrchr(g_res_file_path, L'/') + 1) = '\0';
-		u_strcat(g_res_file_path, L"BadApple.fbm");
+		if ((p.x < DISPLAY_WIDTH) || (p.y < DISPLAY_HEIGHT)) { /* Motorola L6 */
+			u_strcat(g_res_file_path, L"BadApple_160p.fbm");
+		} else {
+			u_strcat(g_res_file_path, L"BadApple_220p.fbm");
+		}
 		file_handle = DL_FsOpenFile(g_res_file_path, FILE_READ_MODE, 0);
 		DL_FsReadFile(&app_instance->fbm_head, sizeof(FBM_HEADER_T), 1, file_handle, &readen);
 		if (readen == 0) {
