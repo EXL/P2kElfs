@@ -27,8 +27,8 @@ See [Bad Apple!! demo on Motorola E398/ROKR E1 and other P2K phones](https://you
 
 | Phone    | Screen  | Viewport        | Fixed FPS  | FPS (avg, min-max) | ELF filename |
 |----------|---------|-----------------|------------|--------------------|--------------|
-| SLVR L6i | 128x160 | 128x160 (1bpp)  | 30.0       | 15.94, 12.8-22.7   | BadApple.elf |
-| ROKR E1  | 176x220 | 176x220 (1bpp)  | 30.0       | 18.29, 15.1-30.3   | BadApple.elf |
+| SLVR L6i | 128x160 | 128x160 (1bpp)  | 30.0       | 31.47, 18.8-55.5   | BadApple.elf |
+| ROKR E1  | 176x220 | 176x220 (1bpp)  | 30.0       | 29.60, 13.8-52.6   | BadApple.elf |
 
 * BadApple.elf (ELF for ElfPack 1.0)
 
