@@ -15,6 +15,7 @@ import zlib
 import PIL
 from PIL import Image
 
+compress = True
 bmp_offset = 0x3E
 bmp_width = 176
 bmp_height = 220
@@ -49,13 +50,17 @@ def convert_bmp_to_fbm(bitmaps_directory):
 				if first_time:
 					file_out.write((len(buff)).to_bytes(2, byteorder='big'))
 					first_time = False
-				compressed = zlib.compress(buff, level=-1, wbits=-zlib.MAX_WBITS)
+				if compress:
+					compressed = zlib.compress(buff, level=-1, wbits=-zlib.MAX_WBITS)
+				else:
+					compressed = buff
 				print('Converting [' + str(idx+1) + '/' + str(len(bitmap_names)) + '] '
 					+ bitmap + ': ' + str(len(buff)) + ' => ' + str(len(compressed))
 					+ ' bytes (compressed)')
 				if max_compressed_size < len(compressed):
 					max_compressed_size = len(compressed)
-				file_out.write(len(compressed).to_bytes(4, byteorder='big'))
+				if compress:
+					file_out.write(len(compressed).to_bytes(4, byteorder='big'))
 				file_out.write(compressed)
 			idx += 1
 		print('max_compressed_size=' + str(max_compressed_size))

@@ -28,12 +28,15 @@
 #include <utilities.h>
 #include <filesystem.h>
 #include <zlib.h>
+#include <tasks.h>
 
 #define TIMER_FAST_TRIGGER_MS             (1)
 #if defined(FPS_15)
 #define TIMER_FAST_UPDATE_MS              (1000 / 15) /* ~15 FPS. */
 #elif defined(FPS_30)
 #define TIMER_FAST_UPDATE_MS              (1000 / 30) /* ~30 FPS. */
+#elif defined(FPS_60)
+#define TIMER_FAST_UPDATE_MS              (1000 / 60) /* ~60 FPS. */
 #endif
 
 #define ZLIB_IN_BUF_SIZE                  (4 * 1024)
@@ -646,7 +649,9 @@ static UINT32 GFX_Draw_Start(APPLICATION_T *app) {
 	/* Fill screen to black. */
 	memset(appi->fbm_buffer, 0, appi->fbm_head.frame_size);
 
+#if !defined(FPS_60)
 	ZLIB_Start(app);
+#endif
 
 	return RESULT_OK;
 }
@@ -656,7 +661,9 @@ static UINT32 GFX_Draw_Stop(APPLICATION_T *app) {
 
 	appi = (APP_INSTANCE_T *) app;
 
+#if !defined(FPS_60)
 	ZLIB_Stop(app);
+#endif
 
 	MME_StopHandler(NULL, app);
 
@@ -671,11 +678,12 @@ static UINT32 GFX_Draw_Stop(APPLICATION_T *app) {
 }
 
 static UINT32 GFX_Draw_Step(APPLICATION_T *app) {
+	APP_INSTANCE_T *appi;
 	UINT32 zl_size;
 	UINT32 readen;
-	APP_INSTANCE_T *appi;
 
 	appi = (APP_INSTANCE_T *) app;
+#if !defined(FPS_60)
 
 	inflateReset(&d_stream);
 
@@ -694,7 +702,16 @@ static UINT32 GFX_Draw_Step(APPLICATION_T *app) {
 	d_stream.avail_out = ZLIB_OUT_BUF_SIZE;
 
 	inflate(&d_stream, Z_SYNC_FLUSH);
-
+#else
+	if (appi->fbm_frame <= appi->fbm_head.frames) {
+		DL_FsReadFile(appi->fbm_buffer, appi->fbm_head.frame_size, 1, file_handle, &readen);
+		appi->fbm_frame += 1;
+		suSleep(5, NULL);
+	} else {
+		DL_FsFSeekFile(file_handle, 0 + sizeof(FBM_HEADER_T), 0);
+		appi->fbm_frame = 0;
+	}
+#endif
 	return RESULT_OK;
 }
 
