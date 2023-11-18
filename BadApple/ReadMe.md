@@ -31,6 +31,7 @@ See [Bad Apple!! demo on Motorola E398/ROKR E1 and other P2K phones](https://you
 | ROKR E1  | 176x220 | 176x220 (1bpp)  | 30.0       | 29.60, 13.8-52.6   | BadApple.elf |
 
 * BadApple.elf (ELF for ElfPack 1.0)
+* BadApple_60fps.elf (ELF for ElfPack 1.0, experimental 60 FPS version)
 
 ## Additional information
 
