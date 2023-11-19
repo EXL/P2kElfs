@@ -653,6 +653,8 @@ static UINT32 GFX_Draw_Start(APPLICATION_T *app) {
 	ZLIB_Start(app);
 #endif
 
+	APP_MMC_UtilStopVariousTimers();
+
 	return RESULT_OK;
 }
 
@@ -673,6 +675,8 @@ static UINT32 GFX_Draw_Stop(APPLICATION_T *app) {
 	}
 
 	DL_FsCloseFile(file_handle);
+
+	APP_MMC_UtilRestartVariousTimers();
 
 	return RESULT_OK;
 }
