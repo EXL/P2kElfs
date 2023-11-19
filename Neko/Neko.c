@@ -1612,8 +1612,8 @@ static UINT32 HandleEventTimeOutInactivities(EVENT_STACK_T *ev_st, APPLICATION_T
  * EV_FLIP_CLOSED 0x20BE (V600)
  */
 static UINT32 HandleEventFlipClosed(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
-	g_user_activity = FALSE;
 	g_flip_opened = FALSE;
+	g_user_activity = FALSE;
 
 	P();
 
@@ -1625,6 +1625,7 @@ static UINT32 HandleEventFlipClosed(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
  */
 static UINT32 HandleEventFlipOpened(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
 	g_flip_opened = TRUE;
+	g_user_activity = TRUE;
 
 	P();
 
