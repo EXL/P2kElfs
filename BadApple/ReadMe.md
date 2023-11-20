@@ -31,6 +31,7 @@ See [Bad Apple!! demo on Motorola E398/ROKR E1 and other P2K phones](https://you
 | ROKR E1  | 176x220 | 176x220 (1bpp)  | 30.0       | 29.60, 13.8-52.6   | BadApple.elf |
 
 * BadApple.elf (ELF for ElfPack 1.0)
+* BadApple_V600.elf (ELF for ElfPack 1.0, Motorola V600 version)
 * BadApple_60fps.elf (ELF for ElfPack 1.0, experimental 60 FPS version)
 
 ## Additional information
@@ -39,6 +40,8 @@ The ELF-application has been tested on the following phones and firmware:
 
 * Motorola SLVR L6i: R3443H1_G_0A.65.0BR
 * Motorola ROKR E1: R373_G_0E.30.49R
+* Motorola V600: TRIPLETS_G_0B.09.72R
+* Motorola V235: R3512_G_0A.30.6CR
 
 Application type: GUI + ATI + zlib.
 
