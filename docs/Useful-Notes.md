@@ -1,6 +1,21 @@
 Useful Notes
 ============
 
+## Check missing function calls
+
+```bash
+$ awk '{ print $3; }' elfloader.sym | sort | uniq > lib.sym
+$ grep -Fxvf lib.sym symbols_of_all_elfs.sym
+```
+
+## Compare libraries
+
+```bash
+$ cat lib1.sym | sort -u > 1.sym
+$ grep -v '^#' lib2.sym | awk -Wnon-decimal-data '{if ($1>0) printf "0x%08X %s %s\n", 0+$1, $2, $3}' | sort -u > 2.sym
+$ git diff 1.sym 2.sym
+```
+
 ## Set executable flag to file on Windows using Git
 
 ```bash
