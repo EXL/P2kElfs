@@ -5,7 +5,7 @@ GPUs on Motorola phones
 
 ```
 Motorola SLVR L6, L6i           ATI Imageon W2240     192 KiB
-Motorola V300, V500 V600        ATI Imageon W2250     192 KiB
+Motorola V300, V500, V600       ATI Imageon W2250     192 KiB
 Motorola V80                    ATI Imageon W2250     192 KiB
 Motorola V635                   ATI Imageon W226x     ?
 Motorola E398/ROKR E1           ATI Imageon W2250     192 KiB
