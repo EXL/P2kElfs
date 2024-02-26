@@ -63,9 +63,10 @@ python -m pip install --upgrade Pillow
 
     [Additional Information](https://www.spriters-resource.com/pc_computer/maplestory/sheet/21897/).
 
-* **Sheep**: baat & voyager.
+* **Sheep**: baat & voyager, original idea and sprites Village Center, Inc.
 
-    [Additional Information](https://forum.motofan.ru/index.php?s=&showtopic=165504&view=findpost&p=1371628).
+    [Additional Information #1](https://forum.motofan.ru/index.php?s=&showtopic=165504&view=findpost&p=1371628).
+    [Additional Information #2](http://web.archive.org/web/20050204192403/http://www.villagecenter.co.jp/english/poe.html).
 
 * **PepeD**: garych.
 
