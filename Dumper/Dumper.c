@@ -1048,6 +1048,8 @@ static UINT32 DumpMemoryRegionToFile(
 	return status;
 }
 
+/* U800_Neptune LTE IC Baseband Specification.pdf */
+
 static WCHAR *GetUniqueIdentifierSoc(void) {
 	BOOL bit0;
 	BOOL bit1;
