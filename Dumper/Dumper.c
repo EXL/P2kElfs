@@ -42,8 +42,9 @@ typedef enum {
 typedef enum {
 	APP_TIMER_EXIT = 0xE398,
 	APP_TIMER_EXIT_FAST,
-	APP_TIMER_DO_BENCHMARK,
-	APP_TIMER_DUMP_OK
+	APP_TIMER_DO_DUMP,
+	APP_TIMER_DUMP_OK,
+	APP_TIMER_GO_VIEW
 } APP_TIMER_T;
 
 typedef enum {
@@ -61,6 +62,7 @@ typedef enum {
 	APP_MENU_ITEM_IROM,
 	APP_MENU_ITEM_IRAM,
 	APP_MENU_ITEM_PANIC,
+	APP_MENU_ITEM_SOC,
 	APP_MENU_ITEM_HELP,
 	APP_MENU_ITEM_ABOUT,
 	APP_MENU_ITEM_EXIT,
@@ -75,6 +77,7 @@ typedef enum {
 
 typedef enum {
 	APP_VIEW_HELP,
+	APP_VIEW_SOC,
 	APP_VIEW_ABOUT
 } APP_VIEW_T;
 
@@ -99,6 +102,7 @@ typedef struct {
 	APP_VIEW_T view;
 	APP_MENU_ITEM_T menu_current_item_index;
 	BOOL flag_from_select;
+	BOOL flag_show_view_after_dumping;
 
 	PHONE_PARAMETERS_T phone_parameters;
 } APP_INSTANCE_T;
@@ -141,7 +145,16 @@ static UINT32 DumpMemoryRegionToFile(
 	UINT32 start, UINT32 size, const WCHAR *filename,
 	UINT32 chunk_size
 );
+static UINT32 DumpSoC(EVENT_STACK_T *ev_st, APPLICATION_T *app);
+
+static WCHAR *GetUniqueIdentifierSoc(void);
+static WCHAR *GetProductRevisionSoc(void);
+static WCHAR *GetProductVendorSoc(void);
+static WCHAR *GetSiliconRevisionSoc(void);
+
 static UINT32 ClearDataArrays(UINT8 *data_arr, UINT32 size);
+
+static INT32 ReadBit(UINT16 value, UINT8 bitIndex);
 
 static const char g_app_name[APP_NAME_LEN] = "Dumper";
 
@@ -153,6 +166,7 @@ static const WCHAR g_str_menu_battery_rom[] = L"Battery ROM";
 static const WCHAR g_str_menu_irom[] = L"IROM (integrated)";
 static const WCHAR g_str_menu_iram[] = L"IRAM (integrated)";
 static const WCHAR g_str_menu_panic[] = L"Panics Data";
+static const WCHAR g_str_menu_soc[] = L"Neptune IC";
 static const WCHAR g_str_menu_help[] = L"Help...";
 static const WCHAR g_str_menu_about[] = L"About...";
 static const WCHAR g_str_menu_exit[] = L"Exit";
@@ -168,6 +182,25 @@ static const WCHAR g_str_about_content_p1[] = L"Version: 1.0";
 static const WCHAR g_str_about_content_p2[] = L"\x00A9 EXL, 02-Jun-2023.";
 static const WCHAR g_str_about_content_p3[] = L"https://github.com/EXL/P2kElfs/tree/master/Dumper";
 static const WCHAR g_str_about_content_p4[] = L"       "; /* HACK: gap */
+static const WCHAR g_str_view_iim[] = L"Neptune IC Info";
+static const WCHAR g_str_soc_uid[] = L"Unique Identifier:";
+static const WCHAR g_str_soc_uid_u[] = L"0000 Unknown";
+static const WCHAR g_str_soc_uid_d[] = L"0001 Development Part";
+static const WCHAR g_str_soc_uid_p[] = L"0010 Production Part";
+static const WCHAR g_str_soc_uid_s[] = L"0011 Non-Secure Part";
+static const WCHAR g_str_soc_rev_product_revision[] = L"Product Revision:";
+static const WCHAR g_str_soc_rev_pr_unk[] = L"00000 Reserved";
+static const WCHAR g_str_soc_rev_pr_lts[] = L"10001 Neptune LTS ROM";
+static const WCHAR g_str_soc_rev_pr_lte[] = L"10010 Neptune LTE ROM";
+static const WCHAR g_str_soc_rev_pr_uls[] = L"10011 Neptune ULS ROM";
+static const WCHAR g_str_soc_rev_product_vendor[] = L"Product Vendor / Tech:";
+static const WCHAR g_str_soc_rev_pr_unk0[] = L"000 Unknown 000";
+static const WCHAR g_str_soc_rev_pr_sps6[] = L"001 SPS HIP6W? 001";
+static const WCHAR g_str_soc_rev_pr_sps7[] = L"010 SPS HIP7 010";
+static const WCHAR g_str_soc_rev_pr_sps8[] = L"011 SPS HIP8 011";
+static const WCHAR g_str_soc_rev_silicon_revision[] = L"Silicon Revision:";
+static const WCHAR g_str_soc_rev_si_0[] = L"0000 (Initial Revision) Pass 1";
+static const WCHAR g_str_soc_rev_si_1[] = L"0001 Pass 2";
 
 static const WCHAR g_file_dump_boot[]        = L"D_BOOT_HWCFG.bin";
 static const WCHAR g_file_dump_pds[]         = L"D_PDS.bin";
@@ -175,7 +208,8 @@ static const WCHAR g_file_dump_ram[]         = L"D_RAM.bin";
 static const WCHAR g_file_dump_battery_rom[] = L"D_BATT_ROM.bin";
 static const WCHAR g_file_dump_irom[]        = L"D_IROM.bin";
 static const WCHAR g_file_dump_iram[]        = L"D_IRAM.bin";
-static const WCHAR g_file_dump_panic[]        = L"D_PANIC.bin";
+static const WCHAR g_file_dump_panic[]       = L"D_PANIC.bin";
+static const WCHAR g_file_dump_soc[]         = L"D_SOC.bin";
 
 static WCHAR g_res_file_path[FS_MAX_URI_NAME_LENGTH];
 static WCHAR g_cur_file_path[FS_MAX_URI_NAME_LENGTH];
@@ -554,7 +588,7 @@ static UINT32 HandleStateEnter(EVENT_STACK_T *ev_st, APPLICATION_T *app, ENTER_S
 				case APP_POPUP_DUMP_WAIT:
 					notice_type = NOTICE_TYPE_WAIT;
 					UIS_MakeContentFromString("MCq0NMCq1", &content, g_str_dump_wait_p1, g_str_dump_wait_p2);
-					APP_UtilStartTimer(TIMER_POPUP_DELAY_MS, APP_TIMER_DO_BENCHMARK, app);
+					APP_UtilStartTimer(TIMER_POPUP_DELAY_MS, APP_TIMER_DO_DUMP, app);
 					break;
 			}
 			dialog = UIS_CreateTransientNotice(&port, &content, notice_type);
@@ -571,6 +605,13 @@ static UINT32 HandleStateEnter(EVENT_STACK_T *ev_st, APPLICATION_T *app, ENTER_S
 						app_instance->resources[APP_RESOURCE_ICON_DUMPER],
 						g_str_about_content_p1, g_str_about_content_p2, g_str_about_content_p3,
 						g_str_about_content_p4, g_str_about_content_p4);
+					break;
+				case APP_VIEW_SOC:
+					UIS_MakeContentFromString("q0Nq1Nq2Nq3Nq4Nq5Nq6Nq7Nq8", &content, g_str_view_iim,
+						g_str_soc_uid, GetUniqueIdentifierSoc(),
+						g_str_soc_rev_product_revision, GetProductRevisionSoc(),
+						g_str_soc_rev_product_vendor, GetProductVendorSoc(),
+						g_str_soc_rev_silicon_revision, GetSiliconRevisionSoc());
 					break;
 			}
 			dialog = UIS_CreateViewer(&port, &content, NULL);
@@ -589,8 +630,19 @@ static UINT32 HandleStateEnter(EVENT_STACK_T *ev_st, APPLICATION_T *app, ENTER_S
 }
 
 static UINT32 HandleStateExit(EVENT_STACK_T *ev_st, APPLICATION_T *app, EXIT_STATE_TYPE_T state) {
+	APP_INSTANCE_T *app_instance;
+
+	app_instance = (APP_INSTANCE_T *) app;
+
 	if (state == EXIT_STATE_EXIT) {
 		DeleteDialog(app);
+
+		if (app_instance->flag_show_view_after_dumping) {
+			app_instance->flag_show_view_after_dumping = FALSE;
+
+			APP_UtilStartTimer(TIMER_FAST_TRIGGER_MS, APP_TIMER_GO_VIEW, app);
+		}
+
 		return RESULT_OK;
 	}
 	return RESULT_FAIL;
@@ -622,7 +674,7 @@ static UINT32 HandleEventTimerExpired(EVENT_STACK_T *ev_st, APPLICATION_T *app) 
 			DL_AudPlayTone(0x00,  0xFF);
 			return ApplicationStop(ev_st, app);
 			break;
-		case APP_TIMER_DO_BENCHMARK:
+		case APP_TIMER_DO_DUMP:
 			switch (app_instance->menu_current_item_index) {
 				case APP_MENU_ITEM_BOOT_HWCFG:
 					app_instance->popup =
@@ -659,6 +711,12 @@ static UINT32 HandleEventTimerExpired(EVENT_STACK_T *ev_st, APPLICATION_T *app) 
 						(DumpPanic(ev_st, app) == RESULT_OK) ? APP_POPUP_DUMP_OK : APP_POPUP_DUMP_FAIL;
 					APP_UtilChangeState(APP_STATE_POPUP, ev_st, app);
 					break;
+				case APP_MENU_ITEM_SOC:
+					app_instance->flag_show_view_after_dumping = TRUE;
+					app_instance->popup =
+						(DumpSoC(ev_st, app) == RESULT_OK) ? APP_POPUP_DUMP_OK : APP_POPUP_DUMP_FAIL;
+					APP_UtilChangeState(APP_STATE_POPUP, ev_st, app);
+					break;
 			}
 			break;
 		case APP_TIMER_DUMP_OK:
@@ -671,6 +729,10 @@ static UINT32 HandleEventTimerExpired(EVENT_STACK_T *ev_st, APPLICATION_T *app) 
 			MME_GC_playback_open_audio_play_forget(L"/a/mobile/system/shutter5.wav");
 #endif /* !defined(FTR_V600) */
 #endif /* !defined(USE_MME) */
+			break;
+		case APP_TIMER_GO_VIEW:
+			app_instance->view = APP_VIEW_SOC;
+			APP_UtilChangeState(APP_STATE_VIEW, ev_st, app);
 			break;
 		default:
 			break;
@@ -699,6 +761,7 @@ static UINT32 HandleEventSelect(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
 		case APP_MENU_ITEM_IROM:
 		case APP_MENU_ITEM_IRAM:
 		case APP_MENU_ITEM_PANIC:
+		case APP_MENU_ITEM_SOC:
 			app_instance->popup = APP_POPUP_DUMP_WAIT;
 			status |= APP_UtilChangeState(APP_STATE_POPUP, ev_st, app);
 			break;
@@ -774,6 +837,9 @@ static LIST_ENTRY_T *CreateList(EVENT_STACK_T *ev_st, APPLICATION_T *app, UINT32
 	status |= UIS_MakeContentFromString("Mq0",
 		&list_elements[APP_MENU_ITEM_PANIC].content.static_entry.text,
 		g_str_menu_panic);
+	status |= UIS_MakeContentFromString("Mq0",
+		&list_elements[APP_MENU_ITEM_SOC].content.static_entry.text,
+		g_str_menu_soc);
 	status |= UIS_MakeContentFromString("Mq0",
 		&list_elements[APP_MENU_ITEM_HELP].content.static_entry.text,
 		g_str_menu_help);
@@ -908,6 +974,15 @@ static UINT32 DumpPanic(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
 	return DumpMemoryRegionToFile(ev_st, app, 0x10020000, 0x20000, g_file_dump_panic, 0);
 }
 
+static UINT32 DumpSoC(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
+	APP_INSTANCE_T *app_instance;
+
+	app_instance = (APP_INSTANCE_T *) app;
+
+	return DumpMemoryRegionToFile(ev_st, app, 0x24850000, 0x12, g_file_dump_soc, 0);
+}
+
+
 static UINT32 DumpMemoryRegionToFile(
 	EVENT_STACK_T *ev_st, APPLICATION_T *app,
 	UINT32 start, UINT32 size, const WCHAR *filename,
@@ -973,10 +1048,97 @@ static UINT32 DumpMemoryRegionToFile(
 	return status;
 }
 
+static WCHAR *GetUniqueIdentifierSoc(void) {
+	BOOL bit0;
+	BOOL bit1;
+	BOOL bit3;
+	UINT16 uid0;
+
+	uid0 = *((UINT16 *) 0x24850000);
+
+	bit0 = ReadBit(uid0, 0);
+	bit1 = ReadBit(uid0, 1);
+	bit3 = ReadBit(uid0, 3);
+
+	if (bit0) {
+		return (WCHAR *) g_str_soc_uid_d;
+	} else if (bit1) {
+		return (WCHAR *) g_str_soc_uid_p;
+	} else if (bit3) {
+		return (WCHAR *) g_str_soc_uid_s;
+	}
+	return (WCHAR *) g_str_soc_uid_u;
+}
+
+static WCHAR *GetProductRevisionSoc(void) {
+	BOOL bit11;
+	BOOL bit12;
+	BOOL bit15;
+	UINT16 rev;
+
+	rev = *((UINT16 *) 0x24850010);
+
+	bit11 = ReadBit(rev, 11);
+	bit12 = ReadBit(rev, 12);
+	bit15 = ReadBit(rev, 15);
+
+	if (bit15) {
+		if (bit11 && bit12) {
+			return (WCHAR *) g_str_soc_rev_pr_uls;
+		} else if (bit11) {
+			return (WCHAR *) g_str_soc_rev_pr_lts;
+		} else if (bit12) {
+			return (WCHAR *) g_str_soc_rev_pr_lte;
+		}
+	}
+	return (WCHAR *) g_str_soc_rev_pr_unk;
+}
+
+static WCHAR *GetProductVendorSoc(void) {
+	BOOL bit8;
+	BOOL bit9;
+	UINT16 rev;
+
+	rev = *((UINT16 *) 0x24850010);
+
+	bit8 = ReadBit(rev, 8);
+	bit9 = ReadBit(rev, 9);
+
+	if (bit8 && bit9) {
+		return (WCHAR *) g_str_soc_rev_pr_sps8;
+	} else if (bit8) {
+		return (WCHAR *) g_str_soc_rev_pr_sps6;
+	} else if (bit9) {
+		return (WCHAR *) g_str_soc_rev_pr_sps7;
+	}
+	return (WCHAR *) g_str_soc_rev_pr_unk0;
+}
+
+static WCHAR *GetSiliconRevisionSoc(void) {
+	BOOL bit0;
+	UINT16 rev;
+
+	rev = *((UINT16 *) 0x24850010);
+
+	bit0 = ReadBit(rev, 0);
+
+	if (bit0) {
+		return (WCHAR *) g_str_soc_rev_si_1;
+	}
+	return (WCHAR *) g_str_soc_rev_si_0;
+}
+
 static UINT32 ClearDataArrays(UINT8 *data_arr, UINT32 size) {
 	UINT32 i;
 	for (i = 0; i < size; ++i) {
 		data_arr[i] = 0;
 	}
 	return RESULT_OK;
+}
+
+static INT32 ReadBit(UINT16 value, UINT8 bitIndex) {
+	if (bitIndex > 15) {
+		return -1;
+	}
+	return (value >> bitIndex) & 0x01;
 }
