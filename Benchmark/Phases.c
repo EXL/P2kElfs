@@ -382,3 +382,100 @@ UINT32 Bench_GPU_Passes(UINT32 bmp_width, UINT32 bmp_height, WCHAR *fps, WCHAR *
 	return status;
 }
 #endif
+
+UINT32 DisksResult(WCHAR *disk_result) {
+	UINT32 i;
+	UINT32 status;
+	WCHAR *result;
+	VOLUME_DESCR_T volume_description;
+	WCHAR volumes[MAX_VOLUMES_COUNT * 3];
+	UINT32 disk_count;
+	WCHAR disks[LENGTH_VOLUME_NAME * MAX_VOLUMES_COUNT];
+
+	disk_count = 0;
+	status = RESULT_OK;
+
+	result = DL_FsVolumeEnum(volumes);
+	if (!result) {
+		u_strcpy(disk_result, L"Error: Cannot get list of disks!");
+		return RESULT_FAIL;
+	}
+
+	for (i = 0; i < MAX_VOLUMES_COUNT; ++i) {
+		disks[(i * 4) + 0] = volumes[i * 3];
+		disks[(i * 4) + 1] = volumes[i * 3 + 1];
+		disks[(i * 4) + 2] = volumes[i * 3];
+		disks[(i * 4) + 3] = 0x0000;
+		disk_count += 1;
+		if (!volumes[i * 3 + 2]) {
+			break;
+		}
+	}
+
+	for (i = 0; i < disk_count; ++i) {
+		char disk_a[LENGTH_VOLUME_NAME];
+		WCHAR *disk_u = disks + (i * 4);
+		u_utoa(disk_u, disk_a);
+		if (!DL_FsGetVolumeDescr(disk_u, &volume_description)) {
+			u_strcpy(disk_result, L"Error: Cannot get volume description of disk: ");
+			u_strcat(disk_result, disk_u);
+			return RESULT_FAIL;
+		}
+		LOG("Found volume: %s, free size: %d bytes.\n", disk_a, volume_description.free);
+		u_strcpy(disk_result, disk_u);
+		u_strcat(disk_result, L":\n");
+		if (volume_description.free < 0x40000) { /* At least 262144 bytes. */
+			u_strcat(disk_result, L"No free 262144 bytes.");
+		} else {
+
+		}
+	}
+
+//	u_strcpy(disk_result, L"OK!");
+
+	return status;
+}
+
+extern UINT32 DiskBenchmark(WCHAR *result, WCHAR *disk) {
+	UINT32 i;
+	UINT32 status;
+	FILE_HANDLE_T file;
+	WCHAR file_path[FS_MAX_URI_NAME_LENGTH / 4];
+
+	status = RESULT_OK;
+
+	// 1K: R: W:
+	// 4K: R: W:
+	// 8K: R: W:
+
+	u_strcpy(file_path, L"file:/");
+	u_strcat(file_path, disk);
+	u_strcat(file_path, L"BENCH.bin");
+
+	if (DL_FsFFileExist(file_path)) {
+		status = DL_FsDeleteFile(file_path, 0);
+		if (status != RESULT_OK) {
+			return RESULT_FAIL;
+		}
+	}
+
+	file = DL_FsOpenFile(file_path, FILE_WRITE_MODE, NULL);
+
+	for (i = 0; i < real_start + real_size; i += chunk_size) {
+		status |= DL_FsWriteFile((void *) i, chunk_size, 1, file, &written);
+		if (written == 0) {
+			status = RESULT_FAIL;
+		}
+	}
+
+	status |= DL_FsCloseFile(file);
+
+	if (DL_FsFFileExist(file_path)) {
+		status = DL_FsDeleteFile(file_path, 0);
+		if (status != RESULT_OK) {
+			return RESULT_FAIL;
+		}
+	}
+
+	return status;
+}

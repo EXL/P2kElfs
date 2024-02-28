@@ -154,4 +154,12 @@ typedef struct {
 
 extern UINT32 TotalHeapSize(BENCHMARK_RESULTS_HEAP_T *result);
 
+/* Disk Benchmark */
+
+#define MAX_VOLUMES_COUNT              (5)
+#define LENGTH_VOLUME_NAME             (3 + 1) /* '/a/\0' */
+
+extern UINT32 DisksResult(WCHAR *result);
+extern UINT32 DiskBenchmark(WCHAR *result);
+
 #endif // BENCHMARK_H

@@ -53,6 +53,7 @@ typedef enum {
 	APP_MENU_ITEM_BENCH_GPU,
 	APP_MENU_ITEM_BENCH_RAM,
 	APP_MENU_ITEM_BENCH_HEAP,
+	APP_MENU_ITEM_BENCH_DISK,
 	APP_MENU_ITEM_HELP,
 	APP_MENU_ITEM_ABOUT,
 	APP_MENU_ITEM_EXIT,
@@ -69,7 +70,8 @@ typedef enum {
 	APP_VIEW_CPU_RESULTS,
 	APP_VIEW_GPU_RESULTS,
 	APP_VIEW_RAM_RESULTS,
-	APP_VIEW_HEAP_RESULTS
+	APP_VIEW_HEAP_RESULTS,
+	APP_VIEW_DISK_RESULTS
 } APP_VIEW_T;
 
 typedef struct {
@@ -85,6 +87,7 @@ typedef struct {
 	BENCHMARK_RESULTS_GPU_T gpu_result;
 	BENCHMARK_RESULTS_RAM_T ram_result;
 	BENCHMARK_RESULTS_HEAP_T heap_result;
+	WCHAR *all_disks_result;
 } APP_INSTANCE_T;
 
 #if defined(EP1)
@@ -120,6 +123,7 @@ static const WCHAR g_str_menu_bench_cpu[] = L"CPU (MCU)";
 static const WCHAR g_str_menu_bench_ipu[] = L"GPU (IPU)";
 static const WCHAR g_str_menu_bench_ram[] = L"RAM (SRAM)";
 static const WCHAR g_str_menu_bench_heap[] = L"HEAP (J2ME)";
+static const WCHAR g_str_menu_bench_disk[] = L"DISK (IO)";
 static const WCHAR g_str_menu_help[] = L"Help...";
 static const WCHAR g_str_menu_about[] = L"About...";
 static const WCHAR g_str_menu_exit[] = L"Exit";
@@ -137,12 +141,14 @@ static const WCHAR g_str_view_gpu_results[] = L"GPU Results";
 static const WCHAR g_str_view_gpu_fps[] = L"Average FPS:";
 static const WCHAR g_str_view_gpu_properties[] = L"Properties:";
 static const WCHAR g_str_view_gpu_todo[] = L"Not yet implemented, sorry!";
+static const WCHAR g_str_view_disk_results[] = L"Disk Results";
 static const WCHAR g_str_help_content_p1[] =
 	L"A simple ELF benchmarking application for Motorola P2K phones.\n\n"
 	L"CPU (MCU) - contains two BogoMIPS and Dhrystone benchmarks.\n\n"
 	L"GPU (IPU) - consists a procedural stress Flame test at different resolutions and a video driver information.\n\n"
 	L"RAM (SRAM) - calculates free system memory for ELFs and TOP-6 blocks of maximum size.\n\n"
 	L"HEAP (J2ME) - shows free Java Heap memory for ELFs, test requires Heap functions in the ELF library to work.\n\n"
+	L"DISK (IO) - test read/write speeds on the phone's file systems disks.\n\n"
 	L"This benchmark is convenient to use with the Overclock.elf application.";
 static const WCHAR g_str_about_content_p1[] = L"Version: 1.0";
 static const WCHAR g_str_about_content_p2[] = L"\x00A9 EXL, 28-Aug-2023.";
@@ -290,6 +296,7 @@ static UINT32 ApplicationStart(EVENT_STACK_T *ev_st, REG_ID_T reg_id, void *reg_
 		app_instance->popup = APP_POPUP_PLEASE_WAIT;
 		app_instance->view = APP_VIEW_ABOUT;
 		app_instance->flag_from_select = FALSE;
+		app_instance->all_disks_result = suAllocMem(RESULT_STRING * 4, NULL);
 
 		status = APP_Start(ev_st, &app_instance->app, APP_STATE_MAIN,
 			g_state_table_hdls, ApplicationStop, g_app_name, 0);
@@ -314,6 +321,8 @@ static UINT32 ApplicationStop(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
 	DeleteDialog(app);
 
 	FreeResourses(app_instance->resources);
+
+	suFreeMem(app_instance->all_disks_result);
 
 	status |= APP_Exit(ev_st, app, 0);
 
@@ -478,6 +487,12 @@ static UINT32 HandleStateEnter(EVENT_STACK_T *ev_st, APPLICATION_T *app, ENTER_S
 							app_instance->heap_result.desc
 					);
 					break;
+				case APP_VIEW_DISK_RESULTS:
+					UIS_MakeContentFromString(
+						"q0Nq1", &content, g_str_view_disk_results,
+							app_instance->all_disks_result
+					);
+					break;
 			}
 			dialog = UIS_CreateViewer(&port, &content, NULL);
 			break;
@@ -580,6 +595,12 @@ static UINT32 HandleEventTimerExpired(EVENT_STACK_T *ev_st, APPLICATION_T *app) 
 					}
 
 					break;
+				case APP_MENU_ITEM_BENCH_DISK:
+					app_instance->view = APP_VIEW_DISK_RESULTS;
+
+					DisksResult(app_instance->all_disks_result);
+
+					break;
 				default:
 					break;
 			}
@@ -609,6 +630,7 @@ static UINT32 HandleEventSelect(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
 		case APP_MENU_ITEM_BENCH_GPU:
 		case APP_MENU_ITEM_BENCH_RAM:
 		case APP_MENU_ITEM_BENCH_HEAP:
+		case APP_MENU_ITEM_BENCH_DISK:
 			status |= APP_UtilChangeState(APP_STATE_POPUP, ev_st, app);
 			break;
 		case APP_MENU_ITEM_HELP:
@@ -674,6 +696,9 @@ static LIST_ENTRY_T *CreateList(EVENT_STACK_T *ev_st, APPLICATION_T *app, UINT32
 	status |= UIS_MakeContentFromString("Mq0",
 		&list_elements[APP_MENU_ITEM_BENCH_HEAP].content.static_entry.text,
 		g_str_menu_bench_heap);
+	status |= UIS_MakeContentFromString("Mq0",
+		&list_elements[APP_MENU_ITEM_BENCH_DISK].content.static_entry.text,
+		g_str_menu_bench_disk);
 	status |= UIS_MakeContentFromString("Mq0",
 		&list_elements[APP_MENU_ITEM_HELP].content.static_entry.text,
 		g_str_menu_help);
