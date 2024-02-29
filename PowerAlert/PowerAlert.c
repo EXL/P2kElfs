@@ -136,6 +136,8 @@ static UINT32 ApplicationStart(EVENT_STACK_T *ev_st, REG_ID_T reg_id, void *reg_
 static UINT32 ApplicationStop(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
 	UINT32 status;
 
+	APP_ConsumeEv(ev_st, app);
+
 	status = APP_Exit(ev_st, app, 0);
 
 	LdrUnloadELF(&Lib);

@@ -281,6 +281,8 @@ static UINT32 ApplicationStop(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
 	status = RESULT_OK;
 	appi = (APP_INSTANCE_T *) app;
 
+	APP_ConsumeEv(ev_st, app);
+
 	DeleteDialog(app);
 
 	FreeResourses(appi->resources);

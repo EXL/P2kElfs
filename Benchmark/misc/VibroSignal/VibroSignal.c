@@ -200,6 +200,8 @@ static UINT32 ApplicationStop(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
 
 	status = RESULT_OK;
 
+	APP_ConsumeEv(ev_st, app);
+
 	DeleteDialog(app);
 
 	status |= APP_Exit(ev_st, app, 0);
