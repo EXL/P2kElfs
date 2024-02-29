@@ -159,7 +159,7 @@ extern UINT32 TotalHeapSize(BENCHMARK_RESULTS_HEAP_T *result);
 #define MAX_VOLUMES_COUNT              (5)
 #define LENGTH_VOLUME_NAME             (3 + 1) /* '/a/\0' */
 
-extern UINT32 DisksResult(WCHAR *result);
-extern UINT32 DiskBenchmark(WCHAR *result);
+extern UINT32 DisksResult(WCHAR *disk_result);
+extern UINT32 DiskBenchmark(WCHAR *disk_result, WCHAR *disk, UINT32 addr, UINT32 c_size, UINT32 f_size);
 
 #endif // BENCHMARK_H

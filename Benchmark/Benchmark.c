@@ -296,7 +296,7 @@ static UINT32 ApplicationStart(EVENT_STACK_T *ev_st, REG_ID_T reg_id, void *reg_
 		app_instance->popup = APP_POPUP_PLEASE_WAIT;
 		app_instance->view = APP_VIEW_ABOUT;
 		app_instance->flag_from_select = FALSE;
-		app_instance->all_disks_result = suAllocMem(RESULT_STRING * 4, NULL);
+		app_instance->all_disks_result = suAllocMem(RESULT_STRING * 10, NULL);
 
 		status = APP_Start(ev_st, &app_instance->app, APP_STATE_MAIN,
 			g_state_table_hdls, ApplicationStop, g_app_name, 0);

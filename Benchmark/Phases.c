@@ -9,6 +9,8 @@
 
 char float_string[FLOAT_STRING];
 
+static UINT32 DeleteFileIfExists(const WCHAR *file_path);
+
 #if defined(PALMOS_BOGOMIPS)
 /* This is the number of bits of precision for the loops_per_second.  Each
    bit takes on average 1.5/HZ seconds.  This (like the original) is a little
@@ -397,7 +399,7 @@ UINT32 DisksResult(WCHAR *disk_result) {
 
 	result = DL_FsVolumeEnum(volumes);
 	if (!result) {
-		u_strcpy(disk_result, L"Error: Cannot get list of disks!");
+		u_strcpy(disk_result, L"Error: Cannot get list of disks!\n");
 		return RESULT_FAIL;
 	}
 
@@ -419,62 +421,109 @@ UINT32 DisksResult(WCHAR *disk_result) {
 		if (!DL_FsGetVolumeDescr(disk_u, &volume_description)) {
 			u_strcpy(disk_result, L"Error: Cannot get volume description of disk: ");
 			u_strcat(disk_result, disk_u);
+			u_strcat(disk_result, L"\n");
 			return RESULT_FAIL;
 		}
 		LOG("Found volume: %s, free size: %d bytes.\n", disk_a, volume_description.free);
-		u_strcpy(disk_result, disk_u);
-		u_strcat(disk_result, L":\n");
+		u_strcat(disk_result, disk_u);
+		u_strcat(disk_result, L" (128 KiB file):\n");
 		if (volume_description.free < 0x40000) { /* At least 262144 bytes. */
 			u_strcat(disk_result, L"No free 262144 bytes.");
 		} else {
-
+			DiskBenchmark(disk_result, disk_u, 0x03FC0000, 0x1000, 0x20000); /* IRAM, Chunk: 4096  B, Size: 128 KiB. */
+			DiskBenchmark(disk_result, disk_u, 0x03FC0000, 0x2000, 0x20000); /* IRAM, Chunk: 8192  B, Size: 128 KiB. */
+			DiskBenchmark(disk_result, disk_u, 0x03FC0000, 0x4000, 0x20000); /* IRAM, Chunk: 16384 B, Size: 128 KiB. */
 		}
 	}
 
-//	u_strcpy(disk_result, L"OK!");
+	if (!disk_count) {
+		u_strcpy(disk_result, L"Error: No disks available!\n");
+	}
 
 	return status;
 }
 
-extern UINT32 DiskBenchmark(WCHAR *result, WCHAR *disk) {
+extern UINT32 DiskBenchmark(WCHAR *disk_result, WCHAR *disk, UINT32 addr, UINT32 c_size, UINT32 f_size) {
 	UINT32 i;
+	UINT32 rw;
+	INT32 res;
 	UINT32 status;
 	FILE_HANDLE_T file;
 	WCHAR file_path[FS_MAX_URI_NAME_LENGTH / 4];
+	char *read_buffer;
+	UINT64 time_start;
+	UINT64 time_end;
+	UINT32 time_result;
+	WCHAR num_u[RESULT_STRING];
 
 	status = RESULT_OK;
-
-	// 1K: R: W:
-	// 4K: R: W:
-	// 8K: R: W:
 
 	u_strcpy(file_path, L"file:/");
 	u_strcat(file_path, disk);
 	u_strcat(file_path, L"BENCH.bin");
 
-	if (DL_FsFFileExist(file_path)) {
-		status = DL_FsDeleteFile(file_path, 0);
-		if (status != RESULT_OK) {
-			return RESULT_FAIL;
-		}
-	}
+	u_ltou(c_size / 1024, num_u);
+	u_strcat(disk_result, num_u);
+	u_strcat(disk_result, L"K, ");
 
+	status |= DeleteFileIfExists(file_path);
+
+	/* Write File */
+	time_start = suPalReadTime();
 	file = DL_FsOpenFile(file_path, FILE_WRITE_MODE, NULL);
-
-	for (i = 0; i < real_start + real_size; i += chunk_size) {
-		status |= DL_FsWriteFile((void *) i, chunk_size, 1, file, &written);
-		if (written == 0) {
+	for (i = addr; i < addr + f_size; i += c_size) {
+		status |= DL_FsWriteFile((void *) i, c_size, 1, file, &rw);
+		if (rw == 0) {
 			status = RESULT_FAIL;
 		}
 	}
-
 	status |= DL_FsCloseFile(file);
+
+	time_end = suPalReadTime();
+	time_result = (UINT32) suPalTicksToMsec(time_end - time_start);
+
+	u_ltou(time_result, num_u);
+	u_strcat(disk_result, L"W:");
+	u_strcat(disk_result, num_u);
+	u_strcat(disk_result, L", ");
+
+	/* Read File */
+	read_buffer = suAllocMem(c_size, &res);
+	time_start = suPalReadTime();
+	if (res == RESULT_OK) { /* No Allocation Error. */
+		file = DL_FsOpenFile(file_path, FILE_READ_MODE, NULL);
+		for (i = addr; i < addr + f_size; i += c_size) {
+			status = DL_FsReadFile((void *) read_buffer, c_size, 1, file, &rw);
+			if (rw == 0) {
+				status = RESULT_FAIL;
+			}
+		}
+		status |= DL_FsCloseFile(file);
+		time_end = suPalReadTime();
+		time_result = (UINT32) suPalTicksToMsec(time_end - time_start);
+		suFreeMem(read_buffer);
+
+		u_ltou(time_result, num_u);
+		u_strcat(disk_result, L"R:");
+		u_strcat(disk_result, num_u);
+		u_strcat(disk_result, L", ms.\n");
+	} else {
+		u_strcat(disk_result, L"Error: Can allocate chunk buffer.\n");
+	}
+
+	status |= DeleteFileIfExists(file_path);
+
+	return status;
+}
+
+
+static UINT32 DeleteFileIfExists(const WCHAR *file_path) {
+	UINT32 status;
+
+	status = RESULT_FAIL;
 
 	if (DL_FsFFileExist(file_path)) {
 		status = DL_FsDeleteFile(file_path, 0);
-		if (status != RESULT_OK) {
-			return RESULT_FAIL;
-		}
 	}
 
 	return status;
