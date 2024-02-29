@@ -46,7 +46,7 @@ See [Overclock](../Overclock) project documents for overclocking Benchmark compa
 
 ### Disks/Volumes benchmarking results
 
-Thanks to @fkcoder and @Unreal_man for the tests.
+Thanks to @fkcoder, @baat, and @Unreal_man for the tests.
 
 ![Screenshot of Benchmark from Motorola E1 8](../images/Screenshot_Benchmark_E1_8.png) ![Screenshot of Benchmark from Motorola E1 9](../images/Screenshot_Benchmark_E1_9.png)
 
@@ -54,6 +54,7 @@ Thanks to @fkcoder and @Unreal_man for the tests.
 |----------|---------------------------------------------------------------------------------------|----------------------------------------------------------------------------------|-------------------------------------------------------------------------------------|
 | SLVR L6i | 4K, W:4318, R:162, ms. <br /> 8K, W:3935, R:129, ms. <br /> 16K, W:3568, R:107, ms.   | 4K, W:445, R:39, ms. <br /> 8K, W:420, R:26, ms. <br /> 16K, W:405, R:20, ms.    | (None)                                                                              |
 | ROKR E1  | 4K, W:4662, R:152, ms. <br /> 8K, W:4138, R:107, ms. <br /> 16K, W:3765, R:100, ms.   | 4K, W:795, R:38, ms. <br /> 8K, W:767, R:26, ms. <br /> 16K, W:758, R:20, ms.    | 4K, W:511, R:758, ms. <br /> 8K, W:500, R:628, ms. <br /> 16K, W:421, R:560, ms.    |
+| SLVR L7  | 4K, W:4886, R:161, ms. <br /> 8K, W:4618, R:123, ms. <br /> 16K, W:4315, R:100, ms.   | 4K, W:974, R:35, ms. <br /> 8K, W:959, R:25, ms. <br /> 16K, W:938, R:19, ms.    | 4K, W:308, R:190, ms. <br /> 8K, W:232, R:168, ms. <br /> 16K, W:320, R:159, ms.    |
 | SLVR L7e | 4K, W:3815, R:147, ms. <br /> 8K, W:3473, R:115, ms. <br /> 16K, W:3138, R:98, ms.    | 4K, W:843, R:38, ms. <br /> 8K, W:822, R:26, ms. <br /> 16K, W:807, R:19, ms.    | 4K, W:302, R:266, ms. <br /> 8K, W:183, R:200, ms. <br /> 16K, W:117, R:157, ms.    |
 
 ## Other versions
