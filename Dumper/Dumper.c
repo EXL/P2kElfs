@@ -190,9 +190,11 @@ static const WCHAR g_str_soc_uid_p[] = L"0010 Production Part";
 static const WCHAR g_str_soc_uid_s[] = L"0011 Non-Secure Part";
 static const WCHAR g_str_soc_rev_product_revision[] = L"Product Revision:";
 static const WCHAR g_str_soc_rev_pr_unk[] = L"00000 Reserved";
-static const WCHAR g_str_soc_rev_pr_lts[] = L"10001 Neptune LTS ROM";
-static const WCHAR g_str_soc_rev_pr_lte[] = L"10010 Neptune LTE ROM";
-static const WCHAR g_str_soc_rev_pr_uls[] = L"10011 Neptune ULS ROM";
+static const WCHAR g_str_soc_rev_pr_lts[] = L"10001 Neptune LTS 0000 ROM";
+static const WCHAR g_str_soc_rev_pr_lte[] = L"10010 Neptune LTE 0200 ROM";
+static const WCHAR g_str_soc_rev_pr_uls[] = L"10011 Neptune ULS 0000 ROM";
+static const WCHAR g_str_soc_rev_pr_lte2[] = L"10100 Neptune LTE2 0300 ROM";
+static const WCHAR g_str_soc_rev_pr_lte2_irom0400[] = L"101?? Neptune LTE2 0400 ROM?";
 static const WCHAR g_str_soc_rev_product_vendor[] = L"Product Vendor / Tech:";
 static const WCHAR g_str_soc_rev_pr_unk0[] = L"000 Unknown 000";
 static const WCHAR g_str_soc_rev_pr_sps6[] = L"001 SPS HIP6W? 001";
@@ -1050,7 +1052,10 @@ static UINT32 DumpMemoryRegionToFile(
 	return status;
 }
 
-/* U800_Neptune LTE IC Baseband Specification.pdf */
+/*
+ * U800_Neptune LTE IC Baseband Specification.pdf:
+ * https://firmware.center/firmware/Motorola/E398/Service%20Docs/Data%20Sheets/U800_Neptune%20LTE%20IC%20Baseband%20Specification.pdf
+ */
 
 static WCHAR *GetUniqueIdentifierSoc(void) {
 	BOOL bit0;
@@ -1077,6 +1082,7 @@ static WCHAR *GetUniqueIdentifierSoc(void) {
 static WCHAR *GetProductRevisionSoc(void) {
 	BOOL bit11;
 	BOOL bit12;
+	BOOL bit13;
 	BOOL bit15;
 	UINT16 rev;
 
@@ -1084,15 +1090,24 @@ static WCHAR *GetProductRevisionSoc(void) {
 
 	bit11 = ReadBit(rev, 11);
 	bit12 = ReadBit(rev, 12);
+	bit13 = ReadBit(rev, 13);
 	bit15 = ReadBit(rev, 15);
 
 	if (bit15) {
-		if (bit11 && bit12) {
-			return (WCHAR *) g_str_soc_rev_pr_uls;
-		} else if (bit11) {
-			return (WCHAR *) g_str_soc_rev_pr_lts;
-		} else if (bit12) {
-			return (WCHAR *) g_str_soc_rev_pr_lte;
+		if (bit13) {
+			if (bit11 || bit12) {
+				return (WCHAR *) g_str_soc_rev_pr_lte2_irom0400;
+			} else {
+				return (WCHAR *) g_str_soc_rev_pr_lte2;
+			}
+		} else {
+			if (bit11 && bit12) {
+				return (WCHAR *) g_str_soc_rev_pr_uls;
+			} else if (bit11) {
+				return (WCHAR *) g_str_soc_rev_pr_lts;
+			} else if (bit12) {
+				return (WCHAR *) g_str_soc_rev_pr_lte;
+			}
 		}
 	}
 	return (WCHAR *) g_str_soc_rev_pr_unk;
