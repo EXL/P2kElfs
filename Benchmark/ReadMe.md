@@ -57,6 +57,10 @@ Thanks to @fkcoder, @baat, and @Unreal_man for the tests.
 | SLVR L7  | 4K, W:4886, R:161, ms. <br /> 8K, W:4618, R:123, ms. <br /> 16K, W:4315, R:100, ms.   | 4K, W:974, R:35, ms. <br /> 8K, W:959, R:25, ms. <br /> 16K, W:938, R:19, ms.    | 4K, W:308, R:190, ms. <br /> 8K, W:232, R:168, ms. <br /> 16K, W:320, R:159, ms.    |
 | SLVR L7e | 4K, W:3815, R:147, ms. <br /> 8K, W:3473, R:115, ms. <br /> 16K, W:3138, R:98, ms.    | 4K, W:843, R:38, ms. <br /> 8K, W:822, R:26, ms. <br /> 16K, W:807, R:19, ms.    | 4K, W:302, R:266, ms. <br /> 8K, W:183, R:200, ms. <br /> 16K, W:117, R:157, ms.    |
 
+Benchmarking results on Motorola ROKR E1 with custom [Dream A Reality 2.x Test 16](https://forum.motofan.ru/index.php?showtopic=167677) firmware: 52 MHz vs. 65 MHz MCU overclock.
+
+![Screenshot of Benchmark from Motorola E1 10](../images/Screenshot_Benchmark_E1_10.png) ![Screenshot of Benchmark from Motorola E1 11](../images/Screenshot_Benchmark_E1_11.png)
+
 ## Other versions
 
 * Various signal e.g. vibromotor finding version using binary search. See [misc/VibroSignal](misc/VibroSignal) utility project in this directory.
