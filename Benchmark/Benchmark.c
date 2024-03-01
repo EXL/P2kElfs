@@ -490,10 +490,13 @@ static UINT32 HandleStateEnter(EVENT_STACK_T *ev_st, APPLICATION_T *app, ENTER_S
 					);
 					break;
 				case APP_VIEW_DISK_RESULTS:
+#if defined(EP1) || defined(EP2)
 					UIS_MakeContentFromString(
-						"q0Nq1", &content, g_str_view_disk_results,
-							app_instance->all_disks_result
+						"q0Nq1", &content, g_str_view_disk_results, app_instance->all_disks_result
 					);
+#else
+					UIS_MakeContentFromString("q0Nq1", &content, g_str_view_disk_results, g_str_view_gpu_todo);
+#endif
 					break;
 			}
 			dialog = UIS_CreateViewer(&port, &content, NULL);
@@ -599,9 +602,9 @@ static UINT32 HandleEventTimerExpired(EVENT_STACK_T *ev_st, APPLICATION_T *app) 
 					break;
 				case APP_MENU_ITEM_BENCH_DISK:
 					app_instance->view = APP_VIEW_DISK_RESULTS;
-
+#if defined(EP1) || defined(EP2)
 					DisksResult(app_instance->all_disks_result);
-
+#endif
 					break;
 				default:
 					break;

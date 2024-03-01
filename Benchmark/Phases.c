@@ -383,7 +383,6 @@ UINT32 Bench_GPU_Passes(UINT32 bmp_width, UINT32 bmp_height, WCHAR *fps, WCHAR *
 
 	return status;
 }
-#endif
 
 UINT32 DisksResult(WCHAR *disk_result) {
 	UINT32 i;
@@ -516,7 +515,6 @@ extern UINT32 DiskBenchmark(WCHAR *disk_result, WCHAR *disk, UINT32 addr, UINT32
 	return status;
 }
 
-
 static UINT32 DeleteFileIfExists(const WCHAR *file_path) {
 	UINT32 status;
 
@@ -528,3 +526,4 @@ static UINT32 DeleteFileIfExists(const WCHAR *file_path) {
 
 	return status;
 }
+#endif
