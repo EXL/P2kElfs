@@ -59,7 +59,7 @@ Thanks to @fkcoder, @baat, and @Unreal_man for the tests.
 
 Benchmarking results on Motorola ROKR E1 with custom [Dream A Reality 2.x Test 16](https://forum.motofan.ru/index.php?showtopic=167677) firmware: 52 MHz vs. 65 MHz MCU overclock.
 
-![Screenshot of Benchmark from Motorola E1 10](../images/Screenshot_Benchmark_E1_10.png) ![Screenshot of Benchmark from Motorola E1 11](../images/Screenshot_Benchmark_E1_11.png)
+![Screenshot of Benchmark from Motorola E1 10](../images/Screenshot_Benchmark_E1_10.jpg) ![Screenshot of Benchmark from Motorola E1 11](../images/Screenshot_Benchmark_E1_11.jpg)
 
 ## Other versions
 
