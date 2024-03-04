@@ -1,7 +1,7 @@
 GPUs on Motorola phones
 =======================
 
-## ARM based Motorola P2K phones
+## ARM7TDMI-S based GSM Motorola P2K phones
 
 ```
 Motorola SLVR L6, L6i           ATI Imageon W2240     192 KiB
@@ -21,7 +21,7 @@ Motorola RAZR V3re              ATI Imageon W2240 (!) 192 KiB
 Motorola RAZR V3ie, V3ire       ATI Imageon W2262     ? + 2 MB
 ```
 
-## M·CORE based Motorola P2K phones
+## M·CORE and ARM1136 based UMTS Motorola P2K phones
 
 ```
 SC4  - Nvidia GoForce 3000 @ 320 KB VRAM
@@ -65,7 +65,7 @@ RAM: 32 MB SRAM
 GPU: Nvidia GoForce SC12 4800 @ 1280 KB VRAM
 ```
 
-## Other ARM based phones
+## ARM7TDMI-S based GSM ODM phones
 
 ```
 Motorola SLVR L6 i-mode (Mitsubishi MT 340i)   Nvidia GoForce 2150
