@@ -94,6 +94,7 @@ See [Overclock](../Overclock) project documents for overclocking Yeti3D comparis
 * F (4th) - A special versions with FPS meter.
 * L (4th) - A special versions with long search range for Motorola RAZR V3r.
 * U (4th) - A special versions for Motorola SLVR L6 phone (R3511_G_0A.52.45R_A) with upside down display.
+* S (5th) - FPS limit to prevent phone's reboot.
 
 ### Summary
 
