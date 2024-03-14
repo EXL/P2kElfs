@@ -351,6 +351,7 @@ static UINT32 ApplicationStart(EVENT_STACK_T *ev_st, REG_ID_T reg_id, void *reg_
 		app_instance->popup = APP_POPUP_DUMP_OK;
 		app_instance->view = APP_VIEW_ABOUT;
 		app_instance->flag_from_select = FALSE;
+		app_instance->flag_show_view_after_dumping = FALSE;
 		SetPhoneParameters(app_instance);
 
 		status = APP_Start(ev_st, &app_instance->app, APP_STATE_MAIN,
