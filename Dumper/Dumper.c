@@ -395,6 +395,7 @@ static UINT32 ApplicationStop(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
 
 static UINT32 SetPhoneParameters(APP_INSTANCE_T *app_instance) {
 	INT32 result;
+	UINT32 offset;
 	char buffer_a[DEBUG_OUTPUT_MAX_LENGTH + 1];
 	WCHAR buffer_u[DEBUG_OUTPUT_MAX_LENGTH + 1];
 	char disk_a[DISK_DRIVER_NAME_SIZE]; /* /a/, /b/, /c/ */
@@ -468,7 +469,13 @@ static UINT32 SetPhoneParameters(APP_INSTANCE_T *app_instance) {
 	u_atou(buffer_a, buffer_u);
 	u_strcat(g_str_help_content_p1, buffer_u);
 
-	u_strncpy(disk_u, g_res_file_path + 6, 3); /* file://c/... */
+	/* HACK: Ugly DAR modded firmware support with no URI scheme. */
+	if (!strcmp(LdrGetFirmwareMajorVersion(), "R373") && !strcmp(LdrGetFirmwareMinorVersion(), "DAR")) {
+		offset = 0; /* /c/... */
+	} else {
+		offset = 6; /* file://c/... */
+	}
+	u_strncpy(disk_u, g_res_file_path + offset, 3);
 	u_utoa(disk_u, disk_a);
 	PFprintf("Disk: %s\n", disk_a);
 	sprintf(buffer_a, "Disk: %s\n", disk_a);
