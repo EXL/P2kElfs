@@ -33,6 +33,10 @@ no warnings.
 
 #include "dhry.h"
 
+#if defined(EM1) || defined(EM2)
+#define printf PFprintf
+#endif
+
 Rec_Pointer     Ptr_Glob,
                 Next_Ptr_Glob;
 int             Int_Glob;

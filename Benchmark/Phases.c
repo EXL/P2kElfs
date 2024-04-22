@@ -1,4 +1,5 @@
 #include <loader.h>
+#include <filesystem.h>
 #include <utilities.h>
 #include <mem.h>
 #if defined(EP1) || defined(EP2)
@@ -144,12 +145,26 @@ UINT32 BogoMIPS(BENCHMARK_RESULTS_CPU_T *result) {
 }
 #endif
 
-#if defined(MCORE_BOGOMIPS)
-UINT32 BogoMIPS(BENCHMARK_RESULTS_CPU_T *result) {
-	u_strcpy(result->bogo_time, L"Not Implemented");
-	u_strcpy(result->bogo_mips, L"Not Implemented");
+#if defined(__mcore__)
+void delay_bmips(UINT32 loops) {
+	asm volatile(
+		"mov r0, r0\n"
+		"loop:"
+			"declt %0\n"
+			"bf loopb"
+		: "=r"(loops)
+		: "0"(loops)
+	);
+}
 
-	return RESULT_FAIL;
+void *AmMemAllocPointer(int size) {
+	INT32 result;
+	void *address = suAllocMem(size, &result);
+	return (result != RESULT_OK) ? NULL : address;
+}
+
+void AmMemFreePointer(void *ptr) {
+	suFreeMem(ptr);
 }
 #endif
 
@@ -383,6 +398,7 @@ UINT32 Bench_GPU_Passes(UINT32 bmp_width, UINT32 bmp_height, WCHAR *fps, WCHAR *
 
 	return status;
 }
+#endif
 
 UINT32 DisksResult(WCHAR *disk_result) {
 	UINT32 i;
@@ -416,6 +432,9 @@ UINT32 DisksResult(WCHAR *disk_result) {
 	for (i = 0; i < disk_count; ++i) {
 		char disk_a[LENGTH_VOLUME_NAME];
 		WCHAR *disk_u = disks + (i * 4);
+		UINT32 free_size_memory;
+		UINT32 copy_address;
+
 		u_utoa(disk_u, disk_a);
 		if (!DL_FsGetVolumeDescr(disk_u, &volume_description)) {
 			u_strcpy(disk_result, L"Error: Cannot get volume description of disk: ");
@@ -423,15 +442,27 @@ UINT32 DisksResult(WCHAR *disk_result) {
 			u_strcat(disk_result, L"\n");
 			return RESULT_FAIL;
 		}
-		LOG("Found volume: %s, free size: %d bytes.\n", disk_a, volume_description.free);
+
+#if defined(EP1) || defined(EP2)
+		free_size_memory = volume_description.free;
+		copy_address = 0x03FC0000; /* iRAM */
+#elif defined(EM1) || defined(EM2)
+		free_size_memory = volume_description.free_size;
+		copy_address = 0x08000000; /* iRAM or RAM */
+#else
+		free_size_memory = 0;
+		copy_address = 0x00000000; /* iROM */
+#endif
+
+		LOG("Found volume: %s, free size: %d bytes.\n", disk_a, free_size_memory);
 		u_strcat(disk_result, disk_u);
 		u_strcat(disk_result, L" (128 KiB file):\n");
-		if (volume_description.free < 0x40000) { /* At least 262144 bytes. */
+		if (free_size_memory < 0x40000) { /* At least 262144 bytes. */
 			u_strcat(disk_result, L"No free 262144 bytes.");
 		} else {
-			DiskBenchmark(disk_result, disk_u, 0x03FC0000, 0x1000, 0x20000); /* IRAM, Chunk: 4096  B, Size: 128 KiB. */
-			DiskBenchmark(disk_result, disk_u, 0x03FC0000, 0x2000, 0x20000); /* IRAM, Chunk: 8192  B, Size: 128 KiB. */
-			DiskBenchmark(disk_result, disk_u, 0x03FC0000, 0x4000, 0x20000); /* IRAM, Chunk: 16384 B, Size: 128 KiB. */
+			DiskBenchmark(disk_result, disk_u, copy_address, 0x1000, 0x20000); /* Chunk: 4096  B, Size: 128 KiB. */
+			DiskBenchmark(disk_result, disk_u, copy_address, 0x2000, 0x20000); /* Chunk: 8192  B, Size: 128 KiB. */
+			DiskBenchmark(disk_result, disk_u, copy_address, 0x4000, 0x20000); /* Chunk: 16384 B, Size: 128 KiB. */
 		}
 	}
 
@@ -526,4 +557,3 @@ static UINT32 DeleteFileIfExists(const WCHAR *file_path) {
 
 	return status;
 }
-#endif

@@ -19,9 +19,8 @@ set MCORE_PATH=C:\MCORE_EM2
 set SDK_PATH=%MCORE_PATH%\SDK
 
 :: Defines.
-set DEFINES=-D__P2K__ -DEM2 -DMCORE_BOGOMIPS
-:: set DEFINES=-D__P2K__ -DEM1 -DPALMOS_BOGOMIPS
-:: set DEFINES=-D__P2K__ -DEM1 -DLINUX_BOGOMIPS
+set DEFINES=-D__P2K__ -DEM2 -DLINUX_BOGOMIPS
+:: set DEFINES=-D__P2K__ -DEM2 -DPALMOS_BOGOMIPS
 
 :: Includes.
 set INCLUDES=-I.
@@ -34,19 +33,19 @@ set ELF_NAME=Benchmark
 
 :: Compiling step.
 %MCORE_PATH%\bin\mcore-elf-gcc -fshort-wchar -funsigned-char -fomit-frame-pointer -fno-builtin ^
-	-m340 -m4align -mbig-endian -nostdinc -nostdlib -I%SDK_PATH% %INCLUDES% %DEFINES% ^
+	-m340 -m4align -mbig-endian -nostdinc -nostdlib -I%SDK_PATH% %INCLUDES% %DEFINES% %OPTIM% ^
 	-c dhry_1.c -o dhry_1.o
 %MCORE_PATH%\bin\mcore-elf-gcc -fshort-wchar -funsigned-char -fomit-frame-pointer -fno-builtin ^
-	-m340 -m4align -mbig-endian -nostdinc -nostdlib -I%SDK_PATH% %INCLUDES% %DEFINES% ^
+	-m340 -m4align -mbig-endian -nostdinc -nostdlib -I%SDK_PATH% %INCLUDES% %DEFINES% %OPTIM% ^
 	-c dhry_2.c -o dhry_2.o
 %MCORE_PATH%\bin\mcore-elf-gcc -fshort-wchar -funsigned-char -fomit-frame-pointer -fno-builtin ^
-	-m340 -m4align -mbig-endian -nostdinc -nostdlib -I%SDK_PATH% %INCLUDES% %DEFINES% ^
+	-m340 -m4align -mbig-endian -nostdinc -nostdlib -I%SDK_PATH% %INCLUDES% %DEFINES% %OPTIM% ^
 	-c Phases.c -o Phases.o
 %MCORE_PATH%\bin\mcore-elf-gcc -fshort-wchar -funsigned-char -fomit-frame-pointer -fno-builtin ^
-	-m340 -m4align -mbig-endian -nostdinc -nostdlib -I%SDK_PATH% %INCLUDES% %DEFINES% ^
+	-m340 -m4align -mbig-endian -nostdinc -nostdlib -I%SDK_PATH% %INCLUDES% %DEFINES% %OPTIM% ^
 	-c FireEffect.c -o FireEffect.o
 %MCORE_PATH%\bin\mcore-elf-gcc -fshort-wchar -funsigned-char -fomit-frame-pointer -fno-builtin ^
-	-m340 -m4align -mbig-endian -nostdinc -nostdlib -I%SDK_PATH% %INCLUDES% %DEFINES% ^
+	-m340 -m4align -mbig-endian -nostdinc -nostdlib -I%SDK_PATH% %INCLUDES% %DEFINES% %OPTIM% ^
 	-c %ELF_NAME%.c -o %ELF_NAME%.o
 
 :: Linking step.

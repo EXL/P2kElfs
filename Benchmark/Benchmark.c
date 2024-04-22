@@ -140,7 +140,7 @@ static const WCHAR g_str_view_heap_results[] = L"Java Heap Results";
 static const WCHAR g_str_view_gpu_results[] = L"GPU Results";
 static const WCHAR g_str_view_gpu_fps[] = L"Average FPS:";
 static const WCHAR g_str_view_gpu_properties[] = L"Properties:";
-static const WCHAR g_str_view_gpu_todo[] = L"Not yet implemented, sorry!";
+static const WCHAR g_str_view_todo[] = L"Not yet implemented, sorry!";
 static const WCHAR g_str_view_disk_results[] = L"Disk Results";
 static const WCHAR g_str_help_content_p1[] =
 	L"A simple ELF benchmarking application for Motorola P2K phones.\n\n"
@@ -450,6 +450,7 @@ static UINT32 HandleStateEnter(EVENT_STACK_T *ev_st, APPLICATION_T *app, ENTER_S
 					);
 					break;
 				case APP_VIEW_GPU_RESULTS:
+#if defined(EP1) || defined(EP2)
 					UIS_MakeContentFromString(
 						"q0Nq1NSq2NSq3NSq4NSq5NSq6NSq7N NRq8NSq9", &content, g_str_view_gpu_results,
 						g_str_view_gpu_fps,
@@ -462,6 +463,9 @@ static UINT32 HandleStateEnter(EVENT_STACK_T *ev_st, APPLICATION_T *app, ENTER_S
 						g_str_view_gpu_properties,
 							app_instance->gpu_result.properties
 					);
+#else
+					UIS_MakeContentFromString("q0Nq1", &content, g_str_view_ram_results, g_str_view_todo);
+#endif
 					break;
 				case APP_VIEW_RAM_RESULTS:
 #if defined(EP1) || defined(EP2)
@@ -478,7 +482,7 @@ static UINT32 HandleStateEnter(EVENT_STACK_T *ev_st, APPLICATION_T *app, ENTER_S
 							app_instance->ram_result.blocks[5]
 					);
 #else
-					UIS_MakeContentFromString("q0Nq1", &content, g_str_view_ram_results, g_str_view_gpu_todo);
+					UIS_MakeContentFromString("q0Nq1", &content, g_str_view_ram_results, g_str_view_todo);
 #endif
 					break;
 				case APP_VIEW_HEAP_RESULTS:
@@ -495,7 +499,7 @@ static UINT32 HandleStateEnter(EVENT_STACK_T *ev_st, APPLICATION_T *app, ENTER_S
 						"q0Nq1", &content, g_str_view_disk_results, app_instance->all_disks_result
 					);
 #else
-					UIS_MakeContentFromString("q0Nq1", &content, g_str_view_disk_results, g_str_view_gpu_todo);
+					UIS_MakeContentFromString("q0Nq1", &content, g_str_view_disk_results, g_str_view_todo);
 #endif
 					break;
 			}
@@ -602,9 +606,7 @@ static UINT32 HandleEventTimerExpired(EVENT_STACK_T *ev_st, APPLICATION_T *app) 
 					break;
 				case APP_MENU_ITEM_BENCH_DISK:
 					app_instance->view = APP_VIEW_DISK_RESULTS;
-#if defined(EP1) || defined(EP2)
 					DisksResult(app_instance->all_disks_result);
-#endif
 					break;
 				default:
 					break;
