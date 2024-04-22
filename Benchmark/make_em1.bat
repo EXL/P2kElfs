@@ -35,6 +35,9 @@ set ELF_NAME=Benchmark
 :: Compiling step.
 %MCORE_PATH%\GCC_MCore\bin\mcore-elf-gcc -fshort-wchar -mbig-endian -nostdinc -m340 ^
 	-fomit-frame-pointer -nostdlib -fno-builtin -I%SDK_PATH% %INCLUDES% %DEFINES% %OPTIM% ^
+	-c delay_mcore340_GCC.S -o delay_mcore340_GCC.o
+%MCORE_PATH%\GCC_MCore\bin\mcore-elf-gcc -fshort-wchar -mbig-endian -nostdinc -m340 ^
+	-fomit-frame-pointer -nostdlib -fno-builtin -I%SDK_PATH% %INCLUDES% %DEFINES% %OPTIM% ^
 	-c dhry_1.c -o dhry_1.o
 %MCORE_PATH%\GCC_MCore\bin\mcore-elf-gcc -fshort-wchar -mbig-endian -nostdinc -m340 ^
 	-fomit-frame-pointer -nostdlib -fno-builtin -I%SDK_PATH% %INCLUDES% %DEFINES% %OPTIM% ^
@@ -51,5 +54,5 @@ set ELF_NAME=Benchmark
 
 :: Linking step.
 %MCORE_PATH%\GCC_MCore\bin\mcore-elf-ld -dn -r -no-bss-init -z muldefs ^
-	dhry_1.o dhry_2.o Phases.o FireEffect.o %ELF_NAME%.o ^
+	delay_mcore340_GCC.o dhry_1.o dhry_2.o Phases.o FireEffect.o %ELF_NAME%.o ^
 	-T%MCORE_PATH%\GCC_MCore\mcore-elf\lib\linker_elf.ld -o %ELF_NAME%.elf

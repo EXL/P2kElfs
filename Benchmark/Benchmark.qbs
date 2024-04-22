@@ -6,6 +6,7 @@ Application {
 		"Phases.c",
 		"delay_armv4t_ADS.S",
 		"delay_armv4t_GCC.S",
+		"delay_mcore340_GCC.S",
 		"dhry_1.c",
 		"dhry_2.c"
 	]

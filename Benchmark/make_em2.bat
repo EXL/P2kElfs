@@ -34,6 +34,9 @@ set ELF_NAME=Benchmark
 :: Compiling step.
 %MCORE_PATH%\bin\mcore-elf-gcc -fshort-wchar -funsigned-char -fomit-frame-pointer -fno-builtin ^
 	-m340 -m4align -mbig-endian -nostdinc -nostdlib -I%SDK_PATH% %INCLUDES% %DEFINES% %OPTIM% ^
+	-c delay_mcore340_GCC.S -o delay_mcore340_GCC.o
+%MCORE_PATH%\bin\mcore-elf-gcc -fshort-wchar -funsigned-char -fomit-frame-pointer -fno-builtin ^
+	-m340 -m4align -mbig-endian -nostdinc -nostdlib -I%SDK_PATH% %INCLUDES% %DEFINES% %OPTIM% ^
 	-c dhry_1.c -o dhry_1.o
 %MCORE_PATH%\bin\mcore-elf-gcc -fshort-wchar -funsigned-char -fomit-frame-pointer -fno-builtin ^
 	-m340 -m4align -mbig-endian -nostdinc -nostdlib -I%SDK_PATH% %INCLUDES% %DEFINES% %OPTIM% ^
@@ -51,4 +54,5 @@ set ELF_NAME=Benchmark
 :: Linking step.
 %MCORE_PATH%\bin\mcore-elf-ld -d -EB -N -r -s -Bstatic -Bsymbolic -Bsymbolic-functions ^
 	--gc-sections -nostdinc -nostdlib --unresolved-symbols=report-all -z muldefs -z combreloc -z nodefaultlib ^
-	dhry_1.o dhry_2.o Phases.o FireEffect.o %ELF_NAME%.o -T%MCORE_PATH%\mcore-elf\lib\linker_elf.ld -o %ELF_NAME%.elf
+	delay_mcore340_GCC.o dhry_1.o dhry_2.o Phases.o FireEffect.o %ELF_NAME%.o ^
+	-T%MCORE_PATH%\mcore-elf\lib\linker_elf.ld -o %ELF_NAME%.elf

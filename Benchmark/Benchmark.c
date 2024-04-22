@@ -468,7 +468,6 @@ static UINT32 HandleStateEnter(EVENT_STACK_T *ev_st, APPLICATION_T *app, ENTER_S
 #endif
 					break;
 				case APP_VIEW_RAM_RESULTS:
-#if defined(EP1) || defined(EP2)
 					UIS_MakeContentFromString(
 						"q0Nq1NSq2N NRq3NSq4NSq5NSq6NSq7NSq8NSq9", &content, g_str_view_ram_results,
 						g_str_view_mem_total,
@@ -481,9 +480,6 @@ static UINT32 HandleStateEnter(EVENT_STACK_T *ev_st, APPLICATION_T *app, ENTER_S
 							app_instance->ram_result.blocks[4],
 							app_instance->ram_result.blocks[5]
 					);
-#else
-					UIS_MakeContentFromString("q0Nq1", &content, g_str_view_ram_results, g_str_view_todo);
-#endif
 					break;
 				case APP_VIEW_HEAP_RESULTS:
 					UIS_MakeContentFromString(
@@ -494,13 +490,9 @@ static UINT32 HandleStateEnter(EVENT_STACK_T *ev_st, APPLICATION_T *app, ENTER_S
 					);
 					break;
 				case APP_VIEW_DISK_RESULTS:
-#if defined(EP1) || defined(EP2)
 					UIS_MakeContentFromString(
 						"q0Nq1", &content, g_str_view_disk_results, app_instance->all_disks_result
 					);
-#else
-					UIS_MakeContentFromString("q0Nq1", &content, g_str_view_disk_results, g_str_view_todo);
-#endif
 					break;
 			}
 			dialog = UIS_CreateViewer(&port, &content, NULL);

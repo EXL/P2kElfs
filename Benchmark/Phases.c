@@ -145,18 +145,7 @@ UINT32 BogoMIPS(BENCHMARK_RESULTS_CPU_T *result) {
 }
 #endif
 
-#if defined(__mcore__)
-void delay_bmips(UINT32 loops) {
-	asm volatile(
-		"mov r0, r0\n"
-		"loop:"
-			"declt %0\n"
-			"bf loopb"
-		: "=r"(loops)
-		: "0"(loops)
-	);
-}
-
+#if defined(__MCORE__)
 void *AmMemAllocPointer(int size) {
 	INT32 result;
 	void *address = suAllocMem(size, &result);
@@ -411,6 +400,10 @@ UINT32 DisksResult(WCHAR *disk_result) {
 
 	disk_count = 0;
 	status = RESULT_OK;
+
+	/* Clean it first. */
+	disk_result[0] = '\0';
+	disk_result[1] = '\0';
 
 	result = DL_FsVolumeEnum(volumes);
 	if (!result) {
