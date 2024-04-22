@@ -118,7 +118,11 @@ extern UINT32 Bench_GPU_Passes(UINT32 bmp_width, UINT32 bmp_height, WCHAR *fps, 
 
 #define RAM_TOP_BLOCKS_COUNT           (6)
 #define RAM_STEP_SIZE                  (256)
+#if defined(EM1) || defined(EM2)
+#define RAM_TOTAL_BLOCKS_COUNT         (1024)
+#else
 #define RAM_TOTAL_BLOCKS_COUNT         (512)
+#endif
 #define RAM_START_SIZE_TOTAL           (RAM_STEP_SIZE * 4)
 #define RAM_START_SIZE_BLOCK           (RAM_STEP_SIZE * 8)
 
