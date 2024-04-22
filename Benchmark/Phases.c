@@ -12,6 +12,20 @@ char float_string[FLOAT_STRING];
 
 static UINT32 DeleteFileIfExists(const WCHAR *file_path);
 
+#if defined(NO_ASM)
+#define delay_bmips delay_bmips_loop
+static __inline void delay_bmips_loop(UINT32 loops) {
+	UINT32 i;
+	for (i = loops; !!(i > 0); --i) {
+#if defined(__GNUC__) /* GCC Only. */
+		asm volatile ("" ::: "memory");
+#else
+		;
+#endif
+	}
+}
+#endif
+
 #if defined(PALMOS_BOGOMIPS)
 /* This is the number of bits of precision for the loops_per_second.  Each
    bit takes on average 1.5/HZ seconds.  This (like the original) is a little

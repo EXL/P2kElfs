@@ -10,7 +10,7 @@ Application {
 		"dhry_1.c",
 		"dhry_2.c"
 	]
-	cpp.defines: [ "__P2K__", "EP1", "MCORE_BOGOMIPS" ]
+	cpp.defines: [ "__P2K__", "EP1", "LINUX_BOGOMIPS" ]
 	cpp.optimization: "O2"
 	cpp.staticLibraries: ["Lib"]
 }

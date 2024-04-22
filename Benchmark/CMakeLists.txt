@@ -34,6 +34,7 @@ add_definitions("-DLINUX_BOGOMIPS")
 #add_definitions("-DMCORE_BOGOMIPS")
 #add_definitions("-DFTR_V600")
 #add_definitions("-DFTR_L7E")
+#add_definitions("-DNO_ASM")
 
 set(SOURCE_FILES
 	dhry_1.c
