@@ -25,7 +25,7 @@ all:
 	$(MCORE_PATH)/bin/mcore-elf-gcc -fshort-wchar -funsigned-char -fomit-frame-pointer -fno-builtin \
 		-m340 -m4align -mbig-endian -nostdinc -nostdlib \
 		-I$(SDK_PATH) $(INCLUDES) $(DEFINES) $(OPTIM) \
-		-c delay_mcore340_GCC.c -o delay_mcore340_GCC.o
+		-c delay_mcore340_GCC.S -o delay_mcore340_GCC.o
 	$(MCORE_PATH)/bin/mcore-elf-gcc -fshort-wchar -funsigned-char -fomit-frame-pointer -fno-builtin \
 		-m340 -m4align -mbig-endian -nostdinc -nostdlib \
 		-I$(SDK_PATH) $(INCLUDES) $(DEFINES) $(OPTIM) \

@@ -159,18 +159,6 @@ UINT32 BogoMIPS(BENCHMARK_RESULTS_CPU_T *result) {
 }
 #endif
 
-#if defined(__MCORE__)
-void *AmMemAllocPointer(int size) {
-	INT32 result;
-	void *address = suAllocMem(size, &result);
-	return (result != RESULT_OK) ? NULL : address;
-}
-
-void AmMemFreePointer(void *ptr) {
-	suFreeMem(ptr);
-}
-#endif
-
 static void *AllocateBiggestBlock(UINT32 start_size, UINT32 *max_block_size, UINT32 step, BOOL java_heap) {
 	UINT32 size;
 	INT32 error;
@@ -326,12 +314,17 @@ UINT32 TotalHeapSize(BENCHMARK_RESULTS_HEAP_T *result) {
 		status = RESULT_FAIL;
 	}
 
+/* BUG: Is the M-CORE 7 MiB Heap patch bugged? `AmMemAllocPointer()` can only be called a few times. */
+#if defined(EM1) || defined(EM2)
+	total_size = HEAP_STEP_SIZE;
+#else
 	do {
 		heap_blocks[i].block_address = AllocateBiggestBlock(
 			HEAP_START_SIZE_TOTAL, &heap_blocks[i].block_size, HEAP_STEP_SIZE, TRUE
 		);
 		total_size += heap_blocks[i].block_size;
 	} while (heap_blocks[i++].block_address != NULL);
+#endif
 
 	time_end = suPalReadTime();
 

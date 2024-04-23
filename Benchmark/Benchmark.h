@@ -142,7 +142,12 @@ extern UINT32 TotalRamSize(BENCHMARK_RESULTS_RAM_T *result);
 
 /* Java Heap Benchmark */
 
+/* BUG: Is the M-CORE 7 MiB Heap patch bugged? `AmMemAllocPointer()` can only be called a few times. */
+#if defined(EM1) || defined(EM2)
+#define HEAP_STEP_SIZE                 (5591256 - 393216)
+#else
 #define HEAP_STEP_SIZE                 (4096)
+#endif
 #define HEAP_TOTAL_BLOCKS_COUNT        (512)
 #define HEAP_START_SIZE_TOTAL          (HEAP_STEP_SIZE * 8)
 
