@@ -51,7 +51,8 @@ typedef enum {
 	APP_MENU_ITEM_FIRST,
 	APP_MENU_ITEM_BENCH_CPU = APP_MENU_ITEM_FIRST,
 	APP_MENU_ITEM_BENCH_GPU,
-	APP_MENU_ITEM_BENCH_RAM,
+	APP_MENU_ITEM_BENCH_RAM_SUAPI,
+	APP_MENU_ITEM_BENCH_RAM_UIS,
 	APP_MENU_ITEM_BENCH_HEAP,
 	APP_MENU_ITEM_BENCH_DISK,
 	APP_MENU_ITEM_HELP,
@@ -121,7 +122,8 @@ const char g_app_name[APP_NAME_LEN] = "Benchmark";
 static const WCHAR g_str_app_name[] = L"Benchmark";
 static const WCHAR g_str_menu_bench_cpu[] = L"CPU (MCU)";
 static const WCHAR g_str_menu_bench_ipu[] = L"GPU (IPU)";
-static const WCHAR g_str_menu_bench_ram[] = L"RAM (SRAM)";
+static const WCHAR g_str_menu_bench_ram_suapi[] = L"RAM (SUAPI)";
+static const WCHAR g_str_menu_bench_ram_uis[] = L"RAM (UIS)";
 static const WCHAR g_str_menu_bench_heap[] = L"HEAP (J2ME)";
 static const WCHAR g_str_menu_bench_disk[] = L"DISK (IO)";
 static const WCHAR g_str_menu_help[] = L"Help...";
@@ -146,7 +148,8 @@ static const WCHAR g_str_help_content_p1[] =
 	L"A simple ELF benchmarking application for Motorola P2K phones.\n\n"
 	L"CPU (MCU) - contains two BogoMIPS and Dhrystone benchmarks.\n\n"
 	L"GPU (IPU) - consists a procedural stress Flame test at different resolutions and a video driver information.\n\n"
-	L"RAM (SRAM) - calculates free system memory for ELFs and TOP-6 blocks of maximum size.\n\n"
+	L"RAM (SUAPI) - calculates free system memory for ELFs and TOP-6 blocks of maximum size using SUAPI allocators.\n\n"
+	L"RAM (UIS) - calculates free system memory for ELFs and TOP-6 blocks of maximum size using UIS allocators.\n\n"
 	L"HEAP (J2ME) - shows free Java Heap memory for ELFs, test requires Heap functions in the ELF library to work.\n\n"
 	L"DISK (IO) - test read/write speeds on the phone's file systems disks.\n\n"
 	L"This benchmark is convenient to use with the Overclock.elf application.";
@@ -580,11 +583,18 @@ static UINT32 HandleEventTimerExpired(EVENT_STACK_T *ev_st, APPLICATION_T *app) 
 #endif
 
 					break;
-				case APP_MENU_ITEM_BENCH_RAM:
+				case APP_MENU_ITEM_BENCH_RAM_SUAPI:
 					app_instance->view = APP_VIEW_RAM_RESULTS;
 
-					TotalRamSize(&app_instance->ram_result);
-					TopOfBiggestRamBlocks(&app_instance->ram_result);
+					TotalRamSize(&app_instance->ram_result, FALSE);
+					TopOfBiggestRamBlocks(&app_instance->ram_result, FALSE);
+
+					break;
+				case APP_MENU_ITEM_BENCH_RAM_UIS:
+					app_instance->view = APP_VIEW_RAM_RESULTS;
+
+					TotalRamSize(&app_instance->ram_result, TRUE);
+					TopOfBiggestRamBlocks(&app_instance->ram_result, TRUE);
 
 					break;
 				case APP_MENU_ITEM_BENCH_HEAP:
@@ -627,7 +637,8 @@ static UINT32 HandleEventSelect(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
 	switch (app_instance->menu_current_item_index) {
 		case APP_MENU_ITEM_BENCH_CPU:
 		case APP_MENU_ITEM_BENCH_GPU:
-		case APP_MENU_ITEM_BENCH_RAM:
+		case APP_MENU_ITEM_BENCH_RAM_SUAPI:
+		case APP_MENU_ITEM_BENCH_RAM_UIS:
 		case APP_MENU_ITEM_BENCH_HEAP:
 		case APP_MENU_ITEM_BENCH_DISK:
 			status |= APP_UtilChangeState(APP_STATE_POPUP, ev_st, app);
@@ -690,8 +701,11 @@ static LIST_ENTRY_T *CreateList(EVENT_STACK_T *ev_st, APPLICATION_T *app, UINT32
 		&list_elements[APP_MENU_ITEM_BENCH_GPU].content.static_entry.text,
 		g_str_menu_bench_ipu);
 	status |= UIS_MakeContentFromString("Mq0",
-		&list_elements[APP_MENU_ITEM_BENCH_RAM].content.static_entry.text,
-		g_str_menu_bench_ram);
+		&list_elements[APP_MENU_ITEM_BENCH_RAM_SUAPI].content.static_entry.text,
+		g_str_menu_bench_ram_suapi);
+	status |= UIS_MakeContentFromString("Mq0",
+		&list_elements[APP_MENU_ITEM_BENCH_RAM_UIS].content.static_entry.text,
+		g_str_menu_bench_ram_uis);
 	status |= UIS_MakeContentFromString("Mq0",
 		&list_elements[APP_MENU_ITEM_BENCH_HEAP].content.static_entry.text,
 		g_str_menu_bench_heap);

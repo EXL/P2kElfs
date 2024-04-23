@@ -137,8 +137,8 @@ typedef struct {
 	UINT32 block_time;
 } RAM_ALLOCATED_BLOCK_T;
 
-extern UINT32 TopOfBiggestRamBlocks(BENCHMARK_RESULTS_RAM_T *result);
-extern UINT32 TotalRamSize(BENCHMARK_RESULTS_RAM_T *result);
+extern UINT32 TopOfBiggestRamBlocks(BENCHMARK_RESULTS_RAM_T *result, BOOL uis);
+extern UINT32 TotalRamSize(BENCHMARK_RESULTS_RAM_T *result, BOOL uis);
 
 /* Java Heap Benchmark */
 

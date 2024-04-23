@@ -159,7 +159,7 @@ UINT32 BogoMIPS(BENCHMARK_RESULTS_CPU_T *result) {
 }
 #endif
 
-static void *AllocateBiggestBlock(UINT32 start_size, UINT32 *max_block_size, UINT32 step, BOOL java_heap) {
+static void *AllocateBiggestBlock(UINT32 start_size, UINT32 *max_block_size, UINT32 step, BOOL java_heap, BOOL uis) {
 	UINT32 size;
 	INT32 error;
 	void *block_address;
@@ -175,13 +175,13 @@ static void *AllocateBiggestBlock(UINT32 start_size, UINT32 *max_block_size, UIN
 				error = RESULT_FAIL;
 			}
 		} else {
-			block_address = suAllocMem(size, &error);
+			block_address = (uis) ? uisAllocateMemory(size, &error) : suAllocMem(size, &error);
 		}
 		if (error == RESULT_OK) {
 			if (java_heap) {
 				AmMemFreePointer(block_address);
 			} else {
-				suFreeMem(block_address);
+				(uis) ? uisFreeMemory(block_address) : suFreeMem(block_address);
 			}
 			size += step * 4;
 		} else {
@@ -193,7 +193,7 @@ static void *AllocateBiggestBlock(UINT32 start_size, UINT32 *max_block_size, UIN
 						error = RESULT_OK;
 					}
 				} else {
-					block_address = suAllocMem(size, &error);
+					block_address = (uis) ? uisAllocateMemory(size, &error) : suAllocMem(size, &error);
 				}
 			}
 			break;
@@ -209,7 +209,7 @@ static void *AllocateBiggestBlock(UINT32 start_size, UINT32 *max_block_size, UIN
 	return block_address;
 }
 
-UINT32 TopOfBiggestRamBlocks(BENCHMARK_RESULTS_RAM_T *result) {
+UINT32 TopOfBiggestRamBlocks(BENCHMARK_RESULTS_RAM_T *result, BOOL uis) {
 	UINT16 i;
 	UINT32 status;
 	UINT64 time_start;
@@ -225,7 +225,7 @@ UINT32 TopOfBiggestRamBlocks(BENCHMARK_RESULTS_RAM_T *result) {
 
 		time_start = suPalReadTime();
 		top_blocks[i].block_address = AllocateBiggestBlock(
-			RAM_START_SIZE_BLOCK, &top_blocks[i].block_size, RAM_STEP_SIZE, FALSE
+			RAM_START_SIZE_BLOCK, &top_blocks[i].block_size, RAM_STEP_SIZE, FALSE, uis
 		);
 		time_end = suPalReadTime();
 		top_blocks[i].block_time = (UINT32) suPalTicksToMsec(time_end - time_start);
@@ -243,13 +243,13 @@ UINT32 TopOfBiggestRamBlocks(BENCHMARK_RESULTS_RAM_T *result) {
 		if (!top_blocks[i].block_address) {
 			status = RESULT_FAIL;
 		}
-		suFreeMem(top_blocks[i].block_address);
+		(uis) ? uisFreeMemory(top_blocks[i].block_address) : suFreeMem(top_blocks[i].block_address);
 	}
 
 	return status;
 }
 
-UINT32 TotalRamSize(BENCHMARK_RESULTS_RAM_T *result) {
+UINT32 TotalRamSize(BENCHMARK_RESULTS_RAM_T *result, BOOL uis) {
 	UINT16 i;
 	UINT32 status;
 	UINT32 total_size;
@@ -266,7 +266,7 @@ UINT32 TotalRamSize(BENCHMARK_RESULTS_RAM_T *result) {
 
 	do {
 		ram_blocks[i].block_address = AllocateBiggestBlock(
-			RAM_START_SIZE_TOTAL, &ram_blocks[i].block_size, RAM_STEP_SIZE, FALSE
+			RAM_START_SIZE_TOTAL, &ram_blocks[i].block_size, RAM_STEP_SIZE, FALSE, uis
 		);
 		total_size += ram_blocks[i].block_size;
 	} while (ram_blocks[i++].block_address != NULL);
@@ -275,7 +275,7 @@ UINT32 TotalRamSize(BENCHMARK_RESULTS_RAM_T *result) {
 
 	i -= 1;
 	while (i-- > 0) {
-		suFreeMem(ram_blocks[i].block_address);
+		(uis) ? uisFreeMemory(ram_blocks[i].block_address) : suFreeMem(ram_blocks[i].block_address);
 	}
 
 	time_result = (UINT32) suPalTicksToMsec(time_end - time_start);
@@ -320,7 +320,7 @@ UINT32 TotalHeapSize(BENCHMARK_RESULTS_HEAP_T *result) {
 #else
 	do {
 		heap_blocks[i].block_address = AllocateBiggestBlock(
-			HEAP_START_SIZE_TOTAL, &heap_blocks[i].block_size, HEAP_STEP_SIZE, TRUE
+			HEAP_START_SIZE_TOTAL, &heap_blocks[i].block_size, HEAP_STEP_SIZE, TRUE, FALSE
 		);
 		total_size += heap_blocks[i].block_size;
 	} while (heap_blocks[i++].block_address != NULL);
