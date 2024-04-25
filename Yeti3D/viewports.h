@@ -78,12 +78,26 @@ Prepared for public release: 10/24/2003 - Derek J. Evans <derek@theteahouse.com.
     #endif
 #elif defined(ROT_0)
     #if !defined(G_DEFAULT)
-        #define YETI_DISPLAY_WIDTH 220
-        #define YETI_DISPLAY_HEIGHT 176
+        #if defined(EP1) || defined(EP2)
+            #define YETI_DISPLAY_WIDTH 220
+            #define YETI_DISPLAY_HEIGHT 176
+        #elif defined(EM1) || defined(EM2)
+            #define YETI_DISPLAY_WIDTH 240
+            #define YETI_DISPLAY_HEIGHT 320
+        #endif
     #else
-        #define YETI_DISPLAY_WIDTH 160
-        #define YETI_DISPLAY_HEIGHT 128
+        #if defined(EP1) || defined(EP2)
+            #define YETI_DISPLAY_WIDTH 160
+            #define YETI_DISPLAY_HEIGHT 128
+        #elif defined(EM1) || defined(EM2)
+            #define YETI_DISPLAY_WIDTH 240
+            #define YETI_DISPLAY_HEIGHT 176
+        #endif
     #endif
+#endif
+
+#if (YETI_DISPLAY_WIDTH == 320) && (YETI_DISPLAY_HEIGHT == 240)
+#define NO_STRETCH
 #endif
 
 #if (YETI_DISPLAY_WIDTH == 220) && (YETI_DISPLAY_HEIGHT == 176)

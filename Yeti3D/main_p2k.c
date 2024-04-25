@@ -14,22 +14,28 @@
  *   https://forum.motofan.ru/index.php?s=&showtopic=170514&view=findpost&p=1459600
  *
  * Application type:
- *   GUI + ATI + Java Heap + Videomode
+ *   GUI + ATI, Nvidia + Java Heap + Videomode
  */
 
 #include "yeti.h"
 #include "game.h"
 
 #include <loader.h>
-#include <ati.h>
 #include <apps.h>
 #include <dl.h>
+#include <dl_keypad.h>
 #include <dal.h>
 #include <filesystem.h>
 #include <uis.h>
+#include <canvas.h>
 #include <mem.h>
 #include <time_date.h>
 #include <utilities.h>
+#if defined(EP1) || defined(EP2)
+#include <ati.h>
+#elif defined(EM1) || defined(EM2)
+#include <nvidia.h>
+#endif
 
 #define TIMER_FAST_TRIGGER_MS             (1)
 #if defined(FPS_15)
@@ -51,6 +57,7 @@ typedef enum {
 	APP_TIMER_LOOP
 } APP_TIMER_T;
 
+#if defined(EP1) || defined(EP2)
 typedef struct {
 	AHIDRVINFO_T *info_driver;
 	AHIDEVCONTEXT_T context;
@@ -65,6 +72,13 @@ typedef struct {
 	AHIRECT_T rect_draw;
 	AHIUPDATEPARAMS_T update_params;
 } APP_AHI_T;
+#elif defined(EM1) || defined(EM2)
+typedef struct {
+	GF_HANDLE GxHandle;
+	GXRECT fb0_rect;
+	UINT8 *fb0;
+} APP_GFSDK_T;
+#endif
 
 typedef struct {
 	UINT32 pressed;
@@ -82,7 +96,11 @@ typedef struct {
 
 	UINT8 *p_bitmap;
 
+#if defined(EP1) || defined(EP2)
 	APP_AHI_T ahi;
+#elif defined(EM1) || defined(EM2)
+	APP_GFSDK_T gfsdk;
+#endif
 	APP_KEYBOARD_T keys;
 	UINT32 timer_handle;
 	UINT8 keyboard_volume_level;
@@ -92,6 +110,10 @@ typedef struct {
 UINT32 Register(const char *elf_path_uri, const char *args, UINT32 ev_code); /* ElfPack 1.x entry point. */
 #elif defined(EP2)
 ldrElf *_start(WCHAR *uri, WCHAR *arguments);                                /* ElfPack 2.x entry point. */
+#elif defined(EM1)
+int _main(ElfLoaderApp ela);                                                 /* ElfPack 1.x M*CORE entry point. */
+#elif defined(EM2)
+UINT32 ELF_Entry(ldrElf *elf, WCHAR *arguments);                             /* ElfPack 2.x M*CORE entry point. */
 #endif
 
 static UINT32 ApplicationStart(EVENT_STACK_T *ev_st, REG_ID_T reg_id, void *reg_hdl);
@@ -109,11 +131,18 @@ static UINT32 ProcessKeyboard(EVENT_STACK_T *ev_st, APPLICATION_T *app, UINT32 k
 static UINT32 HandleEventTimerExpired(EVENT_STACK_T *ev_st, APPLICATION_T *app);
 static void FPS_Meter(void);
 
+#if defined(EP1) || defined(EP2)
 static UINT32 ATI_Driver_Log(APPLICATION_T *app);
 static UINT32 ATI_Driver_Log_Memory(APPLICATION_T *app, AHIPIXFMT_T pixel_format);
 static UINT32 ATI_Driver_Start(APPLICATION_T *app);
 static UINT32 ATI_Driver_Stop(APPLICATION_T *app);
 static UINT32 ATI_Driver_Flush(APPLICATION_T *app);
+#elif defined(EM1) || defined(EM2)
+static UINT32 Nvidia_Driver_Start(APPLICATION_T *app);
+static UINT32 Nvidia_Driver_Stop(APPLICATION_T *app);
+static UINT32 Nvidia_Driver_Flush(APPLICATION_T *app);
+static UINT32 Nvidia_Driver_Fill(APPLICATION_T *app);
+#endif
 
 static UINT32 GFX_Draw_Start(APPLICATION_T *app);
 static UINT32 GFX_Draw_Stop(APPLICATION_T *app);
@@ -126,6 +155,10 @@ static const char g_app_name[APP_NAME_LEN] = "FireEffect";
 
 #if defined(EP2)
 static ldrElf g_app_elf;
+#elif defined(EM1)
+static ElfLoaderApp g_app_elf = { 0 };
+#elif defined(EM2)
+static ldrElf *g_app_elf = NULL;
 #endif
 
 typedef enum {
@@ -208,6 +241,58 @@ ldrElf *_start(WCHAR *uri, WCHAR *arguments) {
 
 	return (status == RESULT_OK) ? &g_app_elf : NULL;
 }
+#elif defined(EM1)
+int _main(ElfLoaderApp ela) {
+	UINT32 status;
+
+	status = RESULT_OK;
+
+	memcpy((void *) &g_app_elf, (void *) &ela, sizeof(ElfLoaderApp));
+
+	status = APP_Register(&g_app_elf.evcode, 1, g_state_table_hdls, APP_STATE_MAX, (void *) ApplicationStart);
+
+	u_strcpy(g_res_file_path, uri);
+
+	LoaderShowApp(&g_app_elf);
+
+	return RESULT_FAIL;
+}
+#elif defined(EM2)
+UINT32 ELF_Entry(ldrElf *elf, WCHAR *arguments) {
+	UINT32 status;
+	UINT32 reserve;
+	WCHAR *ptr;
+
+	status = RESULT_OK;
+	g_app_elf = elf;
+	g_app_elf->name = (char *) g_app_name;
+
+	if (ldrIsLoaded(g_app_elf->name)) {
+		PFprintf("%s: Application already loaded.\n", g_app_elf->name);
+		return RESULT_FAIL;
+	}
+
+	reserve = g_app_elf->evbase + 1;
+	reserve = ldrInitEventHandlersTbl(g_state_any_hdls, reserve);
+	reserve = ldrInitEventHandlersTbl(g_state_init_hdls, reserve);
+	reserve = ldrInitEventHandlersTbl(g_state_main_hdls, reserve);
+
+	status |= APP_Register(&g_app_elf->evbase, 1, g_state_table_hdls, APP_STATE_MAX, (void *) ApplicationStart);
+	if (status == RESULT_OK) {
+		PFprintf("%s: Application has been registered successfully.\n", g_app_elf->name);
+
+		ptr = NULL;
+		u_strcpy(g_res_file_path, L"file:/");
+		ptr = g_res_file_path + u_strlen(g_res_file_path);
+		DL_FsGetURIFromID(&g_app_elf->id, ptr);
+
+		status |= ldrSendEvent(g_app_elf->evbase);
+	} else {
+		PFprintf("%s: Cannot register application.\n", g_app_elf->name);
+	}
+
+	return status;
+}
 #endif
 
 static UINT32 ApplicationStart(EVENT_STACK_T *ev_st, REG_ID_T reg_id, void *reg_hdl) {
@@ -220,7 +305,12 @@ static UINT32 ApplicationStart(EVENT_STACK_T *ev_st, REG_ID_T reg_id, void *reg_
 		app_instance = (APP_INSTANCE_T *) APP_InitAppData((void *) APP_HandleEvent, sizeof(APP_INSTANCE_T),
 			reg_id, 0, 0, 1, 1, 1, 0);
 
+#if defined(EP1) || defined(EP2)
 		app_instance->ahi.info_driver = NULL;
+#elif defined(EM1) || defined(EM2)
+		app_instance->gfsdk.GxHandle = 0x08193934; // FIXME: How I can obtain this?
+		app_instance->gfsdk.fb0 = NULL;
+#endif
 		app_instance->bmp_width = YETI_VIEWPORT_WIDTH;
 		app_instance->bmp_height = YETI_VIEWPORT_HEIGHT;
 		app_instance->p_bitmap = NULL;
@@ -231,13 +321,19 @@ static UINT32 ApplicationStart(EVENT_STACK_T *ev_st, REG_ID_T reg_id, void *reg_
 		DL_AudGetVolumeSetting(PHONE, &app_instance->keyboard_volume_level);
 		DL_AudSetVolumeSetting(PHONE, 0);
 
+#if defined(EP1) || defined(EP2)
 		status |= ATI_Driver_Start((APPLICATION_T *) app_instance);
+#elif defined(EM1) || defined(EM2)
+		status |= Nvidia_Driver_Start((APPLICATION_T *) app_instance);
+#endif
 
 		status |= APP_Start(ev_st, &app_instance->app, APP_STATE_MAIN,
 			g_state_table_hdls, ApplicationStop, g_app_name, 0);
 
 #if defined(EP2)
 		g_app_elf.app = (APPLICATION_T *) app_instance;
+#elif defined(EM2)
+		g_app_elf->app = &app_instance->app;
 #endif
 	}
 
@@ -259,15 +355,22 @@ static UINT32 ApplicationStop(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
 
 	status |= GFX_Draw_Stop(app);
 	status |= SetLoopTimer(app, 0);
+#if defined(EP1) || defined(EP2)
 	status |= ATI_Driver_Stop(app);
+#elif defined(EM1) || defined(EM2)
+	status |= Nvidia_Driver_Stop(app);
+#endif
 	status |= APP_Exit(ev_st, app, 0);
 
 #if defined(EP1)
 	LdrUnloadELF(&Lib);
 #elif defined(EP2)
 	ldrUnloadElf();
+#elif defined(EM1)
+	LoaderEndApp(&g_app_elf);
+#elif defined(EM2)
+	ldrUnloadElf(g_app_elf);
 #endif
-
 	return status;
 }
 
@@ -397,6 +500,7 @@ static UINT32 CheckKeyboard(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
 }
 
 static UINT32 ProcessKeyboard(EVENT_STACK_T *ev_st, APPLICATION_T *app, UINT32 key, BOOL pressed) {
+#if defined(EP1) || defined(EP2)
 	#define KK_2 MULTIKEY_6
 	#define KK_UP MULTIKEY_RIGHT
 	#define KK_4 MULTIKEY_2
@@ -405,6 +509,16 @@ static UINT32 ProcessKeyboard(EVENT_STACK_T *ev_st, APPLICATION_T *app, UINT32 k
 	#define KK_RIGHT MULTIKEY_DOWN
 	#define KK_8 MULTIKEY_4
 	#define KK_DOWN MULTIKEY_LEFT
+#elif defined(EM1) || defined(EM2)
+	#define KK_2 MULTIKEY_2
+	#define KK_UP MULTIKEY_UP
+	#define KK_4 MULTIKEY_4
+	#define KK_LEFT MULTIKEY_LEFT
+	#define KK_6 MULTIKEY_6
+	#define KK_RIGHT MULTIKEY_RIGHT
+	#define KK_8 MULTIKEY_8
+	#define KK_DOWN MULTIKEY_DOWN
+#endif
 
 	switch (key) {
 		case MULTIKEY_0:
@@ -467,7 +581,11 @@ static UINT32 HandleEventTimerExpired(EVENT_STACK_T *ev_st, APPLICATION_T *app) 
 			FPS_Meter();
 			CheckKeyboard(ev_st, app);
 			GFX_Draw_Step(app);
+#if defined(EP1) || defined(EP2)
 			ATI_Driver_Flush(app);
+#elif defined(EM1) || defined(EM2)
+			Nvidia_Driver_Flush(app);
+#endif
 			break;
 		case APP_TIMER_EXIT:
 			/* Play an exit sound using quiet speaker. */
@@ -512,6 +630,7 @@ static void FPS_Meter(void) {
 #endif
 }
 
+#if defined(EP1) || defined(EP2)
 static UINT32 ATI_Driver_Log(APPLICATION_T *app) {
 	APP_INSTANCE_T *appi;
 
@@ -943,6 +1062,78 @@ static UINT32 ATI_Driver_Flush(APPLICATION_T *app) {
 
 	return RESULT_OK;
 }
+#elif defined(EM1) || defined(EM2)
+static UINT32 Nvidia_Driver_Start(APPLICATION_T *app) {
+	INT32 result;
+	UINT32 status;
+	APP_INSTANCE_T *app_instance;
+	GRAPHIC_POINT_T point;
+
+	result = RESULT_OK;
+	status = RESULT_OK;
+	app_instance = (APP_INSTANCE_T *) app;
+
+	app_instance->gfsdk.fb0_rect.x = 0;
+	app_instance->gfsdk.fb0_rect.y = 0;
+
+	UIS_CanvasGetDisplaySize(&point);
+	app_instance->gfsdk.fb0_rect.w = point.x + 1;
+	app_instance->gfsdk.fb0_rect.h = point.y + 1;
+	app_instance->gfsdk.fb0 = uisAllocateMemory(
+		app_instance->gfsdk.fb0_rect.w * app_instance->gfsdk.fb0_rect.h * 2, &result
+	);
+	if (result != RESULT_OK) {
+		LOG("Cannot allocate '%d' bytes of memory for fill screen!\n",
+			app_instance->gfsdk.fb0_rect.w * app_instance->gfsdk.fb0_rect.h * 2);
+		status = RESULT_FAIL;
+	}
+	memclr(app_instance->gfsdk.fb0, app_instance->gfsdk.fb0_rect.w * app_instance->gfsdk.fb0_rect.h * 2);
+	Nvidia_Driver_Flush(app);
+	uisFreeMemory(app_instance->gfsdk.fb0);
+
+	app_instance->gfsdk.fb0_rect.w = YETI_VIEWPORT_WIDTH;
+	app_instance->gfsdk.fb0_rect.h = YETI_VIEWPORT_HEIGHT;
+
+	app_instance->gfsdk.fb0 = uisAllocateMemory(YETI_VIEWPORT_WIDTH * YETI_VIEWPORT_HEIGHT * 2, &result);
+	if (result != RESULT_OK) {
+		LOG("Cannot allocate '%d' bytes of memory for screen!\n", YETI_VIEWPORT_WIDTH * YETI_VIEWPORT_HEIGHT * 2);
+		status = RESULT_FAIL;
+	}
+
+	return status;
+}
+
+static UINT32 Nvidia_Driver_Stop(APPLICATION_T *app) {
+	UINT32 status;
+	APP_INSTANCE_T *app_instance;
+
+	status = RESULT_OK;
+	app_instance = (APP_INSTANCE_T *) app;
+
+	uisFreeMemory(app_instance->gfsdk.fb0);
+
+	return status;
+}
+
+static UINT32 Nvidia_Driver_Flush(APPLICATION_T *app) {
+	UINT32 status;
+	APP_INSTANCE_T *app_instance;
+
+	status = RESULT_OK;
+	app_instance = (APP_INSTANCE_T *) app;
+
+	GFGxCopyColorBitmap(
+		app_instance->gfsdk.GxHandle,
+		app_instance->gfsdk.fb0_rect.x, app_instance->gfsdk.fb0_rect.y,
+		app_instance->gfsdk.fb0_rect.w, app_instance->gfsdk.fb0_rect.h,
+		app_instance->gfsdk.fb0_rect.x, app_instance->gfsdk.fb0_rect.y,
+		app_instance->gfsdk.fb0_rect.w * 2,
+		app_instance->gfsdk.fb0
+	);
+
+	return status;
+}
+#endif
 
 yeti_t *yeti = NULL;
 
@@ -1044,14 +1235,22 @@ static UINT32 GFX_Draw_Start(APPLICATION_T *app) {
 
 	appi = (APP_INSTANCE_T *) app;
 
+#if defined(EP1) || defined(EP2)
 	appi->p_bitmap = (UINT8 *) appi->ahi.bitmap.image;
+#elif defined(EM1) || defined(EM2)
+	appi->p_bitmap = (UINT8 *) appi->gfsdk.fb0;
+#endif
 
 #if defined(MEMORY_MANUAL_ALLOCATION)
 	Allocate_Memory_Blocks(131072);
 	Free_Memory_Blocks();
 #endif
 
+#if defined(EP1) || defined(EP2)
 	yeti = (yeti_t *) AmMemAllocPointer(sizeof(yeti_t));
+#elif defined(EM1) || defined(EM2)
+	yeti = (yeti_t *) uisAllocateMemory(sizeof(yeti_t), NULL);
+#endif
 	if (!yeti) {
 		LOG("yeti: Error alloc %d bytes.\n", sizeof(yeti_t));
 	} else {
@@ -1104,7 +1303,11 @@ static UINT32 InitResourses(void) {
 
 	readen = 0;
 
+#if defined(EP1) || defined(EP2)
 	res_tex = (texture_t *) AmMemAllocPointer(sizeof(texture_t) * YETI_TEXTURE_MAX);
+#elif defined(EM1) || defined(EM2)
+	res_tex = (texture_t *) uisAllocateMemory(sizeof(texture_t) * YETI_TEXTURE_MAX, NULL);
+#endif
 	*(u_strrchr(g_res_file_path, L'/') + 1) = '\0';
 	u_strcat(g_res_file_path, L"Yeti3D.tex");
 	file_handle = DL_FsOpenFile(g_res_file_path, FILE_READ_MODE, 0);
@@ -1119,7 +1322,11 @@ static UINT32 InitResourses(void) {
 		LOG("%s\n", "Yeti3D.tex: Error reading file.");
 	}
 
+#if defined(EP1) || defined(EP2)
 	res_lua = (rgb555_t (*)[256]) AmMemAllocPointer(sizeof(lua_t));
+#elif defined(EM1) || defined(EM2)
+	res_lua = (rgb555_t (*)[256]) uisAllocateMemory(sizeof(lua_t), NULL);
+#endif
 	*(u_strrchr(g_res_file_path, L'/') + 1) = '\0';
 	u_strcat(g_res_file_path, L"Yeti3D.lua");
 	file_handle = DL_FsOpenFile(g_res_file_path, FILE_READ_MODE, 0);
@@ -1134,7 +1341,11 @@ static UINT32 InitResourses(void) {
 		LOG("%s\n", "Yeti3D.lua: Error reading file.");
 	}
 
+#if defined(EP1) || defined(EP2)
 	reciprocal = (int *) AmMemAllocPointer(sizeof(int) * YETI_RECIPROCAL_MAX);
+#elif defined(EM1) || defined(EM2)
+	reciprocal = (int *) uisAllocateMemory(sizeof(int) * YETI_RECIPROCAL_MAX, NULL);
+#endif
 	*(u_strrchr(g_res_file_path, L'/') + 1) = '\0';
 	u_strcat(g_res_file_path, L"Yeti3D.rec");
 	file_handle = DL_FsOpenFile(g_res_file_path, FILE_READ_MODE, 0);
@@ -1149,7 +1360,11 @@ static UINT32 InitResourses(void) {
 		LOG("%s\n", "Yeti3D.rec: Error reading file.");
 	}
 
+#if defined(EP1) || defined(EP2)
 	sintable = (int *) AmMemAllocPointer(sizeof(int) * YETI_SINTABLE_MAX);
+#elif defined(EM1) || defined(EM2)
+	sintable = (int *) uisAllocateMemory(sizeof(int) * YETI_SINTABLE_MAX, NULL);
+#endif
 	*(u_strrchr(g_res_file_path, L'/') + 1) = '\0';
 	u_strcat(g_res_file_path, L"Yeti3D.sin");
 	file_handle = DL_FsOpenFile(g_res_file_path, FILE_READ_MODE, 0);
@@ -1164,7 +1379,11 @@ static UINT32 InitResourses(void) {
 		LOG("%s\n", "Yeti3D.sin: Error reading file.");
 	}
 
+#if defined(EP1) || defined(EP2)
 	e1m1 = (rom_map_t *) AmMemAllocPointer(sizeof(rom_map_t));
+#elif defined(EM1) || defined(EM2)
+	e1m1 = (rom_map_t *) uisAllocateMemory(sizeof(rom_map_t), NULL);
+#endif
 	*(u_strrchr(g_res_file_path, L'/') + 1) = '\0';
 	u_strcat(g_res_file_path, L"Yeti3D.map");
 	file_handle = DL_FsOpenFile(g_res_file_path, FILE_READ_MODE, 0);
@@ -1179,31 +1398,51 @@ static UINT32 InitResourses(void) {
 		LOG("%s\n", "Yeti3D.map: Error reading file.");
 	}
 
+#if defined(EP1) || defined(EP2)
 	spr_00 = (u16 *) AmMemAllocPointer(SPRITE_0_SIZE);
+#elif defined(EM1) || defined(EM2)
+	spr_00 = (u16 *) uisAllocateMemory(SPRITE_0_SIZE, NULL);
+#endif
 	if (!spr_00) {
 		LOG("Yeti3D.spr:spr_00: Error alloc %d bytes.\n", SPRITE_0_SIZE);
 	} else {
 		LOG("Yeti3D.spr:spr_00: OK alloc %d bytes.\n", SPRITE_0_SIZE);
 	}
+#if defined(EP1) || defined(EP2)
 	spr_01 = (u16 *) AmMemAllocPointer(SPRITE_0_SIZE);
+#elif defined(EM1) || defined(EM2)
+	spr_01 = (u16 *) uisAllocateMemory(SPRITE_0_SIZE, NULL);
+#endif
 	if (!spr_01) {
 		LOG("Yeti3D.spr:spr_01: Error alloc %d bytes.\n", SPRITE_0_SIZE);
 	} else {
 		LOG("Yeti3D.spr:spr_01: OK alloc %d bytes.\n", SPRITE_0_SIZE);
 	}
+#if defined(EP1) || defined(EP2)
 	spr_02 = (u16 *) AmMemAllocPointer(SPRITE_0_SIZE);
+#elif defined(EM1) || defined(EM2)
+	spr_02 = (u16 *) uisAllocateMemory(SPRITE_0_SIZE, NULL);
+#endif
 	if (!spr_02) {
 		LOG("Yeti3D.spr:spr_02: Error alloc %d bytes.\n", SPRITE_0_SIZE);
 	} else {
 		LOG("Yeti3D.spr:spr_02: OK alloc %d bytes.\n", SPRITE_0_SIZE);
 	}
+#if defined(EP1) || defined(EP2)
 	spr_03 = (u16 *) AmMemAllocPointer(SPRITE_0_SIZE);
+#elif defined(EM1) || defined(EM2)
+	spr_03 = (u16 *) uisAllocateMemory(SPRITE_0_SIZE, NULL);
+#endif
 	if (!spr_03) {
 		LOG("Yeti3D.spr:spr_03: Error alloc %d bytes.\n", SPRITE_0_SIZE);
 	} else {
 		LOG("Yeti3D.spr:spr_03: OK alloc %d bytes.\n", SPRITE_0_SIZE);
 	}
+#if defined(EP1) || defined(EP2)
 	spr_ball1 = (u16 *) AmMemAllocPointer(SPRITE_BALL_1_SIZE);
+#elif defined(EM1) || defined(EM2)
+	spr_ball1 = (u16 *) uisAllocateMemory(SPRITE_BALL_1_SIZE, NULL);
+#endif
 	if (!spr_ball1) {
 		LOG("Yeti3D.spr:spr_ball1: Error alloc %d bytes.\n", SPRITE_BALL_1_SIZE);
 	} else {
@@ -1233,57 +1472,101 @@ static UINT32 InitResourses(void) {
 static void FreeResourses(void) {
 	if (res_tex) {
 		LOG("Yeti3D.tex: freed %d bytes.\n", sizeof(texture_t) * YETI_TEXTURE_MAX);
+#if defined(EP1) || defined(EP2)
 		AmMemFreePointer(res_tex);
+#elif defined(EM1) || defined(EM2)
+		uisFreeMemory(res_tex);
+#endif
 		res_tex = NULL;
 	}
 	if (res_lua) {
 		LOG("Yeti3D.lua: freed %d bytes.\n", sizeof(lua_t));
+#if defined(EP1) || defined(EP2)
 		AmMemFreePointer(res_lua);
+#elif defined(EM1) || defined(EM2)
+		uisFreeMemory(res_lua);
+#endif
 		res_lua = NULL;
 	}
 	if (reciprocal) {
 		LOG("Yeti3D.rec: freed %d bytes.\n", sizeof(int) * YETI_RECIPROCAL_MAX);
+#if defined(EP1) || defined(EP2)
 		AmMemFreePointer(reciprocal);
+#elif defined(EM1) || defined(EM2)
+		uisFreeMemory(reciprocal);
+#endif
 		reciprocal = NULL;
 	}
 	if (sintable) {
 		LOG("Yeti3D.sin: freed %d bytes.\n", sizeof(int) * YETI_SINTABLE_MAX);
+#if defined(EP1) || defined(EP2)
 		AmMemFreePointer(sintable);
+#elif defined(EM1) || defined(EM2)
+		uisFreeMemory(sintable);
+#endif
 		sintable = NULL;
 	}
 	if (e1m1) {
 		LOG("Yeti3D.map: freed %d bytes.\n", sizeof(rom_map_t));
+#if defined(EP1) || defined(EP2)
 		AmMemFreePointer(e1m1);
+#elif defined(EM1) || defined(EM2)
+		uisFreeMemory(e1m1);
+#endif
 		e1m1 = NULL;
 	}
 	if (spr_00) {
 		LOG("Yeti3D.spr:spr_00: freed %d bytes.\n", SPRITE_0_SIZE);
+#if defined(EP1) || defined(EP2)
 		AmMemFreePointer(spr_00);
+#elif defined(EM1) || defined(EM2)
+		uisFreeMemory(spr_00);
+#endif
 		sprites[0] = spr_00 = NULL;
 	}
 	if (spr_01) {
 		LOG("Yeti3D.spr:spr_01: freed %d bytes.\n", SPRITE_0_SIZE);
+#if defined(EP1) || defined(EP2)
 		AmMemFreePointer(spr_01);
+#elif defined(EM1) || defined(EM2)
+		uisFreeMemory(spr_01);
+#endif
 		sprites[1] = spr_01 = NULL;
 	}
 	if (spr_02) {
 		LOG("Yeti3D.spr:spr_02: freed %d bytes.\n", SPRITE_0_SIZE);
+#if defined(EP1) || defined(EP2)
 		AmMemFreePointer(spr_02);
+#elif defined(EM1) || defined(EM2)
+		uisFreeMemory(spr_02);
+#endif
 		sprites[2] = spr_02 = NULL;
 	}
 	if (spr_03) {
 		LOG("Yeti3D.spr:spr_03: freed %d bytes.\n", SPRITE_0_SIZE);
+#if defined(EP1) || defined(EP2)
 		AmMemFreePointer(spr_03);
+#elif defined(EM1) || defined(EM2)
+		uisFreeMemory(spr_03);
+#endif
 		sprites[3] = spr_03 = NULL;
 	}
 	if (spr_ball1) {
 		LOG("Yeti3D.spr:spr_ball1: freed %d bytes.\n", SPRITE_BALL_1_SIZE);
+#if defined(EP1) || defined(EP2)
 		AmMemFreePointer(spr_ball1);
+#elif defined(EM1) || defined(EM2)
+		uisFreeMemory(spr_ball1);
+#endif
 		sprites[4] = spr_ball1 = NULL;
 	}
 	if (yeti) {
 		LOG("yeti: freed %d bytes.\n", sizeof(yeti_t));
+#if defined(EP1) || defined(EP2)
 		AmMemFreePointer(yeti);
+#elif defined(EM1) || defined(EM2)
+		uisFreeMemory(yeti);
+#endif
 		yeti = NULL;
 	}
 }
