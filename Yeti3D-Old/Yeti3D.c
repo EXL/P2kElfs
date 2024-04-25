@@ -24,6 +24,7 @@
 #include <dal.h>
 #include <filesystem.h>
 #include <uis.h>
+#include <canvas.h>
 #include <mem.h>
 #include <time_date.h>
 #include <utilities.h>
@@ -126,13 +127,15 @@ static UINT32 ProcessKeyboard(EVENT_STACK_T *ev_st, APPLICATION_T *app, UINT32 k
 static UINT32 HandleEventTimerExpired(EVENT_STACK_T *ev_st, APPLICATION_T *app);
 static void FPS_Meter(void);
 
+#if defined(EP1) || defined(EP2)
 static UINT32 ATI_Driver_Start(APPLICATION_T *app);
 static UINT32 ATI_Driver_Stop(APPLICATION_T *app);
 static UINT32 ATI_Driver_Flush(APPLICATION_T *app);
-
+#elif defined(EM1) || defined(EM2)
 static UINT32 Nvidia_Driver_Start(APPLICATION_T *app);
 static UINT32 Nvidia_Driver_Stop(APPLICATION_T *app);
 static UINT32 Nvidia_Driver_Flush(APPLICATION_T *app);
+#endif
 
 static UINT32 GFX_Draw_Start(APPLICATION_T *app);
 static UINT32 GFX_Draw_Stop(APPLICATION_T *app);
@@ -780,13 +783,11 @@ static UINT32 ATI_Driver_Flush(APPLICATION_T *app) {
 	return RESULT_OK;
 }
 #elif defined(EM1) || defined(EM2)
-
-#endif
-
 static UINT32 Nvidia_Driver_Start(APPLICATION_T *app) {
 	INT32 result;
 	UINT32 status;
 	APP_INSTANCE_T *app_instance;
+	GRAPHIC_POINT_T point;
 
 	result = RESULT_OK;
 	status = RESULT_OK;
@@ -794,12 +795,28 @@ static UINT32 Nvidia_Driver_Start(APPLICATION_T *app) {
 
 	app_instance->gfsdk.fb0_rect.x = 0;
 	app_instance->gfsdk.fb0_rect.y = 0;
+
+	UIS_CanvasGetDisplaySize(&point);
+	app_instance->gfsdk.fb0_rect.w = point.x + 1;
+	app_instance->gfsdk.fb0_rect.h = point.y + 1;
+	app_instance->gfsdk.fb0 = uisAllocateMemory(
+		app_instance->gfsdk.fb0_rect.w * app_instance->gfsdk.fb0_rect.h * 2, &result
+	);
+	if (result != RESULT_OK) {
+		LOG("Cannot allocate '%d' bytes of memory for fill screen!\n",
+			app_instance->gfsdk.fb0_rect.w * app_instance->gfsdk.fb0_rect.h * 2);
+		status = RESULT_FAIL;
+	}
+	memclr(app_instance->gfsdk.fb0, app_instance->gfsdk.fb0_rect.w * app_instance->gfsdk.fb0_rect.h * 2);
+	Nvidia_Driver_Flush(app);
+	uisFreeMemory(app_instance->gfsdk.fb0);
+
 	app_instance->gfsdk.fb0_rect.w = VIEWPORT_WIDTH;
 	app_instance->gfsdk.fb0_rect.h = VIEWPORT_HEIGHT;
 
 	app_instance->gfsdk.fb0 = uisAllocateMemory(VIEWPORT_WIDTH * VIEWPORT_HEIGHT * 2, &result);
 	if (result != RESULT_OK) {
-		LOG("Cannot allocate '%d' bytes of memory for screen buffer!\n", VIEWPORT_WIDTH * VIEWPORT_HEIGHT * 2);
+		LOG("Cannot allocate '%d' bytes of memory for screen!\n", VIEWPORT_WIDTH * VIEWPORT_HEIGHT * 2);
 		status = RESULT_FAIL;
 	}
 
@@ -836,6 +853,7 @@ static UINT32 Nvidia_Driver_Flush(APPLICATION_T *app) {
 
 	return status;
 }
+#endif
 
 static entity_t* box;
 
