@@ -12,21 +12,26 @@
  *   https://www.gbadev.org/demos.php?showinfo=568
  *
  * Application type:
- *   GUI + ATI
+ *   GUI + ATI, Nvidia
  */
 
 #include "yeti.h"
 
 #include <loader.h>
-#include <ati.h>
 #include <apps.h>
 #include <dl.h>
+#include <dl_keypad.h>
 #include <dal.h>
 #include <filesystem.h>
 #include <uis.h>
 #include <mem.h>
 #include <time_date.h>
 #include <utilities.h>
+#if defined(EP1) || defined(EP2)
+#include <ati.h>
+#elif defined(EM1) || defined(EM2)
+#include <nvidia.h>
+#endif
 
 #define TIMER_FAST_TRIGGER_MS             (1)
 #if defined(FPS_15)
@@ -48,6 +53,7 @@ typedef enum {
 	APP_TIMER_LOOP
 } APP_TIMER_T;
 
+#if defined(EP1) || defined(EP2)
 typedef struct {
 	AHIDRVINFO_T *info_driver;
 	AHIDEVCONTEXT_T context;
@@ -61,6 +67,13 @@ typedef struct {
 	AHIRECT_T rect_draw;
 	AHIUPDATEPARAMS_T update_params;
 } APP_AHI_T;
+#elif defined(EM1) || defined(EM2)
+typedef struct {
+	GF_HANDLE GxHandle;
+	GXRECT fb0_rect;
+	UINT8 *fb0;
+} APP_GFSDK_T;
+#endif
 
 typedef struct {
 	UINT32 pressed;
@@ -78,7 +91,11 @@ typedef struct {
 
 	UINT8 *p_bitmap;
 
+#if defined(EP1) || defined(EP2)
 	APP_AHI_T ahi;
+#elif defined(EM1) || defined(EM2)
+	APP_GFSDK_T gfsdk;
+#endif
 	APP_KEYBOARD_T keys;
 	UINT32 timer_handle;
 	UINT8 keyboard_volume_level;
@@ -88,6 +105,10 @@ typedef struct {
 UINT32 Register(const char *elf_path_uri, const char *args, UINT32 ev_code); /* ElfPack 1.x entry point. */
 #elif defined(EP2)
 ldrElf *_start(WCHAR *uri, WCHAR *arguments);                                /* ElfPack 2.x entry point. */
+#elif defined(EM1)
+int _main(ElfLoaderApp ela);                                                 /* ElfPack 1.x M*CORE entry point. */
+#elif defined(EM2)
+UINT32 ELF_Entry(ldrElf *elf, WCHAR *arguments);                             /* ElfPack 2.x M*CORE entry point. */
 #endif
 
 static UINT32 ApplicationStart(EVENT_STACK_T *ev_st, REG_ID_T reg_id, void *reg_hdl);
@@ -109,6 +130,10 @@ static UINT32 ATI_Driver_Start(APPLICATION_T *app);
 static UINT32 ATI_Driver_Stop(APPLICATION_T *app);
 static UINT32 ATI_Driver_Flush(APPLICATION_T *app);
 
+static UINT32 Nvidia_Driver_Start(APPLICATION_T *app);
+static UINT32 Nvidia_Driver_Stop(APPLICATION_T *app);
+static UINT32 Nvidia_Driver_Flush(APPLICATION_T *app);
+
 static UINT32 GFX_Draw_Start(APPLICATION_T *app);
 static UINT32 GFX_Draw_Stop(APPLICATION_T *app);
 static UINT32 GFX_Draw_Step(APPLICATION_T *app);
@@ -120,6 +145,10 @@ static const char g_app_name[APP_NAME_LEN] = "FireEffect";
 
 #if defined(EP2)
 static ldrElf g_app_elf;
+#elif defined(EM1)
+static ElfLoaderApp g_app_elf = { 0 };
+#elif defined(EM2)
+static ldrElf *g_app_elf = NULL;
 #endif
 
 typedef enum {
@@ -198,6 +227,58 @@ ldrElf *_start(WCHAR *uri, WCHAR *arguments) {
 
 	return (status == RESULT_OK) ? &g_app_elf : NULL;
 }
+#elif defined(EM1)
+int _main(ElfLoaderApp ela) {
+	UINT32 status;
+
+	status = RESULT_OK;
+
+	memcpy((void *) &g_app_elf, (void *) &ela, sizeof(ElfLoaderApp));
+
+	status = APP_Register(&g_app_elf.evcode, 1, g_state_table_hdls, APP_STATE_MAX, (void *) ApplicationStart);
+
+	u_strcpy(g_res_file_path, uri);
+
+	LoaderShowApp(&g_app_elf);
+
+	return RESULT_FAIL;
+}
+#elif defined(EM2)
+UINT32 ELF_Entry(ldrElf *elf, WCHAR *arguments) {
+	UINT32 status;
+	UINT32 reserve;
+	WCHAR *ptr;
+
+	status = RESULT_OK;
+	g_app_elf = elf;
+	g_app_elf->name = (char *) g_app_name;
+
+	if (ldrIsLoaded(g_app_elf->name)) {
+		PFprintf("%s: Application already loaded.\n", g_app_elf->name);
+		return RESULT_FAIL;
+	}
+
+	reserve = g_app_elf->evbase + 1;
+	reserve = ldrInitEventHandlersTbl(g_state_any_hdls, reserve);
+	reserve = ldrInitEventHandlersTbl(g_state_init_hdls, reserve);
+	reserve = ldrInitEventHandlersTbl(g_state_main_hdls, reserve);
+
+	status |= APP_Register(&g_app_elf->evbase, 1, g_state_table_hdls, APP_STATE_MAX, (void *) ApplicationStart);
+	if (status == RESULT_OK) {
+		PFprintf("%s: Application has been registered successfully.\n", g_app_elf->name);
+
+		ptr = NULL;
+		u_strcpy(g_res_file_path, L"file:/");
+		ptr = g_res_file_path + u_strlen(g_res_file_path);
+		DL_FsGetURIFromID(&g_app_elf->id, ptr);
+
+		status |= ldrSendEvent(g_app_elf->evbase);
+	} else {
+		PFprintf("%s: Cannot register application.\n", g_app_elf->name);
+	}
+
+	return status;
+}
 #endif
 
 static UINT32 ApplicationStart(EVENT_STACK_T *ev_st, REG_ID_T reg_id, void *reg_hdl) {
@@ -210,7 +291,12 @@ static UINT32 ApplicationStart(EVENT_STACK_T *ev_st, REG_ID_T reg_id, void *reg_
 		app_instance = (APP_INSTANCE_T *) APP_InitAppData((void *) APP_HandleEvent, sizeof(APP_INSTANCE_T),
 			reg_id, 0, 0, 1, 1, 1, 0);
 
+#if defined(EP1) || defined(EP2)
 		app_instance->ahi.info_driver = NULL;
+#elif defined(EM1) || defined(EM2)
+		app_instance->gfsdk.GxHandle = 0x08193934; // FIXME: How I can obtain this?
+		app_instance->gfsdk.fb0 = NULL;
+#endif
 		app_instance->bmp_width = VIEWPORT_WIDTH;
 		app_instance->bmp_height = VIEWPORT_HEIGHT;
 		app_instance->p_bitmap = NULL;
@@ -221,13 +307,19 @@ static UINT32 ApplicationStart(EVENT_STACK_T *ev_st, REG_ID_T reg_id, void *reg_
 		DL_AudGetVolumeSetting(PHONE, &app_instance->keyboard_volume_level);
 		DL_AudSetVolumeSetting(PHONE, 0);
 
+#if defined(EP1) || defined(EP2)
 		status |= ATI_Driver_Start((APPLICATION_T *) app_instance);
+#elif defined(EM1) || defined(EM2)
+		status |= Nvidia_Driver_Start((APPLICATION_T *) app_instance);
+#endif
 
 		status |= APP_Start(ev_st, &app_instance->app, APP_STATE_MAIN,
 			g_state_table_hdls, ApplicationStop, g_app_name, 0);
 
 #if defined(EP2)
 		g_app_elf.app = (APPLICATION_T *) app_instance;
+#elif defined(EM2)
+		g_app_elf->app = &app_instance->app;
 #endif
 	}
 
@@ -249,13 +341,21 @@ static UINT32 ApplicationStop(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
 
 	status |= GFX_Draw_Stop(app);
 	status |= SetLoopTimer(app, 0);
+#if defined(EP1) || defined(EP2)
 	status |= ATI_Driver_Stop(app);
+#elif defined(EM1) || defined(EM2)
+	status |= Nvidia_Driver_Stop(app);
+#endif
 	status |= APP_Exit(ev_st, app, 0);
 
 #if defined(EP1)
 	LdrUnloadELF(&Lib);
 #elif defined(EP2)
 	ldrUnloadElf();
+#elif defined(EM1)
+	LoaderEndApp(&g_app_elf);
+#elif defined(EM2)
+	ldrUnloadElf(g_app_elf);
 #endif
 
 	return status;
@@ -449,7 +549,11 @@ static UINT32 HandleEventTimerExpired(EVENT_STACK_T *ev_st, APPLICATION_T *app) 
 			FPS_Meter();
 			CheckKeyboard(ev_st, app);
 			GFX_Draw_Step(app);
+#if defined(EP1) || defined(EP2)
 			ATI_Driver_Flush(app);
+#elif defined(EM1) || defined(EM2)
+			Nvidia_Driver_Flush(app);
+#endif
 			break;
 		case APP_TIMER_EXIT:
 			/* Play an exit sound using quiet speaker. */
@@ -494,6 +598,7 @@ static void FPS_Meter(void) {
 #endif
 }
 
+#if defined(EP1) || defined(EP2)
 static UINT32 ATI_Driver_Start(APPLICATION_T *app) {
 	UINT32 status;
 	INT32 result;
@@ -674,6 +779,63 @@ static UINT32 ATI_Driver_Flush(APPLICATION_T *app) {
 
 	return RESULT_OK;
 }
+#elif defined(EM1) || defined(EM2)
+
+#endif
+
+static UINT32 Nvidia_Driver_Start(APPLICATION_T *app) {
+	INT32 result;
+	UINT32 status;
+	APP_INSTANCE_T *app_instance;
+
+	result = RESULT_OK;
+	status = RESULT_OK;
+	app_instance = (APP_INSTANCE_T *) app;
+
+	app_instance->gfsdk.fb0_rect.x = 0;
+	app_instance->gfsdk.fb0_rect.y = 0;
+	app_instance->gfsdk.fb0_rect.w = VIEWPORT_WIDTH;
+	app_instance->gfsdk.fb0_rect.h = VIEWPORT_HEIGHT;
+
+	app_instance->gfsdk.fb0 = uisAllocateMemory(VIEWPORT_WIDTH * VIEWPORT_HEIGHT * 2, &result);
+	if (result != RESULT_OK) {
+		LOG("Cannot allocate '%d' bytes of memory for screen buffer!\n", VIEWPORT_WIDTH * VIEWPORT_HEIGHT * 2);
+		status = RESULT_FAIL;
+	}
+
+	return status;
+}
+
+static UINT32 Nvidia_Driver_Stop(APPLICATION_T *app) {
+	UINT32 status;
+	APP_INSTANCE_T *app_instance;
+
+	status = RESULT_OK;
+	app_instance = (APP_INSTANCE_T *) app;
+
+	uisFreeMemory(app_instance->gfsdk.fb0);
+
+	return status;
+}
+
+static UINT32 Nvidia_Driver_Flush(APPLICATION_T *app) {
+	UINT32 status;
+	APP_INSTANCE_T *app_instance;
+
+	status = RESULT_OK;
+	app_instance = (APP_INSTANCE_T *) app;
+
+	GFGxCopyColorBitmap(
+		app_instance->gfsdk.GxHandle,
+		app_instance->gfsdk.fb0_rect.x, app_instance->gfsdk.fb0_rect.y,
+		app_instance->gfsdk.fb0_rect.w, app_instance->gfsdk.fb0_rect.h,
+		app_instance->gfsdk.fb0_rect.x, app_instance->gfsdk.fb0_rect.y,
+		app_instance->gfsdk.fb0_rect.w * 2,
+		app_instance->gfsdk.fb0
+	);
+
+	return status;
+}
 
 static entity_t* box;
 
@@ -739,7 +901,11 @@ static UINT32 GFX_Draw_Start(APPLICATION_T *app) {
 
 	appi = (APP_INSTANCE_T *) app;
 
+#if defined(EP1) || defined(EP2)
 	appi->p_bitmap = (UINT8 *) appi->ahi.bitmap.image;
+#elif defined(EM1) || defined(EM2)
+	appi->p_bitmap = (UINT8 *) appi->gfsdk.fb0;
+#endif
 
 	InitResourses();
 
