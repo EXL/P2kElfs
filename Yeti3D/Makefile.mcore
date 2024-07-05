@@ -12,6 +12,7 @@ LIB_PATH = $(MCORE_PATH)/mcore-elf/lib
 
 # Defines.
 DEFINES = -D__P2K__ -DEM2 -DROT_0 -DFPS_30
+#DEFINES = -D__P2K__ -DEM2 -DROT_0 -DFPS_30 -DFTR_V3X
 #DEFINES = -D__P2K__ -DEM2 -DROT_0 -DFPS_30 -DG_DEFAULT
 
 # Optimization.

@@ -82,8 +82,13 @@ Prepared for public release: 10/24/2003 - Derek J. Evans <derek@theteahouse.com.
             #define YETI_DISPLAY_WIDTH 220
             #define YETI_DISPLAY_HEIGHT 176
         #elif defined(EM1) || defined(EM2)
-            #define YETI_DISPLAY_WIDTH 240
-            #define YETI_DISPLAY_HEIGHT 320
+            #if defined(FTR_V3X)
+                #define YETI_DISPLAY_WIDTH 240
+                #define YETI_DISPLAY_HEIGHT 320
+            #else
+                #define YETI_DISPLAY_WIDTH 176
+                #define YETI_DISPLAY_HEIGHT 220
+            #endif
         #endif
     #else
         #if defined(EP1) || defined(EP2)
