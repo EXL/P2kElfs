@@ -70,7 +70,7 @@ typedef struct {
 } APP_AHI_T;
 #elif defined(EM1) || defined(EM2)
 typedef struct {
-	GF_HANDLE GxHandle;
+	GF_HANDLE gxHandle;
 	GXRECT fb0_rect;
 	UINT8 *fb0;
 } APP_GFSDK_T;
@@ -297,7 +297,7 @@ static UINT32 ApplicationStart(EVENT_STACK_T *ev_st, REG_ID_T reg_id, void *reg_
 #if defined(EP1) || defined(EP2)
 		app_instance->ahi.info_driver = NULL;
 #elif defined(EM1) || defined(EM2)
-		app_instance->gfsdk.GxHandle = 0x08193934; // FIXME: How I can obtain this?
+		app_instance->gfsdk.gxHandle = (GF_HANDLE) &GxHandle;
 		app_instance->gfsdk.fb0 = NULL;
 #endif
 		app_instance->bmp_width = VIEWPORT_WIDTH;
@@ -843,7 +843,7 @@ static UINT32 Nvidia_Driver_Flush(APPLICATION_T *app) {
 	app_instance = (APP_INSTANCE_T *) app;
 
 	GFGxCopyColorBitmap(
-		app_instance->gfsdk.GxHandle,
+		app_instance->gfsdk.gxHandle,
 		app_instance->gfsdk.fb0_rect.x, app_instance->gfsdk.fb0_rect.y,
 		app_instance->gfsdk.fb0_rect.w, app_instance->gfsdk.fb0_rect.h,
 		app_instance->gfsdk.fb0_rect.x, app_instance->gfsdk.fb0_rect.y,
