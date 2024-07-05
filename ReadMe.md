@@ -5,8 +5,6 @@ The source code of ELF applications for Motorola phones on the P2K platform.
 
 ![Screenshot 1 of ElfBox from Motorola ROKR E1](images/Screenshot_ElfBox_E1_1.png) ![Screenshot 2 of ElfBox from Motorola ROKR E1](images/Screenshot_ElfBox_E1_2.png) ![Screenshot 3 of ElfBox from Motorola ROKR E1](images/Screenshot_ElfBox_E1_3.png)
 
-My thread [ELFs by EXL](https://forum.motofan.ru/index.php?showtopic=1742337) with additional information about ELF application development on the MotoFan.Ru forum.
-
 Ready-to-run ELFs builds are available in the [Release](https://github.com/EXL/P2kElfs/releases) section.
 
 ## Projects
