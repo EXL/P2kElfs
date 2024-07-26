@@ -1,5 +1,5 @@
 ########################################################################################################################
-# CMake build script for Motorola P2K ELFs: 02-Oct-2023
+# CMake build script for Motorola P2K ELFs: 26-Jul-2024
 #
 cmake_minimum_required(VERSION 3.16)
 if(NOT ELFPACK)
@@ -23,24 +23,27 @@ elseif(ELFPACK STREQUAL "EM2") # ElfPack v2.x, M*CORE, mcore-elf-gcc (GCC) 3.4.6
 endif()
 
 ########################################################################################################################
-# Project section: General
+# Project section: FlipDetector
 #
-project(P2kElfs)
+project(FlipDetector LANGUAGES C VERSION "1.0.0")
 
-add_subdirectory(Ambilight)
-add_subdirectory(BadApple)
-add_subdirectory(BattDump)
-add_subdirectory(Benchmark)
-add_subdirectory(Dumper)
-add_subdirectory(ElfBox)
-add_subdirectory(FireEffect)
-add_subdirectory(Neko)
-add_subdirectory(Overclock)
-add_subdirectory(Perlin)
-add_subdirectory(PowerAlert)
-add_subdirectory(Screenshot)
-add_subdirectory(Spout)
-add_subdirectory(VibroHaptic)
-add_subdirectory(Yeti3D-Old)
-add_subdirectory(Yeti3D)
-add_subdirectory(FlipDetector)
+include_directories(${PROJECT_SOURCE_DIR})
+
+set(SOURCE_FILES
+	FlipDetector.c)
+
+add_executable(${PROJECT_NAME} ${SOURCE_FILES})
+
+########################################################################################################################
+# Linking and postlinking section
+#
+if(ELFPACK STREQUAL "EP1")
+	#target_link_libraries(${PROJECT_NAME} "${P2K_DIRECTORY_LIBRARIES}/dbg/dbg.o")
+elseif(ELFPACK STREQUAL "EP2")
+	#target_link_libraries(${PROJECT_NAME} "${P2K_DIRECTORY_LIBRARIES}/libgfx.a")
+	include("${P2K_EP2_TOOLCHAIN_ROOT}/cmake/PostLink.cmake")
+elseif(ELFPACK STREQUAL "EM1")
+	#target_link_libraries(${PROJECT_NAME} "${P2K_DIRECTORY_LIBRARIES}/libc.a")
+elseif(ELFPACK STREQUAL "EM2")
+	#target_link_libraries(${PROJECT_NAME} "${P2K_DIRECTORY_LIBRARIES}/libc.a")
+endif()

@@ -15,6 +15,7 @@ Project {
 		"Spout/Spout.qbs",
 		"VibroHaptic/VibroHaptic.qbs",
 		"Yeti3D-Old/Yeti3D-Old.qbs",
-		"Yeti3D/Yeti3D.qbs"
+		"Yeti3D/Yeti3D.qbs",
+		"FlipDetector/FlipDetector.qbs"
 	]
 }

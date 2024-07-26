@@ -99,6 +99,10 @@ Ready-to-run ELFs builds are available in the [Release](https://github.com/EXL/P
     The implementation of the popular "[Bad Apple](https://en.wikipedia.org/wiki/Bad_Apple!!#Use_as_a_graphical_and_audio_test)" demo for the Motorola P2K platform encoded as 1bpp compressed frames.\
     Application type: GUI + ATI + zlib
 
+19. **[Flip Detector](FlipDetector)**
+
+    Detect closed flip of Motorola clamshell phones and do some things.
+
 ## Infromation
 
 * [ELFs by EXL](https://forum.motofan.ru/index.php?showtopic=1742337): A thread on the MotoFan.Ru forum with my ELF projects and additional information.
