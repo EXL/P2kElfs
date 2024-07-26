@@ -189,11 +189,11 @@ static UINT32 HandleEventKeyRelease(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
 		ms_key_release_stop = (UINT32) (suPalTicksToMsec(suPalReadTime()) - app_instance->ms_key_press_start);
 
 		if ((ms_key_release_stop >= KEY_LONG_PRESS_START_MS) && (ms_key_release_stop <= KEY_LONG_PRESS_STOP_MS)) {
-			/* HACK: Inject keypress for exit event. */
+			/* HACK: Inject keypress for long smart key event. */
 			DL_KeyInjectKeyPress(KEY_SOFT_RIGHT, KEY_PRESS, KEY_PORTABLE_ID);
 			DL_KeyInjectKeyPress(KEY_SOFT_RIGHT, KEY_RELEASE, KEY_PORTABLE_ID);
 		} else {
-			/* HACK: Inject keypress for exit event. */
+			/* HACK: Inject keypress for short smart key event. */
 			DL_KeyInjectKeyPress(KEY_JOY_OK, KEY_PRESS, KEY_PORTABLE_ID);
 			DL_KeyInjectKeyPress(KEY_JOY_OK, KEY_RELEASE, KEY_PORTABLE_ID);
 		}
