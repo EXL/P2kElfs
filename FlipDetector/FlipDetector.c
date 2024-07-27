@@ -35,6 +35,7 @@ typedef struct {
 	APPLICATION_T app;
 
 	UINT64 ms_key_press_start;
+	BOOL is_flip_closed;
 } APP_INSTANCE_T;
 
 UINT32 Register(const char *elf_path_uri, const char *args, UINT32 ev_code);
@@ -52,11 +53,11 @@ static UINT32 HandleEventTimerExpired(EVENT_STACK_T *ev_st, APPLICATION_T *app);
 static const char g_app_name[APP_NAME_LEN] = "FlipDetect";
 
 static const UINT8 g_key_exit = KEY_0;
-static const UINT8 g_key_smart = KEY_SMART;
+static const UINT8 g_key_smart = KEY_VOICE;
 
 static const EVENT_HANDLER_ENTRY_T g_state_any_hdls[] = {
-	{ EV_FLIP_OPENED, HandleEventFlipClose },
-	{ EV_FLIP_CLOSED, HandleEventFlipOpen },
+	{ EV_FLIP_OPENED, HandleEventFlipOpen },
+	{ EV_FLIP_CLOSED, HandleEventFlipClose },
 	{ EV_KEY_PRESS, HandleEventKeyPress },
 	{ EV_KEY_RELEASE, HandleEventKeyRelease },
 	{ EV_TIMER_EXPIRED, HandleEventTimerExpired },
@@ -96,6 +97,7 @@ static UINT32 ApplicationStart(EVENT_STACK_T *ev_st, REG_ID_T reg_id, void *reg_
 			reg_id, 0, 1, 1, 2, 0, 0);
 
 		app_instance->ms_key_press_start = 0ULL;
+		app_instance->is_flip_closed = FALSE;
 
 		status = APP_Start(ev_st, &app_instance->app, APP_STATE_MAIN,
 			g_state_table_hdls, ApplicationStop, g_app_name, 0);
@@ -124,24 +126,33 @@ static UINT32 HandleEventFlipOpen(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
 	UINT32 status;
 	APP_INSTANCE_T *app_instance;
 
+	status = RESULT_OK;
 	app_instance = (APP_INSTANCE_T *) app;
 
-	status = DL_DbFeatureStoreState(
-		0xD5 /* DL_DB_FEATURE_ID_MMA_MENU_VIEW */,
-		0x00 /* DL_DB_FEATURE_STATE_ENUM_MMA_MENU_VIEW_ICONS */
+	D("%s\n", "Flip Opened.");
+	app_instance->is_flip_closed = FALSE;
+
+	DL_DbFeatureStoreState(
+		(*(BEGIN_4A__IN_DB + 1) >> 16) | 0xD5 /* DL_DB_FEATURE_ID_MMA_MENU_VIEW */,
+		0x00                                  /* DL_DB_FEATURE_STATE_ENUM_MMA_MENU_VIEW_ICONS */
 	);
 
 	return status;
 }
+
 static UINT32 HandleEventFlipClose(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
 	UINT32 status;
 	APP_INSTANCE_T *app_instance;
 
+	status = RESULT_OK;
 	app_instance = (APP_INSTANCE_T *) app;
 
-	status = DL_DbFeatureStoreState(
-		0xD5 /* DL_DB_FEATURE_ID_MMA_MENU_VIEW */,
-		0x01 /* DL_DB_FEATURE_STATE_ENUM_MMA_MENU_VIEW_LIST */
+	D("%s\n", "Flip Closed.");
+	app_instance->is_flip_closed = TRUE;
+
+	DL_DbFeatureStoreState(
+		(*(BEGIN_4A__IN_DB + 1) >> 16) | 0xD5 /* DL_DB_FEATURE_ID_MMA_MENU_VIEW */,
+		0x01                                  /* DL_DB_FEATURE_STATE_ENUM_MMA_MENU_VIEW_LIST */
 	);
 
 	return status;
@@ -156,8 +167,16 @@ static UINT32 HandleEventKeyPress(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
 	event = AFW_GetEv(ev_st);
 	key = event->data.key_pressed;
 
-	if (key == g_key_exit) {
+	D("%s %d.\n", "Key Pressed: ", key);
+
+	if (key == g_key_exit || key == g_key_smart) {
 		app_instance->ms_key_press_start = suPalTicksToMsec(suPalReadTime());
+	}
+
+	if (app_instance->is_flip_closed) {
+		if (key == g_key_smart) {
+			APP_ConsumeEv(ev_st, app);
+		}
 	}
 
 	return RESULT_OK;
@@ -173,6 +192,8 @@ static UINT32 HandleEventKeyRelease(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
 	event = AFW_GetEv(ev_st);
 	key = event->data.key_pressed;
 
+	D("%s %d.\n", "Key Released: ", key);
+
 	if (key == g_key_exit) {
 		/*
 		 * Detect long key press between 500 ms (0.5 s) and 1500 ms (1.5 s) and ignore rest.
@@ -182,7 +203,7 @@ static UINT32 HandleEventKeyRelease(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
 		if ((ms_key_release_stop >= KEY_LONG_PRESS_START_MS) && (ms_key_release_stop <= KEY_LONG_PRESS_STOP_MS)) {
 			APP_UtilStartTimer(100, APP_TIMER_EXIT, app);
 		}
-	} else if (key == g_key_smart) {
+	} else if (key == g_key_smart && app_instance->is_flip_closed) {
 		/*
 		 * Detect long key press between 500 ms (0.5 s) and 1500 ms (1.5 s) and ignore rest.
 		 */
@@ -190,10 +211,14 @@ static UINT32 HandleEventKeyRelease(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
 
 		if ((ms_key_release_stop >= KEY_LONG_PRESS_START_MS) && (ms_key_release_stop <= KEY_LONG_PRESS_STOP_MS)) {
 			/* HACK: Inject keypress for long smart key event. */
-			DL_KeyInjectKeyPress(KEY_SOFT_RIGHT, KEY_PRESS, KEY_PORTABLE_ID);
-			DL_KeyInjectKeyPress(KEY_SOFT_RIGHT, KEY_RELEASE, KEY_PORTABLE_ID);
+			D("%s %d.\n", "Long key released: ", key);
+
+			DL_KeyInjectKeyPress(KEY_SOFT_LEFT, KEY_PRESS, KEY_PORTABLE_ID);
+			DL_KeyInjectKeyPress(KEY_SOFT_LEFT, KEY_RELEASE, KEY_PORTABLE_ID);
 		} else {
 			/* HACK: Inject keypress for short smart key event. */
+			D("%s %d.\n", "Short key released: ", key);
+
 			DL_KeyInjectKeyPress(KEY_JOY_OK, KEY_PRESS, KEY_PORTABLE_ID);
 			DL_KeyInjectKeyPress(KEY_JOY_OK, KEY_RELEASE, KEY_PORTABLE_ID);
 		}
