@@ -3,6 +3,8 @@
 #if defined(USE_SDL2)
 #include <string.h>
 #include <stdio.h>
+
+#define mfree free
 #endif
 
 #define boolean char
@@ -60,10 +62,12 @@ int main_a_int_fld, main_c_int_fld;
 boolean main_b_boolean_fld;
 int *main_a_int_array1d_fld=0;//????
 
+typedef unsigned short ushort;
+
 void Systemgc(){}
 int getWidth=132, getHeight=176, screen_length=132*176;
 
-#define ushort unsigned short
+extern ushort *screens;
 
 //#define  getWidth 256
 //#define getHeight 240
@@ -84,7 +88,7 @@ unsigned char sbuf[sbufsize], *ebuf=sbuf;
 int stream, streammode;
 
 void flush(){
-  fwrite(stream,sbuf,ebuf-sbuf,&err);
+  fwrite(sbuf,ebuf-sbuf, 1, stream);
   ebuf=sbuf;
 }
 
@@ -98,26 +102,25 @@ void bytearrayoutputstreamwrite(int byt){
 
 int bytearrayinputstreamread(){
   if(ebuf>=sbuf+sbufsize){
-    fread(stream,sbuf,sbufsize,&err);
+    fread(sbuf,sbufsize, 1, stream);
     ebuf=sbuf;
   }
   return *ebuf++;
 }
 
-
-int openstream(int savemode){
-  if(streammode=savemode){ //save
-    if((stream=fopen(romname,A_WriteOnly+A_BIN+A_Create+A_Truncate,P_WRITE,&err))==-1) return -1;
+FILE* openstream(int savemode){
+  if(streammode==savemode){ //save
+    if((stream=fopen(romname, "wb"))==NULL) return NULL;
     ebuf=sbuf;
   }else{
     ebuf=sbuf+sbufsize;
-    if((stream=fopen(romname,A_ReadOnly+A_BIN,P_READ,&err))==-1) return -1;
+    if((stream=fopen(romname, "rb"))==NULL) return NULL;
   }return stream;
 }
 
 void closestream(){ 
   if(streammode) flush();
-  fclose(stream,&err);
+  fclose(stream);
 }
 
 

@@ -4,8 +4,8 @@
 CC=gcc
 STRIP=strip
 CFLAGS=`sdl2-config --cflags` -O2 -g -DUSE_SDL2 -Wall -pedantic -Wno-maybe-uninitialized -Wno-misleading-indentation
-LFLAGS=`sdl2-config --libs`
-NAME=vNes
+LFLAGS=`sdl2-config --libs` -Wl,--allow-multiple-definition
+NAME=vNesC
 ifeq ($(OS), Windows_NT)
 	EXECUTABLE=$(NAME).exe
 else
@@ -15,7 +15,7 @@ endif
 all: $(EXECUTABLE)
 
 $(EXECUTABLE): vNesC.o vSdl2.o
-	$(CC) $(CFLAGS) vNesC.o vSDL2.o -o $(EXECUTABLE) $(LFLAGS)
+	$(CC) $(CFLAGS) vNesC.o vSdl2.o -o $(EXECUTABLE) $(LFLAGS)
 #	$(STRIP) -s $(EXECUTABLE)
 
 clean:

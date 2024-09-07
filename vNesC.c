@@ -236,6 +236,7 @@ int nn; //temp
         s_boolean_static_fld = true;
         do {
             do {
+                main_loop_step();
  //debug("dodo",1,1);////////////            
                 boolean flag5 = k5 % A == 0;
                 if(t_boolean_static_fld) {
@@ -3392,6 +3393,36 @@ label0:;
         return abyte0;
     }
 */
+
+    int loadfilesize;
+    char *loadfile(char *s) {
+        FILE *file = fopen(s, "rb");
+        if (file == NULL) {
+            return NULL;
+        }
+
+        fseek(file, 0, SEEK_END);
+        loadfilesize = ftell(file);
+        rewind(file);
+
+        char *file_data = (char*)malloc(loadfilesize); // +1 for null terminator
+        if (file_data == NULL) {
+            perror("Error allocating memory");
+            fclose(file);
+            return NULL;
+        }
+
+        size_t result = fread(file_data, 1, loadfilesize, file);
+        if (result != loadfilesize) {
+            free(file_data);
+            fclose(file);
+            return NULL;
+        }
+        fclose(file);
+
+        return file_data;
+    }
+
     int loadROM(char *s) {
     	int i1=0, filesize, vramlength;
       char *buf;
