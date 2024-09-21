@@ -953,7 +953,12 @@ static const WCHAR *GetFileNameFromPath(const WCHAR *path) {
 
 static BOOL IsDirectory(UINT16 file_attributes) {
 #if defined(FTR_V600)
-	return (file_attributes == DIRECTORY_FILTER_ATTRIBUTE);
+	/* HACK: Fix directories==files on Motorola C650 series. */
+	#if defined(FTR_C650)
+		return (file_attributes & FS_ATTR_DIRECTORY);
+	#else
+		return (file_attributes == DIRECTORY_FILTER_ATTRIBUTE);
+	#endif
 #else
 	return (file_attributes & FS_ATTR_DIRECTORY);
 #endif
