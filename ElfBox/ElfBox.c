@@ -136,7 +136,9 @@ static LIST_ENTRY_T *CreateList(EVENT_STACK_T *ev_st, APPLICATION_T *app);
 static UINT32 UpdateList(EVENT_STACK_T *ev_st, APPLICATION_T *app, const WCHAR *directory, const WCHAR *filter);
 static UINT32 UpdateVolumeList(EVENT_STACK_T *ev_st, APPLICATION_T *app);
 static UINT32 UpdateFileList(EVENT_STACK_T *ev_st, APPLICATION_T *app, const WCHAR *search_string);
-static UINT32 FillFileList(EVENT_STACK_T *ev_st, APPLICATION_T *app, FS_SEARCH_COMPLETED_INDEX_T *search_index);
+static UINT32 FillFileList(
+	EVENT_STACK_T *ev_st, APPLICATION_T *app, FS_SEARCH_COMPLETED_INDEX_T *search_index, const WCHAR *search_string
+);
 static int file_comparate(const void *obj_1, const void *obj_2);
 static UINT32 SortFileList(EVENT_STACK_T *ev_st, APPLICATION_T *app);
 
@@ -812,14 +814,15 @@ static UINT32 UpdateFileList(EVENT_STACK_T *ev_st, APPLICATION_T *app, const WCH
 		return status;
 	}
 
-	status |= FillFileList(ev_st, app, &search_index);
+	status |= FillFileList(ev_st, app, &search_index, search_string);
 
 	status |= APP_UtilStartTimer(TIMER_FAST_TRIGGER_MS, APP_TIMER_TO_MAIN_VIEW, app);
 
 	return status;
 }
 
-static UINT32 FillFileList(EVENT_STACK_T *ev_st, APPLICATION_T *app, FS_SEARCH_COMPLETED_INDEX_T *search_index) {
+static UINT32 FillFileList(EVENT_STACK_T *ev_st, APPLICATION_T *app,
+	FS_SEARCH_COMPLETED_INDEX_T *search_index, const WCHAR *search_string) {
 	UINT32 status;
 	INT32 error;
 	APP_INSTANCE_T *appi;
@@ -870,10 +873,17 @@ static UINT32 FillFileList(EVENT_STACK_T *ev_st, APPLICATION_T *app, FS_SEARCH_C
 				u_strcpy(appi->fs.list[i + 1].name, GetFileNameFromPath(search_index->search_result.name));
 				appi->fs.list[i + 1].type = (IsElfFile(appi->fs.list[i + 1].name)) ? APP_FS_ELF : APP_FS_FILE;
 			}
+		} else {
+			LOG("DL_FsSearchResults result=%d, i=%d, size=%d\n", status, i, search_index->search_total);
+			D("%s\n", "Search is closed in the loop!\n");
+			status |= DL_FsSearchClose(search_index->search_handle);
+			return UpdateFileList(ev_st, app, search_string);
 		}
 	}
 
 	status |= SortFileList(ev_st, app);
+
+	D("%s\n", "Search is closed in the end of function!\n");
 
 	status |= DL_FsSearchClose(search_index->search_handle);
 
