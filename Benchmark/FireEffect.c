@@ -586,5 +586,90 @@ UINT32 GFX_Draw_Step(APP_AHI_T *ahi) {
 
 	return RESULT_OK;
 }
+#else
+#include <dal.h>
+#include <nvidia.h>
+#include <utilities.h>
 
-#endif // EP1 || EP2
+static GF_HANDLE              RmHandle = NULL; /* Resource Manager Handle. */
+static GF_HANDLE              DxHandle = NULL; /* Display Manager Handle.  */
+static GF_HANDLE              GxHandle = NULL; /* Graphics Manager Handle. */
+
+UINT32 Nvidia_Driver_Start(void) {
+	GF_RETTYPE status;
+	GFRMCOMPONENTID gf_id;
+	GFPROPERTY prop;
+	UINT32 i;
+	
+	status = RESULT_OK;
+	
+	P();
+	
+//	RmHandle = GFRmOpen(NULL);
+	RmHandle = DAL_GetRmHandle(DISPLAY_MAIN);
+	D("RmHandle = 0x%08X\n", RmHandle);
+	if (!RmHandle) {
+		LOG("%s\n", "RmHandle is NULL!");
+		return RESULT_FAIL;
+	}
+	
+	P();
+	
+//	status = GFRmGetProperty(RmHandle, &prop);
+//	D("status = 0x%08X\n", status);
+//	D("prop.Version = 0x%08X\n", prop.Version);
+//	D("prop.DeviceID = 0x%08X\n", prop.DeviceID);
+//	D("prop.DeviceRev = 0x%08X\n", prop.DeviceRev);
+//	D("prop.BuildNumber = 0x%08X\n", prop.BuildNumber);
+//	D("prop.Capability = 0x%08X\n", prop.Capability);
+//	D("prop.CapabilityEx = 0x%08X\n", prop.CapabilityEx);
+//	D("prop.ProdSkuID = 0x%08X\n", prop.ProdSkuID);
+	
+	DxHandle = DAL_GetDxHandle(DISPLAY_MAIN);
+	D("DxHandle = 0x%08X\n", DxHandle);
+	if (!DxHandle) {
+		LOG("%s\n", "DxHandle is NULL!");
+		return RESULT_FAIL;
+	}
+	
+	P();
+	
+//	gf_id.ComponentType = GF_GXAPI;
+//	gf_id.DeviceID = prop.DeviceID;
+//	gf_id.DeviceRev = prop.DeviceRev;
+//	status = GFRmComponentGetEx(RmHandle, &gf_id, &GxHandle, GF_STATE_NEW_ONLY, NULL);
+//	D("GxHandle = 0x%08X, status = 0x%08X\n", GxHandle, status);
+//	if (!GxHandle) {
+//		LOG("%s\n", "GxHandle is NULL!");
+//		GxHandle = 0x08193934;
+////		return RESULT_FAIL;
+//	}
+	
+	P();
+	
+	return RESULT_OK;
+}
+
+UINT32 Nvidia_Driver_Flush(void* bitmap, INT32 srcW, INT32 srcH, INT32 srcX, INT32 srcY) {
+	GXRECT dest_area;
+
+	dest_area.x = 0;
+	dest_area.y = 0;
+	dest_area.w = srcW;
+	dest_area.h = srcH;
+	
+	P();
+	
+	GFGxCopyColorBitmap(
+		GxHandle,
+		dest_area.x, dest_area.y, dest_area.w, dest_area.h, 
+		srcX, srcY,
+		srcW * sizeof(UINT16), 
+		(UINT8 *) bitmap
+	);
+	
+	P();
+
+	return RESULT_OK;
+}
+#endif

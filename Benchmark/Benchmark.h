@@ -104,6 +104,10 @@ extern UINT32 ATI_Driver_Start(APP_AHI_T *ahi, WCHAR *props);
 extern UINT32 ATI_Driver_Flush(APP_AHI_T *ahi);
 extern UINT32 ATI_Driver_Stop(APP_AHI_T *ahi);
 
+extern UINT32 Nvidia_Driver_Start(void);
+extern UINT32 Nvidia_Driver_Flush(void* bitmap, INT32 srcW, INT32 srcH, INT32 srcX, INT32 srcY);
+extern UINT32 Nvidia_Driver_Stop(APP_AHI_T *ahi);
+
 extern UINT32 GFX_Draw_Start(APP_AHI_T *ahi);
 extern UINT32 GFX_Draw_Step(APP_AHI_T *ahi);
 extern UINT32 GFX_Draw_Stop(APP_AHI_T *ahi);

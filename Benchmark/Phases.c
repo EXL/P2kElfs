@@ -3,6 +3,7 @@
 #include <utilities.h>
 #include <mem.h>
 #if defined(EP1) || defined(EP2)
+#include <ati.h>
 #include <tasks.h>
 #endif
 
@@ -367,9 +368,10 @@ UINT32 TotalHeapSize(BENCHMARK_RESULTS_HEAP_T *result) {
 	return status;
 }
 
-#if defined(EP1) || defined(EP2)
 UINT32 Bench_GPU_Passes(UINT32 bmp_width, UINT32 bmp_height, WCHAR *fps, WCHAR *fms, WCHAR *props) {
 	UINT32 status;
+
+#if defined(EP1) || defined(EP2)
 	APP_AHI_T ahi;
 
 	ahi.info_driver = NULL;
@@ -389,12 +391,26 @@ UINT32 Bench_GPU_Passes(UINT32 bmp_width, UINT32 bmp_height, WCHAR *fps, WCHAR *
 
 	GFX_Draw_Stop(&ahi);
 	ATI_Driver_Stop(&ahi);
+#else
+	UINT32 i = 0;
+	Nvidia_Driver_Start();
+	
+//	do {
+//		UINT8 *bitmwap = uisAllocateMemory(240 * 320 * 2, &status);
+		
+//		memset(bitmwap, rand() % 255, 240 * 320 * 2);
+		
+//		Nvidia_Driver_Flush(bitmwap, 240, 320, 0, 0);
+//		uisFreeMemory(bitmwap);
+//		suSleep(10, NULL);
+//		i++;
+//	} while (i < 100);
 
-	CalculateAverageFpsAndTime(fps, fms);
-
-	return status;
-}
 #endif
+//	CalculateAverageFpsAndTime(fps, fms);
+
+	return RESULT_OK;
+}
 
 UINT32 DisksResult(WCHAR *disk_result) {
 	UINT32 i;

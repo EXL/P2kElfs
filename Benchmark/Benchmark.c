@@ -565,22 +565,20 @@ static UINT32 HandleEventTimerExpired(EVENT_STACK_T *ev_st, APPLICATION_T *app) 
 				case APP_MENU_ITEM_BENCH_GPU:
 					app_instance->view = APP_VIEW_GPU_RESULTS;
 
-#if defined(EP1) || defined(EP2)
 					Bench_GPU_Passes(BITMAP_WIDTH_LOW, BITMAP_HEIGHT_LOW,
 						app_instance->gpu_result.fps_pass1,
 						app_instance->gpu_result.fms_pass1,
 						app_instance->gpu_result.properties);
 
-					Bench_GPU_Passes(BITMAP_WIDTH_MID, BITMAP_HEIGHT_MID,
-						app_instance->gpu_result.fps_pass2,
-						app_instance->gpu_result.fms_pass2,
-						app_instance->gpu_result.properties);
+//					Bench_GPU_Passes(BITMAP_WIDTH_MID, BITMAP_HEIGHT_MID,
+//						app_instance->gpu_result.fps_pass2,
+//						app_instance->gpu_result.fms_pass2,
+//						app_instance->gpu_result.properties);
 
-					Bench_GPU_Passes(BITMAP_WIDTH_HIGH, BITMAP_WIDTH_HIGH,
-						app_instance->gpu_result.fps_pass3,
-						app_instance->gpu_result.fms_pass3,
-						app_instance->gpu_result.properties);
-#endif
+//					Bench_GPU_Passes(BITMAP_WIDTH_HIGH, BITMAP_WIDTH_HIGH,
+//						app_instance->gpu_result.fps_pass3,
+//						app_instance->gpu_result.fms_pass3,
+//						app_instance->gpu_result.properties);
 
 					break;
 				case APP_MENU_ITEM_BENCH_RAM_SUAPI:
