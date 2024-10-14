@@ -115,7 +115,7 @@ static const UINT8 g_key_screenshot = KEY_POUND;
 static const WCHAR g_msg_state_main[] = L"Hold \"#\" to Screenshot!\nHold \"0\" to Help.\nHold \"*\" to Exit.";
 static const WCHAR g_msg_softkey_got_it[] = L"Got it!";
 
-#if defined(FTR_V600)
+#if defined(FTR_V600) || defined(FTR_C650)
 static const char g_scr_filename_template[] = "/a/mobile/picture/SCR_%02d%02d%04d_%02d%02d%02d.bmp";
 #else
 static const char g_scr_filename_template[] = "/c/mobile/picture/SCR_%02d%02d%04d_%02d%02d%02d.bmp";
@@ -444,7 +444,7 @@ static UINT32 HandleEventTimerExpired(EVENT_STACK_T *ev_st, APPLICATION_T *app) 
 
 	if (timer_id == APP_TIMER_SCREEN_OK) {
 		/* Play a normal camera shutter sound using loud speaker. */
-#if defined(FTR_V600)
+#if defined(FTR_V600) && !defined(FTR_C650)
 		MME_GC_playback_open_audio_play_forget(L"/a/mobile/system/shutter5.wav");
 #else
 		MME_GC_playback_open_audio_play_forget(L"/a/mobile/system/shutter5.amr");
@@ -474,13 +474,29 @@ static UINT32 MakeScreenshot(void) {
 		status |= PatchBmpHeader(&bitmap);
 		status |= SaveScreenshotFile(&bitmap);
 		if (bitmap.buffer) {
+#if defined(FTR_C650)
+			uisFreeMemory(bitmap.buffer);
+#else
 			suFreeMem(bitmap.buffer);
+#endif
+			bitmap.buffer = NULL;
 		}
 	}
 
 	return status;
 }
 
+#if defined(FTR_C650)
+static UINT32 CopyVramToRamAndInitBitmap(BITMAP_T *bitmap) {
+	bitmap->width = DISPLAY_WIDTH;
+	bitmap->height = DISPLAY_HEIGHT;
+	bitmap->pixels = DISPLAY_WIDTH * DISPLAY_HEIGHT;
+	bitmap->bpp = DISPLAY_BPP;
+	bitmap->size = bitmap->pixels * bitmap->bpp;
+
+	return RESULT_OK;
+}
+#else
 static UINT32 CopyVramToRamAndInitBitmap(BITMAP_T *bitmap) {
 	UINT32 status;
 	INT32 result;
@@ -547,6 +563,7 @@ static UINT32 CopyVramToRamAndInitBitmap(BITMAP_T *bitmap) {
 
 	return status;
 }
+#endif
 
 static UINT32 CreateConvertedBitmap(BITMAP_T *bitmap) {
 	UINT32 status;
@@ -556,7 +573,11 @@ static UINT32 CreateConvertedBitmap(BITMAP_T *bitmap) {
 	UINT16 *address;
 	UINT16 bitmap_pixel;
 
+#if defined(FTR_C650)
+	bitmap->buffer = (UINT16 *) uisAllocateMemory(bitmap->size, (INT32 *) &status);
+#else
 	bitmap->buffer = (UINT16 *) suAllocMem(bitmap->size, (INT32 *) &status);
+#endif
 	if (status != RESULT_OK) {
 		return RESULT_FAIL;
 	}
