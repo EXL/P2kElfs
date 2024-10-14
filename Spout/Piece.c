@@ -83,6 +83,7 @@ typedef struct {
 	APP_KEYBOARD_T keys;
 	UINT32 timer_handle;
 	UINT8 keyboard_volume_level;
+	GRAPHIC_REGION_T dal_draw_region;
 } APP_INSTANCE_T;
 
 #if defined(EP1)
@@ -524,6 +525,7 @@ static void FPS_Meter(void) {
 #endif
 }
 
+#if !defined(FTR_C650)
 static UINT32 ATI_Driver_Start(APPLICATION_T *app) {
 	UINT32 status;
 	INT32 result;
@@ -699,9 +701,59 @@ static UINT32 ATI_Driver_Flush(APPLICATION_T *app) {
 
 	return RESULT_OK;
 }
+#else
+/* Pure DAL driver for C650-like phones. */
+static UINT32 ATI_Driver_Start(APPLICATION_T *app) {
+	APP_INSTANCE_T *appi;
+	UINT8 *display_bitmap;
+
+	appi = (APP_INSTANCE_T *) app;
+	display_bitmap = (UINT8 *) display_source_buffer;
+
+	appi->dal_draw_region.ulc.x = 0;
+	appi->dal_draw_region.ulc.y = 0;
+	appi->dal_draw_region.lrc.x = DISPLAY_WIDTH - 1;
+	appi->dal_draw_region.lrc.y = DISPLAY_HEIGHT - 1;
+
+	memset(display_bitmap, 0xFF, DISPLAY_WIDTH * DISPLAY_HEIGHT * DISPLAY_BYTESPP);
+	DAL_UpdateDisplayRegion(&appi->dal_draw_region, (UINT16 *) display_bitmap);
+
+	appi->dal_draw_region.ulc.x = 0;
+	appi->dal_draw_region.ulc.y = (DISPLAY_HEIGHT / 2) - (SPOUT_HEIGHT / 2);
+	appi->dal_draw_region.lrc.x = SPOUT_WIDTH - 1;
+	appi->dal_draw_region.lrc.y = ((DISPLAY_HEIGHT / 2) - (SPOUT_HEIGHT / 2)) + (SPOUT_HEIGHT - 1);
+
+	return RESULT_OK;
+}
+
+static UINT32 ATI_Driver_Stop(APPLICATION_T *app) {
+	return RESULT_OK;
+}
+
+static UINT32 ATI_Driver_Flush(APPLICATION_T *app) {
+	APP_INSTANCE_T *appi;
+	UINT16 *display_bitmap;
+	INT32 i;
+
+	appi = (APP_INSTANCE_T *) app;
+	display_bitmap = (UINT16 *) display_source_buffer;
+
+	for (i = 0; i < SPOUT_WIDTH * SPOUT_HEIGHT; ++i) {
+		display_bitmap[i] = spout_palette[vbuff[i]];
+	}
+
+//	DAL_UpdateDisplayRegion(&appi->dal_draw_region, display_bitmap);
+	DAL_UpdateRectangleDisplayRegion(&appi->dal_draw_region, display_bitmap, DISPLAY_MAIN);
+//	DAL_WriteDisplayRegion(&appi->dal_draw_region, display_bitmap, DISPLAY_MAIN, FALSE);
+
+	return RESULT_OK;
+}
+#endif
 
 static UINT32 GFX_Draw_Start(APPLICATION_T *app) {
-	// pceAppInit();
+//#if defined(FTR_C650)
+//	ATI_Driver_Start(app);
+//#endif
 	return RESULT_OK;
 }
 
