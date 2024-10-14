@@ -99,6 +99,12 @@ Prepared for public release: 10/24/2003 - Derek J. Evans <derek@theteahouse.com.
             #define YETI_DISPLAY_HEIGHT 176
         #endif
     #endif
+#elif defined(VIEW_96X64)
+    #define YETI_DISPLAY_WIDTH 96
+    #define YETI_DISPLAY_HEIGHT 64
+#elif defined(VIEW_128X128)
+    #define YETI_DISPLAY_WIDTH 128
+    #define YETI_DISPLAY_HEIGHT 128
 #endif
 
 #if (YETI_DISPLAY_WIDTH == 320) && (YETI_DISPLAY_HEIGHT == 240)
@@ -110,6 +116,10 @@ Prepared for public release: 10/24/2003 - Derek J. Evans <derek@theteahouse.com.
 #endif
 
 #if (YETI_DISPLAY_WIDTH == 160) && (YETI_DISPLAY_HEIGHT == 128)
+#define NO_STRETCH
+#endif
+
+#if (YETI_DISPLAY_WIDTH == 128) && (YETI_DISPLAY_HEIGHT == 128)
 #define NO_STRETCH
 #endif
 
