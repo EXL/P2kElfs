@@ -84,6 +84,7 @@ typedef struct {
 	APP_KEYBOARD_T keys;
 	UINT32 timer_handle;
 	UINT8 keyboard_volume_level;
+	GRAPHIC_REGION_T dal_draw_region;
 } APP_INSTANCE_T;
 
 #if defined(EP1)
@@ -107,8 +108,10 @@ static UINT32 ProcessKeyboard(EVENT_STACK_T *ev_st, APPLICATION_T *app, UINT32 k
 static UINT32 HandleEventTimerExpired(EVENT_STACK_T *ev_st, APPLICATION_T *app);
 static void FPS_Meter(void);
 
-static UINT32 ATI_Driver_Log(APPLICATION_T *app);
-static UINT32 ATI_Driver_Log_Memory(APPLICATION_T *app, AHIPIXFMT_T pixel_format);
+#if !defined(FTR_C650)
+	static UINT32 ATI_Driver_Log(APPLICATION_T *app);
+	static UINT32 ATI_Driver_Log_Memory(APPLICATION_T *app, AHIPIXFMT_T pixel_format);
+#endif
 static UINT32 ATI_Driver_Start(APPLICATION_T *app);
 static UINT32 ATI_Driver_Stop(APPLICATION_T *app);
 static UINT32 ATI_Driver_Flush(APPLICATION_T *app);
@@ -395,6 +398,16 @@ static UINT32 CheckKeyboard(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
 }
 
 static UINT32 ProcessKeyboard(EVENT_STACK_T *ev_st, APPLICATION_T *app, UINT32 key, BOOL pressed) {
+#if defined(EM1) || defined(EM2) || defined(FTR_C650)
+	#define KK_2 MULTIKEY_2
+	#define KK_UP MULTIKEY_UP
+	#define KK_4 MULTIKEY_4
+	#define KK_LEFT MULTIKEY_LEFT
+	#define KK_6 MULTIKEY_6
+	#define KK_RIGHT MULTIKEY_RIGHT
+	#define KK_8 MULTIKEY_8
+	#define KK_DOWN MULTIKEY_DOWN
+#else
 	#define KK_2 MULTIKEY_6
 	#define KK_UP MULTIKEY_RIGHT
 	#define KK_4 MULTIKEY_2
@@ -403,6 +416,7 @@ static UINT32 ProcessKeyboard(EVENT_STACK_T *ev_st, APPLICATION_T *app, UINT32 k
 	#define KK_RIGHT MULTIKEY_DOWN
 	#define KK_8 MULTIKEY_4
 	#define KK_DOWN MULTIKEY_LEFT
+#endif
 
 	switch (key) {
 		case MULTIKEY_0:
@@ -510,6 +524,7 @@ static void FPS_Meter(void) {
 #endif
 }
 
+#if !defined(FTR_C650)
 static UINT32 ATI_Driver_Log(APPLICATION_T *app) {
 	APP_INSTANCE_T *appi;
 
@@ -941,6 +956,58 @@ static UINT32 ATI_Driver_Flush(APPLICATION_T *app) {
 
 	return RESULT_OK;
 }
+#else
+/* Pure DAL driver for C650-like phones. */
+static UINT32 ATI_Driver_Start(APPLICATION_T *app) {
+       APP_INSTANCE_T *appi;
+       UINT8 *display_bitmap;
+       INT32 status;
+
+       appi = (APP_INSTANCE_T *) app;
+       display_bitmap = (UINT8 *) display_source_buffer;
+
+       appi->dal_draw_region.ulc.x = 0;
+       appi->dal_draw_region.ulc.y = 0;
+       appi->dal_draw_region.lrc.x = DISPLAY_WIDTH - 1;
+       appi->dal_draw_region.lrc.y = DISPLAY_HEIGHT - 1;
+
+       memset(display_bitmap, 0x00, DISPLAY_WIDTH * DISPLAY_HEIGHT * DISPLAY_BYTESPP);
+       DAL_UpdateDisplayRegion(&appi->dal_draw_region, (UINT16 *) display_bitmap);
+
+#if defined(VIEW_96X64)
+       appi->dal_draw_region.ulc.x = (DISPLAY_WIDTH / 2) - (YETI_DISPLAY_WIDTH / 2);;
+       appi->dal_draw_region.ulc.y = (DISPLAY_HEIGHT / 2) - (YETI_DISPLAY_HEIGHT / 2);
+       appi->dal_draw_region.lrc.x = ((DISPLAY_WIDTH / 2) - (YETI_DISPLAY_WIDTH / 2)) + (YETI_DISPLAY_WIDTH - 1);
+       appi->dal_draw_region.lrc.y = ((DISPLAY_HEIGHT / 2) - (YETI_DISPLAY_HEIGHT / 2)) + (YETI_DISPLAY_HEIGHT - 1);
+#endif
+
+       appi->ahi.bitmap.image = uisAllocateMemory(appi->bmp_width * appi->bmp_height * 2, &status);
+
+       return status;
+}
+
+static UINT32 ATI_Driver_Stop(APPLICATION_T *app) {
+       APP_INSTANCE_T *appi;
+
+       appi = (APP_INSTANCE_T *) app;
+
+       uisFreeMemory(appi->ahi.bitmap.image);
+
+       return RESULT_OK;
+}
+
+static UINT32 ATI_Driver_Flush(APPLICATION_T *app) {
+       APP_INSTANCE_T *appi;
+
+       appi = (APP_INSTANCE_T *) app;
+
+//     DAL_UpdateDisplayRegion(&appi->dal_draw_region, display_bitmap);
+       DAL_UpdateRectangleDisplayRegion(&appi->dal_draw_region, (UINT16 *) appi->p_bitmap, DISPLAY_MAIN);
+//     DAL_WriteDisplayRegion(&appi->dal_draw_region, display_bitmap, DISPLAY_MAIN, FALSE);
+
+       return RESULT_OK;
+}
+#endif // !defined(FTR_C650)
 
 yeti_t *yeti = NULL;
 
