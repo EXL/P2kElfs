@@ -72,29 +72,41 @@ static GRAIN *freeGrain(GRAIN *current);
 
 void pceAppInit(void)
 {
-#if defined(JAVA_HEAP)
-	vbuff = AmMemAllocPointer(128 * 88 * 1);
-#else
-	vbuff = suAllocMem(128 * 88 * 1, NULL);
+#if defined(UIS_HEAP)
+	INT32 status;
 #endif
-	memset(vbuff, 0, 128 * 88);
 
 #if defined(JAVA_HEAP)
-	vbuff2 = AmMemAllocPointer(128 * 128 * 1);
+	vbuff = AmMemAllocPointer(SPOUT_WIDTH * SPOUT_HEIGHT);
+#elif defined(UIS_HEAP)
+	vbuff = uisAllocateMemory(SPOUT_WIDTH * SPOUT_HEIGHT, &status);
 #else
-	vbuff2 = suAllocMem(128 * 128 * 1, NULL);
+	vbuff = suAllocMem(SPOUT_WIDTH * SPOUT_HEIGHT, NULL);
 #endif
-	memset(vbuff2, 0, 128 * 128);
+	memset(vbuff, 0, SPOUT_WIDTH * SPOUT_HEIGHT);
 
 #if defined(JAVA_HEAP)
-	v2g = AmMemAllocPointer(128 * 128 * sizeof(GRAIN *));
+	vbuff2 = AmMemAllocPointer(SPOUT_WIDTH * SPOUT_WIDTH);
+#elif defined(UIS_HEAP)
+	vbuff2 = uisAllocateMemory(SPOUT_WIDTH * SPOUT_WIDTH, &status);
 #else
-	v2g = suAllocMem(128 * 128 * sizeof(GRAIN *), NULL);
+	vbuff2 = suAllocMem(SPOUT_WIDTH * SPOUT_WIDTH, NULL);
 #endif
-	memset(v2g, 0, 128 * 128 * sizeof(GRAIN *));
+	memset(vbuff2, 0, SPOUT_WIDTH * SPOUT_WIDTH);
+
+#if defined(JAVA_HEAP)
+	v2g = AmMemAllocPointer(SPOUT_WIDTH * SPOUT_WIDTH * sizeof(GRAIN *));
+#elif defined(UIS_HEAP)
+	v2g = uisAllocateMemory(SPOUT_WIDTH * SPOUT_WIDTH * sizeof(GRAIN *), &status);
+#else
+	v2g = suAllocMem(SPOUT_WIDTH * SPOUT_WIDTH * sizeof(GRAIN *), NULL);
+#endif
+	memset(v2g, 0, SPOUT_WIDTH * SPOUT_WIDTH * sizeof(GRAIN *));
 
 #if defined(JAVA_HEAP)
 	grain = AmMemAllocPointer(MAX_GRAIN * sizeof(GRAIN));
+#elif defined(UIS_HEAP)
+	grain = uisAllocateMemory(MAX_GRAIN * sizeof(GRAIN), &status);
 #else
 	grain = suAllocMem(MAX_GRAIN * sizeof(GRAIN), NULL);
 #endif
@@ -752,6 +764,11 @@ void pceAppExit( void )
 	AmMemFreePointer(v2g);
 	AmMemFreePointer(vbuff2);
 	AmMemFreePointer(vbuff);
+#elif defined(UIS_HEAP)
+	uisFreeMemory(grain);
+	uisFreeMemory(v2g);
+	uisFreeMemory(vbuff2);
+	uisFreeMemory(vbuff);
 #else
 	mfree(grain);
 	mfree(v2g);
