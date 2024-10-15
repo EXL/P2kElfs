@@ -84,6 +84,7 @@ See [Overclock](../Overclock) project documents for overclocking Yeti3D comparis
 
 * V (1st) - ATI videomode changing e.g. 176x220 => 220x176, 128x160 => 160x128, etc.
 * R (1st) - ATI hardware rootation and zoom surface e.g. 120x80 => 176x220, 96x64 => 128x160, etc.
+* D (1st) - DAL videomode, software rendering for Motorola C650 and other phones.
 * N (2nd) - Non-optimized version with sprites and entities logic.
 * O (2nd) - Optimized version with no sprites and entities logic.
 * 1 (3rd) - ELF for ElfPack 1.0, tested with.
@@ -93,7 +94,8 @@ See [Overclock](../Overclock) project documents for overclocking Yeti3D comparis
 * J (4th) - A special optimized versions with creating screen buffer in Java Heap also, for weak phones like Motorola V600.
 * F (4th) - A special versions with FPS meter.
 * L (4th) - A special versions with long search range for Motorola RAZR V3r.
-* U (4th) - A special versions for Motorola SLVR L6 phone (R3511_G_0A.52.45R_A) with upside down display.
+* Z (4th) - A special versions for Motorola SLVR L6 phone (R3511_G_0A.52.45R_A) with upside down display.
+* U (4th) - A special optimized versions with creating screen buffer in UIS Heap, for weak phones like Motorola C650.
 * S (5th) - FPS limit to prevent phone's reboot.
 
 ### Summary
