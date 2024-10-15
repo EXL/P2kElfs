@@ -3,6 +3,10 @@ Spout
 
 Port of the "Spout" game by kuni to the Motorola P2K phones platform.
 
+## Screenshots from Motorola C650
+
+![Screenshot of Spout from Motorola C650 1](../images/Screenshot_Spout_C650_1.png) ![Screenshot of Spout from Motorola C650 2](../images/Screenshot_Spout_C650_2.png) ![Screenshot of Spout from Motorola C650 3](../images/Screenshot_Spout_C650_3.png)
+
 ## Screenshots from Motorola SLVR L6
 
 ![Screenshot of Spout from Motorola L6 1](../images/Screenshot_Spout_L6_1.png) ![Screenshot of Spout from Motorola L6 2](../images/Screenshot_Spout_L6_2.png) ![Screenshot of Spout from Motorola L6 3](../images/Screenshot_Spout_L6_3.png)
