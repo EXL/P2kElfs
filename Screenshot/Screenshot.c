@@ -491,7 +491,7 @@ static UINT32 CopyVramToRamAndInitBitmap(BITMAP_T *bitmap) {
 	bitmap->width = DISPLAY_WIDTH;
 	bitmap->height = DISPLAY_HEIGHT;
 	bitmap->pixels = DISPLAY_WIDTH * DISPLAY_HEIGHT;
-	bitmap->bpp = DISPLAY_BPP;
+	bitmap->bpp = DISPLAY_BYTESPP;
 	bitmap->size = bitmap->pixels * bitmap->bpp;
 
 	return RESULT_OK;
