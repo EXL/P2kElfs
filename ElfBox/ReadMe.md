@@ -3,6 +3,10 @@ Elf Box
 
 A simple "ElfBox" ELF-applications launcher.
 
+## Screenshots from Motorola C650
+
+![Screenshot 1 of ElfBox from Motorola C650](../images/Screenshot_ElfBox_C650_1.png) ![Screenshot 2 of ElfBox from Motorola C650](../images/Screenshot_ElfBox_C650_2.png)
+
 ## Screenshots from Motorola SLVR L6
 
 ![Screenshot 1 of ElfBox from Motorola SLVR L6](../images/Screenshot_ElfBox_L6_1.png) ![Screenshot 2 of ElfBox from Motorola SLVR L6](../images/Screenshot_ElfBox_L6_2.png) ![Screenshot 3 of ElfBox from Motorola SLVR L6](../images/Screenshot_ElfBox_L6_3.png)
