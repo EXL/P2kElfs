@@ -67,6 +67,7 @@ See [Some ELF demos/games on Motorola P2K phones using ATI Imageon W2240/W2250 v
 * 1 (3rd) - ELF for ElfPack 1.0, tested with.
 * 2 (3rd) - ELF for ElfPack 2.0, tested with.
 * J (4th) - Use Java Heap instead of System Heap for phones with small amount of RAM (needs suspended Java application before ELF launch).
+* U (4th) - Use UIS Heap instead of System Heap for phones with small amount of RAM.
 * L (4th) - Long tail version.
 
 ### Summary

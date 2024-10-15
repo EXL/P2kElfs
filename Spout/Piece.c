@@ -752,6 +752,7 @@ static UINT32 ATI_Driver_Flush(APPLICATION_T *app) {
 
 static UINT32 GFX_Draw_Start(APPLICATION_T *app) {
 //#if defined(FTR_C650)
+//	/* Fill the whole screen to blank white color. */
 //	ATI_Driver_Start(app);
 //#endif
 	return RESULT_OK;
