@@ -368,6 +368,9 @@ UINT32 TotalHeapSize(BENCHMARK_RESULTS_HEAP_T *result) {
 	return status;
 }
 
+#if defined(FTR_C650)
+UINT32 Bench_GPU_Passes(UINT32 bmp_width, UINT32 bmp_height, WCHAR *fps, WCHAR *fms, WCHAR *props) { return RESULT_OK; }
+#else
 UINT32 Bench_GPU_Passes(UINT32 bmp_width, UINT32 bmp_height, WCHAR *fps, WCHAR *fms, WCHAR *props) {
 	UINT32 status;
 
@@ -411,6 +414,7 @@ UINT32 Bench_GPU_Passes(UINT32 bmp_width, UINT32 bmp_height, WCHAR *fps, WCHAR *
 
 	return RESULT_OK;
 }
+#endif
 
 UINT32 DisksResult(WCHAR *disk_result) {
 	UINT32 i;

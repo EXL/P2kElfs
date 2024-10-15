@@ -453,7 +453,9 @@ static UINT32 HandleStateEnter(EVENT_STACK_T *ev_st, APPLICATION_T *app, ENTER_S
 					);
 					break;
 				case APP_VIEW_GPU_RESULTS:
-#if defined(EP1) || defined(EP2)
+#if defined(EM1) || defined(EM2) || defined(FTR_C650)
+					UIS_MakeContentFromString("q0Nq1", &content, g_str_view_ram_results, g_str_view_todo);
+#else
 					UIS_MakeContentFromString(
 						"q0Nq1NSq2NSq3NSq4NSq5NSq6NSq7N NRq8NSq9", &content, g_str_view_gpu_results,
 						g_str_view_gpu_fps,
@@ -466,8 +468,6 @@ static UINT32 HandleStateEnter(EVENT_STACK_T *ev_st, APPLICATION_T *app, ENTER_S
 						g_str_view_gpu_properties,
 							app_instance->gpu_result.properties
 					);
-#else
-					UIS_MakeContentFromString("q0Nq1", &content, g_str_view_ram_results, g_str_view_todo);
 #endif
 					break;
 				case APP_VIEW_RAM_RESULTS:
@@ -570,15 +570,15 @@ static UINT32 HandleEventTimerExpired(EVENT_STACK_T *ev_st, APPLICATION_T *app) 
 						app_instance->gpu_result.fms_pass1,
 						app_instance->gpu_result.properties);
 
-//					Bench_GPU_Passes(BITMAP_WIDTH_MID, BITMAP_HEIGHT_MID,
-//						app_instance->gpu_result.fps_pass2,
-//						app_instance->gpu_result.fms_pass2,
-//						app_instance->gpu_result.properties);
+					Bench_GPU_Passes(BITMAP_WIDTH_MID, BITMAP_HEIGHT_MID,
+						app_instance->gpu_result.fps_pass2,
+						app_instance->gpu_result.fms_pass2,
+						app_instance->gpu_result.properties);
 
-//					Bench_GPU_Passes(BITMAP_WIDTH_HIGH, BITMAP_WIDTH_HIGH,
-//						app_instance->gpu_result.fps_pass3,
-//						app_instance->gpu_result.fms_pass3,
-//						app_instance->gpu_result.properties);
+					Bench_GPU_Passes(BITMAP_WIDTH_HIGH, BITMAP_WIDTH_HIGH,
+						app_instance->gpu_result.fps_pass3,
+						app_instance->gpu_result.fms_pass3,
+						app_instance->gpu_result.properties);
 
 					break;
 				case APP_MENU_ITEM_BENCH_RAM_SUAPI:
