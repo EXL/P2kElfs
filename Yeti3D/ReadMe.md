@@ -19,23 +19,14 @@ Port of the heavy optimized "Yeti3D" 3D engine demo by **Derek J. Evans** from [
 
 Thanks to @Limows
 
-![Photo of Yeti3D on Motorola V3i 1](../images/Photo_Yeti3D_V3i_1.jpg) ![Photo of Yeti3D on Motorola V3i 2](../images/Photo_Yeti3D_V3i_2.jpg)
-
-## Photos of Motorola V235
-
-Thanks to @Indepth6
-
-![Photo of Yeti3D on Motorola V235 1](../images/Photo_Yeti3D_V235_1.jpg)
-
-## Photos of Motorola V360
-
-Thanks to @baat
-
-![Photo of Yeti3D on Motorola V360 1](../images/Photo_Yeti3D_V360_1.jpg)
+![Photo of Yeti3D on Motorola V3i 1](../images/Photo_Yeti3D_V3i_1.jpg)
 
 ## Videos of Motorola SLVR L6 and Motorola ROKR E1
 
-See [Yeti3D Engine port to ELF for Motorola P2K phones](https://www.youtube.com/watch?v=HqgMxK00QFg) video on YouTube.
+* See [Yeti3D Engine port to ELF for Motorola P2K phones](https://www.youtube.com/watch?v=HqgMxK00QFg) video on YouTube.
+* See [Yeti3D Engine on Motorola P2K phones, 52 MHz & 65 MHz (ARM7TDMI overclocking) comparison](https://www.youtube.com/watch?v=Cnb3YsYFWZg) video on YouTube.
+* See [Yeti3D Engine on Motorola V300 and Motorola V600, thanks to Paschendale!](https://www.youtube.com/watch?v=JonuDUWraoI) video on YouTube.
+* See [Yeti3D Engine on Motorola RAZR V3i and Motorola ROKR E1, thanks to Bs0Dd!](https://www.youtube.com/watch?v=YpEJS38H3yc) video on YouTube.
 
 ## Web Demo
 
@@ -84,7 +75,7 @@ See [Overclock](../Overclock) project documents for overclocking Yeti3D comparis
 
 * V (1st) - ATI videomode changing e.g. 176x220 => 220x176, 128x160 => 160x128, etc.
 * R (1st) - ATI hardware rootation and zoom surface e.g. 120x80 => 176x220, 96x64 => 128x160, etc.
-* D (1st) - DAL videomode, software rendering for Motorola C650 and other phones.
+* D (1st) - DAL videomode, software rendering for Motorola C650 and similar phones.
 * N (2nd) - Non-optimized version with sprites and entities logic.
 * O (2nd) - Optimized version with no sprites and entities logic.
 * 1 (3rd) - ELF for ElfPack 1.0, tested with.
@@ -100,12 +91,13 @@ See [Overclock](../Overclock) project documents for overclocking Yeti3D comparis
 
 ### Summary
 
-* 8 ELFs + 8 ElfPack 2.0 ELFs + 4 Task and Semaphores ELFs + 1 Debug ELF + 3 J-weak V600 ELFs + 8 FPS meter ELFs + 2 V3r ELFs + 2 L6 ELFs = 36 ELFs.
+* 8 ELFs + 8 ElfPack 2.0 ELFs + 4 Task and Semaphores ELFs + 1 Debug ELF + 6 V600 ELFs + 8 FPS meter ELFs + 2 V3r ELFs + 2 L6 ELFs + 4 C650 ELFs = 43 ELFs.
 
 ## Additional information
 
 The ELF-application has been tested on the following phones and firmware:
 
+* Motorola C650: R365_G_0B.D3.08R
 * Motorola SLVR L6: R3511_G_0A.52.45R_A
 * Motorola SLVR L6i: R3443H1_G_0A.65.0BR
 * Motorola ROKR E1: R373_G_0E.30.49R
@@ -118,7 +110,7 @@ The ELF-application has been tested on the following phones and firmware:
 * Motorola SLVR L7e: R452D_G_08.01.0AR (some bugs)
 * Motorola KRZR K1:  R452F_G_08.03.08R (some bugs)
 
-Application type: GUI + ATI + Java Heap + Videomode + Tasks (in the Task version).
+Application type: GUI + GPU + Java Heap + Videomode + Tasks (in the Task version).
 
 ## Useful links
 

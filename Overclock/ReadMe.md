@@ -33,6 +33,8 @@ See [Overclocking and Benchmakring old Motorola P2K phones (52 MHz to 65 MHz)](h
 
 | Phone    | Freq   | Total | Text  | 2D Shapes | 3D Shapes | Fill Rate | Animation |
 |----------|--------|-------|-------|-----------|-----------|-----------|-----------|
+| C650     | 52 MHz | 880   | 212   | ?         | ?         | ?         | ?         |
+| C650     | 65 MHz | 1078  | 265   | 259       | 196       | 113       | 245       |
 | SLVR L6i | 52 MHz | 1051  | 255   | 255       | 194       | 89        | 258       |
 | SLVR L6i | 65 MHz | 1108  | 257   | 258       | 223       | 112       | 258       |
 | ROKR E1  | 52 MHz | 1197  | 368   | 303       | 142       | 52        | 332       |
@@ -48,22 +50,24 @@ See [Overclocking and Benchmakring old Motorola P2K phones (52 MHz to 65 MHz)](h
 
 ### Benchmark table
 
-| Phone    | Freq   | CPU (MCU)                                                  | GPU (IPU)                                                                              | RAM (SRAM)                                           | HEAP (J2ME)                |
-|----------|--------|------------------------------------------------------------|----------------------------------------------------------------------------------------|------------------------------------------------------|----------------------------|
-| SLVR L6i | 52 MHz | 1305 ms <br /> 3.21 BMIPS <br /> 2101 ms <br /> 5.41 DMIPS | 3919 ms <br /> 52.6 FPS <br /> 7301 ms <br /> 33.5 FPS <br /> 14380 ms <br /> 16.4 FPS | 159 ms <br /> 1227520 B <br /> 13 ms <br /> 117504 B | 4.11 sec <br /> 1112.0 KiB |
-| SLVR L6i | 65 MHz | 1039 ms <br /> 4.03 BMIPS <br /> 1677 ms <br /> 6.78 DMIPS | 3900 ms <br /> 52.6 FPS <br /> 7015 ms <br /> 33.8 FPS <br /> 11442 ms <br /> 20.2 FPS | 125 ms <br /> 1222912 B <br /> 10 ms <br /> 117504 B | 2.34 sec <br /> 1164.0 KiB |
-| ROKR E1  | 52 MHz | 1304 ms <br /> 3.21 BMIPS <br /> 2080 ms <br /> 5.47 DMIPS | 3425 ms <br /> 62.5 FPS <br /> 6279 ms <br /> 39.5 FPS <br /> 13635 ms <br /> 17.7 FPS | 22 ms <br /> 524800 B <br /> 2 ms <br /> 77312 B     | 7.39 sec <br /> 1060.0 KiB |
-| ROKR E1  | 65 MHz | 1039 ms <br /> 4.03 BMIPS <br /> 1653 ms <br /> 6.88 DMIPS | 3454 ms <br /> 62.5 FPS <br /> 5986 ms <br /> 39.5 FPS <br /> 11079 ms <br /> 21.6 FPS | 18 ms <br /> 526336 B <br /> 2 ms <br /> 77312 B     | 5.44 sec <br /> 1060.0 KiB |
-| SLVR L7  | 52 MHz | 1304 ms <br /> 3.21 BMIPS <br /> 1909 ms <br /> 5.96 DMIPS | 3316 ms <br /> 62.5 FPS <br /> 6365 ms <br /> 39.6 FPS <br /> 13239 ms <br /> 17.1 FPS | 38 ms <br /> 514048 B <br /> 4 ms <br /> 77312 B     | 1.56 sec <br /> 296.0 KiB  |
-| SLVR L7  | 65 MHz | 1043 ms <br /> 4.01 BMIPS <br /> 1528 ms <br /> 7.44 DMIPS | ? ms <br /> ? FPS <br /> ? ms <br /> ? FPS <br /> ? ms <br /> ? FPS                    | ? ms <br /> ? B <br /> ? ms <br /> ? B               | ? sec <br /> ? KiB         |
-| V360     | 52 MHz | 1304 ms <br /> 3.21 BMIPS <br /> 1915 ms <br /> 5.94 DMIPS | 3506 ms <br /> 57.3 FPS <br /> 6364 ms <br /> 39.5 FPS <br /> 13704 ms <br /> 17.2 FPS | 36 ms <br /> 474624 B <br /> 4 ms <br /> 77312 B     | 1.83 sec <br /> 656.0 KiB  |
-| V360     | 65 MHz | 1035 ms <br /> 4.04 BMIPS <br /> 1524 ms <br /> 7.46 DMIPS | ? ms <br /> ? FPS <br /> ? ms <br /> ? FPS <br /> ? ms <br /> ? FPS                    | ? ms <br /> ? B <br /> ? ms <br /> ? B               | ? sec <br /> ? KiB         |
-| RAZR V3i | 52 MHz | 1313 ms <br /> 3.17 BMIPS <br /> 1929 ms <br /> 5.90 DMIPS | 3947 ms <br /> 55.5 FPS <br /> 6888 ms <br /> 35.1 FPS <br /> 13768 ms <br /> 15.9 FPS | 71 ms <br /> 1091584 B <br /> 5 ms <br /> 112384 B   | 5.44 sec <br /> 1192.0 KiB |
-| RAZR V3i | 65 MHz | 1067 ms <br /> 3.91 BMIPS <br /> 1563 ms <br /> 7.28 DMIPS | 3905 ms <br /> 55.5 FPS <br /> 6688 ms <br /> 35.1 FPS <br /> 10763 ms <br /> 22.7 FPS | 46 ms <br /> 960512 B <br /> 4 ms <br /> 112384 B    | ? sec <br /> ? KiB         |
-| RAZR V3r | 52 MHz | 1304 ms <br /> 3.21 BMIPS <br /> 1914 ms <br /> 5.94 DMIPS | 4461 ms <br /> 51.5 FPS <br /> 6054 ms <br /> 42.5 FPS <br /> 13234 ms <br /> 19.0 FPS | 28 ms <br /> 385280 B <br /> 4 ms <br /> 77312 B     | 5.21 sec <br /> 1280.0 KiB |
-| RAZR V3r | 65 MHz | 1042 ms <br /> 4.01 BMIPS <br /> 1534 ms <br /> 7.42 DMIPS | 2641 ms <br /> 83.3 FPS <br /> 4814 ms <br /> 53.5 FPS <br /> 11046 ms <br /> 23.7 FPS | 22 ms <br /> 385280 B <br /> 3 ms <br /> 77312 B     | 4.15 sec <br /> 1280.0 KiB |
-| V600     | 52 MHz | 1334 ms <br /> 3.12 BMIPS <br /> 1965 ms <br /> 5.79 DMIPS | 2640 ms <br /> 82.3 FPS <br /> 4922 ms <br /> 49.9 FPS <br /> 12073 ms <br /> 20.1 FPS | 43 ms <br /> 224000 B <br /> 2 ms <br /> 18176 B     | 1.28 sec <br /> 524.0 KiB  |
-| V600     | 65 MHz | 1070 ms <br /> 3.91 BMIPS <br /> 1559 ms <br /> 7.30 DMIPS | 2589 ms <br /> 83.6 FPS <br /> 3994 ms <br /> 62.5 FPS <br /> 9913 ms <br /> 25.5 FPS  | 32 ms <br /> 202752 B <br /> 1 ms <br /> 18176 B     | 0.86 sec <br /> 544.0 KiB  |
+| Phone    | Freq   | CPU (MCU)                                                  | GPU (IPU)                                                                              | RAM (SUAPI)                                          | RAM (UIS)                  | HEAP (J2ME)                |
+|----------|--------|------------------------------------------------------------|----------------------------------------------------------------------------------------|------------------------------------------------------|----------------------------|----------------------------|
+| С650     | 52 MHz | 1317 ms <br /> 3.17 BMIPS <br /> 2029 ms <br /> 5.61 DMIPS | ?                                                                                      | 46 ms <br /> 279552 B <br /> 1 ms <br /> 18176 B     | 147 ms <br /> 415232 B     | ? sec <br /> ? KiB         |
+| С650     | 65 MHz | 1235 ms <br /> 3.39 BMIPS <br /> 1632 ms <br /> 6.97 DMIPS | ?                                                                                      | 36 ms <br /> 279552 B <br /> 1 ms <br /> 18176 B     | 112 ms <br /> 415232 B     | 1.57 sec <br /> 672.0 KiB  |
+| SLVR L6i | 52 MHz | 1305 ms <br /> 3.21 BMIPS <br /> 2101 ms <br /> 5.41 DMIPS | 3919 ms <br /> 52.6 FPS <br /> 7301 ms <br /> 33.5 FPS <br /> 14380 ms <br /> 16.4 FPS | 159 ms <br /> 1227520 B <br /> 13 ms <br /> 117504 B | ? ms <br /> ? B            | 4.11 sec <br /> 1112.0 KiB |
+| SLVR L6i | 65 MHz | 1039 ms <br /> 4.03 BMIPS <br /> 1677 ms <br /> 6.78 DMIPS | 3900 ms <br /> 52.6 FPS <br /> 7015 ms <br /> 33.8 FPS <br /> 11442 ms <br /> 20.2 FPS | 125 ms <br /> 1222912 B <br /> 10 ms <br /> 117504 B | ? ms <br /> ? B            | 2.34 sec <br /> 1164.0 KiB |
+| ROKR E1  | 52 MHz | 1304 ms <br /> 3.21 BMIPS <br /> 2080 ms <br /> 5.47 DMIPS | 3425 ms <br /> 62.5 FPS <br /> 6279 ms <br /> 39.5 FPS <br /> 13635 ms <br /> 17.7 FPS | 22 ms <br /> 524800 B <br /> 2 ms <br /> 77312 B     | ? ms <br /> ? B            | 7.39 sec <br /> 1060.0 KiB |
+| ROKR E1  | 65 MHz | 1039 ms <br /> 4.03 BMIPS <br /> 1653 ms <br /> 6.88 DMIPS | 3454 ms <br /> 62.5 FPS <br /> 5986 ms <br /> 39.5 FPS <br /> 11079 ms <br /> 21.6 FPS | 18 ms <br /> 526336 B <br /> 2 ms <br /> 77312 B     | ? ms <br /> ? B            | 5.44 sec <br /> 1060.0 KiB |
+| SLVR L7  | 52 MHz | 1304 ms <br /> 3.21 BMIPS <br /> 1909 ms <br /> 5.96 DMIPS | 3316 ms <br /> 62.5 FPS <br /> 6365 ms <br /> 39.6 FPS <br /> 13239 ms <br /> 17.1 FPS | 38 ms <br /> 514048 B <br /> 4 ms <br /> 77312 B     | ? ms <br /> ? B            | 1.56 sec <br /> 296.0 KiB  |
+| SLVR L7  | 65 MHz | 1043 ms <br /> 4.01 BMIPS <br /> 1528 ms <br /> 7.44 DMIPS | ? ms <br /> ? FPS <br /> ? ms <br /> ? FPS <br /> ? ms <br /> ? FPS                    | ? ms <br /> ? B <br /> ? ms <br /> ? B               | ? ms <br /> ? B            | ? sec <br /> ? KiB         |
+| V360     | 52 MHz | 1304 ms <br /> 3.21 BMIPS <br /> 1915 ms <br /> 5.94 DMIPS | 3506 ms <br /> 57.3 FPS <br /> 6364 ms <br /> 39.5 FPS <br /> 13704 ms <br /> 17.2 FPS | 36 ms <br /> 474624 B <br /> 4 ms <br /> 77312 B     | ? ms <br /> ? B            | 1.83 sec <br /> 656.0 KiB  |
+| V360     | 65 MHz | 1035 ms <br /> 4.04 BMIPS <br /> 1524 ms <br /> 7.46 DMIPS | ? ms <br /> ? FPS <br /> ? ms <br /> ? FPS <br /> ? ms <br /> ? FPS                    | ? ms <br /> ? B <br /> ? ms <br /> ? B               | ? ms <br /> ? B            | ? sec <br /> ? KiB         |
+| RAZR V3i | 52 MHz | 1313 ms <br /> 3.17 BMIPS <br /> 1929 ms <br /> 5.90 DMIPS | 3947 ms <br /> 55.5 FPS <br /> 6888 ms <br /> 35.1 FPS <br /> 13768 ms <br /> 15.9 FPS | 71 ms <br /> 1091584 B <br /> 5 ms <br /> 112384 B   | ? ms <br /> ? B            | 5.44 sec <br /> 1192.0 KiB |
+| RAZR V3i | 65 MHz | 1067 ms <br /> 3.91 BMIPS <br /> 1563 ms <br /> 7.28 DMIPS | 3905 ms <br /> 55.5 FPS <br /> 6688 ms <br /> 35.1 FPS <br /> 10763 ms <br /> 22.7 FPS | 46 ms <br /> 960512 B <br /> 4 ms <br /> 112384 B    | ? ms <br /> ? B            | ? sec <br /> ? KiB         |
+| RAZR V3r | 52 MHz | 1304 ms <br /> 3.21 BMIPS <br /> 1914 ms <br /> 5.94 DMIPS | 4461 ms <br /> 51.5 FPS <br /> 6054 ms <br /> 42.5 FPS <br /> 13234 ms <br /> 19.0 FPS | 28 ms <br /> 385280 B <br /> 4 ms <br /> 77312 B     | ? ms <br /> ? B            | 5.21 sec <br /> 1280.0 KiB |
+| RAZR V3r | 65 MHz | 1042 ms <br /> 4.01 BMIPS <br /> 1534 ms <br /> 7.42 DMIPS | 2641 ms <br /> 83.3 FPS <br /> 4814 ms <br /> 53.5 FPS <br /> 11046 ms <br /> 23.7 FPS | 22 ms <br /> 385280 B <br /> 3 ms <br /> 77312 B     | ? ms <br /> ? B            | 4.15 sec <br /> 1280.0 KiB |
+| V600     | 52 MHz | 1334 ms <br /> 3.12 BMIPS <br /> 1965 ms <br /> 5.79 DMIPS | 2640 ms <br /> 82.3 FPS <br /> 4922 ms <br /> 49.9 FPS <br /> 12073 ms <br /> 20.1 FPS | 43 ms <br /> 224000 B <br /> 2 ms <br /> 18176 B     | ? ms <br /> ? B            | 1.28 sec <br /> 524.0 KiB  |
+| V600     | 65 MHz | 1070 ms <br /> 3.91 BMIPS <br /> 1559 ms <br /> 7.30 DMIPS | 2589 ms <br /> 83.6 FPS <br /> 3994 ms <br /> 62.5 FPS <br /> 9913 ms <br /> 25.5 FPS  | 32 ms <br /> 202752 B <br /> 1 ms <br /> 18176 B     | ? ms <br /> ? B            | 0.86 sec <br /> 544.0 KiB  |
 
 See [Benchmark](../Benchmark) project documents for more stock results.
 
@@ -108,6 +112,7 @@ See [Yeti3D](../Yeti3D) project documents for more stock results.
 
 The ELF-application has been tested on the following phones and firmware:
 
+* Motorola C650: R365_G_0B.D3.08R
 * Motorola SLVR L6: R3511_G_0A.52.45R_A
 * Motorola SLVR L6i: R3443H1_G_0A.65.0BR
 * Motorola ROKR E1: R373_G_0E.30.49R

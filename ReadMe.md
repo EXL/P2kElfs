@@ -32,7 +32,7 @@ Ready-to-run ELFs builds are available in the [Release](https://github.com/EXL/P
 5. **[Benchmark](Benchmark)**
 
     A simple ELF benchmarking application for Motorola P2K phones.\
-    Application type: GUI + ATI + Java Heap.
+    Application type: GUI + GPU + Java Heap.
 
 6. **[Dumper](Dumper)**
 
@@ -72,12 +72,12 @@ Ready-to-run ELFs builds are available in the [Release](https://github.com/EXL/P
 13. **[Screenshot](Screenshot)**
 
     ELF daemon utility with GUI to fast take screenshots.\
-    Application type: GUI + Deamon.
+    Application type: GUI + GPU + Deamon.
 
 14. **[Spout](Spout)**
 
     Port of the "Spout" game by kuni to the Motorola P2K phones platform.\
-    Application type: GUI + ATI.
+    Application type: GUI + GPU.
 
 15. **[Vibro Haptic](VibroHaptic)**
 
@@ -92,16 +92,17 @@ Ready-to-run ELFs builds are available in the [Release](https://github.com/EXL/P
 17. **[Yeti3D](Yeti3D)**
 
     Port of the heavy optimized "Yeti3D" 3D engine demo by **Derek J. Evans** from [Nintendo Game Boy Advance](https://en.wikipedia.org/wiki/Game_Boy_Advance) (GBA) to the Motorola P2K phones platform.\
-    Application type: GUI + ATI + Java Heap + Videomode + Tasks (in the Task version).
+    Application type: GUI + GPU + Java Heap + Videomode + Tasks (in the Task version).
 
 18. **[Bad Apple](BadApple)**
 
     The implementation of the popular "[Bad Apple](https://en.wikipedia.org/wiki/Bad_Apple!!#Use_as_a_graphical_and_audio_test)" demo for the Motorola P2K platform encoded as 1bpp compressed frames.\
-    Application type: GUI + ATI + zlib
+    Application type: GUI + ATI + zlib.
 
 19. **[Flip Detector](FlipDetector)**
 
     Detect closed flip of Motorola clamshell phones and do some things.
+    Application type: Deamon.
 
 ## Infromation
 

@@ -76,12 +76,13 @@ See [Some ELF demos/games on Motorola P2K phones using ATI Imageon W2240/W2250 v
 
 ### Summary
 
-* 4 ELFs + 4 ElfPack 2.0 ELFs + 8 Java Heap ELFs + 4 Motorola V600 ELFs + 1 EP1 LongTail ELF = 21 ELFs.
+* 4 ELFs + 4 ElfPack 2.0 ELFs + 8 Java Heap ELFs + 4 Motorola V600 ELFs + 2 Motorola C650 ELFs + 1 EP1 LongTail ELF = 23 ELFs.
 
 ## Additional information
 
 The ELF-application has been tested on the following phones and firmware:
 
+* Motorola C650: R365_G_0B.D3.08R
 * Motorola SLVR L6: R3511_G_0A.52.45R_A
 * Motorola SLVR L6i: R3443H1_G_0A.65.0BR
 * Motorola ROKR E1: R373_G_0E.30.49R
@@ -93,7 +94,7 @@ The ELF-application has been tested on the following phones and firmware:
 * Motorola SLVR L7e: R452D_G_08.01.0AR (memory bugs)
 * Motorola KRZR K1:  R452F_G_08.03.08R (memory bugs)
 
-Application type: GUI + ATI.
+Application type: GUI + GPU.
 
 ## Useful links
 
