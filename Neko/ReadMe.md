@@ -23,7 +23,7 @@ Fun animated widget for desktop screen with skin support.
 
 ## Videos of Motorola ROKR E1 and Motorola SLVR L6
 
-See [Neko Widget ELF application for Motorola P2K phones](https://youtu.be/WXta2V28utI) video on YouTube.
+See [Neko Widget ELF application for Motorola P2K phones](https://www.youtube.com/watch?v=WXta2V28utI) video on YouTube.
 
 ## Skins
 
@@ -51,4 +51,4 @@ The ELF-application has been tested on the following phones and firmware:
 * Motorola V600: TRIPLETS_G_0B.09.72R
 * Motorola V235: R3512_G_0A.30.6CR
 
-Application type: Deamon + GUI + ATI + Widgets.
+Application type: Deamon + GUI + GPU + Widgets.

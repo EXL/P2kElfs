@@ -1,7 +1,7 @@
 Elf Box
 =======
 
-A simple "ElfBox" ELF-applications launcher.
+A simple "ElfBox" ELF-applications launcher for Motorola phones.
 
 ## Screenshots from Motorola C650
 

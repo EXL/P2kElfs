@@ -17,7 +17,7 @@ An application for overclocking ARM7TDMI core in Neptune SoC phones from stock 5
 
 ## Videos of benchmarking Motorola phones
 
-See [Overclocking and Benchmakring old Motorola P2K phones (52 MHz to 65 MHz)](https://youtu.be/IO8aktssBo8) video on YouTube.
+See [Overclocking and Benchmakring old Motorola P2K phones (52 MHz to 65 MHz)](https://www.youtube.com/watch?v=IO8aktssBo8) video on YouTube.
 
 ## Overclocking results
 

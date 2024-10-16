@@ -22,7 +22,7 @@ Ready-to-run ELFs builds are available in the [Release](https://github.com/EXL/P
 3. **[Ambilight](Ambilight)**
 
     ELF daemon utility with GUI settings for some funlights and bias lighting functionality.\
-    Application type: Deamon + GUI + ATI + Funlights.
+    Application type: Deamon + GUI + GPU + Funlights.
 
 4. **[Batt Dump](BattDump)**
 
@@ -47,12 +47,12 @@ Ready-to-run ELFs builds are available in the [Release](https://github.com/EXL/P
 8. **[Fire Effect](FireEffect)**
 
     Port of the Doom PSX fire effect demo splash screen to the Motorola P2K phones platform.\
-    Application type: GUI + ATI.
+    Application type: GUI + GPU.
 
 9. **[Neko](Neko)**
 
     Fun animated widget for desktop screen with skin support.\
-    Application type: Deamon + GUI + ATI + Widgets.
+    Application type: Deamon + GUI + GPU + Widgets.
 
 10. **[Overclock](Overclock)**
 
@@ -62,7 +62,7 @@ Ready-to-run ELFs builds are available in the [Release](https://github.com/EXL/P
 11. **[Perlin](Perlin)**
 
     Port of the "Perlin" plasma and fire demo by [@BOOtak](https://github.com/BOOtak) (Kirill Leyfer) from DCT-3 platform (Nokia 3310) to the Motorola P2K phones platform.\
-    Application type: GUI + ATI.
+    Application type: GUI + GPU.
 
 12. **[Power Alert](PowerAlert)**
 
@@ -87,7 +87,7 @@ Ready-to-run ELFs builds are available in the [Release](https://github.com/EXL/P
 16. **[Yeti3D Old](Yeti3D-Old)**
 
     Port of the "Yeti3D Old" 3D engine demo by **Derek J. Evans** from [Nintendo Game Boy Advance](https://en.wikipedia.org/wiki/Game_Boy_Advance) (GBA) to the Motorola P2K phones platform.\
-    Application type: GUI + ATI.
+    Application type: GUI + GPU.
 
 17. **[Yeti3D](Yeti3D)**
 
@@ -97,11 +97,11 @@ Ready-to-run ELFs builds are available in the [Release](https://github.com/EXL/P
 18. **[Bad Apple](BadApple)**
 
     The implementation of the popular "[Bad Apple](https://en.wikipedia.org/wiki/Bad_Apple!!#Use_as_a_graphical_and_audio_test)" demo for the Motorola P2K platform encoded as 1bpp compressed frames.\
-    Application type: GUI + ATI + zlib.
+    Application type: GUI + GPU + zlib.
 
 19. **[Flip Detector](FlipDetector)**
 
-    Detect closed flip of Motorola clamshell phones and do some things.
+    Detect closed flip of Motorola clamshell phones and do some things.\
     Application type: Deamon.
 
 ## Infromation

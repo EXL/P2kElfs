@@ -17,8 +17,7 @@ Port of the "Perlin" plasma and fire demo by [@BOOtak](https://github.com/BOOtak
 
 ## Videos of Motorola SLVR L6 and Motorola ROKR E1
 
-See [Some ELF demos/games on Motorola P2K phones using ATI Imageon W2240/W2250 videochip
-](https://www.youtube.com/watch?v=DsYLWXPgmsU&t=110s) video on YouTube.
+See [Some ELF demos/games on Motorola P2K phones using ATI Imageon W2240/W2250 videochip](https://www.youtube.com/watch?v=DsYLWXPgmsU&t=110s) video on YouTube.
 
 ## Web Demo
 
@@ -60,7 +59,7 @@ The ELF-application has been tested on the following phones and firmware:
 * Motorola SLVR L7e: R452D_G_08.01.0AR
 * Motorola RAZR V3i: R4441D_G_08.01.03R
 
-Application type: GUI + ATI.
+Application type: GUI + GPU.
 
 ## Useful links
 

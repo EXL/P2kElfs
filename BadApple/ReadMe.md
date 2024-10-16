@@ -17,7 +17,8 @@ The implementation of the popular "Bad Apple" demo for the Motorola P2K platform
 
 ## Videos
 
-See [Bad Apple!! demo on Motorola E398/ROKR E1 and other P2K phones](https://youtu.be/wfju_z-Gamk) video on YouTube.
+* See [Bad Apple!! but it's on Motorola E398/ROKR E1 and other P2K phones](https://www.youtube.com/watch?v=wfju_z-Gamk) video on YouTube.
+* See [Bad Apple!! but it's on Motorola RAZR V3i and Motorola ROKR E1, thanks to Bs0Dd!](https://www.youtube.com/watch?v=9GPEvAeGBB0) video on YouTube.
 
 ## Key controls
 
@@ -32,6 +33,7 @@ See [Bad Apple!! demo on Motorola E398/ROKR E1 and other P2K phones](https://you
 
 * BadApple.elf (ELF for ElfPack 1.0)
 * BadApple_V600.elf (ELF for ElfPack 1.0, Motorola V600 version)
+* BadApple_L7e.elf (ELF for ElfPack 1.0, Motorola SLVR L7e version)
 * BadApple_60fps.elf (ELF for ElfPack 1.0, experimental 60 FPS version)
 
 ## Additional information
@@ -42,8 +44,10 @@ The ELF-application has been tested on the following phones and firmware:
 * Motorola ROKR E1: R373_G_0E.30.49R
 * Motorola V600: TRIPLETS_G_0B.09.72R
 * Motorola V235: R3512_G_0A.30.6CR
+* Motorola SLVR L7: R4513_G_08.B7.ACR_RB
+* Motorola SLVR L7e: R452D_G_08.01.0AR
 
-Application type: GUI + ATI + zlib.
+Application type: GUI + GPU + zlib.
 
 ## Useful links
 

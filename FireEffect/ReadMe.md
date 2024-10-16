@@ -51,7 +51,7 @@ The ELF-application has been tested on the following phones and firmware:
 * Motorola V235: R3512_G_0A.30.6CR
 * Motorola SLVR L7: R4513_G_08.B7.E0R_RB
 
-Application type: GUI + ATI.
+Application type: GUI + GPU.
 
 ## Useful links
 
