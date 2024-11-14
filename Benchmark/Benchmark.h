@@ -3,6 +3,7 @@
 
 #include <apps.h>
 #include <typedefs.h>
+#include <canvas.h>
 #if defined(EP1) || defined(EP2)
 #include <ati.h>
 #endif
@@ -76,6 +77,7 @@ typedef struct {
 	AHIUPDATEPARAMS_T update_params;
 #endif // EP1 || EP2
 
+	GRAPHIC_REGION_T dal_draw_region;
 } APP_AHI_T;
 
 typedef struct {

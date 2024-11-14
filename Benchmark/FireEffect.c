@@ -264,6 +264,7 @@ static UINT32 ATI_Display_Mode_Log(APP_AHI_T *ahi, AHIDISPMODE_T *display_mode) 
 	return RESULT_OK;
 }
 
+#if !defined(FTR_C650)
 static UINT32 ATI_Driver_Log(APP_AHI_T *ahi) {
 	LOG("%s\n", "ATI Driver Dump.");
 	LOG("ATI Driver Name: %s\n", ahi->info_driver->drvName);
@@ -310,7 +311,7 @@ static UINT32 ATI_Driver_Log(APP_AHI_T *ahi) {
 	LOG("ATI CAPS 1: %d (0x%08X)\n", ahi->info_driver->caps1, ahi->info_driver->caps1);
 	LOG("ATI CAPS 2: %d (0x%08X)\n", ahi->info_driver->caps2, ahi->info_driver->caps2);
 
-#if !defined(FTR_L7)
+#if !defined(FTR_L7E)
 	LOG("ATI Surface Screen Info: width=%d, height=%d, pixFormat=%d, byteSize=%d, byteSize=%d KiB\n",
 		ahi->info_surface_screen.width, ahi->info_surface_screen.height,
 		ahi->info_surface_screen.pixFormat,
@@ -499,8 +500,76 @@ UINT32 ATI_Driver_Flush(APP_AHI_T *ahi) {
 
 	return RESULT_OK;
 }
+#else
+/* Pure DAL driver for C650-like phones. */
+UINT32 ATI_Driver_Start(APP_AHI_T *ahi, WCHAR *props) {
+	INT32 result;
+	UINT8 *display_bitmap;
+	AHIDISPMODE_T display_mode;
+
+	display_bitmap = (UINT8 *) display_source_buffer;
+	properties = props;
+
+	ahi->dal_draw_region.ulc.x = 0;
+	ahi->dal_draw_region.ulc.y = 0;
+	ahi->dal_draw_region.lrc.x = DISPLAY_WIDTH - 1;
+	ahi->dal_draw_region.lrc.y = DISPLAY_HEIGHT - 1;
+
+	memset(display_bitmap, 0xFF, DISPLAY_WIDTH * DISPLAY_HEIGHT * DISPLAY_BYTESPP);
+	DAL_UpdateDisplayRegion(&ahi->dal_draw_region, (UINT16 *) display_bitmap);
+
+	ahi->dal_draw_region.ulc.x = (DISPLAY_WIDTH / 2) - (ahi->bmp_width / 2);
+	ahi->dal_draw_region.ulc.y = (DISPLAY_HEIGHT / 2) - (ahi->bmp_height / 2);
+	ahi->dal_draw_region.lrc.x = ((DISPLAY_WIDTH / 2) - (ahi->bmp_width / 2)) + (ahi->bmp_width - 1);
+	ahi->dal_draw_region.lrc.y = ((DISPLAY_HEIGHT / 2) - (ahi->bmp_height / 2)) + (ahi->bmp_height - 1);
+
+	ahi->bitmap.image = suAllocMem(ahi->bmp_width * ahi->bmp_height, &result);
+
+	memclr(properties, RESULT_STRING * 4 * sizeof(WCHAR));
+
+	ahi->is_CSTN_display = TRUE;
+	display_mode.size.x = DISPLAY_WIDTH;
+	display_mode.size.y = DISPLAY_HEIGHT;
+	display_mode.pixel_format = AHIFMT_16BPP_565;
+	display_mode.frequency = 0;
+	display_mode.rotation = AHIROT_0;
+	display_mode.mirror = AHIMIRR_NO;
+
+	ATI_Display_Mode_Log(ahi, &display_mode);
+
+	return result;
+}
+
+UINT32 ATI_Driver_Stop(APP_AHI_T *ahi) {
+	return RESULT_OK;
+}
+
+UINT32 ATI_Driver_Flush(APP_AHI_T *ahi) {
+	INT32 i;
+	UINT8 *vbuff;
+	UINT16 *display_bitmap;
+
+	vbuff = (UINT8 *) ahi->bitmap.image;
+	display_bitmap = (UINT16 *) display_source_buffer;
+
+	for (i = 0; i < ahi->bmp_width * ahi->bmp_height; ++i) {
+		display_bitmap[i] = fire_palette[vbuff[i]];
+	}
+
+//	DAL_UpdateDisplayRegion(&appi->dal_draw_region, display_bitmap);
+	DAL_UpdateRectangleDisplayRegion(&ahi->dal_draw_region, display_bitmap, DISPLAY_MAIN);
+//	DAL_WriteDisplayRegion(&appi->dal_draw_region, display_bitmap, DISPLAY_MAIN, FALSE);
+
+	return RESULT_OK;
+}
+#endif
 
 UINT32 GFX_Draw_Start(APP_AHI_T *ahi) {
+#if defined(FTR_C650)
+	/* Fill the whole screen to blank white color. */
+	ATI_Driver_Start(ahi, properties);
+#endif
+
 	ahi->y_coord = START_Y_COORD;
 	ahi->p_fire = (UINT8 *) ahi->bitmap.image;
 

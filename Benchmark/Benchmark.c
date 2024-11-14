@@ -453,7 +453,7 @@ static UINT32 HandleStateEnter(EVENT_STACK_T *ev_st, APPLICATION_T *app, ENTER_S
 					);
 					break;
 				case APP_VIEW_GPU_RESULTS:
-#if defined(EM1) || defined(EM2) || defined(FTR_C650)
+#if defined(EM1) || defined(EM2)
 					UIS_MakeContentFromString("q0Nq1", &content, g_str_view_gpu_results, g_str_view_todo);
 #else
 					UIS_MakeContentFromString(
