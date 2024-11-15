@@ -131,6 +131,9 @@ static UINT32 HandleEventHelp(EVENT_STACK_T *ev_st, APPLICATION_T *app);
 static UINT32 HandleEventAbout(EVENT_STACK_T *ev_st, APPLICATION_T *app);
 static UINT32 HandleEventExit(EVENT_STACK_T *ev_st, APPLICATION_T *app);
 static UINT32 HandleEventBack(EVENT_STACK_T *ev_st, APPLICATION_T *app);
+#if defined(ASYNC)
+static UINT32 HandleEventSearchCompleted(EVENT_STACK_T *ev_st, APPLICATION_T *app);
+#endif
 
 static LIST_ENTRY_T *CreateList(EVENT_STACK_T *ev_st, APPLICATION_T *app);
 static UINT32 UpdateList(EVENT_STACK_T *ev_st, APPLICATION_T *app, const WCHAR *directory, const WCHAR *filter);
@@ -201,6 +204,9 @@ static EVENT_HANDLER_ENTRY_T g_state_main_hdls[] = {
 static EVENT_HANDLER_ENTRY_T g_state_popup_hdls[] = {
 	{ EV_DONE, HandleEventBack },
 	{ EV_DIALOG_DONE, HandleEventBack },
+#if defined(ASYNC)
+	{ EV_FILE_SEARCH_COMPLETED, HandleEventSearchCompleted },
+#endif
 	{ STATE_HANDLERS_END, NULL }
 };
 
@@ -637,6 +643,26 @@ static UINT32 HandleEventBack(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
 	return status;
 }
 
+#if defined(ASYNC)
+static UINT32 HandleEventSearchCompleted(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
+	UINT32 status;
+	EVENT_T *event;
+	FS_SEARCH_COMPLETED_INDEX_T *search_index;
+
+	status = RESULT_OK;
+	event = AFW_GetEv(ev_st);
+	search_index = (FS_SEARCH_COMPLETED_INDEX_T *) event->attachment;
+
+	D("%d elements found.\n", search_index->search_total);
+
+	status |= FillFileList(ev_st, app, search_index, NULL);
+	status |= APP_ConsumeEv(ev_st, app);
+	status |= APP_UtilChangeState(APP_STATE_MAIN, ev_st, app);
+
+	return status;
+}
+#endif
+
 static LIST_ENTRY_T *CreateList(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
 	UINT32 status;
 	INT32 result;
@@ -774,32 +800,39 @@ static UINT32 UpdateFileList(EVENT_STACK_T *ev_st, APPLICATION_T *app, const WCH
 	 */
 	UINT32 status;
 	APP_INSTANCE_T *appi;
+	IFACE_DATA_T iface;
 
 	FS_SEARCH_COMPLETED_INDEX_T search_index;
 	FS_SEARCH_PARAMS_T search_params;
 	FS_SEARCH_INFO_T *search_info;
 	FS_URI_FNCT_PTR complete_function;
 
+	memclr(&search_params, sizeof(FS_SEARCH_PARAMS_T));
+	memclr(&search_index, sizeof(FS_SEARCH_COMPLETED_INDEX_T));
+
 	status = RESULT_OK;
 	appi = (APP_INSTANCE_T *) app;
+	iface.port = app->port;
 	search_info = NULL;
 	complete_function = NULL;
 
 	appi->fs.root = FALSE;
-
 	search_params.flags = FS_SEARCH_FOLDERS | FS_SEARCH_START_PATH;
 	search_params.attrib = FS_ATTR_DEFAULT;
 	search_params.mask = FS_ATTR_DEFAULT;
 
-#if defined(FTR_V600)
+#if defined(FTR_V600) && !defined(ASYNC)
 	status |= DL_FsSearch(search_params, search_string, &search_info, &complete_function, 0);
 	search_index.search_handle = search_info->shandle;
 	search_index.search_total = search_info->num;
+#elif defined(ASYNC)
+	search_index.search_handle = DL_FsISearch(&iface, search_params, search_string, 0);
+	search_index.search_total = 0;
 #else
 	status |= DL_FsSSearch(search_params, search_string, &search_index.search_handle, &search_index.search_total, 0);
 #endif
-	LOG("Status: %d.\n", status);
-	LOG("Info Num: %d.\n", search_index.search_total);
+	D("Status: %d.\n", status);
+	D("Info Num: %d.\n", search_index.search_total);
 	if (status != RESULT_OK) {
 		LOG("%s\n", "Trying to fix search.");
 		if (search_index.search_handle) {
@@ -814,9 +847,11 @@ static UINT32 UpdateFileList(EVENT_STACK_T *ev_st, APPLICATION_T *app, const WCH
 		return status;
 	}
 
+#if !defined(ASYNC)
 	status |= FillFileList(ev_st, app, &search_index, search_string);
 
 	status |= APP_UtilStartTimer(TIMER_FAST_TRIGGER_MS, APP_TIMER_TO_MAIN_VIEW, app);
+#endif
 
 	return status;
 }
@@ -828,13 +863,14 @@ static UINT32 FillFileList(EVENT_STACK_T *ev_st, APPLICATION_T *app,
 	APP_INSTANCE_T *appi;
 	UINT16 i;
 	UINT16 count;
+	FS_SEARCH_RESULT_T res;
 
 	status = RESULT_OK;
 	error = RESULT_OK;
 	appi = (APP_INSTANCE_T *) app;
 	count = 1;
 
-	LOG("%s\n", "Cleaning previous file list.");
+	LOG("Cleaning previous file list. New elements: %d\n", search_index->search_total);
 	suFreeMem(appi->fs.list);
 	appi->fs.list = NULL;
 
@@ -849,15 +885,15 @@ static UINT32 FillFileList(EVENT_STACK_T *ev_st, APPLICATION_T *app,
 	appi->fs.list[0].type = APP_FS_FOLDER_UP;
 
 	for (i = 0; i < search_index->search_total; ++i) {
-		status = DL_FsSearchResults(search_index->search_handle, i, &count, &search_index->search_result);
+		status = DL_FsSearchResults(search_index->search_handle, i, &count, &res);
 		if (status == RESULT_OK) {
 #if defined(DEBUG)
 			char file_path[FS_MAX_FILE_NAME_LENGTH + 1];
-			u_utoa(search_index->search_result.name, file_path);
+			u_utoa(res.name, file_path);
 			LOG("%d Added: %s, attrib 0x%X, owner %d.\n",
-				i + 1, file_path, search_index->search_result.attrib, search_index->search_result.owner);
+				i + 1, file_path, res.attrib, res.owner);
 #endif
-			if (IsDirectory(search_index->search_result.attrib)) {
+			if (IsDirectory(res.attrib)) {
 				/*
 				 * HACK Stage 1: Use first dot to proper files and folder sorting:
 				 *  - ..
@@ -867,10 +903,10 @@ static UINT32 FillFileList(EVENT_STACK_T *ev_st, APPLICATION_T *app,
 				 *  - file
 				 */
 				u_strcpy(appi->fs.list[i + 1].name, L".");
-				u_strcpy(appi->fs.list[i + 1].name + 1, GetFileNameFromPath(search_index->search_result.name));
+				u_strcpy(appi->fs.list[i + 1].name + 1, GetFileNameFromPath(res.name));
 				appi->fs.list[i + 1].type = APP_FS_FOLDER;
 			} else {
-				u_strcpy(appi->fs.list[i + 1].name, GetFileNameFromPath(search_index->search_result.name));
+				u_strcpy(appi->fs.list[i + 1].name, GetFileNameFromPath(res.name));
 				appi->fs.list[i + 1].type = (IsElfFile(appi->fs.list[i + 1].name)) ? APP_FS_ELF : APP_FS_FILE;
 			}
 		} else {
@@ -1024,38 +1060,3 @@ static UINT32 RunElfApplication(EVENT_STACK_T *ev_st, APPLICATION_T *app, const 
 
 	return status;
 }
-
-/*
- * Async search example using `DL_FsISearch()` function.
- * Buggy as hell.
- */
-#if 0
-static UINT32 HandleEventSearchCompleted(EVENT_STACK_T *ev_st, APPLICATION_T *app);
-
-{ EV_FILE_SEARCH_COMPLETED, HandleEventSearchCompleted },
-
-{
-	IFACE_DATA_T iface;
-	iface.port = app->port;
-	status |= DL_FsISearch(&iface, search_params, search_string, 0);
-	LOG("Status: %d.\n", status);
-}
-
-static UINT32 HandleEventSearchCompleted(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
-	UINT32 status;
-	EVENT_T *event;
-	FS_SEARCH_COMPLETED_INDEX_T *search_index;
-
-	status = RESULT_OK;
-	event = AFW_GetEv(ev_st);
-	search_index = (FS_SEARCH_COMPLETED_INDEX_T *) event->attachment;
-
-	LOG("%d elements found.\n", search_index->search_total);
-
-	status |= FillFileList(ev_st, app, search_index);
-	status |= APP_ConsumeEv(ev_st, app);
-	status |= APP_UtilChangeState(APP_STATE_MAIN, ev_st, app);
-
-	return status;
-}
-#endif
