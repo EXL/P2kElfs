@@ -37,8 +37,8 @@ See [Overclocking and Benchmakring old Motorola P2K phones (52 MHz to 65 MHz)](h
 
 | Phone    | Freq   | Total | Text  | 2D Shapes | 3D Shapes | Fill Rate | Animation |
 |----------|--------|-------|-------|-----------|-----------|-----------|-----------|
-| C650     | 52 MHz | 880   | 212   | ?         | ?         | ?         | ?         |
-| C650     | 65 MHz | 1078  | 265   | 259       | 196       | 113       | 245       |
+| C650     | 52 MHz | 816   | 185   | 192       | 127       | 100       | 212       |
+| C650     | 65 MHz | 1093  | 252   | 253       | 209       | 122       | 257       |
 | SLVR L6i | 52 MHz | 1051  | 255   | 255       | 194       | 89        | 258       |
 | SLVR L6i | 65 MHz | 1108  | 257   | 258       | 223       | 112       | 258       |
 | ROKR E1  | 52 MHz | 1197  | 368   | 303       | 142       | 52        | 332       |
@@ -56,8 +56,8 @@ See [Overclocking and Benchmakring old Motorola P2K phones (52 MHz to 65 MHz)](h
 
 | Phone    | Freq   | CPU (MCU)                                                  | GPU (IPU)                                                                              | RAM (SUAPI)                                          | RAM (UIS)                  | HEAP (J2ME)                |
 |----------|--------|------------------------------------------------------------|----------------------------------------------------------------------------------------|------------------------------------------------------|----------------------------|----------------------------|
-| С650     | 52 MHz | 1317 ms <br /> 3.17 BMIPS <br /> 2029 ms <br /> 5.61 DMIPS | ?                                                                                      | 46 ms <br /> 279552 B <br /> 1 ms <br /> 18176 B     | 147 ms <br /> 415232 B     | ? sec <br /> ? KiB         |
-| С650     | 65 MHz | 1235 ms <br /> 3.39 BMIPS <br /> 1632 ms <br /> 6.97 DMIPS | ?                                                                                      | 36 ms <br /> 279552 B <br /> 1 ms <br /> 18176 B     | 112 ms <br /> 415232 B     | 1.57 sec <br /> 672.0 KiB  |
+| С650     | 52 MHz | 1317 ms <br /> 3.17 BMIPS <br /> 2029 ms <br /> 5.61 DMIPS | 3540 ms <br /> 58.2 FPS <br /> 7261 ms <br /> 35.0 FPS <br /> 14186 ms <br /> 14.4 FPS | 46 ms <br /> 279552 B <br /> 1 ms <br /> 18176 B     | 147 ms <br /> 415232 B     | ? sec <br /> ? KiB         |
+| С650     | 65 MHz | 1235 ms <br /> 3.39 BMIPS <br /> 1632 ms <br /> 6.97 DMIPS | 2728 ms <br /> 75.1 FPS <br /> 5186 ms <br /> 38.4 FPS <br /> 11571 ms <br /> 19.0 FPS | 36 ms <br /> 279552 B <br /> 1 ms <br /> 18176 B     | 112 ms <br /> 415232 B     | 1.57 sec <br /> 672.0 KiB  |
 | SLVR L6i | 52 MHz | 1305 ms <br /> 3.21 BMIPS <br /> 2101 ms <br /> 5.41 DMIPS | 3919 ms <br /> 52.6 FPS <br /> 7301 ms <br /> 33.5 FPS <br /> 14380 ms <br /> 16.4 FPS | 159 ms <br /> 1227520 B <br /> 13 ms <br /> 117504 B | ? ms <br /> ? B            | 4.11 sec <br /> 1112.0 KiB |
 | SLVR L6i | 65 MHz | 1039 ms <br /> 4.03 BMIPS <br /> 1677 ms <br /> 6.78 DMIPS | 3900 ms <br /> 52.6 FPS <br /> 7015 ms <br /> 33.8 FPS <br /> 11442 ms <br /> 20.2 FPS | 125 ms <br /> 1222912 B <br /> 10 ms <br /> 117504 B | ? ms <br /> ? B            | 2.34 sec <br /> 1164.0 KiB |
 | ROKR E1  | 52 MHz | 1304 ms <br /> 3.21 BMIPS <br /> 2080 ms <br /> 5.47 DMIPS | 3425 ms <br /> 62.5 FPS <br /> 6279 ms <br /> 39.5 FPS <br /> 13635 ms <br /> 17.7 FPS | 22 ms <br /> 524800 B <br /> 2 ms <br /> 77312 B     | ? ms <br /> ? B            | 7.39 sec <br /> 1060.0 KiB |
