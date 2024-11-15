@@ -3,6 +3,10 @@ Overclock
 
 An application for overclocking ARM7TDMI core in Neptune SoC phones from stock 52 MHz to 65 MHz.
 
+## Screenshots from Motorola C650
+
+![Screenshot of Overclock from Motorola C650 1](../images/Screenshot_Overclock_C650_1.png) ![Screenshot of Overclock from Motorola C650 2](../images/Screenshot_Overclock_C650_2.png) ![Screenshot of Overclock from Motorola C650 3](../images/Screenshot_Overclock_C650_3.png)
+
 ## Screenshots from Motorola SLVR L6
 
 ![Screenshot of Overclock from Motorola L6 1](../images/Screenshot_Overclock_L6_1.png) ![Screenshot of Overclock from Motorola L6 2](../images/Screenshot_Overclock_L6_2.png) ![Screenshot of Overclock from Motorola L6 3](../images/Screenshot_Overclock_L6_3.png)

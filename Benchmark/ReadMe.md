@@ -3,6 +3,10 @@ Benchmark
 
 A simple ELF benchmarking application for Motorola P2K phones.
 
+## Screenshots from Motorola C650 (SimTech MOOSE Emulator)
+
+![Screenshot of Benchmark from Motorola C650 1](../images/Screenshot_Benchmark_C650_1.png) ![Screenshot of Benchmark from Motorola C650 2](../images/Screenshot_Benchmark_C650_2.png) ![Screenshot of Benchmark from Motorola C650 3](../images/Screenshot_Benchmark_C650_3.png) ![Screenshot of Benchmark from Motorola C650 4](../images/Screenshot_Benchmark_C650_4.png)
+
 ## Screenshots from Motorola SLVR L6
 
 ![Screenshot of Benchmark from Motorola L6 1](../images/Screenshot_Benchmark_L6_1.png) ![Screenshot of Benchmark from Motorola L6 2](../images/Screenshot_Benchmark_L6_2.png) ![Screenshot of Benchmark from Motorola L6 3](../images/Screenshot_Benchmark_L6_3.png) ![Screenshot of Benchmark from Motorola L6 4](../images/Screenshot_Benchmark_L6_4.png)
