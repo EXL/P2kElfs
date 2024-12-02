@@ -148,6 +148,7 @@ static ldrElf *g_app_elf = NULL;
 #endif
 
 static WCHAR g_res_file_path[FS_MAX_URI_NAME_LENGTH];
+static UINT8 *global_bitmap;
 
 static EVENT_HANDLER_ENTRY_T g_state_any_hdls[] = {
 	{ EV_REVOKE_TOKEN, APP_HandleUITokenRevoked },
@@ -473,7 +474,7 @@ static UINT32 CheckKeyboard(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
 }
 
 static UINT32 ProcessKeyboard(EVENT_STACK_T *ev_st, APPLICATION_T *app, UINT32 key, BOOL pressed) {
-#if defined(EM1) || defined(EM2) || defined(FTR_C650)
+#if defined(EP2) || defined(EM1) || defined(EM2) || defined(FTR_C650)
 	#define KK_2 MULTIKEY_2
 	#define KK_UP MULTIKEY_UP
 	#define KK_4 MULTIKEY_4
@@ -933,7 +934,7 @@ static UINT32 ATI_Driver_Start(APPLICATION_T *app) {
 	appi->ahi.bitmap.image = AmMemAllocPointer(appi->bmp_width * appi->bmp_height * 2);
 	if (!appi->ahi.bitmap.image) {
 #else
-	appi->ahi.bitmap.image = suAllocMem(appi->bmp_width * appi->bmp_height * 2, &result);
+	appi->ahi.bitmap.image = uisAllocateMemory(appi->bmp_width * appi->bmp_height * 2, &result);
 	if (result != RESULT_OK) {
 #endif
 		LOG("%s\n", "Error: Cannot allocate screen buffer memory.");
@@ -991,7 +992,7 @@ static UINT32 ATI_Driver_Stop(APPLICATION_T *app) {
 #if defined(JAVA_HEAP)
 		AmMemFreePointer(app_instance->p_bitmap);
 #else
-		suFreeMem(app_instance->p_bitmap);
+		uisFreeMemory(app_instance->p_bitmap);
 #endif
 		app_instance->p_bitmap = NULL;
 	}
@@ -1231,12 +1232,13 @@ static UINT32 GFX_Draw_Start(APPLICATION_T *app) {
 
 	appi = (APP_INSTANCE_T *) app;
 
-
 #if defined(EP1) || defined(EP2)
 	appi->p_bitmap = (UINT8 *) appi->ahi.bitmap.image;
 #elif defined(EM1) || defined(EM2)
 	appi->p_bitmap = (UINT8 *) appi->gfsdk.fb0;
 #endif
+
+	global_bitmap = appi->p_bitmap;
 
 #if defined(MEMORY_MANUAL_ALLOCATION)
 	Allocate_Memory_Blocks(131072);
@@ -1274,9 +1276,12 @@ static UINT32 GFX_Draw_Step(APPLICATION_T *app) {
 	appi = (APP_INSTANCE_T *) app;
 
 	run_step();
-	memcpy(appi->p_bitmap, screens, screen_length*2);
 
 	return RESULT_OK;
+}
+
+void repaint() {
+	memcpy(global_bitmap, screens, screen_length*2);
 }
 
 void Systemarraycopy(void *from, int foff, void *to, int toff, int size) {

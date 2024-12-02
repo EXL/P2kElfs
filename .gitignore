@@ -1,4 +1,5 @@
 *.nes
 *.elf
+*.elfp
 *.o
 *.obj
