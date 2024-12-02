@@ -16,14 +16,13 @@ static SDL_Surface *video;
 static SDL_Renderer *render;
 static SDL_Texture *texture;
 
-#define VIEWPORT_INTERVAL 35
+#if defined(REPAINT_HOOK)
+#define VIEWPORT_INTERVAL 32
+#else
+#define VIEWPORT_INTERVAL 120
+#endif
 
-void repaint() {
-	main_loop_step();
-	memcpy(surface->pixels, screens, screen_length*2);
-}
-
-void main_loop_step(void) {
+void sdl_handle_events(void) {
 	SDL_Event event;
 	while (SDL_PollEvent(&event)) {
 		switch (event.type) {
@@ -64,8 +63,37 @@ void main_loop_step(void) {
 	SDL_UpdateTexture(texture, NULL, video->pixels, video->pitch);
 	SDL_RenderCopy(render, texture, NULL, NULL);
 	SDL_RenderPresent(render);
+}
 
-	SDL_Delay(1000 / VIEWPORT_INTERVAL);
+Uint32 aa = 0, bb = 0, delta = 0;
+
+#if defined(REPAINT_HOOK)
+void repaint() {
+	memcpy(surface->pixels, screens, screen_length*2);
+	sdl_handle_events();
+	SDL_Delay(VIEWPORT_INTERVAL);
+}
+#else
+void repaint() {}
+#endif
+
+void main_loop_step(void) {
+#if defined(REPAINT_HOOK)
+	run_step();
+#else
+	aa = SDL_GetTicks();
+	delta = aa - bb;
+
+	if (delta > 1000 / VIEWPORT_INTERVAL) {
+//		fprintf(stderr, "fps: %d\n", 1000 / delta);
+
+		bb = aa;
+
+		run_step();
+		memcpy(surface->pixels, screens, screen_length*2);
+		sdl_handle_events();
+	}
+#endif
 }
 
 int main(int argc, char *argv[]) {
@@ -80,7 +108,6 @@ int main(int argc, char *argv[]) {
 		return 1;
 	}
 	initnul();
-	h();
 	if(i=loadrom(*++argv)){
 		printf("Error %d\n",i);
 		return i;
@@ -128,16 +155,15 @@ int main(int argc, char *argv[]) {
 		return EXIT_FAILURE;
 	}
 
-//#if !defined(__EMSCRIPTEN__)
-//	while (!quit_loop) {
-//		main_loop_step();
-//		SDL_Delay(1000 / VIEWPORT_INTERVAL);
-//	}
-//#else
-//	emscripten_set_main_loop(main_loop_step, VIEWPORT_INTERVAL, 1); // 35 FPS.
-//#endif
+	init_values();
 
-	run();
+#if !defined(__EMSCRIPTEN__)
+	while (!quit_loop) {
+		main_loop_step();
+	}
+#else
+	emscripten_set_main_loop(main_loop_step, VIEWPORT_INTERVAL, 1); // 35 FPS.
+#endif
 
 	SDL_DestroyTexture(texture);
 	SDL_FreeSurface(surface);

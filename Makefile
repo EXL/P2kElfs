@@ -4,6 +4,7 @@
 CC=gcc
 STRIP=strip
 CFLAGS=`sdl2-config --cflags` -O2 -g -DUSE_SDL2 -Wall -pedantic -Wno-maybe-uninitialized -Wno-misleading-indentation
+#CFLAGS+=-DREPAINT_HOOK
 LFLAGS=`sdl2-config --libs` -Wl,--allow-multiple-definition
 NAME=vNesC
 ifeq ($(OS), Windows_NT)

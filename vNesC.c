@@ -175,70 +175,90 @@ int nn; //temp
         }
     }
 
-    #pragma optimize=no_code_motion
-    void run() {
+    byte *abyte0;
+    byte byte4,byte5,byte6,byte7,byte8,byte9,byte10,byte11,byte12,byte13,byte14;
+    int k7;
+    int i8,i9,i10,i11,i12,i13,i14,i15,i16,i17,i18,i19,i20,i21,i22,i23,i24,i25,i26,i27,i28,i29,i30,i31,i32,i33,i34,i35,i36,i37;
+    int j8,j9,j10,j11,j12,j13,j14,j15,j16,j17,j18,j19,j20,j21,j22,j23,j24,j25,j26,j27,j28,j29,j30,j31,j32,j33,j34,j35,j36,j37;
+    int k8,k9,k10,k11,k12,k13,k14,k15,k16,k17,k18,k19,k20,k21,k22,k23,k24,k25,k26,k27,k28,k29,k30,k31,k32,k33,k34,k35,k36;
+    int l10,l11,l12,l13,l14,l15,l16,l17,l18,l19,l20,l21,l22,l23,l24,l25,l26,l27,l28,l29,l30,l31,l32,l33,l34,l35,l36;
+    int i6,j6,i7,j7;
+    int i1, j1, k1, l1, i2, byte0, j2, k2, l2, i3, j3, k3, l3, i4, j4;
+    int ai[100];
+    int ai1[100];
+    int *ai2;
+    int k4;
+    int l4;
+    int i5;
+    int k5;
+    boolean flag;
+    int l5;
+    long l6;
+    boolean flag1;
+    boolean flag2;
+    boolean flag3;
+    boolean flag4;
+    boolean flag5;
+
+    void init_values(void) {
         running=1;
-        byte *abyte0 = vram;
-        byte byte4,byte5,byte6,byte7,byte8,byte9,byte10,byte11,byte12,byte13,byte14;
-        int k7;
-        int i8,i9,i10,i11,i12,i13,i14,i15,i16,i17,i18,i19,i20,i21,i22,i23,i24,i25,i26,i27,i28,i29,i30,i31,i32,i33,i34,i35,i36,i37;
-        int j8,j9,j10,j11,j12,j13,j14,j15,j16,j17,j18,j19,j20,j21,j22,j23,j24,j25,j26,j27,j28,j29,j30,j31,j32,j33,j34,j35,j36,j37;
-        int k8,k9,k10,k11,k12,k13,k14,k15,k16,k17,k18,k19,k20,k21,k22,k23,k24,k25,k26,k27,k28,k29,k30,k31,k32,k33,k34,k35,k36;
-        int l10,l11,l12,l13,l14,l15,l16,l17,l18,l19,l20,l21,l22,l23,l24,l25,l26,l27,l28,l29,l30,l31,l32,l33,l34,l35,l36;
+        abyte0 = vram;
 
-        int i6,j6,i7,j7;
+        i1 = 0;
+        j1 = 0;
+        k1 = 0;
+        l1 = 0;
+        i2 = 0;
+        byte0 = 4;
+        j2 = 255;
+        k2 = 0;
+        l2 = 1;
+        i3 = 0;
+        j3 = 0;
+        k3 = 0;
+        l3 = 0;
+        i4 = 0;
+        j4 = -1;
+        ai2 = b_int_array1d_static_fld;
+        k4 = abyte0[ai2[7] + 65532] & 0xff | (abyte0[ai2[7] + 65533] & 0xff) << 8;
 
-        int i1 = 0;
-        int j1 = 0;
-        int k1 = 0;
-        int l1 = 0;
-        int i2 = 0;
-        byte byte0 = 4;
-        int j2 = 255;
-        int k2 = 0;
-        int l2 = 1;
-        int i3 = 0;
-        int j3 = 0;
-        int k3 = 0;
-        int l3 = 0;
-        int i4 = 0;
-        int j4 = -1;
-        int ai[100];
-        int ai1[100];
-        int *ai2 = b_int_array1d_static_fld;
-        int k4 = abyte0[ai2[7] + 65532] & 0xff | (abyte0[ai2[7] + 65533] & 0xff) << 8;
+        i5 = k4 + (l4 = ai2[k4 >> 13]);
+
+        for(int j5 = 0; j5 < 100; j5++)
+            ai1[j5] = 0;
+
+        k5 = -50;
+        flag = true;
+        l5 = 0;
+        l6 = SystemcurrentTimeMillis();
+        c_long_static_fld = b_long_static_fld = 0L;
+        flag1 = false;
+        flag2 = i_boolean_static_fld;
+        flag3 = false;
+        flag4 = false;
+
+        m();
+        k_int_static_fld = 0;
+        l_boolean_static_fld = j_boolean_static_fld = false;
+        s_boolean_static_fld = true;
+    }
+
+//    #pragma optimize=no_code_motion
+    void run_step() {
 
 //new File().debugWrite("0:/vnes","\n"+Integer.toString(i5)+" = "+Integer.toString(k4));        
       //debug(ai2[7],abyte0[ai2[7] + 65532]);////////////
       //debug(ai2[7],abyte0[ai2[7] + 65533]);
         //if(true) return; //
-        
-        int l4;
-        int i5 = k4 + (l4 = ai2[k4 >> 13]);
+
    
    //new File().debugWrite("0:/vnes","\n"+Integer.toString(i5)+" = "+Integer.toString(k4));
-   
-        for(int j5 = 0; j5 < 100; j5++)
-            ai1[j5] = 0;
 
-        int k5 = -50;
-        boolean flag = true;
-        int l5 = 0;
-        long l6 = SystemcurrentTimeMillis();
-        c_long_static_fld = b_long_static_fld = 0L;
-        boolean flag1 = false;
-        boolean flag2 = i_boolean_static_fld;
-        boolean flag3 = false;
-        boolean flag4 = false;
-        m();
-        k_int_static_fld = 0;
-        l_boolean_static_fld = j_boolean_static_fld = false;
-        s_boolean_static_fld = true;
 //        do {
-            do {
+//            do {
                 //main_loop_step();
  //debug("dodo",1,1);////////////            
-                boolean flag5 = k5 % A == 0;
+                flag5 = k5 % A == 0;
                 if(t_boolean_static_fld) {
                     l5 = p_int_static_fld + 1;
                     if(l5 >= 240)
@@ -2103,7 +2123,7 @@ label0:
             //            catch(InterruptedException interruptedexception) { }
                     l6 = SystemcurrentTimeMillis();
                 }
-            } while(!v_boolean_static_fld);
+//            } while(!v_boolean_static_fld);
             v_boolean_static_fld = false;
             if(n_boolean_static_fld)
                 return;

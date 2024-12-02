@@ -53,9 +53,10 @@ void debug(char *s, int num, int val){
 
 void savefile(char *fname, void *buf, int size);
 */
-void initnul();     
+void initnul();
+void init_values();
 extern volatile int running;
-extern void repaint(); 
+extern void repaint();
 void serviceRepaints(){}
 
 int main_a_int_fld, main_c_int_fld;
@@ -118,7 +119,7 @@ FILE* openstream(int savemode){
   }return stream;
 }
 
-void closestream(){ 
+void closestream(){
   if(streammode) flush();
   fclose(stream);
 }
@@ -130,7 +131,7 @@ void closestream(){
 static void k() ;
 static void f() ;
 static void l() ;
-void run() ;
+void run_step() ;
 static void xxf(int i1, int j1) ;
     static void xxd(int i1, int j1) ;
   void keyPressed(int i1) ;
@@ -160,13 +161,13 @@ void avoid1int(int i1) ;
     static void avoid8int(int i1, int j1, int k1, int l1, int i2, int j2, int k2, int l2) ;
     static void bvoid2int(int i1, int j1) ;
     static int aint2int(int i1, int j1) ;
-    //static void b(InputStream inputstream) throws IOException 
+    //static void b(InputStream inputstream) throws IOException
     static int bint1int(int i1) ;
     static void avoid2int(int i1, int j1) ;
 
-    
+
 ///////
-    
+
 void savescreen(char *fname);
 
 
