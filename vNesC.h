@@ -90,8 +90,10 @@ char *loadfile(char *s, int *loadfilesize) ;
 #define d_byte_array1d_static_fld_length 256
 #define d_int_array1d_static_fld_length 8 //???4
 
+#if defined(SAVE_LOAD)
 extern FILE *openstream(int savemode);
 extern void bytearrayoutputstreamwrite(int byt);
 extern int bytearrayinputstreamread();
 extern void Systemarraycopy(void *from, int foff, void *to, int toff, int size);
 extern void closestream();
+#endif

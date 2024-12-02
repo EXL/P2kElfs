@@ -21,6 +21,8 @@ static SDL_Surface *video;
 static SDL_Renderer *render;
 static SDL_Texture *texture;
 
+static char romname[256];
+
 static void sdl_handle_events(void) {
 	SDL_Event event;
 	while (SDL_PollEvent(&event)) {
@@ -41,6 +43,8 @@ static void sdl_handle_events(void) {
 					case SDLK_x:     keyPressed(51); break;
 					case SDLK_a:     keyPressed(53); break;
 					case SDLK_s:     keyPressed(48); break;
+					case SDLK_q:     keyPressed(64); break;
+					case SDLK_w:     keyPressed(65); break;
 				}
 				break;
 			case SDL_KEYUP:
@@ -53,6 +57,8 @@ static void sdl_handle_events(void) {
 					case SDLK_x:     keyReleased(51); break;
 					case SDLK_a:     keyReleased(53); break;
 					case SDLK_s:     keyReleased(48); break;
+					case SDLK_q:     keyReleased(64); break;
+					case SDLK_w:     keyReleased(65); break;
 				}
 				break;
 		}
@@ -102,6 +108,7 @@ int main(int argc, char *argv[]) {
 		return 1;
 	}
 	initnul();
+	strncpy(romname, argv[1], 255);
 	if((i=loadrom(*++argv))) {
 		printf("Error %d\n",i);
 		return i;
@@ -172,14 +179,14 @@ int main(int argc, char *argv[]) {
 	return 0;
 }
 
-static FILE* stream;
-static int streammode;
-static char romname[256];
-
 void Systemarraycopy(void *from, int foff, void *to, int toff, int size) {
 //	memmove((char*)to+toff,(char*)from+foff, size);
 	memcpy((char*)to+toff,(char*)from+foff, size);
 }
+
+#if defined(SAVE_LOAD)
+static FILE* stream;
+static int streammode;
 
 static void flush() {
 	fwrite(sbuf,ebuf-sbuf, 1, stream);
@@ -202,13 +209,25 @@ int bytearrayinputstreamread() {
 }
 
 FILE *openstream(int savemode) {
-	if(streammode==savemode){ //save
-		if((stream=fopen(romname, "wb"))==NULL) return NULL;
+	char savename[256 + 4]; // ROM name + .sav
+	streammode = savemode;
+
+	strncpy(savename, romname, 256);
+	strncat(savename, ".sav", 256);
+
+	if(savemode){ //save
+		fprintf(stderr, "Saving NES state...\n");
+		if((stream=fopen(savename, "wb"))==NULL) return NULL;
 		ebuf=sbuf;
 	} else{
+		fprintf(stderr, "Loading NES state...\n");
 		ebuf=sbuf+sbufsize;
-		if((stream=fopen(romname, "rb"))==NULL) return NULL;
-	} return stream;
+		if((stream=fopen(savename, "rb"))==NULL) return NULL;
+	}
+
+	fprintf(stderr, "Done!\n");
+
+	return stream;
 }
 
 void closestream() {
@@ -216,6 +235,7 @@ void closestream() {
 		flush();
 	fclose(stream);
 }
+#endif
 
 char *loadfile(char *s, int *loadfilesize_arg) {
 	int loadfilesize;

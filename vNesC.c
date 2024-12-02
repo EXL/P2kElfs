@@ -75,7 +75,7 @@ static volatile int running;
     static int key[] = {
         50, 56, 52, 54, 49, 51, 
         53, 48, 55, 57, 
-        35, 0, 0, 42
+        35, 64, 65, 42
     };
    // '2'=10 8=20 4=40 6=80 1=1 3=2 0=8 7=4
     static int O = 0;
@@ -2176,6 +2176,7 @@ label0:
             v_boolean_static_fld = false;
             if(n_boolean_static_fld)
                 return;
+#if defined(SAVE_LOAD)
             if(d_boolean_static_fld) {
                 d_boolean_static_fld = false;
                 
@@ -2261,6 +2262,7 @@ label0:
 //                catch(Exception exception1) { }
                 
             }
+#endif
             if(h_boolean_static_fld) {
                 h_boolean_static_fld = false;
                 g();
