@@ -16,6 +16,7 @@ Project {
 		"VibroHaptic/VibroHaptic.qbs",
 		"Yeti3D-Old/Yeti3D-Old.qbs",
 		"Yeti3D/Yeti3D.qbs",
-		"FlipDetector/FlipDetector.qbs"
+		"FlipDetector/FlipDetector.qbs",
+		"vNesC/vNesC.qbs"
 	]
 }

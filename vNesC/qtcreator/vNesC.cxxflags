@@ -1,0 +1,2 @@
+-Wno-int-to-void-pointer-cast
+-Wno-builtin-declaration-mismatch

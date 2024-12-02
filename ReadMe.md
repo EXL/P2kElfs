@@ -104,6 +104,11 @@ Ready-to-run ELFs builds are available in the [Release](https://github.com/EXL/P
     Detect closed flip of Motorola clamshell phones and do some things.\
     Application type: Deamon.
 
+20. **[vNesC](vNesC)**
+
+    A simple vNes emulator of Nintendo NES rewritten from J2ME Java (vNes) to C language using decompilation technique.\
+    Application type: GUI + GPU + Java Heap.
+
 ## Infromation
 
 * [ELFs by EXL](https://forum.motofan.ru/index.php?showtopic=1742337): A thread on the MotoFan.Ru forum with my ELF projects and additional information.
