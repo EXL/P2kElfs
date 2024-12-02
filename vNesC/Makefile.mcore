@@ -1,0 +1,42 @@
+# This Makefile was created by EXL, 02-Dec-2024.
+# Default platform is Motorola P2K M-CORE, ElfPack v2.0 for M-CORE, `mcore-elf-gcc-3.4.6` on Linux.
+
+# Compiler path.
+MCORE_PATH = /opt/mcore-elf-gcc
+
+# SDK path.
+SDK_PATH = $(MCORE_PATH)/sdk
+
+# Libraries path.
+LIB_PATH = $(MCORE_PATH)/mcore-elf/lib
+
+# Defines.
+DEFINES = -D__P2K__ -DEM2 -DROT_0 -DFPS_30
+#DEFINES = -D__P2K__ -DEM2 -DROT_0 -DFPS_30 -DFTR_V3X
+#DEFINES = -D__P2K__ -DEM2 -DROT_0 -DFPS_30 -DG_DEFAULT
+
+# Optimization.
+OPTIM = -O2
+
+# Project/ELF name.
+ELF_NAME = vNesC
+
+all:
+	$(MCORE_PATH)/bin/mcore-elf-gcc -std=c99 -fshort-wchar -funsigned-char -fomit-frame-pointer -fno-builtin \
+		-m340 -m4align -mbig-endian -nostdinc -nostdlib \
+		-I$(SDK_PATH) $(INCLUDES) $(DEFINES) $(OPTIM) \
+		-c vNesC.c -o vNesC.o
+	$(MCORE_PATH)/bin/mcore-elf-gcc -std=c99 -fshort-wchar -funsigned-char -fomit-frame-pointer -fno-builtin \
+		-m340 -m4align -mbig-endian -nostdinc -nostdlib \
+		-I$(SDK_PATH) $(INCLUDES) $(DEFINES) $(OPTIM) \
+		-c vP2k.c -o vP2k.o
+	$(MCORE_PATH)/bin/mcore-elf-ld -d -EB -N -r -s -Bstatic -Bsymbolic -Bsymbolic-functions \
+		-nostdinc -nostdlib --unresolved-symbols=report-all -z muldefs -z combreloc -z nodefaultlib \
+		vNesC.o vP2k.o \
+		-T$(LIB_PATH)/linker_elf.ld -o $(ELF_NAME).elf
+
+clean:
+	-rm -f *.o
+	-rm -f *.obj
+	-rm -f *.elfp
+	-rm -f *.elf
