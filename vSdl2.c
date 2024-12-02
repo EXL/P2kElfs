@@ -12,14 +12,14 @@ static int quit_loop = 0;
 #define VIEWPORT_INTERVAL 32
 #else
 #define VIEWPORT_INTERVAL 120
+
+static Uint32 aa = 0, bb = 0, delta = 0;
 #endif
 
 static SDL_Surface *surface;
 static SDL_Surface *video;
 static SDL_Renderer *render;
 static SDL_Texture *texture;
-
-static Uint32 aa = 0, bb = 0, delta = 0;
 
 static void sdl_handle_events(void) {
 	SDL_Event event;
@@ -177,7 +177,8 @@ static int streammode;
 static char romname[256];
 
 void Systemarraycopy(void *from, int foff, void *to, int toff, int size) {
-	memmove((char*)to+toff,(char*)from+foff, size);
+//	memmove((char*)to+toff,(char*)from+foff, size);
+	memcpy((char*)to+toff,(char*)from+foff, size);
 }
 
 static void flush() {
