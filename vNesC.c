@@ -3491,10 +3491,10 @@ label0:;
       //if((f=fopen(s,A_ReadOnly+A_BIN,P_READ,&err))==-1) return 3;
       //filesize=lseek(f,0,2,&err,&err);
       //lseek(f,0,0, &err,&err);
-      if(!(vram = (byte*)malloc(vramlength=filesize+10240+16384))){ mfree(buf); return 3;}
+      if(!(vram = (byte*)MEM_Alloc_HUGE(vramlength=filesize+10240+16384))){ MEM_Free_HUGE(buf); return 3;}
       memset(vram,0,vramlength);
       memcpy(vram,buf,filesize);
-      mfree(buf);
+      MEM_Free_HUGE(buf);
 //      fread(f, vram,filesize,&err);
 //      fclose(f, &err);
 
@@ -4103,10 +4103,10 @@ label0:;
             if(l_int_static_fld < 60)
                 l_int_static_fld = 60;
             //main_a_int_array1d_fld = 
-            if(screens) mfree(screens);
+            if(screens) MEM_Free_HUGE(screens);
             Systemgc();
             //main_a_int_array1d_fld = 
-              screens = (ushort*)malloc(l_int_static_fld * aa*2);
+              screens = (ushort*)MEM_Alloc_HUGE(l_int_static_fld * aa*2);
             for(int i1 = 0; i1 < h_int_array1d_static_fld_length; i1++)
                 h_int_array1d_static_fld[i1] = (((256 - i1 - 1) * aa) / 256) * l_int_static_fld;
 
@@ -4130,10 +4130,10 @@ label0:;
             if(aa < 60)
                 aa = 60;
             //main_a_int_array1d_fld = 
-              if(screens) mfree(screens);
+              if(screens) MEM_Free_HUGE(screens);
             Systemgc();
             //main_a_int_array1d_fld = 
-              screens = (ushort*)malloc(l_int_static_fld * aa*2);
+              screens = (ushort*)MEM_Alloc_HUGE(l_int_static_fld * aa*2);
             for(int k1 = 0; k1 < h_int_array1d_static_fld_length; k1++)
                 h_int_array1d_static_fld[k1] = (k1 * l_int_static_fld) / 256;
 
@@ -4640,6 +4640,6 @@ void savefile(char *fname, void *buf, int size){
 void freeall(){
   if(a_char_array1d_static_fld) mfree(a_char_array1d_static_fld);
   if(b_byte_array1d_static_fld) mfree(b_byte_array1d_static_fld);
-  if(vram) mfree(vram);
-  if(screens) mfree(screens);
+  if(vram) MEM_Free_HUGE(vram);
+  if(screens) MEM_Free_HUGE(screens);
 }

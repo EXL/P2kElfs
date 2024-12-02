@@ -107,8 +107,8 @@ int main(int argc, char *argv[]) {
 		printf("No NES ROM!\n");
 		return 1;
 	}
-	initnul();
 	strncpy(romname, argv[1], 255);
+	initnul();
 	if((i=loadrom(*++argv))) {
 		printf("Error %d\n",i);
 		return i;
@@ -244,7 +244,7 @@ char *loadfile(char *s, int *loadfilesize_arg) {
 	loadfilesize = ftell(file);
 	rewind(file);
 
-	char *file_data = (char*)malloc(loadfilesize); // +1 for null terminator
+	char *file_data = (char*)MEM_Alloc_HUGE(loadfilesize);
 	if (file_data == NULL) {
 		perror("Error allocating memory");
 		fclose(file);
@@ -253,7 +253,7 @@ char *loadfile(char *s, int *loadfilesize_arg) {
 
 	size_t result = fread(file_data, 1, loadfilesize, file);
 	if (result != loadfilesize) {
-		free(file_data);
+		MEM_Free_HUGE(file_data);
 		fclose(file);
 		return NULL;
 	}
@@ -267,4 +267,12 @@ char *loadfile(char *s, int *loadfilesize_arg) {
 void Systemarraycopy(void *from, int foff, void *to, int toff, int size) {
 	memmove((char*)to+toff,(char*)from+foff, size);
 //	memcpy((char*)to+toff,(char*)from+foff, size);
+}
+
+void *MEM_Alloc_HUGE(int mem_size) {
+	return malloc(mem_size);
+}
+
+void MEM_Free_HUGE(void *ptr) {
+	mfree(ptr);
 }

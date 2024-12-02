@@ -99,3 +99,6 @@ extern void bytearrayoutputstreamwrite(int byt);
 extern int bytearrayinputstreamread();
 extern void closestream();
 #endif
+
+void *MEM_Alloc_HUGE(int mem_size);
+void MEM_Free_HUGE(void *ptr);

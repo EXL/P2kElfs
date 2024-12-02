@@ -137,7 +137,7 @@ static UINT32 GFX_Draw_Step(APPLICATION_T *app);
 static UINT32 InitResourses(void);
 static void FreeResourses(void);
 
-static const char g_app_name[APP_NAME_LEN] = "FireEffect";
+static const char g_app_name[APP_NAME_LEN] = "vNesC";
 
 #if defined(EP2)
 static ldrElf g_app_elf;
@@ -1226,9 +1226,11 @@ static void Free_Memory_Blocks(void) {
 #endif
 
 static UINT32 GFX_Draw_Start(APPLICATION_T *app) {
+	UINT32 status;
 	APP_INSTANCE_T *appi;
 
 	appi = (APP_INSTANCE_T *) app;
+
 
 #if defined(EP1) || defined(EP2)
 	appi->p_bitmap = (UINT8 *) appi->ahi.bitmap.image;
@@ -1246,7 +1248,10 @@ static UINT32 GFX_Draw_Start(APPLICATION_T *app) {
 	screen_length = getWidth * getHeight;
 	initnul();
 
-	// TODO: LOADROM
+	if((status=loadrom("ROM.nes"))) {
+		LOG("%s status=%d\n", "Cannot Load ROM.nes file!", status);
+		return RESULT_FAIL;
+	}
 
 	init_values();
 
@@ -1279,39 +1284,52 @@ void Systemarraycopy(void *from, int foff, void *to, int toff, int size) {
 //	memcpy((char*)to+toff,(char*)from+foff, size);
 }
 
+void *MEM_Alloc_HUGE(int mem_size) {
+	INT32 status;
+	void *mem_ptr = uisAllocateMemory(mem_size, &status);
+	return (status == RESULT_OK) ? mem_ptr : NULL;
+}
+
+void MEM_Free_HUGE(void *ptr) {
+	uisFreeMemory(ptr);
+}
+
 char *loadfile(char *s, int *loadfilesize_arg) {
+	UINT32 status;
+	UINT32 read_bytes;
 	int loadfilesize;
+	FILE_HANDLE_T rom;
+
 	*loadfilesize_arg = 0;
-	FILE *file = fopen(s, "rb");
-	if (file == NULL) {
+
+	g_res_file_path[u_strlen(g_res_file_path) - 3] = '\0';
+	u_strcat(g_res_file_path, L"nes");
+
+	rom = DL_FsOpenFile((WCHAR *) g_res_file_path, FILE_READ_MODE, 0);
+	if (rom == FILE_HANDLE_INVALID) {
 		return NULL;
 	}
 
-	fseek(file, 0, SEEK_END);
-	loadfilesize = ftell(file);
-	rewind(file);
+	loadfilesize = DL_FsGetFileSize(rom);
 
-	char *file_data = (char*)malloc(loadfilesize); // +1 for null terminator
+	char *file_data = (char*) MEM_Alloc_HUGE(loadfilesize);
 	if (file_data == NULL) {
-		perror("Error allocating memory");
-		fclose(file);
+		LOG("%s\n", "Error allocating memory for NES ROM!");
+		DL_FsCloseFile(rom);
 		return NULL;
 	}
 
-	size_t result = fread(file_data, 1, loadfilesize, file);
-	if (result != loadfilesize) {
-		free(file_data);
-		fclose(file);
+	status = DL_FsReadFile(file_data, loadfilesize, 1, rom, &read_bytes);
+	if (status != RESULT_OK) {
+		LOG("%s\n", "Cannot read NES ROM file!");
+		MEM_Free_HUGE(file_data);
+		DL_FsCloseFile(rom);
 		return NULL;
 	}
-	fclose(file);
+
+	DL_FsCloseFile(rom);
 
 	*loadfilesize_arg = loadfilesize;
 
 	return file_data;
-}
-
-void Systemarraycopy(void *from, int foff, void *to, int toff, int size) {
-	memmove((char*)to+toff,(char*)from+foff, size);
-//	memcpy((char*)to+toff,(char*)from+foff, size);
 }
