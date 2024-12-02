@@ -1,4 +1,4 @@
-// Nes.c
+// vNesC.c
 // NES emulator
 
 #include "vNesC.h"

@@ -1,3 +1,5 @@
+// SDL2 port
+
 #include "vNesC.h"
 
 #include <SDL2/SDL.h>

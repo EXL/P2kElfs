@@ -1,4 +1,19 @@
 /*
+ * About:
+ *   A simple vNes emulator of Nintendo NES rewritten from J2ME Java (vNes) to C language using decompilation technique.
+ *
+ * Author:
+ *   vNes authors, cbn, EXL
+ *
+ * License:
+ *   GPLv2
+ *
+ * Additional information:
+ *   https://www.zophar.net/java/nes.html
+ *   https://cbn.narod.ru/elf_download.html
+ *
+ * Application type:
+ *   GUI + ATI, Nvidia + Java Heap
  */
 
 #include <loader.h>
@@ -18,7 +33,7 @@
 #include <nvidia.h>
 #endif
 
-#include "vNesC.h" /* system headers to up because of "boolean" define! */
+#include "vNesC.h" /* System headers moved above because of "boolean" define! */
 
 #define TIMER_FAST_TRIGGER_MS             (1)
 #if defined(FPS_15)

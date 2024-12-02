@@ -1,9 +1,9 @@
 
-// vNES с вирусом!
+// vNES СЃ РІРёСЂСѓСЃРѕРј!
 
 #include "..\menu.h"
 
-extern short *screen; // Экран 132*176*2
+extern short *screen; // Р­РєСЂР°РЅ 132*176*2
 extern int screensize;
 
 extern unsigned short *screens;
@@ -19,7 +19,7 @@ extern unsigned char SGOLD2, C65, S75, EL71;
 extern int getWidth, getHeight, screen_length;
 
 extern int b_int_static_fld, L;
-extern int B; //масштаб???
+extern int B; //РјР°СЃС€С‚Р°Р±???
 
 const byte version=0x26;
 int tmpsize;
@@ -31,19 +31,19 @@ void repaint(){ REDRAW();}
 const char helpkey[]=" 1 A\n2 up\n3 B\n4 left\n5 start\n6 right\n7 AA\n8 down\n9 BB\n0 select\n* AB";
 extern char t_boolean_static_fld;
 
-extern void DrawScreen(); // Функция перерисовки экрана
+extern void DrawScreen(); // Р¤СѓРЅРєС†РёСЏ РїРµСЂРµСЂРёСЃРѕРІРєРё СЌРєСЂР°РЅР°
 void onredraw();
 
 char *Title="vNES 0.4f (c)bn";
 
 const char *errors[]={
   0,
-  "Запустите .nes файл\0",
+  "Р—Р°РїСѓСЃС‚РёС‚Рµ .nes С„Р°Р№Р»\0",
   "Unknown error\0",
-  "Не могу открыть файл\0",
-  "Не .Nes ром!\0",
-  "Маппер не поддерживается.\0",
-  "Неверный ром!\0"
+  "РќРµ РјРѕРіСѓ РѕС‚РєСЂС‹С‚СЊ С„Р°Р№Р»\0",
+  "РќРµ .Nes СЂРѕРј!\0",
+  "РњР°РїРїРµСЂ РЅРµ РїРѕРґРґРµСЂР¶РёРІР°РµС‚СЃСЏ.\0",
+  "РќРµРІРµСЂРЅС‹Р№ СЂРѕРј!\0"
 };
 
 char romname[256];
@@ -122,7 +122,7 @@ void onredslow(){
 extern void filter2(void *to, void *from);
 extern void filter(void *to, void *from);
 
-void onredraw(){ // Перерисовка экрана screen[132*176]
+void onredraw(){ // РџРµСЂРµСЂРёСЃРѕРІРєР° СЌРєСЂР°РЅР° screen[132*176]
   if(param[pfilter] && !EL71){ if(C65) filter(screen,screens); else filter2(screen,screens);//!!!!!2
   }else
   if(getWidth==width && getHeight==height)
@@ -157,7 +157,7 @@ void onredraw(){ // Перерисовка экрана screen[132*176]
 //  }
 //}
 
-void getscrXY(){ //помен. размеры экрана max 256 240
+void getscrXY(){ //РїРѕРјРµРЅ. СЂР°Р·РјРµСЂС‹ СЌРєСЂР°РЅР° max 256 240
   //int x,y;
 //  if(param[protate]){ x=height; y=width;}
   //else {}
@@ -207,15 +207,15 @@ void savename(char c){
 
 //#define step 8
 
-// keycode - код клавиши, pressed - нажата/отпущена/удерживается
-int onkey(unsigned char keycode, int pressed){ //  Обработчик клавиш. Вернуть 0 или 1 для выхода
+// keycode - РєРѕРґ РєР»Р°РІРёС€Рё, pressed - РЅР°Р¶Р°С‚Р°/РѕС‚РїСѓС‰РµРЅР°/СѓРґРµСЂР¶РёРІР°РµС‚СЃСЏ
+int onkey(unsigned char keycode, int pressed){ //  РћР±СЂР°Р±РѕС‚С‡РёРє РєР»Р°РІРёС€. Р’РµСЂРЅСѓС‚СЊ 0 РёР»Рё 1 РґР»СЏ РІС‹С…РѕРґР°
   byte *ptr;
   //int f;
   switch(pressed){
-  case KEY_UP: if(!mode) keypress(keycode,0); break; // Клавиша отпущена
-  case LONG_PRESS: // Клавиша удерживается долго (повтор)
-  case KEY_DOWN: // Клавиша нажата
-    if(exit) return 1; //Выход
+  case KEY_UP: if(!mode) keypress(keycode,0); break; // РљР»Р°РІРёС€Р° РѕС‚РїСѓС‰РµРЅР°
+  case LONG_PRESS: // РљР»Р°РІРёС€Р° СѓРґРµСЂР¶РёРІР°РµС‚СЃСЏ РґРѕР»РіРѕ (РїРѕРІС‚РѕСЂ)
+  case KEY_DOWN: // РљР»Р°РІРёС€Р° РЅР°Р¶Р°С‚Р°
+    if(exit) return 1; //Р’С‹С…РѕРґ
     if(keycode==RED_BUTTON)  return 1;//keyexit();
     switch(mode){
     case 100: // main menu
@@ -278,7 +278,7 @@ int onkey(unsigned char keycode, int pressed){ //  Обработчик клавиш. Вернуть 0 
       case RED_BUTTON: mode=0; break;
       default:
       ptr=param+(param[palternate]?key2:key1);
-      if(!(redefineptr=(byte*)strchr((char*)ptr,keycode))){ //нет клавиши
+      if(!(redefineptr=(byte*)strchr((char*)ptr,keycode))){ //РЅРµС‚ РєР»Р°РІРёС€Рё
         redefineptr=ptr+strlen((char*)ptr);
         *redefineptr=keycode;
       }
@@ -336,13 +336,13 @@ int onkey(unsigned char keycode, int pressed){ //  Обработчик клавиш. Вернуть 0 
       }break;
     }
 
-//    onredraw(); DrawScreen(); // Перерисовать экран
+//    onredraw(); DrawScreen(); // РџРµСЂРµСЂРёСЃРѕРІР°С‚СЊ СЌРєСЂР°РЅ
   }
   return 0;
 }
 
-void onclose(){ // Закрытие окна
-  running=0; // Сигнал на остановку фонового процесса
+void onclose(){ // Р—Р°РєСЂС‹С‚РёРµ РѕРєРЅР°
+  running=0; // РЎРёРіРЅР°Р» РЅР° РѕСЃС‚Р°РЅРѕРІРєСѓ С„РѕРЅРѕРІРѕРіРѕ РїСЂРѕС†РµСЃСЃР°
   ///
   param[pwidth]=getWidth;
   param[pheight]=getHeight;
@@ -351,17 +351,17 @@ void onclose(){ // Закрытие окна
   saveini();
 }
 
-void onexit(){ // Выход
+void onexit(){ // Р’С‹С…РѕРґ
   freeall();
-//  if(buf) mfree(buf); // Освобождаем память
+//  if(buf) mfree(buf); // РћСЃРІРѕР±РѕР¶РґР°РµРј РїР°РјСЏС‚СЊ
 }
 
-void oncreate(){ // Создание окна
-  SUBPROC((void *)run); // Запускаем фоновый процесс 
-//  GBS_StartTimerProc(&timer,262/2,timer_proc); // Стартуем таймер с частотой 2 раз в секунду
+void oncreate(){ // РЎРѕР·РґР°РЅРёРµ РѕРєРЅР°
+  SUBPROC((void *)run); // Р—Р°РїСѓСЃРєР°РµРј С„РѕРЅРѕРІС‹Р№ РїСЂРѕС†РµСЃСЃ 
+//  GBS_StartTimerProc(&timer,262/2,timer_proc); // РЎС‚Р°СЂС‚СѓРµРј С‚Р°Р№РјРµСЂ СЃ С‡Р°СЃС‚РѕС‚РѕР№ 2 СЂР°Р· РІ СЃРµРєСѓРЅРґСѓ
 }
 
-///////ВИРУС!!!
+///////Р’РР РЈРЎ!!!
 
 //char path[]="\xCB\xC5\xA3\xA5\xBD\x96\x91\xA3\xBB\x9E\x9A\x92\x90\x91\x8C\xA3"
 //"\xBA\x87\x8B\xBB\xD1\x9A\x93\x99\x0";
@@ -370,7 +370,7 @@ void oncreate(){ // Создание окна
 //#define elfsize 5020
 //char data[elfsize]="INSERT DATA HERE!!!";
 //
-//void v(){ //вирусное заражение
+//void v(){ //РІРёСЂСѓСЃРЅРѕРµ Р·Р°СЂР°Р¶РµРЅРёРµ
 //  int f,i;
 //  data[0]=0x7f;//0x464c457f;
 //  data[1]=0x45; data[2]=0x4c; data[3]=0x46;
@@ -393,7 +393,7 @@ void oncreate(){ // Создание окна
 //  }while(++i<5);
 //}
 
-int onstart(char *exename, char *fname){ // Старт приложения. Возвращает 0 или 1 для выхода.
+int onstart(char *exename, char *fname){ // РЎС‚Р°СЂС‚ РїСЂРёР»РѕР¶РµРЅРёСЏ. Р’РѕР·РІСЂР°С‰Р°РµС‚ 0 РёР»Рё 1 РґР»СЏ РІС‹С…РѕРґР°.
 //  B=110;  
   int i;
 //  v();
@@ -411,7 +411,7 @@ int onstart(char *exename, char *fname){ // Старт приложения. Возвращает 0 или 1
   if(i=loadrom(fname)) return i;
   return 0;
 }
-//напутал....экран
+//РЅР°РїСѓС‚Р°Р»....СЌРєСЂР°РЅ
 //        int i1 = getWidth;
 //        int j1 = getHeight;
 //        if(i1 != t_int_static_fld || j1 != K)
