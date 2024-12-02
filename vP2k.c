@@ -1290,13 +1290,21 @@ void Systemarraycopy(void *from, int foff, void *to, int toff, int size) {
 }
 
 void *MEM_Alloc_HUGE(int mem_size) {
+#if defined(JAVA_HEAP)
+	return AmMemAllocPointer(mem_size);
+#else
 	INT32 status;
 	void *mem_ptr = uisAllocateMemory(mem_size, &status);
 	return (status == RESULT_OK) ? mem_ptr : NULL;
+#endif
 }
 
 void MEM_Free_HUGE(void *ptr) {
+#if defined(JAVA_HEAP)
+	AmMemFreePointer(ptr);
+#else
 	uisFreeMemory(ptr);
+#endif
 }
 
 char *loadfile(char *s, int *loadfilesize_arg) {
