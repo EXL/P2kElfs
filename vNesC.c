@@ -38,10 +38,12 @@ static int aint2int(int i1, int j1) ;
 //static void b(InputStream inputstream) throws IOException
 static int bint1int(int i1) ;
 static void avoid2int(int i1, int j1) ;
+#if defined(SAVE_LOAD)
 static void c_out();
 static void b_out();
 static void b_in();
 static void c_in();
+#endif
 
 unsigned char sbuf[sbufsize], *ebuf=sbuf;
 
@@ -3768,6 +3770,7 @@ label0:;
         }
     }
 
+#if defined(SAVE_LOAD)
     static void c_in(){//(InputStream inputstream) throws IOException {
         switch(w) {
         default:
@@ -3865,6 +3868,155 @@ label0:;
             break;
         }
     }
+
+    static void b_in(){//(InputStream inputstream) throws IOException {
+        for(int i1 = 0; i1 < 10240; i1++)
+            vram[i1] = (byte)inputstreamread();
+
+        for(int j1 = 0; j1 < b_int_array1d_static_fld_length; j1++) {
+            b_int_array1d_static_fld[j1] = (inputstreamread() & 0xff) << 0;
+            b_int_array1d_static_fld[j1] |= (inputstreamread() & 0xff) << 8;
+            b_int_array1d_static_fld[j1] |= (inputstreamread() & 0xff) << 16;
+            b_int_array1d_static_fld[j1] |= (inputstreamread() & 0xff) << 24;
+        }
+
+        q_boolean_static_fld = inputstreamread() == 255;
+        a_int_static_fld = inputstreamread();
+        for(int k1 = 0; k1 < e_int_array1d_static_fld_length; k1++)
+            e_int_array1d_static_fld[k1] = inputstreamread() & 0xff;
+
+        S = inputstreamread() & 0xff;
+        R = inputstreamread() & 0xff;
+        o_int_static_fld = inputstreamread() & 0xff;
+        e_int_static_fld = inputstreamread() & 0xff;
+        V = inputstreamread() & 0xff;
+        D = (inputstreamread() & 0xff) << 0;
+        D |= (inputstreamread() & 0xff) << 8;
+        D |= (inputstreamread() & 0xff) << 16;
+        D |= (inputstreamread() & 0xff) << 24;
+        y = (inputstreamread() & 0xff) << 0;
+        y |= (inputstreamread() & 0xff) << 8;
+        y |= (inputstreamread() & 0xff) << 16;
+        y |= (inputstreamread() & 0xff) << 24;
+        c_int_static_fld = inputstreamread() & 0xff;
+        ab = inputstreamread() & 0xff;
+        q_int_static_fld = inputstreamread() & 0xff;
+        j_int_static_fld = inputstreamread() & 0xff;
+        for(int l1 = 0; l1 < i_int_array1d_static_fld_length; l1++) {
+            i_int_array1d_static_fld[l1] = (inputstreamread() & 0xff) << 0;
+            i_int_array1d_static_fld[l1] |= (inputstreamread() & 0xff) << 8;
+            i_int_array1d_static_fld[l1] |= (inputstreamread() & 0xff) << 16;
+            i_int_array1d_static_fld[l1] |= (inputstreamread() & 0xff) << 24;
+        }
+
+        for(int i2 = 0; i2 < l_int_array1d_static_fld_length; i2++) {
+            l_int_array1d_static_fld[i2] = (inputstreamread() & 0xff) << 0;
+            l_int_array1d_static_fld[i2] |= (inputstreamread() & 0xff) << 8;
+            l_int_array1d_static_fld[i2] |= (inputstreamread() & 0xff) << 16;
+            l_int_array1d_static_fld[i2] |= (inputstreamread() & 0xff) << 24;
+        }
+
+        short c1 = 0x2000;//'\u2000';
+        if(E == 0)
+            c1 = 0x4000;//'\u4000';
+        for(int j2 = 0; j2 < c1; j2++) {
+            vram[j2+ram] = (byte)inputstreamread();
+            if((j2 & 8) != 0 && j2 >= 8192) {
+                int l2 = vram[ram+(j2 ^ 8)] & 0xff;
+                int i3 = vram[ram+j2] & 0xff;
+                int j3 = ((j2 & 0xfffffff0) >> 1 | (j2 & 7)) - 4096;
+                a_char_array1d_static_fld[j3] = (short)(
+                    (l2 & 1)         |
+                    (l2 & 2) << 1    |
+                    (l2 & 4) << 2    |
+                    (l2 & 8) << 3    |
+                    (l2 & 0x10) << 4 |
+                    (l2 & 0x20) << 5 |
+                    (l2 & 0x40) << 6 |
+                    (l2 & 0x80) << 7 |
+                    (i3 & 1) << 1    |
+                    (i3 & 2) << 2    |
+                    (i3 & 4) << 3    |
+                    (i3 & 8) << 4    |
+                    (i3 & 0x10) << 5 |
+                    (i3 & 0x20) << 6 |
+                    (i3 & 0x40) << 7 |
+                    (i3 & 0x80) << 8
+                );
+            }
+        }
+
+        b_boolean_static_fld = inputstreamread() == 255;
+        x = inputstreamread() & 0xff;
+        for(int k2 = 0; k2 < d_byte_array1d_static_fld_length; k2++)
+            d_byte_array1d_static_fld[k2] = (byte)inputstreamread();
+
+        p_int_static_fld = d_byte_array1d_static_fld[0] & 0xff;
+        C = inputstreamread() & 0xff;
+        j();
+    }
+
+    static void c_out(){//(OutputStream outputstream) throws IOException {
+        for(int i1 = 0; i1 < 10240; i1++)
+            outputstreamwrite(vram[i1] & 0xff);
+
+        for(int j1 = 0; j1 < b_int_array1d_static_fld_length; j1++) {
+            outputstreamwrite(b_int_array1d_static_fld[j1] >> 0 & 0xff);
+            outputstreamwrite(b_int_array1d_static_fld[j1] >> 8 & 0xff);
+            outputstreamwrite(b_int_array1d_static_fld[j1] >> 16 & 0xff);
+            outputstreamwrite(b_int_array1d_static_fld[j1] >> 24 & 0xff);
+        }
+
+        outputstreamwrite(q_boolean_static_fld ? 255 : 0);
+        outputstreamwrite(a_int_static_fld & 0xff);
+        for(int k1 = 0; k1 < e_int_array1d_static_fld_length; k1++)
+            outputstreamwrite(e_int_array1d_static_fld[k1] & 0xff);
+
+        outputstreamwrite(S & 0xff);
+        outputstreamwrite(R & 0xff);
+        outputstreamwrite(o_int_static_fld & 0xff);
+        outputstreamwrite(e_int_static_fld & 0xff);
+        outputstreamwrite(V & 0xff);
+        outputstreamwrite(D >> 0 & 0xff);
+        outputstreamwrite(D >> 8 & 0xff);
+        outputstreamwrite(D >> 16 & 0xff);
+        outputstreamwrite(D >> 24 & 0xff);
+        outputstreamwrite(y >> 0 & 0xff);
+        outputstreamwrite(y >> 8 & 0xff);
+        outputstreamwrite(y >> 16 & 0xff);
+        outputstreamwrite(y >> 24 & 0xff);
+        outputstreamwrite(c_int_static_fld & 0xff);
+        outputstreamwrite(ab & 0xff);
+        outputstreamwrite(q_int_static_fld & 0xff);
+        outputstreamwrite(j_int_static_fld & 0xff);
+        for(int l1 = 0; l1 < i_int_array1d_static_fld_length; l1++) {
+            outputstreamwrite(i_int_array1d_static_fld[l1] >> 0 & 0xff);
+            outputstreamwrite(i_int_array1d_static_fld[l1] >> 8 & 0xff);
+            outputstreamwrite(i_int_array1d_static_fld[l1] >> 16 & 0xff);
+            outputstreamwrite(i_int_array1d_static_fld[l1] >> 24 & 0xff);
+        }
+
+        for(int i2 = 0; i2 < l_int_array1d_static_fld_length; i2++) {
+            outputstreamwrite(l_int_array1d_static_fld[i2] >> 0 & 0xff);
+            outputstreamwrite(l_int_array1d_static_fld[i2] >> 8 & 0xff);
+            outputstreamwrite(l_int_array1d_static_fld[i2] >> 16 & 0xff);
+            outputstreamwrite(l_int_array1d_static_fld[i2] >> 24 & 0xff);
+        }
+
+        short c1 = 0x2000;//'\u2000';
+        if(E == 0)
+            c1 = 0x4000;//'\u4000';
+        for(int j2 = 0; j2 < c1; j2++)
+            outputstreamwrite(vram[ram+j2] & 0xff);
+
+        outputstreamwrite(b_boolean_static_fld ? 255 : 0);
+        outputstreamwrite(x & 0xff);
+        for(int k2 = 0; k2 < d_byte_array1d_static_fld_length; k2++)
+            outputstreamwrite(d_byte_array1d_static_fld[k2] & 0xff);
+
+        outputstreamwrite(C & 0xff);
+    }
+#endif
 
     static boolean abool() {
         return (d_int_array1d_static_fld[0] & 0x40) != 0;
@@ -4107,154 +4259,6 @@ label0:;
         else
             k1 = -a_short_array1d_static_fld[360 - j1];
         return (k1 * i1) / 1000;
-    }
-
-    static void b_in(){//(InputStream inputstream) throws IOException {
-        for(int i1 = 0; i1 < 10240; i1++)
-            vram[i1] = (byte)inputstreamread();
-
-        for(int j1 = 0; j1 < b_int_array1d_static_fld_length; j1++) {
-            b_int_array1d_static_fld[j1] = (inputstreamread() & 0xff) << 0;
-            b_int_array1d_static_fld[j1] |= (inputstreamread() & 0xff) << 8;
-            b_int_array1d_static_fld[j1] |= (inputstreamread() & 0xff) << 16;
-            b_int_array1d_static_fld[j1] |= (inputstreamread() & 0xff) << 24;
-        }
-
-        q_boolean_static_fld = inputstreamread() == 255;
-        a_int_static_fld = inputstreamread();
-        for(int k1 = 0; k1 < e_int_array1d_static_fld_length; k1++)
-            e_int_array1d_static_fld[k1] = inputstreamread() & 0xff;
-
-        S = inputstreamread() & 0xff;
-        R = inputstreamread() & 0xff;
-        o_int_static_fld = inputstreamread() & 0xff;
-        e_int_static_fld = inputstreamread() & 0xff;
-        V = inputstreamread() & 0xff;
-        D = (inputstreamread() & 0xff) << 0;
-        D |= (inputstreamread() & 0xff) << 8;
-        D |= (inputstreamread() & 0xff) << 16;
-        D |= (inputstreamread() & 0xff) << 24;
-        y = (inputstreamread() & 0xff) << 0;
-        y |= (inputstreamread() & 0xff) << 8;
-        y |= (inputstreamread() & 0xff) << 16;
-        y |= (inputstreamread() & 0xff) << 24;
-        c_int_static_fld = inputstreamread() & 0xff;
-        ab = inputstreamread() & 0xff;
-        q_int_static_fld = inputstreamread() & 0xff;
-        j_int_static_fld = inputstreamread() & 0xff;
-        for(int l1 = 0; l1 < i_int_array1d_static_fld_length; l1++) {
-            i_int_array1d_static_fld[l1] = (inputstreamread() & 0xff) << 0;
-            i_int_array1d_static_fld[l1] |= (inputstreamread() & 0xff) << 8;
-            i_int_array1d_static_fld[l1] |= (inputstreamread() & 0xff) << 16;
-            i_int_array1d_static_fld[l1] |= (inputstreamread() & 0xff) << 24;
-        }
-
-        for(int i2 = 0; i2 < l_int_array1d_static_fld_length; i2++) {
-            l_int_array1d_static_fld[i2] = (inputstreamread() & 0xff) << 0;
-            l_int_array1d_static_fld[i2] |= (inputstreamread() & 0xff) << 8;
-            l_int_array1d_static_fld[i2] |= (inputstreamread() & 0xff) << 16;
-            l_int_array1d_static_fld[i2] |= (inputstreamread() & 0xff) << 24;
-        }
-
-        short c1 = 0x2000;//'\u2000';
-        if(E == 0)
-            c1 = 0x4000;//'\u4000';
-        for(int j2 = 0; j2 < c1; j2++) {
-            vram[j2+ram] = (byte)inputstreamread();
-            if((j2 & 8) != 0 && j2 >= 8192) {
-                int l2 = vram[ram+(j2 ^ 8)] & 0xff;
-                int i3 = vram[ram+j2] & 0xff;
-                int j3 = ((j2 & 0xfffffff0) >> 1 | (j2 & 7)) - 4096;
-                a_char_array1d_static_fld[j3] = (short)(
-                    (l2 & 1)         |
-                    (l2 & 2) << 1    |
-                    (l2 & 4) << 2    |
-                    (l2 & 8) << 3    |
-                    (l2 & 0x10) << 4 |
-                    (l2 & 0x20) << 5 |
-                    (l2 & 0x40) << 6 |
-                    (l2 & 0x80) << 7 |
-                    (i3 & 1) << 1    |
-                    (i3 & 2) << 2    |
-                    (i3 & 4) << 3    |
-                    (i3 & 8) << 4    |
-                    (i3 & 0x10) << 5 |
-                    (i3 & 0x20) << 6 |
-                    (i3 & 0x40) << 7 |
-                    (i3 & 0x80) << 8
-                );
-            }
-        }
-
-        b_boolean_static_fld = inputstreamread() == 255;
-        x = inputstreamread() & 0xff;
-        for(int k2 = 0; k2 < d_byte_array1d_static_fld_length; k2++)
-            d_byte_array1d_static_fld[k2] = (byte)inputstreamread();
-
-        p_int_static_fld = d_byte_array1d_static_fld[0] & 0xff;
-        C = inputstreamread() & 0xff;
-        j();
-    }
-
-    static void c_out(){//(OutputStream outputstream) throws IOException {
-        for(int i1 = 0; i1 < 10240; i1++)
-            outputstreamwrite(vram[i1] & 0xff);
-
-        for(int j1 = 0; j1 < b_int_array1d_static_fld_length; j1++) {
-            outputstreamwrite(b_int_array1d_static_fld[j1] >> 0 & 0xff);
-            outputstreamwrite(b_int_array1d_static_fld[j1] >> 8 & 0xff);
-            outputstreamwrite(b_int_array1d_static_fld[j1] >> 16 & 0xff);
-            outputstreamwrite(b_int_array1d_static_fld[j1] >> 24 & 0xff);
-        }
-
-        outputstreamwrite(q_boolean_static_fld ? 255 : 0);
-        outputstreamwrite(a_int_static_fld & 0xff);
-        for(int k1 = 0; k1 < e_int_array1d_static_fld_length; k1++)
-            outputstreamwrite(e_int_array1d_static_fld[k1] & 0xff);
-
-        outputstreamwrite(S & 0xff);
-        outputstreamwrite(R & 0xff);
-        outputstreamwrite(o_int_static_fld & 0xff);
-        outputstreamwrite(e_int_static_fld & 0xff);
-        outputstreamwrite(V & 0xff);
-        outputstreamwrite(D >> 0 & 0xff);
-        outputstreamwrite(D >> 8 & 0xff);
-        outputstreamwrite(D >> 16 & 0xff);
-        outputstreamwrite(D >> 24 & 0xff);
-        outputstreamwrite(y >> 0 & 0xff);
-        outputstreamwrite(y >> 8 & 0xff);
-        outputstreamwrite(y >> 16 & 0xff);
-        outputstreamwrite(y >> 24 & 0xff);
-        outputstreamwrite(c_int_static_fld & 0xff);
-        outputstreamwrite(ab & 0xff);
-        outputstreamwrite(q_int_static_fld & 0xff);
-        outputstreamwrite(j_int_static_fld & 0xff);
-        for(int l1 = 0; l1 < i_int_array1d_static_fld_length; l1++) {
-            outputstreamwrite(i_int_array1d_static_fld[l1] >> 0 & 0xff);
-            outputstreamwrite(i_int_array1d_static_fld[l1] >> 8 & 0xff);
-            outputstreamwrite(i_int_array1d_static_fld[l1] >> 16 & 0xff);
-            outputstreamwrite(i_int_array1d_static_fld[l1] >> 24 & 0xff);
-        }
-
-        for(int i2 = 0; i2 < l_int_array1d_static_fld_length; i2++) {
-            outputstreamwrite(l_int_array1d_static_fld[i2] >> 0 & 0xff);
-            outputstreamwrite(l_int_array1d_static_fld[i2] >> 8 & 0xff);
-            outputstreamwrite(l_int_array1d_static_fld[i2] >> 16 & 0xff);
-            outputstreamwrite(l_int_array1d_static_fld[i2] >> 24 & 0xff);
-        }
-
-        short c1 = 0x2000;//'\u2000';
-        if(E == 0)
-            c1 = 0x4000;//'\u4000';
-        for(int j2 = 0; j2 < c1; j2++)
-            outputstreamwrite(vram[ram+j2] & 0xff);
-
-        outputstreamwrite(b_boolean_static_fld ? 255 : 0);
-        outputstreamwrite(x & 0xff);
-        for(int k2 = 0; k2 < d_byte_array1d_static_fld_length; k2++)
-            outputstreamwrite(d_byte_array1d_static_fld[k2] & 0xff);
-
-        outputstreamwrite(C & 0xff);
     }
 
     static int bint1int(int i1) {

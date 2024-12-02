@@ -1,22 +1,23 @@
 // vNesC.h
 
+#define VNES_VIEWPORT_WIDTH 256
+#define VNES_VIEWPORT_HEIGHT 240
+
 #if defined(USE_SDL2)
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
+
+#define true 1
+#define false 0
+#define mfree free
 #elif defined(__P2K__)
+#include <mem.h>
 #include <typedefs.h>
 #endif
 
-#define mfree free
-
 #define boolean char
 #define byte signed char
-#undef true
-#define true 1
-#undef false
-#define false 0
-#undef null
 #define null 0
 
 #define b_int_array1d_static_fld_length 8 //?
@@ -90,10 +91,11 @@ char *loadfile(char *s, int *loadfilesize) ;
 #define d_byte_array1d_static_fld_length 256
 #define d_int_array1d_static_fld_length 8 //???4
 
+extern void Systemarraycopy(void *from, int foff, void *to, int toff, int size);
+
 #if defined(SAVE_LOAD)
 extern FILE *openstream(int savemode);
 extern void bytearrayoutputstreamwrite(int byt);
 extern int bytearrayinputstreamread();
-extern void Systemarraycopy(void *from, int foff, void *to, int toff, int size);
 extern void closestream();
 #endif

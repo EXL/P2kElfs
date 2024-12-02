@@ -98,8 +98,8 @@ static void main_loop_step(void) {
 }
 
 int main(int argc, char *argv[]) {
-	getWidth      = 256;
-	getHeight     = 240;
+	getWidth      = VNES_VIEWPORT_WIDTH;
+	getHeight     = VNES_VIEWPORT_HEIGHT;
 	screen_length = getWidth * getHeight;
 
 	int i;
@@ -177,11 +177,6 @@ int main(int argc, char *argv[]) {
 	SDL_Quit();
 
 	return 0;
-}
-
-void Systemarraycopy(void *from, int foff, void *to, int toff, int size) {
-//	memmove((char*)to+toff,(char*)from+foff, size);
-	memcpy((char*)to+toff,(char*)from+foff, size);
 }
 
 #if defined(SAVE_LOAD)
@@ -267,4 +262,9 @@ char *loadfile(char *s, int *loadfilesize_arg) {
 	*loadfilesize_arg = loadfilesize;
 
 	return file_data;
+}
+
+void Systemarraycopy(void *from, int foff, void *to, int toff, int size) {
+	memmove((char*)to+toff,(char*)from+foff, size);
+//	memcpy((char*)to+toff,(char*)from+foff, size);
 }
