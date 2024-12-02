@@ -3,9 +3,11 @@
 
 CC=gcc
 STRIP=strip
-CFLAGS=`sdl2-config --cflags` -O2 -g -DUSE_SDL2 -Wall -pedantic -Wno-maybe-uninitialized -Wno-misleading-indentation
+CFLAGS=`sdl2-config --cflags` -O3 -DUSE_SDL2
 #CFLAGS+=-DREPAINT_HOOK
-LFLAGS=`sdl2-config --libs` -Wl,--allow-multiple-definition
+#CFLAGS+=-g
+CFLAGS+=-Wall -pedantic -Wno-builtin-declaration-mismatch
+LFLAGS=`sdl2-config --libs`
 NAME=vNesC
 ifeq ($(OS), Windows_NT)
 	EXECUTABLE=$(NAME).exe
@@ -17,7 +19,7 @@ all: $(EXECUTABLE)
 
 $(EXECUTABLE): vNesC.o vSdl2.o
 	$(CC) $(CFLAGS) vNesC.o vSdl2.o -o $(EXECUTABLE) $(LFLAGS)
-#	$(STRIP) -s $(EXECUTABLE)
+	$(STRIP) -s $(EXECUTABLE)
 
 clean:
 	-rm -f *.o

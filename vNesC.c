@@ -3,7 +3,54 @@
 
 #include "vNesC.h"
 
-int nn; //temp
+static void serviceRepaints() { }
+static void Systemgc() { }
+static long SystemcurrentTimeMillis() { return 0; }
+
+static void k() ;
+static void f() ;
+static void l() ;
+static void xxf(int i1, int j1) ;
+static void xxd(int i1, int j1) ;
+static void j() ;
+static void xd(int i1) ;
+static boolean bbool() ;
+static void m() ;
+static int xxb(int i1, int j1) ;
+//static void d() ;
+static void c0() ;
+static void avoid1int(int i1) ;
+static void g() ;
+static int loadROM(char *s) ;
+static void avoid() ;
+static void b() ;
+static boolean abool() ;
+static void h() ;
+static int aint1int(int i1) ;
+static void i() ;
+static void e(int i1, int j1) ;
+static void xxxxb(int i1, int j1, int k1, int l1) ;
+static void avoid4int(int i1, int j1, int k1, int l1) ;
+static void c(int i1, int j1) ;
+static void avoid8int(int i1, int j1, int k1, int l1, int i2, int j2, int k2, int l2) ;
+static void bvoid2int(int i1, int j1) ;
+static int aint2int(int i1, int j1) ;
+//static void b(InputStream inputstream) throws IOException
+static int bint1int(int i1) ;
+static void avoid2int(int i1, int j1) ;
+static void c_out();
+static void b_out();
+static void b_in();
+static void c_in();
+
+unsigned char sbuf[sbufsize], *ebuf=sbuf;
+
+static int main_a_int_fld, main_c_int_fld;
+static boolean main_b_boolean_fld;
+int getWidth, getHeight, screen_length;
+static int nn; //temp
+
+static volatile int running;
 
     static int b_int_static_fld = 128;
     static int Z = 0;
@@ -37,7 +84,7 @@ int nn; //temp
     static int N = 0;
     static int s_int_static_fld = 0;
     static int v_int_static_fld = 0;
-    int B = 100;
+    static int B = 100;
     static int z = 0;
     static boolean q_boolean_static_fld = true;
     static boolean a_boolean_static_fld = false;
@@ -47,10 +94,10 @@ int nn; //temp
     static int I = 0;
     static boolean e_boolean_static_fld = false;
     static int F = 0;
-    int k_int_static_fld = 0;
+    static int k_int_static_fld = 0;
     static int a_int_static_fld = 0;
     static int X = 0;
-    boolean o_boolean_static_fld = false;
+    static boolean o_boolean_static_fld = false;
     static char *a_java_lang_String_static_fld = null;
     static int y = 0;
     static int D = 0;
@@ -69,7 +116,7 @@ int nn; //temp
     static int u_int_static_fld = 0;
     static int K = -1;
     static int t_int_static_fld = -1;
-    boolean t_boolean_static_fld = true;
+    static boolean t_boolean_static_fld = true;
     static ushort j_int_array1d_static_fld[32];
     static ushort g_int_array1d_static_fld[64];
     static int e_int_array1d_static_fld[32];
@@ -88,15 +135,15 @@ int nn; //temp
     static int J = 1;
     static int Y = 0;
     static boolean u_boolean_static_fld = false;
-    int A = 5;
+    static int A = 5;
     static int d_int_array1d_static_fld[8];//=0; //free?????
-    boolean v_boolean_static_fld = false;
+    static boolean v_boolean_static_fld = false;
     static boolean h_boolean_static_fld = false;
     static char *b_java_lang_String_static_fld;
     static boolean m_boolean_static_fld = false;
     static boolean s_boolean_static_fld = false;
-    boolean d_boolean_static_fld = false;
-    static boolean k_boolean_static_fld = false;
+    static boolean d_boolean_static_fld = false;
+//    static boolean k_boolean_static_fld = false;
     static int V = 4;
     static int p_int_static_fld = 0;
     static byte d_byte_array1d_static_fld[256];
@@ -117,8 +164,8 @@ int nn; //temp
         1000
     };
     static boolean c_boolean_static_fld = false;
-    boolean l_boolean_static_fld = false;
-    boolean j_boolean_static_fld = false;
+    static boolean l_boolean_static_fld = false;
+    static boolean j_boolean_static_fld = false;
     ushort *screens=0; //free screen!!!
     static int h_int_static_fld;
     static int r_int_static_fld;
@@ -130,14 +177,15 @@ int nn; //temp
     static int l_int_static_fld = -1;
     static int M = 0;
     static int ram=0, ramsize=0;
-    int keyindex=-1;
-    char *fmessage=null;
-
-
-
+    static int keyindex=-1;
 
     static void k() {
-        xxxxb((m_int_static_fld << 5) + (Z & 0x1f), (m_int_static_fld << 5) + (f_int_static_fld & 0x1f), (m_int_static_fld << 5) + (n_int_static_fld & 0x1f), (m_int_static_fld << 5) + (Q & 0x1f));
+        xxxxb(
+            (m_int_static_fld << 5) + (Z & 0x1f),
+            (m_int_static_fld << 5) + (f_int_static_fld & 0x1f),
+            (m_int_static_fld << 5) + (n_int_static_fld & 0x1f),
+            (m_int_static_fld << 5) + (Q & 0x1f)
+        );
     }
 
     static void f() {
@@ -175,30 +223,30 @@ int nn; //temp
         }
     }
 
-    byte *abyte0;
-    byte byte4,byte5,byte6,byte7,byte8,byte9,byte10,byte11,byte12,byte13,byte14;
-    int k7;
-    int i8,i9,i10,i11,i12,i13,i14,i15,i16,i17,i18,i19,i20,i21,i22,i23,i24,i25,i26,i27,i28,i29,i30,i31,i32,i33,i34,i35,i36,i37;
-    int j8,j9,j10,j11,j12,j13,j14,j15,j16,j17,j18,j19,j20,j21,j22,j23,j24,j25,j26,j27,j28,j29,j30,j31,j32,j33,j34,j35,j36,j37;
-    int k8,k9,k10,k11,k12,k13,k14,k15,k16,k17,k18,k19,k20,k21,k22,k23,k24,k25,k26,k27,k28,k29,k30,k31,k32,k33,k34,k35,k36;
-    int l10,l11,l12,l13,l14,l15,l16,l17,l18,l19,l20,l21,l22,l23,l24,l25,l26,l27,l28,l29,l30,l31,l32,l33,l34,l35,l36;
-    int i6,j6,i7,j7;
-    int i1, j1, k1, l1, i2, byte0, j2, k2, l2, i3, j3, k3, l3, i4, j4;
-    int ai[100];
-    int ai1[100];
-    int *ai2;
-    int k4;
-    int l4;
-    int i5;
-    int k5;
-    boolean flag;
-    int l5;
-    long l6;
-    boolean flag1;
-    boolean flag2;
-    boolean flag3;
-    boolean flag4;
-    boolean flag5;
+    static byte *abyte0;
+    static byte byte4,byte5,byte6,byte7,byte8,byte9,byte10,byte11,byte12,byte13,byte14;
+    static int k7;
+    static int i8,i9,i10,i11,i12,i13,i14,i15,i16,i17,i18,i19,i20,i21,i22,i23,i24,i25,i26,i27,i28,i29,i30,i31,i32,i33,i34,i35,i36,i37;
+    static int j8,j9,j10,j11,j12,j13,j14,j15,j16,j17,j18,j19,j20,j21,j22,j23,j24,j25,j26,j27,j28,j29,j30,j31,j32,j33,j34,j35,j36,j37;
+    static int k8,k9,k10,k11,k12,k13,k14,k15,k16,k17,k18,k19,k20,k21,k22,k23,k24,k25,k26,k27,k28,k29,k30,k31,k32,k33,k34,k35,k36;
+    static int l10,l11,l12,l13,l14,l15,l16,l17,l18,l19,l20,l21,l22,l23,l24,l25,l26,l27,l28,l29,l30,l31,l32,l33,l34,l35,l36;
+    static int i6,j6,i7,j7;
+    static int i1, j1, k1, l1, i2, byte0, j2, k2, l2, i3, j3, k3, l3, i4, j4;
+    static int ai[100];
+    static int ai1[100];
+    static int *ai2;
+    static int k4;
+    static int l4;
+    static int i5;
+    static int k5;
+    static boolean flag;
+    static int l5;
+    static long l6;
+    static boolean flag1;
+    static boolean flag2;
+    static boolean flag3;
+    static boolean flag4;
+    static boolean flag5;
 
     void init_values(void) {
         running=1;
@@ -220,7 +268,7 @@ int nn; //temp
         i4 = 0;
         j4 = -1;
         ai2 = b_int_array1d_static_fld;
-        k4 = abyte0[ai2[7] + 65532] & 0xff | (abyte0[ai2[7] + 65533] & 0xff) << 8;
+        k4 = (abyte0[ai2[7] + 65532] & 0xff) | (abyte0[ai2[7] + 65533] & 0xff) << 8;
 
         i5 = k4 + (l4 = ai2[k4 >> 13]);
 
@@ -280,7 +328,7 @@ int nn; //temp
                             abyte0[j2-- + 256] = (byte)(k4 >> 8);
                             abyte0[j2-- + 256] = (byte)k4;
                             abyte0[j2-- + 256] = (byte)(k2 | (k1 == 0 ? 2 : 0) | (k1 >> 7) << 7 | l3 << 6 | l2 << 2);
-                            k4 = abyte0[ai2[7] + 65530] & 0xff | (abyte0[ai2[7] + 65531] & 0xff) << 8;
+                            k4 = (abyte0[ai2[7] + 65530] & 0xff) | (abyte0[ai2[7] + 65531] & 0xff) << 8;
                             i5 = k4 + (l4 = ai2[k4 >> 13]);
                             i1 += 7;
                         }
@@ -288,7 +336,7 @@ int nn; //temp
                     if(t_boolean_static_fld && k6 == l5 + 1 && (R & 0x18) != 0)
                         o_int_static_fld |= 0x40;
                     if(k4 != j4) {
-                        if(t_boolean_static_fld)
+                        if(t_boolean_static_fld) {
                             if(k6 <= 239) {
                                 if(k6 > l5) {
                                     i1 += 116 * (240 - k6);
@@ -303,6 +351,7 @@ int nn; //temp
                                 i1 += 116 * (260 - k6);
                                 k6 = 260;
                             }
+                        }
                         i1 += 116;
 //debug(999,i5);                        
 label0:
@@ -317,55 +366,55 @@ label0:
 							//debug(i5,i5);                                
  //new File().debugWrite("0:/56","\n"+Integer.toString(i5)+" = "+Integer.toString(abyte0[i5]));
                             
-                            boolean flag6;
-                            boolean flag31;
-                            boolean flag32;
-                            boolean flag33;
-                            boolean flag34;
-                            boolean flag35;
-                            boolean flag36;
-                            boolean flag37;
-                            boolean flag38;
-                            boolean flag39;
-                            boolean flag40;
-                            boolean flag41;
-                            boolean flag42;
-                            boolean flag43;
-                            boolean flag44;
-                            boolean flag45;
-                            boolean flag46;
-                            boolean flag47;
-                            boolean flag48;
-                            boolean flag49;
-                            boolean flag50;
-                            boolean flag51;
-                            boolean flag52;
-                            boolean flag53;
-                            boolean flag54;
-                            boolean flag55;
-                            boolean flag56;
-                            boolean flag57;
-                            boolean flag58;
-                            boolean flag59;
-                            boolean flag60;
-                            boolean flag61;
-                            boolean flag62;
-                            boolean flag63;
-                            boolean flag64;
-                            boolean flag65;
-                            boolean flag66;
-                            boolean flag67;
-                            boolean flag68;
-                            boolean flag69;
-                            boolean flag70;
-                            boolean flag71;
-                            boolean flag72;
-                            boolean flag73;
-                            boolean flag74;
-                            boolean flag75;
-                            boolean flag76;
-                            boolean flag77;
-                            boolean flag78;
+//                            boolean flag6;
+//                            boolean flag31;
+//                            boolean flag32;
+//                            boolean flag33;
+//                            boolean flag34;
+//                            boolean flag35;
+//                            boolean flag36;
+//                            boolean flag37;
+//                            boolean flag38;
+//                            boolean flag39;
+//                            boolean flag40;
+//                            boolean flag41;
+//                            boolean flag42;
+//                            boolean flag43;
+//                            boolean flag44;
+//                            boolean flag45;
+//                            boolean flag46;
+//                            boolean flag47;
+//                            boolean flag48;
+//                            boolean flag49;
+//                            boolean flag50;
+//                            boolean flag51;
+//                            boolean flag52;
+//                            boolean flag53;
+//                            boolean flag54;
+//                            boolean flag55;
+//                            boolean flag56;
+//                            boolean flag57;
+//                            boolean flag58;
+//                            boolean flag59;
+//                            boolean flag60;
+//                            boolean flag61;
+//                            boolean flag62;
+//                            boolean flag63;
+//                            boolean flag64;
+//                            boolean flag65;
+//                            boolean flag66;
+//                            boolean flag67;
+//                            boolean flag68;
+//                            boolean flag69;
+//                            boolean flag70;
+//                            boolean flag71;
+//                            boolean flag72;
+//                            boolean flag73;
+//                            boolean flag74;
+//                            boolean flag75;
+//                            boolean flag76;
+//                            boolean flag77;
+//                            boolean flag78;
                             
                //31656
 //                 31659//////////////
@@ -389,7 +438,7 @@ label0:
                                 abyte0[j2-- + 256] = (byte)(k4 >> 8);
                                 abyte0[j2-- + 256] = (byte)k4;
                                 abyte0[j2-- + 256] = (byte)(k2 | (k1 == 0 ? 2 : 0) | (k1 >> 7) << 7 | l3 << 6 | l2 << 2);
-                                k4 = abyte0[ai2[7] + 65534] & 0xff | (abyte0[ai2[7] + 65535] & 0xff) << 8;
+                                k4 = (abyte0[ai2[7] + 65534] & 0xff) | (abyte0[ai2[7] + 65535] & 0xff) << 8;
                                 i5 = k4 + (l4 = ai2[k4 >> 13]);
                                 j3 = 1;
                                 l2 = 1;
@@ -397,8 +446,8 @@ label0:
                                 continue;
 
                             case 1: // '\001'
-                                k7 = abyte0[i5++] + l1 & 0xff;
-                                j1 |= aint1int(abyte0[k7] & 0xff | (abyte0[k7 + 1] & 0xff) << 8);
+                                k7 = (abyte0[i5++] + l1) & 0xff;
+                                j1 |= (aint1int(abyte0[k7] & 0xff) | (abyte0[k7 + 1] & 0xff) << 8);
                                 k1 = j1;
                                 i1 -= 6;
                                 continue;
@@ -502,8 +551,8 @@ label0:
                                 continue;
 
                             case 17: // '\021'
-                                j9 = abyte0[i5++] & 0xff;
-                                j1 |= aint1int((abyte0[j9] & 0xff | (abyte0[j9 + 1] & 0xff) << 8) + i2);
+                                j9 = (abyte0[i5++]) & 0xff;
+                                j1 |= (aint1int((abyte0[j9] & 0xff) | (abyte0[j9 + 1] & 0xff) << 8) + i2);
                                 k1 = j1;
                                 i1 -= 5;
                                 continue;
@@ -522,13 +571,13 @@ label0:
                                 continue;
 
                             case 21: // '\025'
-                                j1 |= abyte0[abyte0[i5++] + l1 & 0xff] & 0xff;
+                                j1 |= (abyte0[(abyte0[i5++] + l1) & 0xff]) & 0xff;
                                 k1 = j1;
                                 i1 -= 4;
                                 continue;
 
                             case 22: // '\026'
-                                k9 = abyte0[i5++] + l1 & 0xff;
+                                k9 = (abyte0[i5++] + l1) & 0xff;
                                 i10 = abyte0[k9] & 0xff;
                                 k2 = i10 >> 7;
                                 abyte0[k9] = (byte)(k1 = i10 << 1 & 0xff);
@@ -588,14 +637,14 @@ label0:
                                 k4 = (i5 - l4) + 1;
                                 abyte0[j2-- + 256] = (byte)(k4 >> 8);
                                 abyte0[j2-- + 256] = (byte)k4;
-                                k4 = abyte0[i5] & 0xff | (abyte0[i5 + 1] & 0xff) << 8;
+                                k4 = (abyte0[i5] & 0xff) | (abyte0[i5 + 1] & 0xff) << 8;
                                 i5 = k4 + (l4 = ai2[k4 >> 13]);
                                 i1 -= 6;
                                 continue;
 
                             case 33: // '!'
-                                l10 = abyte0[i5++] + l1 & 0xff;
-                                j1 &= aint1int(abyte0[l10] & 0xff | (abyte0[l10 + 1] & 0xff) << 8);
+                                l10 = (abyte0[i5++] + l1) & 0xff;
+                                j1 &= aint1int((abyte0[l10] & 0xff) | (abyte0[l10 + 1] & 0xff) << 8);
                                 k1 = j1;
                                 i1 -= 6;
                                 continue;
@@ -711,7 +760,7 @@ label0:
 
                             case 49: // '1'
                                 l12 = abyte0[i5++] & 0xff;
-                                j1 &= aint1int((abyte0[l12] & 0xff | (abyte0[l12 + 1] & 0xff) << 8) + i2);
+                                j1 &= aint1int(((abyte0[l12] & 0xff) | (abyte0[l12 + 1] & 0xff) << 8) + i2);
                                 k1 = j1;
                                 i1 -= 5;
                                 continue;
@@ -730,13 +779,13 @@ label0:
                                 continue;
 
                             case 53: // '5'
-                                j1 &= abyte0[abyte0[i5++] + l1 & 0xff] & 0xff;
+                                j1 &= abyte0[(abyte0[i5++] + l1) & 0xff] & 0xff;
                                 k1 = j1;
                                 i1 -= 4;
                                 continue;
 
                             case 54: // '6'
-                                i13 = abyte0[i5++] + l1 & 0xff;
+                                i13 = (abyte0[i5++] + l1) & 0xff;
                                 j13 = abyte0[i13] & 0xff;
                                 j13 = j13 << 1 | k2;
                                 k2 = j13 >> 8;
@@ -807,8 +856,8 @@ label0:
                                 continue;
 
                             case 65: // 'A'
-                                j14 = abyte0[i5++] + l1 & 0xff;
-                                j14 = abyte0[j14] & 0xff | (abyte0[j14 + 1] & 0xff) << 8;
+                                j14 = (abyte0[i5++] + l1) & 0xff;
+                                j14 = (abyte0[j14] & 0xff) | (abyte0[j14 + 1] & 0xff) << 8;
                                 j1 ^= aint1int(j14);
                                 k1 = j1;
                                 i1 -= 6;
@@ -869,7 +918,7 @@ label0:
 
                             case 76: // 'L'
                                 i15 = i5 - 1;
-                                k4 = abyte0[i5] & 0xff | (abyte0[i5 + 1] & 0xff) << 8;
+                                k4 = (abyte0[i5] & 0xff) | (abyte0[i5 + 1] & 0xff) << 8;
                                 i5 = k4 + (l4 = ai2[k4 >> 13]);
                                 i1 -= 3;
                                 if(i5 == j4 || i5 == i15) {
@@ -921,7 +970,7 @@ label0:
                                 break;
 
                             case 79: // 'O'
-                                flag31 = true;
+//                                flag31 = true;
                                 break;
 
                             case 80: // 'P'
@@ -942,17 +991,17 @@ label0:
 
                             case 81: // 'Q'
                                 j16 = abyte0[i5++] & 0xff;
-                                j1 ^= aint1int((abyte0[j16] & 0xff | (abyte0[j16 + 1] & 0xff) << 8) + i2);
+                                j1 ^= aint1int(((abyte0[j16] & 0xff) | (abyte0[j16 + 1] & 0xff) << 8) + i2);
                                 k1 = j1;
                                 i1 -= 5;
                                 break;
 
                             case 82: // 'R'
-                                flag32 = true;
+//                                flag32 = true;
                                 break;
 
                             case 83: // 'S'
-                                flag33 = true;
+//                                flag33 = true;
                                 break;
 
                             case 84: // 'T'
@@ -961,13 +1010,13 @@ label0:
                                 break;
 
                             case 85: // 'U'
-                                j1 ^= abyte0[abyte0[i5++] + l1 & 0xff] & 0xff;
+                                j1 ^= abyte0[(abyte0[i5++] + l1) & 0xff] & 0xff;
                                 k1 = j1;
                                 i1 -= 4;
                                 break;
 
                             case 86: // 'V'
-                                k16 = abyte0[i5++] + l1 & 0xff;
+                                k16 = (abyte0[i5++] + l1) & 0xff;
                                 l16 = abyte0[k16] & 0xff;
                                 k2 = l16 & 1;
                                 abyte0[k16] = (byte)(k1 = l16 >> 1);
@@ -975,7 +1024,7 @@ label0:
                                 break;
 
                             case 87: // 'W'
-                                flag34 = true;
+//                                flag34 = true;
                                 break;
 
                             case 88: // 'X'
@@ -995,7 +1044,7 @@ label0:
                                 break;
 
                             case 91: // '['
-                                flag35 = true;
+//                                flag35 = true;
                                 break;
 
                             case 92: // '\\'
@@ -1020,7 +1069,7 @@ label0:
                                 break;
 
                             case 95: // '_'
-                                flag36 = true;
+//                                flag36 = true;
                                 break;
 
                             case 96: // '`'
@@ -1031,8 +1080,8 @@ label0:
                                 break;
 
                             case 97: // 'a'
-                                k17 = abyte0[i5++] + l1 & 0xff;
-                                l17 = aint1int(abyte0[k17] & 0xff | (abyte0[k17 + 1] & 0xff) << 8);
+                                k17 = (abyte0[i5++] + l1) & 0xff;
+                                l17 = aint1int((abyte0[k17] & 0xff) | (abyte0[k17 + 1] & 0xff) << 8);
                                 i18 = j1 + l17 + k2;
                                 l3 = (~(j1 ^ l17) & (j1 ^ i18)) >> 7 & 1;
                                 k2 = i18 >> 8;
@@ -1042,11 +1091,11 @@ label0:
                                 break;
 
                             case 98: // 'b'
-                                flag37 = true;
+//                                flag37 = true;
                                 break;
 
                             case 99: // 'c'
-                                flag38 = true;
+//                                flag38 = true;
                                 break;
 
                             case 100: // 'd'
@@ -1073,7 +1122,7 @@ label0:
                                 break;
 
                             case 103: // 'g'
-                                flag39 = true;
+//                                flag39 = true;
                                 break;
 
                             case 104: // 'h'
@@ -1098,7 +1147,7 @@ label0:
                                 break;
 
                             case 107: // 'k'
-                                flag40 = true;
+//                                flag40 = true;
                                 break;
 
                             case 108: // 'l'
@@ -1133,7 +1182,7 @@ label0:
                                 break;
 
                             case 111: // 'o'
-                                flag41 = true;
+//                                flag41 = true;
                                 break;
 
                             case 112: // 'p'
@@ -1149,7 +1198,7 @@ label0:
 
                             case 113: // 'q'
                                 l21 = abyte0[i5++] & 0xff;
-                                i22 = aint1int((abyte0[l21] & 0xff | (abyte0[l21 + 1] & 0xff) << 8) + i2);
+                                i22 = aint1int(((abyte0[l21] & 0xff) | (abyte0[l21 + 1] & 0xff) << 8) + i2);
                                 j22 = j1 + i22 + k2;
                                 l3 = (~(j1 ^ i22) & (j1 ^ j22)) >> 7 & 1;
                                 k2 = j22 >> 8;
@@ -1158,11 +1207,11 @@ label0:
                                 break;
 
                             case 114: // 'r'
-                                flag42 = true;
+//                                flag42 = true;
                                 break;
 
                             case 115: // 's'
-                                flag43 = true;
+//                                flag43 = true;
                                 break;
 
                             case 116: // 't'
@@ -1171,7 +1220,7 @@ label0:
                                 break;
 
                             case 117: // 'u'
-                                k22 = abyte0[abyte0[i5++] + l1 & 0xff] & 0xff;
+                                k22 = abyte0[(abyte0[i5++] + l1) & 0xff] & 0xff;
                                 l22 = j1 + k22 + k2;
                                 l3 = (~(j1 ^ k22) & (j1 ^ l22)) >> 7 & 1;
                                 k2 = l22 >> 8;
@@ -1180,7 +1229,7 @@ label0:
                                 break;
 
                             case 118: // 'v'
-                                i23 = abyte0[i5++] + l1 & 0xff;
+                                i23 = (abyte0[i5++] + l1) & 0xff;
                                 j23 = abyte0[i23] & 0xff;
                                 k23 = k2 << 7;
                                 k2 = j23 & 1;
@@ -1189,7 +1238,7 @@ label0:
                                 break;
 
                             case 119: // 'w'
-                                flag44 = true;
+//                                flag44 = true;
                                 break;
 
                             case 120: // 'x'
@@ -1212,7 +1261,7 @@ label0:
                                 break;
 
                             case 123: // '{'
-                                flag45 = true;
+//                                flag45 = true;
                                 break;
 
                             case 124: // '|'
@@ -1241,7 +1290,7 @@ label0:
                                 break;
 
                             case 127: // '\177'
-                                flag46 = true;
+//                                flag46 = true;
                                 break;
 
                             case -128: 
@@ -1250,8 +1299,8 @@ label0:
                                 break;
 
                             case -127: 
-                                k25 = abyte0[i5++] + l1 & 0xff;
-                                avoid2int(abyte0[k25] & 0xff | (abyte0[k25 + 1] & 0xff) << 8, j1);
+                                k25 = (abyte0[i5++] + l1) & 0xff;
+                                avoid2int((abyte0[k25] & 0xff) | (abyte0[k25 + 1] & 0xff) << 8, j1);
                                 i1 -= 6;
                                 break;
 
@@ -1261,7 +1310,7 @@ label0:
                                 break;
 
                             case -125: 
-                                flag47 = true;
+//                                flag47 = true;
                                 break;
 
                             case -124: 
@@ -1280,11 +1329,11 @@ label0:
                                 break;
 
                             case -121: 
-                                flag48 = true;
+//                                flag48 = true;
                                 break;
 
                             case -120: 
-                                k1 = i2 = i2 - 1 & 0xff;
+                                k1 = i2 = (i2 - 1) & 0xff;
                                 i1 -= 2;
                                 break;
 
@@ -1299,7 +1348,7 @@ label0:
                                 break;
 
                             case -117: 
-                                flag49 = true;
+//                                flag49 = true;
                                 break;
 
                             case -116: 
@@ -1321,7 +1370,7 @@ label0:
                                 break;
 
                             case -113: 
-                                flag50 = true;
+//                                flag50 = true;
                                 break;
 
                             case -112: 
@@ -1337,35 +1386,35 @@ label0:
 
                             case -111: 
                                 l25 = abyte0[i5++] & 0xff;
-                                avoid2int((abyte0[l25] & 0xff | (abyte0[l25 + 1] & 0xff) << 8) + i2, j1);
+                                avoid2int(((abyte0[l25] & 0xff) | (abyte0[l25 + 1] & 0xff) << 8) + i2, j1);
                                 i1 -= 6;
                                 break;
 
                             case -110: 
-                                flag51 = true;
+//                                flag51 = true;
                                 break;
 
                             case -109: 
-                                flag52 = true;
+//                                flag52 = true;
                                 break;
 
                             case -108: 
-                                abyte0[abyte0[i5++] + l1 & 0xff] = (byte)i2;
+                                abyte0[(abyte0[i5++] + l1) & 0xff] = (byte)i2;
                                 i1 -= 4;
                                 break;
 
                             case -107: 
-                                abyte0[abyte0[i5++] + l1 & 0xff] = (byte)j1;
+                                abyte0[(abyte0[i5++] + l1) & 0xff] = (byte)j1;
                                 i1 -= 4;
                                 break;
 
                             case -106: 
-                                abyte0[abyte0[i5++] + i2 & 0xff] = (byte)l1;
+                                abyte0[(abyte0[i5++] + i2) & 0xff] = (byte)l1;
                                 i1 -= 4;
                                 break;
 
                             case -105: 
-                                flag53 = true;
+//                                flag53 = true;
                                 break;
 
                             case -104: 
@@ -1385,11 +1434,11 @@ label0:
                                 break;
 
                             case -101: 
-                                flag54 = true;
+//                                flag54 = true;
                                 break;
 
                             case -100: 
-                                flag55 = true;
+//                                flag55 = true;
                                 break;
 
                             case -99: 
@@ -1399,11 +1448,11 @@ label0:
                                 break;
 
                             case -98: 
-                                flag56 = true;
+//                                flag56 = true;
                                 break;
 
                             case -97: 
-                                flag57 = true;
+//                                flag57 = true;
                                 break;
 
                             case -96: 
@@ -1412,8 +1461,8 @@ label0:
                                 break;
 
                             case -95: 
-                                i26 = abyte0[i5++] + l1 & 0xff;
-                                k1 = j1 = aint1int(abyte0[i26] & 0xff | (abyte0[i26 + 1] & 0xff) << 8);
+                                i26 = (abyte0[i5++] + l1) & 0xff;
+                                k1 = j1 = aint1int((abyte0[i26] & 0xff) | (abyte0[i26 + 1] & 0xff) << 8);
                                 i1 -= 6;
                                 break;
 
@@ -1423,7 +1472,7 @@ label0:
                                 break;
 
                             case -93: 
-                                flag58 = true;
+//                                flag58 = true;
                                 break;
 
                             case -92: 
@@ -1442,7 +1491,7 @@ label0:
                                 break;
 
                             case -89: 
-                                flag59 = true;
+//                                flag59 = true;
                                 break;
 
                             case -88: 
@@ -1461,7 +1510,7 @@ label0:
                                 break;
 
                             case -85: 
-                                flag60 = true;
+//                                flag60 = true;
                                 break;
 
                             case -84: 
@@ -1485,7 +1534,7 @@ label0:
                                 break;
 
                             case -81: 
-                                flag61 = true;
+//                                flag61 = true;
                                 break;
 
                             case -80: 
@@ -1501,35 +1550,35 @@ label0:
 
                             case -79: 
                                 j26 = abyte0[i5++] & 0xff;
-                                k1 = j1 = aint1int((abyte0[j26] & 0xff | (abyte0[j26 + 1] & 0xff) << 8) + i2);
+                                k1 = j1 = aint1int(((abyte0[j26] & 0xff) | (abyte0[j26 + 1] & 0xff) << 8) + i2);
                                 i1 -= 5;
                                 break;
 
                             case -78: 
-                                flag62 = true;
+//                                flag62 = true;
                                 break;
 
                             case -77: 
-                                flag63 = true;
+//                                flag63 = true;
                                 break;
 
                             case -76: 
-                                k1 = i2 = abyte0[abyte0[i5++] + l1 & 0xff] & 0xff;
+                                k1 = i2 = abyte0[(abyte0[i5++] + l1) & 0xff] & 0xff;
                                 i1 -= 4;
                                 break;
 
                             case -75: 
-                                k1 = j1 = abyte0[abyte0[i5++] + l1 & 0xff] & 0xff;
+                                k1 = j1 = abyte0[(abyte0[i5++] + l1) & 0xff] & 0xff;
                                 i1 -= 4;
                                 break;
 
                             case -74: 
-                                k1 = l1 = abyte0[abyte0[i5++] + i2 & 0xff] & 0xff;
+                                k1 = l1 = abyte0[(abyte0[i5++] + i2) & 0xff] & 0xff;
                                 i1 -= 4;
                                 break;
 
                             case -73: 
-                                flag64 = true;
+//                                flag64 = true;
                                 break;
 
                             case -72: 
@@ -1549,7 +1598,7 @@ label0:
                                 break;
 
                             case -69: 
-                                flag65 = true;
+//                                flag65 = true;
                                 break;
 
                             case -68: 
@@ -1571,7 +1620,7 @@ label0:
                                 break;
 
                             case -65: 
-                                flag66 = true;
+//                                flag66 = true;
                                 break;
 
                             case -64: 
@@ -1582,8 +1631,8 @@ label0:
                                 break;
 
                             case -63: 
-                                l26 = abyte0[i5++] + l1 & 0xff;
-                                l26 = j1 - aint1int(abyte0[l26] & 0xff | (abyte0[l26 + 1] & 0xff) << 8);
+                                l26 = (abyte0[i5++] + l1) & 0xff;
+                                l26 = j1 - aint1int((abyte0[l26] & 0xff) | (abyte0[l26 + 1] & 0xff) << 8);
                                 k2 = l26 < 0 ? 0 : 1;
                                 k1 = l26 & 0xff;
                                 i1 -= 6;
@@ -1595,7 +1644,7 @@ label0:
                                 break;
 
                             case -61: 
-                                flag67 = true;
+//                                flag67 = true;
                                 break;
 
                             case -60: 
@@ -1619,11 +1668,11 @@ label0:
                                 break;
 
                             case -57: 
-                                flag68 = true;
+//                                flag68 = true;
                                 break;
 
                             case -56: 
-                                k1 = i2 = i2 + 1 & 0xff;
+                                k1 = i2 = (i2 + 1) & 0xff;
                                 i1 -= 2;
                                 break;
 
@@ -1635,12 +1684,12 @@ label0:
                                 break;
 
                             case -54: 
-                                k1 = l1 = l1 - 1 & 0xff;
+                                k1 = l1 = (l1 - 1) & 0xff;
                                 i1 -= 2;
                                 break;
 
                             case -53: 
-                                flag69 = true;
+//                                flag69 = true;
                                 break;
 
                             case -52: 
@@ -1662,12 +1711,12 @@ label0:
                             case -50: 
                                nn=abyte0[i5++] & 0xff;
                                 k28 = nn | (abyte0[i5++] & 0xff) << 8;
-                                avoid2int(k28, k1 = aint1int(k28) - 1 & 0xff);
+                                avoid2int(k28, k1 = (aint1int(k28) - 1) & 0xff);
                                 i1 -= 6;
                                 break;
 
                             case -49: 
-                                flag70 = true;
+//                                flag70 = true;
                                 break;
 
                             case -48: 
@@ -1731,18 +1780,18 @@ label0:
 
                             case -47: 
                                 l28 = abyte0[i5++] & 0xff;
-                                l28 = j1 - aint1int((abyte0[l28] & 0xff | (abyte0[l28 + 1] & 0xff) << 8) + i2);
+                                l28 = j1 - aint1int(((abyte0[l28] & 0xff) | (abyte0[l28 + 1] & 0xff) << 8) + i2);
                                 k2 = l28 < 0 ? 0 : 1;
                                 k1 = l28 & 0xff;
                                 i1 -= 5;
                                 break;
 
                             case -46: 
-                                flag71 = true;
+//                                flag71 = true;
                                 break;
 
                             case -45: 
-                                flag72 = true;
+//                                flag72 = true;
                                 break;
 
                             case -44: 
@@ -1751,20 +1800,20 @@ label0:
                                 break;
 
                             case -43: 
-                                k29 = j1 - (abyte0[abyte0[i5++] + l1 & 0xff] & 0xff);
+                                k29 = j1 - (abyte0[(abyte0[i5++] + l1) & 0xff] & 0xff);
                                 k2 = k29 < 0 ? 0 : 1;
                                 k1 = k29 & 0xff;
                                 i1 -= 4;
                                 break;
 
                             case -42: 
-                                l29 = abyte0[i5++] + l1 & 0xff;
+                                l29 = (abyte0[i5++] + l1) & 0xff;
                                 k1 = --abyte0[l29] & 0xff;
                                 i1 -= 6;
                                 break;
 
                             case -41: 
-                                flag73 = true;
+//                                flag73 = true;
                                 break;
 
                             case -40: 
@@ -1785,7 +1834,7 @@ label0:
                                 break;
 
                             case -37: 
-                                flag74 = true;
+//                                flag74 = true;
                                 break;
 
                             case -36: 
@@ -1804,12 +1853,12 @@ label0:
                             case -34: 
                               nn=abyte0[i5++] & 0xff;
                                 k30 = (nn | (abyte0[i5++] & 0xff) << 8) + l1;
-                                avoid2int(k30, k1 = aint1int(k30) - 1 & 0xff);
+                                avoid2int(k30, k1 = (aint1int(k30) - 1) & 0xff);
                                 i1 -= 7;
                                 break;
 
                             case -33: 
-                                flag75 = true;
+//                                flag75 = true;
                                 break;
 
                             case -32: 
@@ -1820,8 +1869,8 @@ label0:
                                 break;
 
                             case -31: 
-                                i31 = abyte0[i5++] + l1 & 0xff;
-                                j31 = aint1int(abyte0[i31] & 0xff | (abyte0[i31 + 1] & 0xff) << 8);
+                                i31 = (abyte0[i5++] + l1) & 0xff;
+                                j31 = aint1int((abyte0[i31] & 0xff) | (abyte0[i31 + 1] & 0xff) << 8);
                                 k31 = j1 - j31 - (1 - k2);
                                 l3 = ((j1 ^ j31) & (j1 ^ k31)) >> 7;
                                 k2 = k31 < 0 ? 0 : 1;
@@ -1835,7 +1884,7 @@ label0:
                                 break;
 
                             case -29: 
-                                flag76 = true;
+//                                flag76 = true;
                                 break;
 
                             case -28: 
@@ -1861,11 +1910,11 @@ label0:
                                 break;
 
                             case -25: 
-                                flag77 = true;
+//                                flag77 = true;
                                 break;
 
                             case -24: 
-                                k1 = l1 = l1 + 1 & 0xff;
+                                k1 = l1 = (l1 + 1) & 0xff;
                                 i1 -= 2;
                                 break;
 
@@ -1912,12 +1961,12 @@ label0:
                             case -18: 
                               nn=abyte0[i5++] & 0xff;
                                 k34 = nn | (abyte0[i5++] & 0xff) << 8;
-                                avoid2int(k34, k1 = aint1int(k34) + 1 & 0xff);
+                                avoid2int(k34, k1 = (aint1int(k34) + 1) & 0xff);
                                 i1 -= 6;
                                 break;
 
                             case -17: 
-                                flag78 = true;
+//                                flag78 = true;
                                 break;
 
                             case -16: 
@@ -1938,7 +1987,7 @@ label0:
 
                             case -15: 
                                 l34 = abyte0[i5++] & 0xff;
-                                i35 = aint1int((abyte0[l34] & 0xff | (abyte0[l34 + 1] & 0xff) << 8) + i2);
+                                i35 = aint1int(((abyte0[l34] & 0xff) | (abyte0[l34 + 1] & 0xff) << 8) + i2);
                                 j35 = j1 - i35 - (1 - k2);
                                 l3 = ((j1 ^ i35) & (j1 ^ j35)) >> 7;
                                 k2 = j35 < 0 ? 0 : 1;
@@ -1947,11 +1996,11 @@ label0:
                                 break;
 
                             case -14: 
-                                flag6 = true;
+//                                flag6 = true;
                                 break;
 
                             case -13: 
-                                flag6 = true;
+//                                flag6 = true;
                                 break;
 
                             case -12: 
@@ -1960,7 +2009,7 @@ label0:
                                 break;
 
                             case -11: 
-                                k35 = abyte0[abyte0[i5++] + l1 & 0xff] & 0xff;
+                                k35 = abyte0[(abyte0[i5++] + l1) & 0xff] & 0xff;
                                 l35 = j1 - k35 - (1 - k2);
                                 l3 = ((j1 ^ k35) & (j1 ^ l35)) >> 7;
                                 k2 = l35 < 0 ? 0 : 1;
@@ -1969,13 +2018,13 @@ label0:
                                 break;
 
                             case -10: 
-                                i36 = abyte0[i5++] + l1 & 0xff;
+                                i36 = (abyte0[i5++] + l1) & 0xff;
                                 k1 = ++abyte0[i36] & 0xff;
                                 i1 -= 6;
                                 break;
 
                             case -9: 
-                                flag6 = true;
+//                                flag6 = true;
                                 break;
 
                             case -8: 
@@ -1998,7 +2047,7 @@ label0:
                                 break;
 
                             case -5: 
-                                flag6 = true;
+//                                flag6 = true;
                                 break;
 
                             case -4: 
@@ -2019,12 +2068,12 @@ label0:
                             case -2: 
                               nn=abyte0[i5++] & 0xff;
                                 j37 = (nn | (abyte0[i5++] & 0xff) << 8) + l1;
-                                avoid2int(j37, k1 = aint1int(j37) + 1 & 0xff);
+                                avoid2int(j37, k1 = (aint1int(j37) + 1) & 0xff);
                                 i1 -= 7;
                                 break;
 
                             case -1: 
-                                flag6 = true;
+//                                flag6 = true;
                                 break;
                             }
                         } while(true);
@@ -2034,7 +2083,7 @@ label0:
                         abyte0[j2-- + 256] = (byte)(k4 >> 8);
                         abyte0[j2-- + 256] = (byte)k4;
                         abyte0[j2-- + 256] = (byte)(k2 | (k1 == 0 ? 2 : 0) | (k1 >> 7) << 7 | l3 << 6 | l2 << 2);
-                        k4 = abyte0[ai2[7] + 65534] & 0xff | (abyte0[ai2[7] + 65535] & 0xff) << 8;
+                        k4 = (abyte0[ai2[7] + 65534] & 0xff) | (abyte0[ai2[7] + 65535] & 0xff) << 8;
                         i5 = k4 + (l4 = ai2[k4 >> 13]);
                         l2 = 1;
                         i1 += 7;
@@ -2096,9 +2145,9 @@ label0:
 
                 k5++;
                 if(l_boolean_static_fld)
-                    k_int_static_fld = k_int_static_fld & 0xfe | k5 & 1;
+                    k_int_static_fld = (k_int_static_fld & 0xfe) | (k5 & 1);
                 if(j_boolean_static_fld)
-                    k_int_static_fld = k_int_static_fld & 0xfd | (k5 & 1) << 1;
+                    k_int_static_fld = (k_int_static_fld & 0xfd) | (k5 & 1) << 1;
                 if(flag && k5 == 0) {
                     i7 = 0;
                     flag = false;
@@ -2130,7 +2179,7 @@ label0:
             if(d_boolean_static_fld) {
                 d_boolean_static_fld = false;
                 
-                if(openstream(1)!=-1) {
+                if(openstream(1)!=NULL) {
 //                    ByteArrayOutputStream bytearrayoutputstream = new ByteArrayOutputStream();
                     bytearrayoutputstreamwrite(j1 & 0xff);
                     bytearrayoutputstreamwrite(l1 & 0xff);
@@ -2171,7 +2220,7 @@ label0:
             if(o_boolean_static_fld) {
                 o_boolean_static_fld = false;
                 
-              if(openstream(0)!=-1){
+              if(openstream(0)!=NULL){
   //                  byte abyte1[] = bbytes1String(b_java_lang_String_static_fld + "save" + z + ".dat");
 //                    ByteArrayInputStream bytearrayinputstream = null;
 //                    if(abyte1 != null)
@@ -2227,7 +2276,6 @@ label0:
                 j1 = 0;
                 l1 = 0;
                 i2 = 0;
-                byte byte1 = 4;
                 j2 = 255;
                 k2 = 0;
                 k1 = 0;
@@ -2237,7 +2285,7 @@ label0:
                 k3 = 0;
                 l3 = 0;
                 i4 = 0;
-                k4 = abyte0[ai2[7] + 65532] & 0xff | (abyte0[ai2[7] + 65533] & 0xff) << 8;
+                k4 = (abyte0[ai2[7] + 65532] & 0xff) | (abyte0[ai2[7] + 65533] & 0xff) << 8;
                 i5 = k4 + (l4 = ai2[k4 >> 13]);
                 m();
                 k_int_static_fld = 0;
@@ -2246,8 +2294,6 @@ label0:
 //        } while(true);
         s_boolean_static_fld = n_boolean_static_fld = false;
     }
-
-
 
     static void xxf(int i1, int j1) {
     int l1,k1,i2,j2,k2,l2,i3,j3,k3,l3,i4;
@@ -2332,10 +2378,10 @@ label0:
                 if(P != 0) {
                     if((d_int_array1d_static_fld[0] & 0x10) != 0) {
                         l1 <<= 2;
-                        c(0, l1 + 0 << 10);
-                        c(1, l1 + 1 << 10);
-                        c(2, l1 + 2 << 10);
-                        c(3, l1 + 3 << 10);
+                        c(0, (l1 + 0) << 10);
+                        c(1, (l1 + 1) << 10);
+                        c(2, (l1 + 2) << 10);
+                        c(3, (l1 + 3) << 10);
                     } else {
                         l1 <<= 2;
                         avoid8int(l1 + 0, l1 + 1, l1 + 2, l1 + 3, l1 + 4, l1 + 5, l1 + 6, l1 + 7);
@@ -2354,7 +2400,7 @@ label0:
                 //break label0;
 
             case 2: // '\002'
-                if(U == 1024 && (d_int_array1d_static_fld[0] & 8) != 0)
+                if(U == 1024 && (d_int_array1d_static_fld[0] & 8) != 0) {
                     if(d_int_static_fld != 0) {
                         m_int_static_fld = (d_int_array1d_static_fld[1] & 0x10) >> 4;
                         m_int_static_fld |= (d_int_array1d_static_fld[2] & 0x10) >> 3;
@@ -2363,6 +2409,7 @@ label0:
                     } else {
                         d_int_static_fld = 1;
                     }
+                }
                 if(P == 0 && (d_int_array1d_static_fld[0] & 0x10) != 0) {
                     l1 <<= 2;
                     bvoid2int(4, l1 + 0);
@@ -2373,10 +2420,10 @@ label0:
                 }
                 if((d_int_array1d_static_fld[0] & 0x10) != 0) {
                     l1 <<= 2;
-                    c(4, l1 + 0 << 10);
-                    c(5, l1 + 1 << 10);
-                    c(6, l1 + 2 << 10);
-                    c(7, l1 + 3 << 10);
+                    c(4, (l1 + 0) << 10);
+                    c(5, (l1 + 1) << 10);
+                    c(6, (l1 + 2) << 10);
+                    c(7, (l1 + 3) << 10);
                 }
                 goto label0;//                break label0;
 
@@ -2414,7 +2461,7 @@ label0:
             break;
 
         case 3: // '\003'
-            i2 = (j1 & (P >> 1) - 1) << 3;
+            i2 = (j1 & ((P >> 1) - 1)) << 3;
             avoid8int(i2 + 0, i2 + 1, i2 + 2, i2 + 3, i2 + 4, i2 + 5, i2 + 6, i2 + 7);
             break;
 
@@ -2517,8 +2564,8 @@ label0:
         case 6: // '\006'
             k2 = (j1 & 0x3c) >> 2;
             l2 = j1 & 3;
-            e(0, k2 * 2 + 0 << 13);
-            e(1, k2 * 2 + 1 << 13);
+            e(0, (k2 * 2 + 0) << 13);
+            e(1, (k2 * 2 + 1) << 13);
             bvoid2int(0, l2 * 8 + 0);
             bvoid2int(1, l2 * 8 + 1);
             bvoid2int(2, l2 * 8 + 2);
@@ -2541,33 +2588,33 @@ label0:
         case 8: // '\b'
             j3 = (j1 & 0xf8) >> 3;
             k3 = j1 & 7;
-            e(0, j3 * 2 + 0 << 13);
-            e(1, j3 * 2 + 1 << 13);
-            c(0, k3 * 8 + 0 << 10);
-            c(1, k3 * 8 + 1 << 10);
-            c(2, k3 * 8 + 2 << 10);
-            c(3, k3 * 8 + 3 << 10);
-            c(4, k3 * 8 + 4 << 10);
-            c(5, k3 * 8 + 5 << 10);
-            c(6, k3 * 8 + 6 << 10);
-            c(7, k3 * 8 + 7 << 10);
+            e(0, (j3 * 2 + 0) << 13);
+            e(1, (j3 * 2 + 1) << 13);
+            c(0, (k3 * 8 + 0) << 10);
+            c(1, (k3 * 8 + 1) << 10);
+            c(2, (k3 * 8 + 2) << 10);
+            c(3, (k3 * 8 + 3) << 10);
+            c(4, (k3 * 8 + 4) << 10);
+            c(5, (k3 * 8 + 5) << 10);
+            c(6, (k3 * 8 + 6) << 10);
+            c(7, (k3 * 8 + 7) << 10);
             break;
 
         case 11: // '\013'
             l3 = j1 & 1;
             i4 = (j1 & 0x70) >> 4;
-            e(0, l3 * 4 + 0 << 13);
-            e(1, l3 * 4 + 1 << 13);
-            e(2, l3 * 4 + 2 << 13);
-            e(3, l3 * 4 + 3 << 13);
-            c(0, i4 * 8 + 0 << 10);
-            c(1, i4 * 8 + 1 << 10);
-            c(2, i4 * 8 + 2 << 10);
-            c(3, i4 * 8 + 3 << 10);
-            c(4, i4 * 8 + 4 << 10);
-            c(5, i4 * 8 + 5 << 10);
-            c(6, i4 * 8 + 6 << 10);
-            c(7, i4 * 8 + 7 << 10);
+            e(0, (l3 * 4 + 0) << 13);
+            e(1, (l3 * 4 + 1) << 13);
+            e(2, (l3 * 4 + 2) << 13);
+            e(3, (l3 * 4 + 3) << 13);
+            c(0, (i4 * 8 + 0) << 10);
+            c(1, (i4 * 8 + 1) << 10);
+            c(2, (i4 * 8 + 2) << 10);
+            c(3, (i4 * 8 + 3) << 10);
+            c(4, (i4 * 8 + 4) << 10);
+            c(5, (i4 * 8 + 5) << 10);
+            c(6, (i4 * 8 + 6) << 10);
+            c(7, (i4 * 8 + 7) << 10);
             break;
 
         case 15: // '\017'
@@ -2577,15 +2624,15 @@ label0:
 
             case 32768: 
                 if((j1 & 0x80) != 0) {
-                    e(0, (j1 & 0x3f) * 2 + 1 << 13);
-                    e(1, (j1 & 0x3f) * 2 + 0 << 13);
-                    e(2, (j1 & 0x3f) * 2 + 3 << 13);
-                    e(3, (j1 & 0x3f) * 2 + 2 << 13);
+                    e(0, ((j1 & 0x3f) * 2 + 1) << 13);
+                    e(1, ((j1 & 0x3f) * 2 + 0) << 13);
+                    e(2, ((j1 & 0x3f) * 2 + 3) << 13);
+                    e(3, ((j1 & 0x3f) * 2 + 2) << 13);
                 } else {
-                    e(0, (j1 & 0x3f) * 2 + 0 << 13);
-                    e(1, (j1 & 0x3f) * 2 + 1 << 13);
-                    e(2, (j1 & 0x3f) * 2 + 2 << 13);
-                    e(3, (j1 & 0x3f) * 2 + 3 << 13);
+                    e(0, ((j1 & 0x3f) * 2 + 0) << 13);
+                    e(1, ((j1 & 0x3f) * 2 + 1) << 13);
+                    e(2, ((j1 & 0x3f) * 2 + 2) << 13);
+                    e(3, ((j1 & 0x3f) * 2 + 3) << 13);
                 }
                 if((j1 & 0x40) != 0)
                     avoid4int(0, 0, 1, 1);
@@ -2595,25 +2642,25 @@ label0:
 
             case 32769: 
                 if((j1 & 0x80) != 0) {
-                    e(2, (j1 & 0x3f) * 2 + 1 << 13);
-                    e(3, (j1 & 0x3f) * 2 + 0 << 13);
+                    e(2, ((j1 & 0x3f) * 2 + 1) << 13);
+                    e(3, ((j1 & 0x3f) * 2 + 0) << 13);
                 } else {
-                    e(2, (j1 & 0x3f) * 2 + 0 << 13);
-                    e(3, (j1 & 0x3f) * 2 + 1 << 13);
+                    e(2, ((j1 & 0x3f) * 2 + 0) << 13);
+                    e(3, ((j1 & 0x3f) * 2 + 1) << 13);
                 }
                 goto label0; //break label0;
 
             case 32770: 
                 if((j1 & 0x80) != 0) {
-                    e(0, (j1 & 0x3f) * 2 + 1 << 13);
-                    e(1, (j1 & 0x3f) * 2 + 1 << 13);
-                    e(2, (j1 & 0x3f) * 2 + 1 << 13);
-                    e(3, (j1 & 0x3f) * 2 + 1 << 13);
+                    e(0, ((j1 & 0x3f) * 2 + 1) << 13);
+                    e(1, ((j1 & 0x3f) * 2 + 1) << 13);
+                    e(2, ((j1 & 0x3f) * 2 + 1) << 13);
+                    e(3, ((j1 & 0x3f) * 2 + 1) << 13);
                 } else {
-                    e(0, (j1 & 0x3f) * 2 + 0 << 13);
-                    e(1, (j1 & 0x3f) * 2 + 0 << 13);
-                    e(2, (j1 & 0x3f) * 2 + 0 << 13);
-                    e(3, (j1 & 0x3f) * 2 + 0 << 13);
+                    e(0, ((j1 & 0x3f) * 2 + 0) << 13);
+                    e(1, ((j1 & 0x3f) * 2 + 0) << 13);
+                    e(2, ((j1 & 0x3f) * 2 + 0) << 13);
+                    e(3, ((j1 & 0x3f) * 2 + 0) << 13);
                 }
                 goto label0; //break label0;
 
@@ -2621,11 +2668,11 @@ label0:
                 break;
             }
             if((j1 & 0x80) != 0) {
-                e(2, (j1 & 0x3f) * 2 + 1 << 13);
-                e(3, (j1 & 0x3f) * 2 + 0 << 13);
+                e(2, ((j1 & 0x3f) * 2 + 1) << 13);
+                e(3, ((j1 & 0x3f) * 2 + 0) << 13);
             } else {
-                e(2, (j1 & 0x3f) * 2 + 0 << 13);
-                e(3, (j1 & 0x3f) * 2 + 1 << 13);
+                e(2, ((j1 & 0x3f) * 2 + 0) << 13);
+                e(3, ((j1 & 0x3f) * 2 + 1) << 13);
             }
             if((j1 & 0x40) != 0)
                 avoid4int(0, 0, 1, 1);
@@ -2662,11 +2709,11 @@ label0:;
                 break;
 
             case 17666: 
-                I = I & 0xff00 | j1 & 0xff;
+                I = (I & 0xff00) | (j1 & 0xff);
                 break;
 
             case 17667: 
-                I = I & 0xff | j1 << 8;
+                I = (I & 0xff) | j1 << 8;
                 e_boolean_static_fld = true;
                 break;
             }
@@ -2928,7 +2975,7 @@ label0:;
                 i2 = l_int_array1d_static_fld[V + (k1 >> 6)] + ((k1 & 0x3f) << 3);
             ushort c1;
             if(flag)
-                c1 = a_char_array1d_static_fld[i2 | byte0 - 1 - j1];
+                c1 = a_char_array1d_static_fld[i2 | (byte0 - 1 - j1)];
             else
                 c1 = a_char_array1d_static_fld[i2 | j1];
             if(c1 != 0)
@@ -2936,7 +2983,7 @@ label0:;
         }
     }
 
-    void h() {
+    static void h() {
         int i1 = getWidth;
         int j1 = getHeight;
         if(i1 != t_int_static_fld || j1 != K)
@@ -2989,7 +3036,7 @@ label0:;
         //savefile("1.out",vram,0x10810);
         return 0;//true;
     }
-
+#if 0
     static void d() {
         if(s_boolean_static_fld) {
             v_boolean_static_fld = n_boolean_static_fld = true;
@@ -3000,8 +3047,8 @@ label0:;
      //       catch(InterruptedException interruptedexception) { }
         }
     }
-
-    void c0() {
+#endif
+    static void c0() {
         h();
         int i1,i2,i3,i4,i5,i6,i7,i8,i9,i10;
         int j1,j2,j3,j4,j5,j6,j7,j8,j9,j10;
@@ -3029,7 +3076,7 @@ label0:;
                 l3 = j3 + (l1 & 0x3ff);
                 j4 = l1 >> 12 & 7;
                 l2 = abyte0[ram+(j3 + 960 + (l1 >> 4 & 0x38) + (l1 >> 2 & 7))] & 0xff;
-                k4 = l1 & 2 | l1 >> 4 & 4;
+                k4 = (l1 & 2) | (l1 >> 4 & 4);
                 j2 = (l2 >> k4 & 3) << 2;
                 l4 = -c_int_static_fld;
                 do {
@@ -3048,7 +3095,7 @@ label0:;
                                 if(!aflag[k9]) {
                                   if(flag || k9 >= 8){
                                       //if(k9>4) //my add = ничего не выводит тогда
-                                        ai[l8] = ai1[j2 | i8 & 3];
+                                        ai[l8] = ai1[j2 | (i8 & 3)];
                                         //if((j2 | i8 & 3)!=0) printf("%d ", j2 | i8 & 3);
                                   }
                                     l8 -= i1;
@@ -3148,7 +3195,6 @@ label0:;
                 boolean flag4 = (k3 & 0x20) != 0;
                 k3 = (k3 & 3) << 2 | 0x10;
                 k5 = c_int_array1d_static_fld[k2];
-                boolean flag5 = false;
                 if(byte0 == 16)
                     j6 = l_int_array1d_static_fld[((i3 & 1) << 2) + (i3 >> 6)] + ((i3 & 0x3e) << 3);
                 else
@@ -3160,9 +3206,9 @@ label0:;
                         goto label0;//continue label0;
                     if(!aflag1[j7]) {
                         if(flag2)
-                            l7 = ac1[j6 | l6 - 1];
+                            l7 = ac1[j6 | (l6 - 1)];
                         else
-                            l7 = ac1[j6 | byte0 - l6];
+                            l7 = ac1[j6 | (byte0 - l6)];
                         if(flag3)
                             k8 = i4;
                         else
@@ -3174,7 +3220,7 @@ label0:;
                         for(i10 = 0; i10 < 8; i10++) {
                             if(!aflag[k8]) {
                                 k10 = l7 & 3;
-                                if(k10 != 0 && (flag1 || k8 >= 8 && k8 < 248) && (!flag4 || ai[j9] >> 24 == 0))
+                                if(k10 != 0 && (flag1 || (k8 >= 8 && k8 < 248)) && (!flag4 || ai[j9] >> 24 == 0))
                                     ai[j9] = ai1[k10 | k3];
                                 if(flag3)
                                     j9 += i1;
@@ -3201,7 +3247,7 @@ label0:;
         serviceRepaints();
     }
 
-    void avoid1int(int i1) {
+    static void avoid1int(int i1) {
         h();
         int j1 = c_int_array1d_static_fld[i1];
         ushort *ai = screens;
@@ -3217,8 +3263,8 @@ label0:;
             int l2 = i_int_array1d_static_fld[8 + (k1 >> 10 & 3)];
             int j3 = k1 >> 12 & 7;
             j2 = abyte1[ram+(l2 + 960 + (k1 >> 4 & 0x38) + (k1 >> 2 & 7))] & 0xff;
-            int l3 = k1 & 2 | k1 >> 4 & 4;
-            l1 = (j2 >> l3 & 3) << 2;
+            int l3 = (k1 & 2) | (k1 >> 4 & 4);
+            l1 = ((j2 >> l3) & 3) << 2;
             int j4 = -c_int_static_fld;
             do {
                 int k4 = abyte1[ram+l2 + (k1 & 0x3ff)] & 0xff;
@@ -3234,7 +3280,7 @@ label0:;
                 for(int i7 = j4 + 7; i7 >= i5; i7--) {
                     if(!a_boolean_array1d_static_fld[i7]) {
                         if(i7 < 256 && (i7 >= 8 || flag))
-                            ai[k6] = ai1[l1 | i6 & 3];
+                            ai[k6] = ai1[l1 | (i6 & 3)];
                         k6 -= r_int_static_fld;
                     }
                     i6 >>= 2;
@@ -3277,7 +3323,7 @@ label0:;
                     j5 = l_int_array1d_static_fld[V + (i3 >> 6)] + ((i3 & 0x3f) << 3);
                 int l5;
                 if(flag2)
-                    l5 = a_char_array1d_static_fld[j5 | byte0 - 1 - k2];
+                    l5 = a_char_array1d_static_fld[j5 | (byte0 - 1 - k2)];
                 else
                     l5 = a_char_array1d_static_fld[j5 | k2];
                 int j6;
@@ -3297,11 +3343,12 @@ label0:;
                                 if(l7 != 0) {
                                     if(i2 == 0 && k7 != 0)
                                         o_int_static_fld |= 0x40;
-                                    if(flag1 || j6 >= 8 && j6 < 248)
+                                    if(flag1 || (j6 >= 8 && j6 < 248)) {
                                         if(!flag4 || k7 == 0)
                                             ai[l6] = ai1[l7 | k3] | 0x4000000;
                                         else
                                             ai[l6] |= 0x4000000;
+                                    }
                                 }
                             }
                         }
@@ -3380,8 +3427,25 @@ label0:;
             if((k1 & 8) == 0) {
                 int i2 = vram[ram+k1] & 0xff;
                 int j2 = vram[ram+(k1 | 8)] & 0xff;
-                int k2 = ((k1 & 0xfffffff0) >> 1 | k1 & 7) - 4096;
-                a_char_array1d_static_fld[k2] = (ushort)(i2 & 1 | (i2 & 2) << 1 | (i2 & 4) << 2 | (i2 & 8) << 3 | (i2 & 0x10) << 4 | (i2 & 0x20) << 5 | (i2 & 0x40) << 6 | (i2 & 0x80) << 7 | (j2 & 1) << 1 | (j2 & 2) << 2 | (j2 & 4) << 3 | (j2 & 8) << 4 | (j2 & 0x10) << 5 | (j2 & 0x20) << 6 | (j2 & 0x40) << 7 | (j2 & 0x80) << 8);
+                int k2 = ((k1 & 0xfffffff0) >> 1 | (k1 & 7)) - 4096;
+                a_char_array1d_static_fld[k2] = (ushort)(
+                    (i2 & 1)         |
+                    (i2 & 2) << 1    |
+                    (i2 & 4) << 2    |
+                    (i2 & 8) << 3    |
+                    (i2 & 0x10) << 4 |
+                    (i2 & 0x20) << 5 |
+                    (i2 & 0x40) << 6 |
+                    (i2 & 0x80) << 7 |
+                    (j2 & 1) << 1    |
+                    (j2 & 2) << 2    |
+                    (j2 & 4) << 3    |
+                    (j2 & 8) << 4    |
+                    (j2 & 0x10) << 5 |
+                    (j2 & 0x20) << 6 |
+                    (j2 & 0x40) << 7 |
+                    (j2 & 0x80) << 8
+                );
             }
 
         C = 0;
@@ -3414,8 +3478,8 @@ label0:;
     }
 */
 
-    int loadfilesize;
-    char *loadfile(char *s) {
+    static int loadfilesize;
+    static char *loadfile(char *s) {
         FILE *file = fopen(s, "rb");
         if (file == NULL) {
             return NULL;
@@ -3443,7 +3507,7 @@ label0:;
         return file_data;
     }
 
-    int loadROM(char *s) {
+    static int loadROM(char *s) {
     	int i1=0, filesize, vramlength;
       char *buf;
       if(!(buf=loadfile(s))) return 3;
@@ -3515,7 +3579,7 @@ label0:;
     	    return 6;
     	}
         Y = 16384 * u_int_static_fld;
-        int j1 = Y + 10240;
+//        int j1 = Y + 10240;
         //vram = new byte[j1];
         Systemarraycopy(vram,0,vram,10240,vramlength-10240);
         ram=10256;
@@ -3833,7 +3897,7 @@ label0:;
         return (d_int_array1d_static_fld[0] & 0x40) != 0;
     }
 
-     int aint1int(int i1) {
+    static int aint1int(int i1) {
         int j1,k1;
         switch(i1 >> 13) {
         case 0: // '\0'
@@ -3846,7 +3910,7 @@ label0:;
                 j1 = o_int_static_fld;
  //debug("aint1",j1,j_int_static_fld);                
                 o_int_static_fld &= 0x7f;
-                j_int_static_fld = j1 & 0xe0 | j_int_static_fld & 0x1f;
+                j_int_static_fld = (j1 & 0xe0) | (j_int_static_fld & 0x1f);
 //    debug("aint2",j1,j_int_static_fld);
                 return j_int_static_fld;
 
@@ -3898,7 +3962,7 @@ label0:;
 	return a;
 	}
 */
-    void i() {
+    static void i() {
         if(m_boolean_static_fld) {
             aa = (getHeight * B) / 100;
             if(u_boolean_static_fld)
@@ -4005,7 +4069,7 @@ label0:;
 */
     static void e(int i1, int j1) {
         j1 %= Y;
-        b_int_array1d_static_fld[i1 + 4] = (j1 - (i1 + 4 << 13)) + 10240;
+        b_int_array1d_static_fld[i1 + 4] = (j1 - ((i1 + 4) << 13)) + 10240;
     }
 
     static void xxxxb(int i1, int j1, int k1, int l1) {
@@ -4127,8 +4191,25 @@ label0:;
             if((j2 & 8) != 0 && j2 >= 8192) {
                 int l2 = vram[ram+(j2 ^ 8)] & 0xff;
                 int i3 = vram[ram+j2] & 0xff;
-                int j3 = ((j2 & 0xfffffff0) >> 1 | j2 & 7) - 4096;
-                a_char_array1d_static_fld[j3] = (short)(l2 & 1 | (l2 & 2) << 1 | (l2 & 4) << 2 | (l2 & 8) << 3 | (l2 & 0x10) << 4 | (l2 & 0x20) << 5 | (l2 & 0x40) << 6 | (l2 & 0x80) << 7 | (i3 & 1) << 1 | (i3 & 2) << 2 | (i3 & 4) << 3 | (i3 & 8) << 4 | (i3 & 0x10) << 5 | (i3 & 0x20) << 6 | (i3 & 0x40) << 7 | (i3 & 0x80) << 8);
+                int j3 = ((j2 & 0xfffffff0) >> 1 | (j2 & 7)) - 4096;
+                a_char_array1d_static_fld[j3] = (short)(
+                    (l2 & 1)         |
+                    (l2 & 2) << 1    |
+                    (l2 & 4) << 2    |
+                    (l2 & 8) << 3    |
+                    (l2 & 0x10) << 4 |
+                    (l2 & 0x20) << 5 |
+                    (l2 & 0x40) << 6 |
+                    (l2 & 0x80) << 7 |
+                    (i3 & 1) << 1    |
+                    (i3 & 2) << 2    |
+                    (i3 & 4) << 3    |
+                    (i3 & 8) << 4    |
+                    (i3 & 0x10) << 5 |
+                    (i3 & 0x20) << 6 |
+                    (i3 & 0x40) << 7 |
+                    (i3 & 0x80) << 8
+                );
             }
         }
 
@@ -4271,8 +4352,8 @@ label0:;
                     if(ab == 0)
                         p_int_static_fld = j1;
                 }
-                C = C + 1 & 0xff;
-                ab = ab + 1 & 0xff;
+                C = (C + 1) & 0xff;
+                ab = (ab + 1) & 0xff;
                 goto label0; //break label0;
 
             case 5: // '\005'
@@ -4336,8 +4417,25 @@ label0:;
             if((i1 & 8) != 0) {
                 byte byte0 = vram[ram+(i1 ^ 8)];
                 j2 = j1;
-                k2 = ((i1 & 0xfffffff0) >> 1 | i1 & 7) - 4096;
-                a_char_array1d_static_fld[k2] = (ushort)(byte0 & 1 | (byte0 & 2) << 1 | (byte0 & 4) << 2 | (byte0 & 8) << 3 | (byte0 & 0x10) << 4 | (byte0 & 0x20) << 5 | (byte0 & 0x40) << 6 | (byte0 & 0x80) << 7 | (j2 & 1) << 1 | (j2 & 2) << 2 | (j2 & 4) << 3 | (j2 & 8) << 4 | (j2 & 0x10) << 5 | (j2 & 0x20) << 6 | (j2 & 0x40) << 7 | (j2 & 0x80) << 8);
+                k2 = ((i1 & 0xfffffff0) >> 1 | (i1 & 7)) - 4096;
+                a_char_array1d_static_fld[k2] = (ushort)(
+                    (byte0 & 1)         |
+                    (byte0 & 2) << 1    |
+                    (byte0 & 4) << 2    |
+                    (byte0 & 8) << 3    |
+                    (byte0 & 0x10) << 4 |
+                    (byte0 & 0x20) << 5 |
+                    (byte0 & 0x40) << 6 |
+                    (byte0 & 0x80) << 7 |
+                    (j2 & 1) << 1       |
+                    (j2 & 2) << 2       |
+                    (j2 & 4) << 3       |
+                    (j2 & 8) << 4       |
+                    (j2 & 0x10) << 5    |
+                    (j2 & 0x20) << 6    |
+                    (j2 & 0x40) << 7    |
+                    (j2 & 0x80) << 8
+                );
             }//ERROR WAS HERE (char)
             break;
 
@@ -4507,7 +4605,7 @@ void savescreen(char *fname){
   fclose(f); 
 }
 */
-int nshow=0;
+//static int nshow=0;
 /*
 void repaint(){
   if(++nshow==200){
