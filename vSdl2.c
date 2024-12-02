@@ -19,20 +19,8 @@ static SDL_Texture *texture;
 #define VIEWPORT_INTERVAL 35
 
 void repaint() {
-	memcpy(surface->pixels, screens, 132*176*2);
-}
-
-void check_keys(void) {
-	const Uint8 *keyboard = SDL_GetKeyboardState(NULL);
-//	yeti.keyboard.a      = keyboard[SDL_SCANCODE_Z] || keyboard[SDL_SCANCODE_LCTRL] || keyboard[SDL_SCANCODE_RETURN];
-//	yeti.keyboard.b      = keyboard[SDL_SCANCODE_X] || keyboard[SDL_SCANCODE_SPACE];
-//	yeti.keyboard.select = keyboard[SDL_SCANCODE_ESCAPE];
-//	yeti.keyboard.right  = keyboard[SDL_SCANCODE_RIGHT] || keyboard[SDL_SCANCODE_D];
-//	yeti.keyboard.left   = keyboard[SDL_SCANCODE_LEFT] || keyboard[SDL_SCANCODE_A];
-//	yeti.keyboard.up     = keyboard[SDL_SCANCODE_UP] || keyboard[SDL_SCANCODE_W];
-//	yeti.keyboard.down   = keyboard[SDL_SCANCODE_DOWN] || keyboard[SDL_SCANCODE_S];
-//	yeti.keyboard.l      = keyboard[SDL_SCANCODE_C] || keyboard[SDL_SCANCODE_PAGEUP];
-//	yeti.keyboard.r      = keyboard[SDL_SCANCODE_V] || keyboard[SDL_SCANCODE_PAGEDOWN];
+	main_loop_step();
+	memcpy(surface->pixels, screens, screen_length*2);
 }
 
 void main_loop_step(void) {
@@ -72,45 +60,34 @@ void main_loop_step(void) {
 		}
 	}
 
-	//    static const char *a_java_lang_String_array1d_static_fld[] = {
-//        "Up", "Down", "Left", "Right", "A", "B", "Start", "Select", "AA", "BB",
-//        "Trigger", "Quick Save", "Quick Load", "FullScreen"
-//    };
-    static int key[] = {
-        50, 56, 52, 54, 49, 51,
-        53, 48, 55, 57,
-        35, 0, 0, 42
-    };
-
-//	check_keys();
-
-//	memcpy(surface->pixels, screens, getWidth*getHeight*2);
-
 	SDL_BlitSurface(surface, NULL, video, NULL);
 	SDL_UpdateTexture(texture, NULL, video->pixels, video->pitch);
 	SDL_RenderCopy(render, texture, NULL, NULL);
 	SDL_RenderPresent(render);
 
-	SDL_Delay(5);
+	SDL_Delay(1000 / VIEWPORT_INTERVAL);
 }
 
 int main(int argc, char *argv[]) {
-	srand(time(NULL));
+
+	getWidth      = 256;
+	getHeight     = 240;
+	screen_length = getWidth * getHeight;
 
 	int i;
-  if(argc<2){
-    printf("No ROM!\n");
-    return 1;
-  }
-  initnul();
-  h();
-  if(i=loadrom(*++argv)){
-    printf("Error %d\n",i);
-    return i;
-  }
+	if(argc<2){
+		printf("No ROM!\n");
+		return 1;
+	}
+	initnul();
+	h();
+	if(i=loadrom(*++argv)){
+		printf("Error %d\n",i);
+		return i;
+	}
 
 	SDL_Window *window = SDL_CreateWindow(
-		"Yeti3D",
+		"vNesC",
 		SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
 		getWidth, getHeight,
 		SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE
@@ -134,11 +111,11 @@ int main(int argc, char *argv[]) {
 	}
 
 //	RGB555
-//	surface = SDL_CreateRGBSurface(0, YETI_VIEWPORT_WIDTH, YETI_VIEWPORT_HEIGHT, 16, 0x7C00, 0x03E0, 0x001F, 0x0000);
+//	surface = SDL_CreateRGBSurface(0, getWidth, getHeight, 16, 0x7C00, 0x03E0, 0x001F, 0x0000);
 //	RGB565
 	surface = SDL_CreateRGBSurface(0, getWidth, getHeight, 16, 0xF800, 0x07E0, 0x001F, 0x0000);
 //	BGR555
-//	surface = SDL_CreateRGBSurface(0, YETI_VIEWPORT_WIDTH, YETI_VIEWPORT_HEIGHT, 16, 0x001F, 0x03E0, 0x7C00, 0x0000);
+//	surface = SDL_CreateRGBSurface(0, getWidth, getHeight, 16, 0x001F, 0x03E0, 0x7C00, 0x0000);
 	if (surface == NULL) {
 		SDL_Log("SDL_CreateRGBSurface (surface) failed: %s", SDL_GetError());
 		return EXIT_FAILURE;

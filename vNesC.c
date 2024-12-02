@@ -234,9 +234,9 @@ int nn; //temp
         k_int_static_fld = 0;
         l_boolean_static_fld = j_boolean_static_fld = false;
         s_boolean_static_fld = true;
-        do {
+//        do {
             do {
-                main_loop_step();
+                //main_loop_step();
  //debug("dodo",1,1);////////////            
                 boolean flag5 = k5 % A == 0;
                 if(t_boolean_static_fld) {
@@ -2034,7 +2034,7 @@ label0:
                     //////////////////////////////////
                     if(t_boolean_static_fld || k6 >= 240 || (R & 0x18) == 0)
                         continue;
-                    
+
                     if(flag5) {
                         D &= 0xfbe0;
                         D |= y & 0x41f;
@@ -2106,7 +2106,7 @@ label0:
             } while(!v_boolean_static_fld);
             v_boolean_static_fld = false;
             if(n_boolean_static_fld)
-                break;
+                return;
             if(d_boolean_static_fld) {
                 d_boolean_static_fld = false;
                 
@@ -2223,7 +2223,7 @@ label0:
                 k_int_static_fld = 0;
                 l_boolean_static_fld = j_boolean_static_fld = false;
             }
-        } while(true);
+//        } while(true);
         s_boolean_static_fld = n_boolean_static_fld = false;
     }
 
