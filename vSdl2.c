@@ -216,3 +216,35 @@ void closestream() {
 		flush();
 	fclose(stream);
 }
+
+char *loadfile(char *s, int *loadfilesize_arg) {
+	int loadfilesize;
+	*loadfilesize_arg = 0;
+	FILE *file = fopen(s, "rb");
+	if (file == NULL) {
+		return NULL;
+	}
+
+	fseek(file, 0, SEEK_END);
+	loadfilesize = ftell(file);
+	rewind(file);
+
+	char *file_data = (char*)malloc(loadfilesize); // +1 for null terminator
+	if (file_data == NULL) {
+		perror("Error allocating memory");
+		fclose(file);
+		return NULL;
+	}
+
+	size_t result = fread(file_data, 1, loadfilesize, file);
+	if (result != loadfilesize) {
+		free(file_data);
+		fclose(file);
+		return NULL;
+	}
+	fclose(file);
+
+	*loadfilesize_arg = loadfilesize;
+
+	return file_data;
+}

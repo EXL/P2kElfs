@@ -26,8 +26,8 @@ clean:
 	-rm -f *.elf
 	-rm -f *.exe
 
-vNesC.o: Makefile vNesC.c vNesC.h
+vNesC.o: Makefile.pc vNesC.c vNesC.h
 	$(CC) $(CFLAGS) -c vNesC.c -o vNesC.o
 
-vSdl2.o: Makefile vSdl2.c vNesC.h
+vSdl2.o: Makefile.pc vSdl2.c vNesC.h
 	$(CC) $(CFLAGS) -c vSdl2.c -o vSdl2.o

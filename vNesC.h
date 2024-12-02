@@ -4,14 +4,19 @@
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
+#elif defined(__P2K__)
+#include <typedefs.h>
+#endif
 
 #define mfree free
-#endif
 
 #define boolean char
 #define byte signed char
+#undef true
 #define true 1
+#undef false
 #define false 0
+#undef null
 #define null 0
 
 #define b_int_array1d_static_fld_length 8 //?
@@ -74,6 +79,7 @@ void run_step() ;
 void keyPressed(int i1) ;
 void keyReleased(int i1) ;
 boolean loadrom(char *s) ;
+char *loadfile(char *s, int *loadfilesize) ;
 ///////
 //void savescreen(char *fname);
 

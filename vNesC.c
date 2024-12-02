@@ -3478,39 +3478,10 @@ label0:;
     }
 */
 
-    static int loadfilesize;
-    static char *loadfile(char *s) {
-        FILE *file = fopen(s, "rb");
-        if (file == NULL) {
-            return NULL;
-        }
-
-        fseek(file, 0, SEEK_END);
-        loadfilesize = ftell(file);
-        rewind(file);
-
-        char *file_data = (char*)malloc(loadfilesize); // +1 for null terminator
-        if (file_data == NULL) {
-            perror("Error allocating memory");
-            fclose(file);
-            return NULL;
-        }
-
-        size_t result = fread(file_data, 1, loadfilesize, file);
-        if (result != loadfilesize) {
-            free(file_data);
-            fclose(file);
-            return NULL;
-        }
-        fclose(file);
-
-        return file_data;
-    }
-
     static int loadROM(char *s) {
-    	int i1=0, filesize, vramlength;
+    	int i1=0, filesize, vramlength, loadfilesize;
       char *buf;
-      if(!(buf=loadfile(s))) return 3;
+      if(!(buf=loadfile(s, &loadfilesize))) return 3;
       filesize=loadfilesize;
       //int f;
       //if((f=fopen(s,A_ReadOnly+A_BIN,P_READ,&err))==-1) return 3;
