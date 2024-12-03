@@ -47,7 +47,9 @@ static void sdl_handle_events(void) {
 					case SDLK_s:      keyPressed(48);  break;
 					case SDLK_q:      keyPressed(64);  break;
 					case SDLK_w:      keyPressed(65);  break;
+#if !defined(__EMSCRIPTEN__)
 					case SDLK_ESCAPE: quit_loop = 1;   break;
+#endif
 				}
 				break;
 			case SDL_KEYUP:
