@@ -647,6 +647,7 @@ static UINT32 ATI_Driver_Log(APPLICATION_T *app) {
 	LOG("ATI CAPS 1: %d (0x%08X)\n", appi->ahi.info_driver->caps1, appi->ahi.info_driver->caps1);
 	LOG("ATI CAPS 2: %d (0x%08X)\n", appi->ahi.info_driver->caps2, appi->ahi.info_driver->caps2);
 
+#if !defined(FTR_L7E)
 	LOG("ATI Surface Screen Info: width=%d, height=%d, pixFormat=%d, byteSize=%d, byteSize=%d KiB\n",
 		appi->ahi.info_surface_screen.width, appi->ahi.info_surface_screen.height,
 		appi->ahi.info_surface_screen.pixFormat,
@@ -664,6 +665,7 @@ static UINT32 ATI_Driver_Log(APPLICATION_T *app) {
 		appi->ahi.info_surface_draw.offset,
 		appi->ahi.info_surface_draw.stride,
 		appi->ahi.info_surface_draw.numPlanes);
+#endif
 
 	return RESULT_OK;
 }
@@ -927,11 +929,16 @@ static UINT32 ATI_Driver_Start(APPLICATION_T *app) {
 	status |= AhiDrawClipDstSet(appi->ahi.context, NULL);
 	status |= AhiDrawClipSrcSet(appi->ahi.context, NULL);
 
+#if !defined(FTR_L7E)
 	status |= AhiSurfInfo(appi->ahi.context, appi->ahi.screen, &appi->ahi.info_surface_screen);
 	status |= AhiSurfInfo(appi->ahi.context, appi->ahi.draw, &appi->ahi.info_surface_draw);
 
 	appi->width = appi->ahi.info_surface_screen.width;
 	appi->height = appi->ahi.info_surface_screen.height;
+#else
+	appi->width = display_mode.size.x;
+	appi->height = display_mode.size.y;
+#endif
 
 	appi->ahi.update_params.size = sizeof(AHIUPDATEPARAMS_T);
 	appi->ahi.update_params.sync = FALSE;
