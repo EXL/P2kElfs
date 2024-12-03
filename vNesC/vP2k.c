@@ -953,7 +953,7 @@ static UINT32 ATI_Driver_Start(APPLICATION_T *app) {
 	appi->ahi.bitmap.image = uisAllocateMemory(appi->bmp_width * appi->bmp_height * 2, &result);
 	if (result != RESULT_OK) {
 #endif
-		LOG("%s\n", "Error: Cannot allocate screen buffer memory.");
+		LOG("Error: Cannot allocate screen buffer memory: %d bytes.\n", appi->bmp_width * appi->bmp_height * 2);
 		return RESULT_FAIL;
 	}
 	appi->ahi.rect_bitmap.x1 = 0;
