@@ -27,7 +27,7 @@ set DEFINES=-D__P2K__ -DEM2 -DROT_0 -DFPS_30
 set INCLUDES=-I.
 
 :: Optimization.
-set OPTIM=-O2
+set OPTIM=-O3
 
 :: Project/ELF name.
 set ELF_NAME=vNesC

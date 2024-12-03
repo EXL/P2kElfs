@@ -15,7 +15,7 @@ DEFINES = -D__P2K__ -DEM2 -DROT_0 -DFPS_30
 #DEFINES = -D__P2K__ -DEM2 -DROT_0 -DFPS_30 -DG_DEFAULT
 
 # Optimization.
-OPTIM = -O2
+OPTIM = -O3
 
 # Project/ELF name.
 ELF_NAME = vNesC
