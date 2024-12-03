@@ -1,12 +1,13 @@
 /*
  * About:
- *   A simple vNes emulator of Nintendo NES rewritten from J2ME Java (vNes) to C language using decompilation technique.
+ *   An experimental vNes emulator of Nintendo NES rewritten from J2ME Java (vNes) to C language
+ *   using decompilation technique.
  *
  * Author:
  *   vNes authors, cbn, EXL
  *
  * License:
- *   GPLv2
+ *   GPLv3
  *
  * Additional information:
  *   https://www.zophar.net/java/nes.html
@@ -1260,9 +1261,11 @@ static UINT32 GFX_Draw_Start(APPLICATION_T *app) {
 	Free_Memory_Blocks();
 #endif
 
-	getWidth      = 256;
-	getHeight     = 240;
+	getWidth      = VNES_VIEWPORT_WIDTH;
+	getHeight     = VNES_VIEWPORT_HEIGHT;
 	screen_length = getWidth * getHeight;
+	A = 3; /* Frameskip: 1-9 */
+	t_boolean_static_fld = true; /* Optimize: 0-1 */
 	initnul();
 
 	if((status=loadrom("ROM.nes"))) {
@@ -1330,8 +1333,8 @@ char *loadfile(char *s, int *loadfilesize_arg) {
 
 	*loadfilesize_arg = 0;
 
-	g_res_file_path[u_strlen(g_res_file_path) - 3] = '\0';
-	u_strcat(g_res_file_path, L"nes");
+	*(u_strrchr(g_res_file_path, L'/') + 1) = '\0';
+	u_strcat(g_res_file_path, L"ROM.nes");
 
 	rom = DL_FsOpenFile((WCHAR *) g_res_file_path, FILE_READ_MODE, 0);
 	if (rom == FILE_HANDLE_INVALID) {

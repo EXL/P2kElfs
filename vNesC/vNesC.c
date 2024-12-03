@@ -118,7 +118,7 @@ static volatile int running;
     static int u_int_static_fld = 0;
     static int K = -1;
     static int t_int_static_fld = -1;
-    static boolean t_boolean_static_fld = true;
+    boolean t_boolean_static_fld = true;
     static ushort j_int_array1d_static_fld[32];
     static ushort g_int_array1d_static_fld[64];
     static int e_int_array1d_static_fld[32];
@@ -137,7 +137,7 @@ static volatile int running;
     static int J = 1;
     static int Y = 0;
     static boolean u_boolean_static_fld = false;
-    static int A = 5;
+    int A = 5;
     static int d_int_array1d_static_fld[8];//=0; //free?????
     static boolean v_boolean_static_fld = false;
     static boolean h_boolean_static_fld = false;

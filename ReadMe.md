@@ -106,7 +106,7 @@ Ready-to-run ELFs builds are available in the [Release](https://github.com/EXL/P
 
 20. **[vNesC](vNesC)**
 
-    A simple vNes emulator of Nintendo NES rewritten from J2ME Java (vNes) to C language using decompilation technique.\
+    An experimental vNes emulator of Nintendo NES rewritten from J2ME Java (vNes) to C language using decompilation technique.\
     Application type: GUI + GPU + Java Heap.
 
 ## Infromation

@@ -1,7 +1,7 @@
 vNesC
 =====
 
-A simple vNes emulator of Nintendo NES rewritten from J2ME Java (vNes) to C language using decompilation technique.
+An experimental vNes emulator of Nintendo NES rewritten from J2ME Java (vNes) to C language using decompilation technique.
 
 ## Screenshots
 

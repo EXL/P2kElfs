@@ -11,7 +11,7 @@ static int quit_loop = 0;
 #endif
 
 #if defined(REPAINT_HOOK)
-#define VIEWPORT_INTERVAL 32
+#define VIEWPORT_INTERVAL 1000 / 75
 #else
 #define VIEWPORT_INTERVAL 120
 
@@ -37,30 +37,31 @@ static void sdl_handle_events(void) {
 				break;
 			case SDL_KEYDOWN:
 				switch (event.key.keysym.sym) {
-					case SDLK_UP:    keyPressed(50); break;
-					case SDLK_DOWN:  keyPressed(56); break;
-					case SDLK_LEFT:  keyPressed(52); break;
-					case SDLK_RIGHT: keyPressed(54); break;
-					case SDLK_z:     keyPressed(49); break;
-					case SDLK_x:     keyPressed(51); break;
-					case SDLK_a:     keyPressed(53); break;
-					case SDLK_s:     keyPressed(48); break;
-					case SDLK_q:     keyPressed(64); break;
-					case SDLK_w:     keyPressed(65); break;
+					case SDLK_UP:     keyPressed(50);  break;
+					case SDLK_DOWN:   keyPressed(56);  break;
+					case SDLK_LEFT:   keyPressed(52);  break;
+					case SDLK_RIGHT:  keyPressed(54);  break;
+					case SDLK_z:      keyPressed(49);  break;
+					case SDLK_x:      keyPressed(51);  break;
+					case SDLK_a:      keyPressed(53);  break;
+					case SDLK_s:      keyPressed(48);  break;
+					case SDLK_q:      keyPressed(64);  break;
+					case SDLK_w:      keyPressed(65);  break;
+					case SDLK_ESCAPE: quit_loop = 1;   break;
 				}
 				break;
 			case SDL_KEYUP:
 				switch (event.key.keysym.sym) {
-					case SDLK_UP:    keyReleased(50); break;
-					case SDLK_DOWN:  keyReleased(56); break;
-					case SDLK_LEFT:  keyReleased(52); break;
-					case SDLK_RIGHT: keyReleased(54); break;
-					case SDLK_z:     keyReleased(49); break;
-					case SDLK_x:     keyReleased(51); break;
-					case SDLK_a:     keyReleased(53); break;
-					case SDLK_s:     keyReleased(48); break;
-					case SDLK_q:     keyReleased(64); break;
-					case SDLK_w:     keyReleased(65); break;
+					case SDLK_UP:     keyReleased(50); break;
+					case SDLK_DOWN:   keyReleased(56); break;
+					case SDLK_LEFT:   keyReleased(52); break;
+					case SDLK_RIGHT:  keyReleased(54); break;
+					case SDLK_z:      keyReleased(49); break;
+					case SDLK_x:      keyReleased(51); break;
+					case SDLK_a:      keyReleased(53); break;
+					case SDLK_s:      keyReleased(48); break;
+					case SDLK_q:      keyReleased(64); break;
+					case SDLK_w:      keyReleased(65); break;
 				}
 				break;
 		}
@@ -103,16 +104,18 @@ int main(int argc, char *argv[]) {
 	getWidth      = VNES_VIEWPORT_WIDTH;
 	getHeight     = VNES_VIEWPORT_HEIGHT;
 	screen_length = getWidth * getHeight;
+	A = 2; /* Frameskip: 1-9 */
+	t_boolean_static_fld = true; /* Optimize: 0-1 */
 
 	int i;
 	if(argc < 2){
-		printf("No NES ROM!\n");
+		fprintf(stderr, "No NES ROM!\n");
 		return 1;
 	}
 	strncpy(romname, argv[1], 255);
 	initnul();
 	if((i=loadrom(*++argv))) {
-		printf("Error %d\n",i);
+		fprintf(stderr, "Error %d\n",i);
 		return i;
 	}
 

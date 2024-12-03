@@ -1,6 +1,8 @@
 // vNesC.h
 
-#define VNES_VIEWPORT_WIDTH 256
+/* 64x64   - min */
+/* 256x240 - max */
+#define VNES_VIEWPORT_WIDTH  256
 #define VNES_VIEWPORT_HEIGHT 240
 
 #if defined(USE_SDL2)
@@ -64,6 +66,8 @@ void init_values();
 extern void repaint();
 
 extern int getWidth, getHeight, screen_length;
+extern int A; /* Frameskip: 1-9 */
+extern boolean t_boolean_static_fld; /* Optimize: 0-1 */
 
 typedef unsigned short ushort;
 
