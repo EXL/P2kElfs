@@ -2,6 +2,8 @@
 
 #include "vNesC.h"
 
+#include <time.h>
+
 #include <SDL2/SDL.h>
 
 #if defined(__EMSCRIPTEN__)
@@ -24,6 +26,9 @@ static SDL_Renderer *render;
 static SDL_Texture *texture;
 
 static char romname[256];
+
+static void save_screenshot(void);
+static void save_sdl_screenshot(void);
 
 static void sdl_handle_events(void) {
 	SDL_Event event;
@@ -48,6 +53,8 @@ static void sdl_handle_events(void) {
 					case SDLK_q:      keyPressed(64);  break;
 					case SDLK_w:      keyPressed(65);  break;
 #if !defined(__EMSCRIPTEN__)
+					case SDLK_o:   save_sdl_screenshot();  break;
+					case SDLK_p:   save_screenshot();  break;
 					case SDLK_ESCAPE: quit_loop = 1;   break;
 #endif
 				}
@@ -282,4 +289,48 @@ void *MEM_Alloc_HUGE(int mem_size) {
 
 void MEM_Free_HUGE(void *ptr) {
 	mfree(ptr);
+}
+
+static void save_screenshot(void) {
+	unsigned char bmphead[70] = {
+		0x42, 0x4D, 0x46, 0xE0, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x46, 0x00,
+		0x00, 0x00, 0x38, 0x00, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0xF0, 0x00,
+		0x00, 0x00, 0x01, 0x00, 0x10, 0x00, 0x03, 0x00, 0x00, 0x00, 0x00, 0xE0,
+		0x01, 0x00, 0x13, 0x0B, 0x00, 0x00, 0x13, 0x0B, 0x00, 0x00, 0x00, 0x00,
+		0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xF8, 0x00, 0x00, 0xE0, 0x07,
+		0x00, 0x00, 0x1F, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
+	};
+
+	*(int *)(bmphead+0x02) = VNES_VIEWPORT_WIDTH * VNES_VIEWPORT_HEIGHT * 2 + 70;
+	*(int *)(bmphead+0x12) = VNES_VIEWPORT_WIDTH;
+	*(int *)(bmphead+0x16) = VNES_VIEWPORT_HEIGHT;
+	*(int *)(bmphead+0x22) = VNES_VIEWPORT_WIDTH * VNES_VIEWPORT_HEIGHT * 2;
+
+	char fname[256];
+	snprintf(fname, 256, "Screenshot_%ld.bmp", time(NULL));
+
+	FILE *f;
+	int i,j;
+	short scr[VNES_VIEWPORT_WIDTH * VNES_VIEWPORT_HEIGHT];
+	short *s=(short *)screens;
+
+	for (j = 0; j < VNES_VIEWPORT_HEIGHT; j++) {
+		for (i = 0; i < VNES_VIEWPORT_WIDTH; i++) {
+			scr[(VNES_VIEWPORT_HEIGHT - j - 1) * VNES_VIEWPORT_WIDTH + i] = s[j * VNES_VIEWPORT_WIDTH + i];
+		}
+	}
+
+	f=fopen(fname,"wb");
+	fwrite(bmphead,sizeof(bmphead),1,f);
+	fwrite(scr,VNES_VIEWPORT_WIDTH * VNES_VIEWPORT_HEIGHT*2,1,f);
+	fclose(f);
+
+	fprintf(stderr, "Screenshot saved!\n");
+}
+
+static void save_sdl_screenshot(void) {
+	char fname[256];
+	snprintf(fname, 256, "Screenshot_SDL_%ld.bmp", time(NULL));
+	SDL_SaveBMP(surface, fname);
+	fprintf(stderr, "Screenshot SDL saved!\n");
 }
