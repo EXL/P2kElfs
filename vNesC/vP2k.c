@@ -1,17 +1,17 @@
 /*
  * About:
  *   An experimental vNes emulator of Nintendo NES rewritten from J2ME Java (vNes) to C language
- *   using decompilation technique.
+ *   using decompilation technique by cbn. Port from Siemens x65, x75 (SGold, NewSGold) platforms.
  *
- * Author:
- *   vNes authors, cbn, EXL
+ * Authors:
+ *   vNes J2ME emulator authors, cbn, EXL
  *
  * License:
  *   GPLv3
  *
  * Additional information:
- *   https://www.zophar.net/java/nes.html
  *   https://cbn.narod.ru/elf_download.html
+ *   https://cbn.narod.ru/vNES.zip
  *
  * Application type:
  *   GUI + ATI, Nvidia + Java Heap
