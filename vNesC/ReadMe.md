@@ -34,6 +34,7 @@ See [TODO](TODO) video on YouTube.
 * 3 - Select.
 * Center, 5, 7 - A.
 * 9 - B.
+* 0, Left Soft, End - Exit.
 
 ## ELF files
 
@@ -51,7 +52,7 @@ See [TODO](TODO) video on YouTube.
 
 ### Legend
 
-* 2 or 3 (1st digit) - Copiler optimization level.
+* 2 or 3 (1st digit) - Compiler optimization level.
 * 15 or 30 (2nd digit) - Fixed FPS loop.
 * 3 or 4 (3rd digit) - Frameskip option.
 
@@ -71,14 +72,14 @@ The ELF-application has been tested on the following phones and firmware:
 
 Tested ROMs:
 
-* ROM_Chip_Dale_1.nes
-* ROM_Chip_Dale_2.nes
-* ROM_Contra.nes
-* ROM_Guerrilla_War.nes
-* ROM_Mega_Man.nes
-* ROM_Super_C.nes
-* ROM_Super_Mario.nes
-* ROM_Battle_City.nes
+* Chip_Dale_1.nes
+* Chip_Dale_2.nes
+* Contra.nes
+* Guerrilla_War.nes
+* Mega_Man.nes
+* Super_C.nes
+* Super_Mario.nes
+* Battle_City.nes
 
 Application type: GUI + GPU + Java Heap.
 
