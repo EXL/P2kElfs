@@ -7,21 +7,21 @@ Place "ROM.nes" Nintendo NES/Famicom/Dendy ROM file next to the ELF application.
 
 ## Screenshots from Motorola ROKR E1 and Motorola E770v
 
-TODO:
+![Screenshot of vNesC from Motorola E770v 1](../images/Screenshot_vNesC_E770v_1.png) ![Screenshot of vNesC from Motorola E770v 2](../images/Screenshot_vNesC_E770v_2.png) ![Screenshot of vNesC from Motorola E770v 3](../images/Screenshot_vNesC_E770v_3.png) ![Screenshot of vNesC from Motorola E770v 4](../images/Screenshot_vNesC_E770v_4.png)
 
 ## Screenshots from Motorola RAZR V3x
 
-TODO:
+![Screenshot of vNesC from Motorola V3x 1](../images/Screenshot_vNesC_V3x_1.png) ![Screenshot of vNesC from Motorola V3x 2](../images/Screenshot_vNesC_V3x_2.png) ![Screenshot of vNesC from Motorola V3x 3](../images/Screenshot_vNesC_V3x_3.png) ![Screenshot of vNesC from Motorola V3x 4](../images/Screenshot_vNesC_V3x_4.png)
 
 ## Photos of Motorola E770v
 
-TODO:
+![Photo of vNesC on Motorola E770v 1](../images/Photo_vNesC_E770v_1.jpg)
 
 Thanks to @diokhann
 
 ## Photos of Motorola ROKR E1 and Motorola RAZR V3x
 
-TODO:
+![Photo of vNesC on Motorola ROKR E1 and Motorola RAZR V3x 1](../images/Photo_vNesC_E1_V3x_1.jpg)
 
 ## Videos of Motorola ROKR E1, Motorola E770v, Motorola RAZR V3x, and Motorola SLVR L7e
 
