@@ -3,6 +3,10 @@ Yeti3D
 
 Port of the heavy optimized "Yeti3D" 3D engine demo by **Derek J. Evans** from [Nintendo Game Boy Advance](https://en.wikipedia.org/wiki/Game_Boy_Advance) (GBA) to the Motorola P2K phones platform.
 
+## Screenshots from Motorola C650
+
+![Screenshot of Yeti3D from Motorola C650 1](../images/Screenshot_Yeti3D_C650_1.png) ![Screenshot of Yeti3D from Motorola C650 2](../images/Screenshot_Yeti3D_C650_2.png) ![Screenshot of Yeti3D from Motorola C650 3](../images/Screenshot_Yeti3D_C650_3.png) ![Screenshot of Yeti3D from Motorola C650 4](../images/Screenshot_Yeti3D_C650_4.png)
+
 ## Screenshots from Motorola SLVR L6
 
 ![Screenshot of Yeti3D from Motorola L6 1](../images/Screenshot_Yeti3D_L6_1.png) ![Screenshot of Yeti3D from Motorola L6 2](../images/Screenshot_Yeti3D_L6_2.png) ![Screenshot of Yeti3D from Motorola L6 3](../images/Screenshot_Yeti3D_L6_3.png)
@@ -10,6 +14,14 @@ Port of the heavy optimized "Yeti3D" 3D engine demo by **Derek J. Evans** from [
 ## Screenshots from Motorola ROKR E1
 
 ![Screenshot of Yeti3D from Motorola E1 1](../images/Screenshot_Yeti3D_E1_1.png) ![Screenshot of Yeti3D from Motorola E1 2](../images/Screenshot_Yeti3D_E1_2.png) ![Screenshot of Yeti3D from Motorola E1 3](../images/Screenshot_Yeti3D_E1_3.png)
+
+## Screenshots from Motorola E770v
+
+![Screenshot of Yeti3D from Motorola E770v 1](../images/Screenshot_Yeti3D_E770v_1.png) ![Screenshot of Yeti3D from Motorola E770v 2](../images/Screenshot_Yeti3D_E770v_2.png) ![Screenshot of Yeti3D from Motorola E770v 3](../images/Screenshot_Yeti3D_E770v_3.png) ![Screenshot of Yeti3D from Motorola E770v 4](../images/Screenshot_Yeti3D_E770v_4.png)
+
+## Screenshots from Motorola RAZR V3x
+
+![Screenshot of Yeti3D from Motorola RAZR V3x 1](../images/Screenshot_Yeti3D_V3x_1.png) ![Screenshot of Yeti3D from Motorola RAZR V3x 2](../images/Screenshot_Yeti3D_V3x_2.png) ![Screenshot of Yeti3D from Motorola RAZR V3x 3](../images/Screenshot_Yeti3D_V3x_3.png) ![Screenshot of Yeti3D from Motorola RAZR V3x 4](../images/Screenshot_Yeti3D_V3x_4.png)
 
 ## Photos of Motorola SLVR L6 and Motorola ROKR E1
 
@@ -68,6 +80,9 @@ Thanks to @Limows
 | ROKR E1  | 176x220 | ROT90 | 96x64 <br /> rotozoom      | Yes       | Yes                     | 1000.0     | 8.12 <br /> 7.5-8.6       | Y3D_RO2T_96x64.elf   |
 | V360     | 176x220 | ROT90 | 96x64 <br /> rotozoom      | No        | No                      | 30.0       | 9.98 <br /> 6.2-12.1      | Y3D_RN1_96x64.elf    |
 | V360     | 176x220 | ROT0  | 220x176 <br /> fullscreen  | No        | No                      | 30.0       | 3.64 <br /> 2.7-5.0       | Y3D_VN1D_220x176.elf |
+| E770v    | 176x220 | ROT0  | 176x220 <br /> fullscreen  | No        | No                      | 30.0       | ? <br /> ?-?              | Y3D_176x220.elf      |
+| RAZR V3x | 240x320 | ROT0  | 240x176 <br /> fullscreen  | No        | No                      | 30.0       | ? <br /> ?-?              | Y3D_240x176.elf      |
+| RAZR V3x | 240x320 | ROT0  | 240x320 <br /> fullscreen  | No        | No                      | 30.0       | ? <br /> ?-?              | Y3D_240x320.elf      |
 
 See [Overclock](../Overclock) project documents for overclocking Yeti3D comparision.
 
@@ -91,7 +106,7 @@ See [Overclock](../Overclock) project documents for overclocking Yeti3D comparis
 
 ### Summary
 
-* 8 ELFs + 8 ElfPack 2.0 ELFs + 4 Task and Semaphores ELFs + 1 Debug ELF + 6 V600 ELFs + 8 FPS meter ELFs + 2 V3r ELFs + 2 L6 ELFs + 4 C650 ELFs = 43 ELFs.
+* 8 ELFs + 8 ElfPack 2.0 ELFs + 4 Task and Semaphores ELFs + 1 Debug ELF + 6 V600 ELFs + 8 FPS meter ELFs + 2 V3r ELFs + 2 L6 ELFs + 4 C650 ELFs + 3 ElfPack 2.0/M-CORE ELFs = 46 ELFs.
 
 ## Additional information
 
@@ -109,6 +124,8 @@ The ELF-application has been tested on the following phones and firmware:
 * Motorola RAZR V3r: R4515_G_08.BD.D3R
 * Motorola SLVR L7e: R452D_G_08.01.0AR (some bugs)
 * Motorola KRZR K1:  R452F_G_08.03.08R (some bugs)
+* Motorola E770v: R252211_U_85.9B.E1P
+* Motorola RAZR V3x: R252211LD_U_85.9B.E6P
 
 Application type: GUI + GPU + Java Heap + Videomode + Tasks (in the Task version).
 
