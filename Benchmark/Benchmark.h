@@ -29,6 +29,7 @@ typedef struct {
 } BENCHMARK_RESULTS_CPU_T;
 
 extern void delay_bmips(UINT32 loops);
+extern void delay_bmips_l7e(UINT32 loops);
 
 extern UINT32 BogoMIPS(BENCHMARK_RESULTS_CPU_T *result);
 
