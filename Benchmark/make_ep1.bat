@@ -27,16 +27,19 @@ set LIB_MAIN=Lib.o
 
 :: Defines.
 set DEFINES=-D__P2K__ -DEP1 -DLINUX_BOGOMIPS
+:: set DEFINES=-D__P2K__ -DEP1 -DLINUX_BOGOMIPS -DFIX_DELAY_BMIPS
+:: set DEFINES=-D__P2K__ -DEP1 -DLINUX_BOGOMIPS -DFTR_L7E
+:: set DEFINES=-D__P2K__ -DEP1 -DLINUX_BOGOMIPS -DFTR_V600
+:: set DEFINES=-D__P2K__ -DEP1 -DLINUX_BOGOMIPS -DFTR_V600 -DFTR_C650
 :: set DEFINES=-D__P2K__ -DEP1 -DLINUX_BOGOMIPS -DNO_ASM
 :: set DEFINES=-D__P2K__ -DEP1 -DPALMOS_BOGOMIPS
-:: set DEFINES=-D__P2K__ -DEP1 -DPALMOS_BOGOMIPS -DFTR_V600
-:: set DEFINES=-D__P2K__ -DEP1 -DPALMOS_BOGOMIPS -DFTR_L7E
 
 :: Project/ELF name.
 set ELF_NAME=Benchmark
 
 :: Compiling step.
 %ARM_PATH%\armasm -32 -bi -apcs /interwork delay_armv4t_ADS.S delay_armv4t_ADS.o
+%ARM_PATH%\armasm -16 -bi -apcs /interwork delay_armv4t_ADS_fix.S delay_armv4t_ADS_fix.o
 %ARM_PATH%\tcc -I%SDK_PATH% %DEFINES% -bigend -apcs /interwork -O2 -c dhry_1.c -o dhry_1.o
 %ARM_PATH%\tcc -I%SDK_PATH% %DEFINES% -bigend -apcs /interwork -O2 -c dhry_2.c -o dhry_2.o
 %ARM_PATH%\tcc -I%SDK_PATH% %DEFINES% -bigend -apcs /interwork -O2 -c Phases.c -o Phases.o
@@ -45,5 +48,5 @@ set ELF_NAME=Benchmark
 
 :: Linking step.
 %ARM_PATH%\armlink -nolocals -reloc -first %LIB_MAIN%(Lib) ^
-	delay_armv4t_ADS.o dhry_1.o dhry_2.o Phases.o FireEffect.o %ELF_NAME%.o ^
+	delay_armv4t_ADS.o delay_armv4t_ADS_fix.o dhry_1.o dhry_2.o Phases.o FireEffect.o %ELF_NAME%.o ^
 	%LIB_PATH%\%LIB_MAIN% -o %ELF_NAME%.elf

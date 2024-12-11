@@ -115,11 +115,7 @@ UINT32 BogoMIPS(BENCHMARK_RESULTS_CPU_T *result) {
 
 		delta_a = suPalReadTime();
 
-        #ifdef FTR_L7E
-			delay_bmips_l7e(loops_per_sec);
-		#else
-			delay_bmips(loops_per_sec);
-    	#endif
+		delay_bmips(loops_per_sec);
 
 		delta_b = suPalReadTime();
 

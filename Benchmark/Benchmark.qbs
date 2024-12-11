@@ -5,6 +5,7 @@ Application {
 		"FireEffect.c",
 		"Phases.c",
 		"delay_armv4t_ADS.S",
+		"delay_armv4t_ADS_fix.S",
 		"delay_armv4t_GCC.S",
 		"delay_mcore340_GCC.S",
 		"dhry_1.c",

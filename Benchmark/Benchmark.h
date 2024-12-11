@@ -28,8 +28,15 @@ typedef struct {
 	WCHAR dhrys_mips[RESULT_STRING];
 } BENCHMARK_RESULTS_CPU_T;
 
+#if defined(FTR_L7E)
+#define FIX_DELAY_BMIPS
+#endif
+
+#if defined(FIX_DELAY_BMIPS)
+#define delay_bmips delay_bmips_fix
+#endif
+
 extern void delay_bmips(UINT32 loops);
-extern void delay_bmips_l7e(UINT32 loops);
 
 extern UINT32 BogoMIPS(BENCHMARK_RESULTS_CPU_T *result);
 

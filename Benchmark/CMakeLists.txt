@@ -30,9 +30,11 @@ project(Benchmark LANGUAGES ASM C VERSION "1.0.0")
 include_directories(${PROJECT_SOURCE_DIR})
 
 add_definitions("-DLINUX_BOGOMIPS")
+#add_definitions("-DFIX_DELAY_BMIPS")
 #add_definitions("-DPALMOS_BOGOMIPS")
 #add_definitions("-DMCORE_BOGOMIPS")
 #add_definitions("-DFTR_V600")
+#add_definitions("-DFTR_C650")
 #add_definitions("-DFTR_L7E")
 #add_definitions("-DNO_ASM")
 
@@ -45,6 +47,7 @@ set(SOURCE_FILES
 
 if(ELFPACK STREQUAL "EP1")
 	list(APPEND SOURCE_FILES delay_armv4t_ADS.S)
+	list(APPEND SOURCE_FILES delay_armv4t_ADS_fix.S)
 elseif(ELFPACK STREQUAL "EP2")
 	list(APPEND SOURCE_FILES delay_armv4t_GCC.S)
 elseif(ELFPACK STREQUAL "EM1")
