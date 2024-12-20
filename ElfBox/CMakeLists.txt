@@ -30,6 +30,9 @@ project(ElfBox LANGUAGES C VERSION "1.0.0")
 include_directories(${PROJECT_SOURCE_DIR})
 
 add_definitions("-DFTR_V600")
+#add_definitions("-DSHOW_ELF_ICONS")
+#add_definitions("-DASYNC")
+#add_definitions("-DFTR_C650")
 #add_definitions("-DDEBUG")
 
 set(SOURCE_FILES

@@ -107,6 +107,9 @@ typedef struct {
 	WCHAR current_path[FS_MAX_PATH_NAME_LENGTH + 1];
 	WCHAR current_title[FS_MAX_PATH_NAME_LENGTH + 1];
 	APP_FS_T fs;
+#if defined(SHOW_ELF_ICONS)
+	LIST_IMAGE_ELEMENT_T *img_list_elements;
+#endif
 } APP_INSTANCE_T;
 
 UINT32 Register(const char *elf_path_uri, const char *args, UINT32 ev_code); /* ElfPack 1.x entry point. */
@@ -416,6 +419,9 @@ static UINT32 HandleStateEnter(EVENT_STACK_T *ev_st, APPLICATION_T *app, ENTER_S
 				dialog = UIS_CreateStaticList(&port, 0, appi->fs.count, 0, list, FALSE, 2, &actions,
 					appi->resources[APP_RESOURCE_LIST_DESCRIPTION]);
 				suFreeMem(list);
+#if defined(SHOW_ELF_ICONS)
+				suFreeMem(appi->img_list_elements);
+#endif
 
 				/* Insert cursor to proper position. */
 				if (appi->flag_from_select) {
@@ -670,10 +676,12 @@ static LIST_ENTRY_T *CreateList(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
 	LIST_ENTRY_T *list_elements;
 	APP_INSTANCE_T *appi;
 	RESOURCE_ID list_icon;
+	BOOL custom_icon;
 
 	status = RESULT_OK;
 	result = RESULT_OK;
 	appi = (APP_INSTANCE_T *) app;
+	custom_icon = FALSE;
 
 	if (appi->fs.count == 0) {
 		return NULL;
@@ -683,6 +691,13 @@ static LIST_ENTRY_T *CreateList(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
 	if (result != RESULT_OK) {
 		return NULL;
 	}
+#if defined(SHOW_ELF_ICONS)
+	appi->img_list_elements =
+		(LIST_IMAGE_ELEMENT_T *) suAllocMem(sizeof(LIST_IMAGE_ELEMENT_T) * appi->fs.count, &result);
+	if (result != RESULT_OK) {
+		return NULL;
+	}
+#endif
 
 	for (i = 0; i < appi->fs.count; ++i) {
 		memclr(&list_elements[i], sizeof(LIST_ENTRY_T));
@@ -706,8 +721,37 @@ static LIST_ENTRY_T *CreateList(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
 				break;
 		}
 
-		status |= UIS_MakeContentFromString("Mp0 Mq1",
-			&list_elements[i].content.static_entry.text, list_icon, appi->fs.list[i].name);
+#if defined(SHOW_ELF_ICONS)
+		custom_icon = FALSE;
+		if (appi->fs.list[i].type == APP_FS_ELF) {
+			DL_FS_MID_T mid;
+			WCHAR gif_uri[FS_MAX_URI_NAME_LENGTH + 1]; /* 265 */
+
+			status |= AddUriFileHeader(gif_uri, appi->current_path);
+			u_strcat(gif_uri, L"/");
+			u_strcat(gif_uri, appi->fs.list[i].name);
+			gif_uri[u_strlen(gif_uri) - 3] = '\0';
+			u_strcat(gif_uri, L"gif");
+
+			if (DL_FsFFileExist(gif_uri)) {
+				DL_FsGetIDFromURI(gif_uri, &mid);
+
+				appi->img_list_elements[i].image.file_id = mid;
+				appi->img_list_elements[i].image_type = LIST_IMAGE_DL_FS_MID_T;
+				appi->img_list_elements[i].image_index = i;
+
+				custom_icon = TRUE;
+			}
+		}
+#endif
+
+		if (custom_icon) {
+			status |= UIS_MakeContentFromString("Mj0 Mq1",
+				&list_elements[i].content.static_entry.text, &appi->img_list_elements[i], appi->fs.list[i].name);
+		} else {
+			status |= UIS_MakeContentFromString("Mp0 Mq1",
+				&list_elements[i].content.static_entry.text, list_icon, appi->fs.list[i].name);
+		}
 	}
 
 	if (status != RESULT_OK) {
