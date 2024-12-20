@@ -293,6 +293,8 @@ static UINT32 ApplicationStart(EVENT_STACK_T *ev_st, REG_ID_T reg_id, void *reg_
 		app_instance->view = APP_VIEW_HELP;
 		app_instance->menu_current_item_index = APP_MENU_ITEM_FIRST;
 		app_instance->ms_key_press_start = 0LLU;
+		app_instance->ahi.deviceContext = NULL;
+		app_instance->ahi.drvInfo = NULL;
 
 		ResetSettingsToDefaultValues((APPLICATION_T *) app_instance);
 
@@ -973,10 +975,12 @@ static UINT32 GPU_Stop(APPLICATION_T *app) {
 
 	if (appi->ahi.deviceContext) {
 		AhiDevClose(appi->ahi.deviceContext);
+		appi->ahi.deviceContext = NULL;
 	}
 
 	if (appi->ahi.drvInfo) {
 		suFreeMem(appi->ahi.drvInfo);
+		appi->ahi.drvInfo = NULL;
 	}
 
 	return status;
