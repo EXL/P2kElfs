@@ -133,18 +133,13 @@ static UINT32 SaveFileConfig(APPLICATION_T *app, const WCHAR *file_config_path);
 
 static UINT32 SetLoopTimer(APPLICATION_T *app, UINT32 period);
 
+static BOOL KeypadLock(void);
+static BOOL WorkingTable(void);
+
 static UINT32 StartWidget(EVENT_STACK_T *ev_st, APPLICATION_T *app);
 static UINT32 ProcessWidget(EVENT_STACK_T *ev_st, APPLICATION_T *app);
 static UINT32 StopWidget(EVENT_STACK_T *ev_st, APPLICATION_T *app);
 
-static void AHG_Init(void);
-static UINT32 paint(void);
-static BOOL KeypadLock(void);
-static BOOL WorkingTable(void);
-static void InitBitmap(void);
-static void DeinitBitmap(void);
-static UINT32 add_call(EVENT_STACK_T *ev_st, APPLICATION_T *app);
-static UINT32 del_call(EVENT_STACK_T *ev_st, APPLICATION_T *app);
 static UINT32 HandleEventTimeOutInactivities(EVENT_STACK_T *ev_st, APPLICATION_T *app);
 static UINT32 HandleEventTimeOutUserActivity(EVENT_STACK_T *ev_st, APPLICATION_T *app);
 static UINT32 HandleEventFlipClosed(EVENT_STACK_T *ev_st, APPLICATION_T *app);
@@ -194,8 +189,6 @@ static const EVENT_HANDLER_ENTRY_T g_state_any_hdls[] = {
 	{ EV_FLIP_OPENED, HandleEventFlipOpened },
 	/* { EV_BACKLIGHT_TIMEOUT, HandleEventTimeOutInactivities }, */
 	{ EV_INACTIVITY_TIMEOUT, HandleEventTimeOutInactivities },
-	{ EV_ADD_MISSED_CALL, add_call},
-	{ EV_REMOVE_MISSED_CALL, del_call},
 	{ STATE_HANDLERS_END, NULL }
 };
 
@@ -843,6 +836,18 @@ static UINT32 SetLoopTimer(APPLICATION_T *app, UINT32 period) {
 	return status;
 }
 
+static BOOL KeypadLock(void) {
+	BOOL keypad_statate;
+	DL_DbFeatureGetCurrentState(*KEYPAD_STATE, &keypad_statate);
+	return keypad_statate;
+}
+
+static BOOL WorkingTable(void) {
+	UINT8 res;
+	UIS_GetActiveDialogType(&res);
+	return (res == DialogType_Homescreen) ? (true) : (false); /* Desktop window. */
+}
+
 static UINT32 StartWidget(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
 	UINT32 status;
 	APP_INSTANCE_T *app_instance;
@@ -852,9 +857,10 @@ static UINT32 StartWidget(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
 
 	status |= StopWidget(ev_st, app);
 
-	InitBitmap();
 	randomize();
-	AHG_Init();
+
+//	InitBitmap();
+//	GPU_Init();
 
 	status |= SetLoopTimer(app, app_instance->delay);
 
@@ -869,7 +875,7 @@ static UINT32 ProcessWidget(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
 	app_instance = (APP_INSTANCE_T *) app;
 
 	if (WorkingTable() && !KeypadLock() && g_user_activity) {
-		paint();
+//		GPU_Flush();
 	}
 
 	return status;
@@ -885,493 +891,63 @@ static UINT32 StopWidget(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
 	status |= SetLoopTimer(app, 0);
 	status |= APP_UtilStopTimer(app);
 
-	DeinitBitmap();
+//	DeinitBitmap();
 
 	return status;
 }
 
-static UINT8 RECTSURF_W = DISPLAY_WIDTH;
-static UINT8 RECTSURF_H = DISPLAY_HEIGHT;
-static UINT8 x_t = 100;
-static UINT8 y_t = 157;
-static BOOL is_cSTN_128p_DISPLAY = FALSE;
+//static void AHG_Init(void) {
+//	AHIDISPMODE_T mode;
+//	dCtx = DAL_GetDeviceContext(DISPLAY_MAIN);
+//	sDraw = DAL_GetDrawingSurface(DISPLAY_MAIN);
 
-#define a(b, c) ((UINT8)  ((b == c) ? (1) : (0)))
-#define b(t1, t2, t3, t4) ((UINT8)((t1 << 3) + (t2 << 2) + (t3 << 1) + t4))
+//	AhiDispModeGet(dCtx, &mode);
+//	is_cSTN_128p_DISPLAY = (mode.size.x == 128);
+//	if (is_cSTN_128p_DISPLAY) {
+//		RECTSURF_W = 128;
+//		RECTSURF_H = 160;
+//		x_t = 60;
+//		y_t = 102;
+//	} else {
+//		RECTSURF_W = DISPLAY_WIDTH;
+//		RECTSURF_H = DISPLAY_HEIGHT;
+//		x_t = 100;
+//		y_t = 158;
+//	}
+//	rectSurf.x1 = 0;
+//	rectSurf.y1 = 0;
+//	rectSurf.x2 = RECTSURF_W;
+//	rectSurf.y2 = RECTSURF_H;
 
-static UINT8 two2bin(UINT8 b1, UINT8 b2, UINT8 b3, UINT8 b4, UINT8 c, UINT8 n);
-static void FreeBin(void);
-static void OpenBin(UINT8 l);
-static void WriteBin(UINT8 x, UINT8 y, UINT8 u);
-static void AHG_Flush(void);
+//	AhiDispSurfGet(dCtx, &sDisp);
+//	AhiDrawSurfDstSet(dCtx, sDisp, 0);
+//	AhiDrawSurfSrcSet(dCtx, sDraw, 0);
+//	AhiDrawClipSrcSet(dCtx, NULL);
+//	AhiDrawClipDstSet(dCtx, NULL);
+//}
 
-static BOOL call(void);
-static BOOL sms(void);
-static BOOL sleep(void);
-static void copy(UINT8 x, UINT8 y, UINT8 bk);
-static void _time(void);
+//static void AHG_Flush(void) {
+//	AhiDrawSurfSrcSet(dCtx, sDraw, 0);
+//	AhiDrawSurfDstSet(dCtx, sDisp, 0);
+//	AhiDrawClipSrcSet(dCtx, NULL);
+//	AhiDrawClipDstSet(dCtx, NULL);
+//	AhiDrawRopSet(dCtx, AHIROP3(AHIROP_SRCCOPY));
+//	AhiDrawBitBlt(dCtx, &rectSurf, &pSurf);
 
-typedef struct {
-	UINT8 r, g, b;
-} TColor;
+//	/* TODO: Is this even necessary? */
+//	/* AhiDispWaitVBlank(dCtx, 0); */
 
-typedef struct {
-	INT8 x, y;
-} TPoint;
-
-static UINT8 ccall = 0, _count[1] = {0}, s_d = 0, pred_d = 0;
-static INT8 d = 3;
-static INT8 x = 4;
-static TColor *color = NULL;
-static char *arr = NULL, *bin = NULL;
-static FILE file = NULL;
-static UINT32 r = 0;
-static BOOL new = 1;
-static TPoint s[1] = {0};
-static AHIBITMAP_T bm, bmp;
-static AHIDEVCONTEXT_T dCtx = 0;
-static AHISURFACE_T sDraw = 0;
-static AHISURFACE_T sDisp = 0;
-static AHIPOINT_T pSurf = {0, 0};
-static AHIRECT_T rectSurf = {0, 0, 0, 0};
-
-static UINT8 two2bin(UINT8 b1, UINT8 b2, UINT8 b3, UINT8 b4, UINT8 c, UINT8 n) {
-	UINT8 t1, t2, t3, t4, t5, t6, t7, t8;
-	t1 = (b1 >> 4);
-	t2 = b1 - (t1 << 4);
-	t3 = (b2 >> 4);
-	t4 = b2 - (t3 << 4);
-	t5 = (b3 >> 4);
-	t6 = b3 - (t5 << 4);
-	t7 = (b4 >> 4);
-	t8 = b4 - (t7 << 4);
-	return (n == 0) ?
-		((b(a(t1, c), a(t2, c), a(t3, c), a(t4, c)) << 4) + b(a(t5, c), a(t6, c), a(t7, c), a(t8, c))) :
-		((b(a(t8, c), a(t7, c), a(t6, c), a(t5, c)) << 4) + b(a(t4, c), a(t3, c), a(t2, c), a(t1, c)));
-}
-
-static void FreeBin(void) {
-	if (arr) {
-		suFreeMem(arr);
-		arr = NULL;
-	}
-	if (bin) {
-		suFreeMem(bin);
-		bin = NULL;
-	}
-	if (color) {
-		suFreeMem(color);
-		color = NULL;
-	}
-}
-
-static void OpenBin(UINT8 l) {
-	file = DL_FsOpenFile(g_bmp_file_path, FILE_READ_MODE, 0);
-	if (_count[0] < 1) {
-		FreeBin();
-		DL_FsReadFile(_count, 1, 1, file, &r);
-		color = malloc(3 * _count[0]);
-		DL_FsReadFile(color, 1, 3 * _count[0], file, &r);
-		DL_FsReadFile(s, 1, 2, file, &r);
-		arr = malloc(s[0].y * s[0].x);
-		bin = malloc(s[0].y * s[0].x / 4);
-	}
-	DL_FsFSeekFile(file, 3 * (_count[0] + 1) + l * s[0].x * s[0].y, 0);
-	DL_FsReadFile(arr, 1, s[0].y * s[0].x, file, &r);
-	DL_FsCloseFile(file);
-	bmp.stride = s[0].x >> 2;
-	bmp.width = (UINT32)(s[0].x * 2);
-	bmp.height = (UINT32)(s[0].y);
-}
-
-static void WriteBin(UINT8 x, UINT8 y, UINT8 u) {
-	UINT16 i, i2;
-	UINT8 c, _x, _y;
-	AHIPOINT_T p;
-	AHIRECT_T r;
-	p.x = 0;
-	p.y = 0;
-	r.x1 = x;
-	r.y1 = y;
-	r.x2 = x + bmp.width;
-	r.y2 = y + bmp.height;
-	pred_d = u;
-	AhiDrawSurfDstSet(dCtx, sDraw, 0);
-	for (c = 0; c < _count[0]; c++) {
-		for (_y = 0; _y < s[0].y; _y++) {
-			for (_x = 0; _x < (s[0].x) >> 2; _x++) {
-				if (u == 0) {
-					i = _y * (s[0].x >> 2) + _x;
-					bin[i] = two2bin(arr[i << 2], arr[(i << 2) + 1], arr[(i << 2) + 2], arr[(i << 2) + 3], c, 0);
-				} else if (u == 1) {
-					i = _y * (s[0].x >> 2) + _x;
-					i2 = (_y * s[0].x >> 2) + ((s[0].x >> 2) - _x - 1);
-					bin[i] = two2bin(arr[i2 << 2], arr[(i2 << 2) + 1], arr[(i2 << 2) + 2], arr[(i2 << 2) + 3], c, 1);
-				}
-			}
-		}
-		bmp.image = (void *) (bin);
-		if ((ATI_565RGB(color[c].r, color[c].g, color[c].b)) != (ATI_565RGB(0, 0, 255))) {
-			AhiDrawFgColorSet(dCtx, ATI_565RGB(color[c].r, color[c].g, color[c].b));
-			AhiDrawBitmapBlt(dCtx, &r, &p, &bmp, NULL, 1);
-		}
-	}
-}
-
-static void AHG_Init(void) {
-	AHIDISPMODE_T mode;
-	dCtx = DAL_GetDeviceContext(DISPLAY_MAIN);
-	sDraw = DAL_GetDrawingSurface(DISPLAY_MAIN);
-
-	AhiDispModeGet(dCtx, &mode);
-	is_cSTN_128p_DISPLAY = (mode.size.x == 128);
-	if (is_cSTN_128p_DISPLAY) {
-		RECTSURF_W = 128;
-		RECTSURF_H = 160;
-		x_t = 60;
-		y_t = 102;
-	} else {
-		RECTSURF_W = DISPLAY_WIDTH;
-		RECTSURF_H = DISPLAY_HEIGHT;
-		x_t = 100;
-		y_t = 158;
-	}
-	rectSurf.x1 = 0;
-	rectSurf.y1 = 0;
-	rectSurf.x2 = RECTSURF_W;
-	rectSurf.y2 = RECTSURF_H;
-
-	AhiDispSurfGet(dCtx, &sDisp);
-	AhiDrawSurfDstSet(dCtx, sDisp, 0);
-	AhiDrawSurfSrcSet(dCtx, sDraw, 0);
-	AhiDrawClipSrcSet(dCtx, NULL);
-	AhiDrawClipDstSet(dCtx, NULL);
-}
-
-static void AHG_Flush(void) {
-	AhiDrawSurfSrcSet(dCtx, sDraw, 0);
-	AhiDrawSurfDstSet(dCtx, sDisp, 0);
-	AhiDrawClipSrcSet(dCtx, NULL);
-	AhiDrawClipDstSet(dCtx, NULL);
-	AhiDrawRopSet(dCtx, AHIROP3(AHIROP_SRCCOPY));
-	AhiDrawBitBlt(dCtx, &rectSurf, &pSurf);
-
-	/* TODO: Is this even necessary? */
-	/* AhiDispWaitVBlank(dCtx, 0); */
-
-	if (is_cSTN_128p_DISPLAY) {
-		AHIUPDATEPARAMS_T update_params;
-		update_params.size = sizeof(AHIUPDATEPARAMS_T);
-		update_params.sync = FALSE;
-		update_params.rect.x1 = 0;
-		update_params.rect.y1 = 0;
-		update_params.rect.x2 = 0 + RECTSURF_W;
-		update_params.rect.y2 = 0 + RECTSURF_H;
-		AhiDispUpdate(dCtx, &update_params);
-	}
-}
-
-static BOOL KeypadLock(void) {
-	BOOL keypad_statate;
-	DL_DbFeatureGetCurrentState(*KEYPAD_STATE, &keypad_statate);
-	return keypad_statate;
-}
-
-static BOOL WorkingTable(void) {
-	UINT8 res;
-	UIS_GetActiveDialogType(&res);
-	return (res == DialogType_Homescreen) ? (true) : (false); /* Desktop window. */
-}
-
-static BOOL sms(void) {
-	UINT16 t = 0;
-#if defined(FTR_V600)
-	MSG_ATTR_T attrs;
-
-	memclr(&attrs, sizeof(MSG_ATTR_T));
-
-	attrs.mask = MSG_ATTR_READ_FLAG_VALID;
-
-//	arm br 0x10CBC408 - UtilLogString()
-//	arm br 0x10213FA4 - DL_DbMessageGenericGetTotalMessage()
-//	arm br 0x1016BF18 - PreprocessMsggIdle()
-//
-//		13, 14
-//
-//		R00: 0000000b  R01: 01000000  R02: 00000000  R03: 00000000
-//		R04: 1205d6cc  R05: 00000000  R06: 1205d6cc  R07: 1205d6cc
-//		R08: 00000000  R09: 00000000  R10: 00000000  R11: 00000000
-//		R12: 00000000  R13: 03ffa804  R14: 1016bf7f  R15: 10213fa8
-//
-//		R00: 0000000b  R01: 01000000  R02: 00000000  R03: 00000000
-//		R04: 1205d6cc  R05: 00000000  R06: 1205d6cc  R07: 1205d6cc
-//		R08: 00000000  R09: 00000000  R10: 00000000  R11: 00000000
-//		R12: 00000000  R13: 03ffa7e4  R14: 1016bf7f  R15: 10213faa
-//
-//		R00: 00000000  R01: 00010000  R02: 00000000  R03: 00000000
-//		R04: 00000000  R05: 120a4364  R06: 12025538  R07: 00000000
-//		R08: 00000000  R09: 00000000  R10: 00000000  R11: 00000000
-//		R12: 10213fa5  R13: 03ffa7ac  R14: 120a24e3  R15: 10213fa8
-//
-//		R00: 00000000  R01: 00010000  R02: 00000000  R03: 00000000
-//		R04: 00000000  R05: 120a4364  R06: 12025538  R07: 00000000
-//		R08: 00000000  R09: 00000000  R10: 00000000  R11: 00000000
-//		R12: 10213fa5  R13: 03ffa78c  R14: 120a24e3  R15: 10213faa
-
-	DL_DbMessageGenericGetTotalMessage(MSG_FOLDER_INBOX, attrs, &t, MSG_MEM_UNSPECIFIED);
-
-	D("New Messages Count = %d\n", t);
-#else
-	MsgUtilGetUnreadMsgsInAllFolders(&t);
-#endif
-	return (t > 0) ? (true) : (false);
-}
-
-static BOOL call(void) {
-	return (ccall > 0) ? (true) : (false);
-}
-
-static BOOL sleep(void) {
-	CLK_TIME_T time;
-	DL_ClkGetTime(&time);
-	return (time.hour > 22 || time.hour < 6) ? (true) : (false);
-}
-
-static void copy(UINT8 x, UINT8 y, UINT8 bk) {
-	AHIPOINT_T pt;
-	AHIRECT_T rt;
-	if (bk == 1) {
-		pt.x = x;
-		pt.y = y;
-		rt.x1 = 0;
-		rt.y1 = 0;
-		rt.x2 = 40;
-		rt.y2 = 40;
-		AhiSurfCopy(dCtx, sDraw, &bm, &rt, &pt, NULL, AHIFLAG_COPYFROM);
-	} else {
-		pt.x = 0;
-		pt.y = 0;
-		rt.x1 = x;
-		rt.y1 = y;
-		rt.x2 = x + 40;
-		rt.y2 = y + 40;
-		AhiSurfCopy(dCtx, sDraw, &bm, &rt, &pt, NULL, AHIFLAG_COPYTO);
-	}
-}
-
-static void _time(void) {
-	UINT8 count[12] = {1, 3, 3, 3, 3, 3, 3, 5, 3, 3, 5, 1},
-	      start[12] = {0, 1, 1, 4, 4, 6, 9, 12, 9, 17, 20, 0},
-	          u[12] = {0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1};
-	INT8 px[12] = {0, -2, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0};
-	if (!bm.image) {
-		bm.image = (void *)malloc(40 * 40 * 2);
-		copy((UINT8)(x), y_t, 1);
-	} else {
-		copy((UINT8)(x), y_t, 0);
-	}
-	if (sms()) {
-		d = 10;
-	} else if (call()) {
-		d = 9;
-	} else if (sleep()) {
-		d = 0;
-		s_d = 0;
-	}
-	if (new) {
-		if (s_d == count[d] - 1) {
-			new = false;
-			s_d = 0;
-		} else {
-			s_d++;
-			x = x + count[d] * px[d];
-		}
-	} else {
-		if (count[d] * px[d] + x < 5) {
-			d = 2;
-		} else if (count[d] * px[d] + x > x_t) {
-			d = 1;
-		} else {
-			d = random(20);
-			if (d > 8) {
-				while (d > 2) {
-					d -= 5;
-				}
-			}
-			if (d < 0) {
-				d = 0;
-			}
-		}
-		new = true;
-	}
-	if (sms()) {
-		d = 10;
-	} else if (call()) {
-		d = 9;
-	} else if (sleep()) {
-		d = 0;
-		s_d = 0;
-	}
-	copy((UINT8)(x), y_t, 1);
-	OpenBin(start[d] + s_d);
-	WriteBin((UINT8)(x), y_t, (d != 0) ? (u[d]) : (pred_d));
-}
-
-static void InitBitmap(void) {
-	bm.format = AHIFMT_16BPP_565;
-	bm.width = 40;
-	bm.height = 40;
-	bm.stride = 40 * 2;
-	bmp.format = AHIFMT_1BPP;
-	bm.image = NULL;
-	arr = NULL;
-	bin = NULL;
-	color = NULL;
-}
-
-static void DeinitBitmap(void) {
-	if (bm.image) {
-		suFreeMem(bm.image);
-		bm.image = NULL;
-	}
-	_count[0] = 0;
-}
-
-/*
- * 1). 0, 0, 1, 2, ...bug seq!
- * paint:1438: Paint! d=9 pred_d=0, s_d=0
- * paint:1438: Paint! d=9 pred_d=0, s_d=0
- * paint:1438: Paint! d=9 pred_d=0, s_d=1
- * paint:1438: Paint! d=9 pred_d=0, s_d=2
- * paint:1438: Paint! d=9 pred_d=0, s_d=0
- * paint:1438: Paint! d=9 pred_d=0, s_d=0
- * HandleEventMain:581: EVT_D: 0x00000398 (920) att_size=8
- * paint:1438: Paint! d=9 pred_d=0, s_d=1
- * paint:1438: Paint! d=0 pred_d=0, s_d=2
- * paint:1438: Paint! d=0 pred_d=0, s_d=3
- * paint:1438: Paint! d=0 pred_d=0, s_d=4
- *
- * 2). 0, 1, 2, 3, ...bug seq!
- * paint:1438: Paint! d=9 pred_d=0, s_d=0
- * paint:1438: Paint! d=9 pred_d=0, s_d=0
- * paint:1438: Paint! d=9 pred_d=0, s_d=1
- * paint:1438: Paint! d=9 pred_d=0, s_d=2
- * paint:1438: Paint! d=9 pred_d=0, s_d=0
- * paint:1438: Paint! d=9 pred_d=0, s_d=0
- * paint:1438: Paint! d=9 pred_d=0, s_d=1
- * HandleEventMain:581: EVT_D: 0x00000398 (920) att_size=8
- * paint:1438: Paint! d=9 pred_d=0, s_d=2
- * paint:1438: Paint! d=0 pred_d=0, s_d=3
- * paint:1438: Paint! d=0 pred_d=0, s_d=4
- * paint:1438: Paint! d=0 pred_d=0, s_d=5
- *
- * 3). 1, 2, 0, 0, ... no bug seq!
- * paint:1438: Paint! d=9 pred_d=0, s_d=0
- * paint:1438: Paint! d=9 pred_d=0, s_d=0
- * paint:1438: Paint! d=9 pred_d=0, s_d=1
- * paint:1438: Paint! d=9 pred_d=0, s_d=2
- * HandleEventMain:581: EVT_D: 0x00000398 (920) att_size=8
- * paint:1438: Paint! d=9 pred_d=0, s_d=0
- * paint:1438: Paint! d=0 pred_d=0, s_d=0
- * paint:1438: Paint! d=0 pred_d=0, s_d=0
- *
- * 4). 2, 0, 0, 0, ... no bug seq!
- * paint:1438: Paint! d=9 pred_d=0, s_d=0
- * paint:1438: Paint! d=9 pred_d=0, s_d=1
- * paint:1438: Paint! d=9 pred_d=0, s_d=2
- * paint:1438: Paint! d=9 pred_d=0, s_d=0
- * HandleEventMain:581: EVT_D: 0x00000398 (920) att_size=8
- * paint:1438: Paint! d=9 pred_d=0, s_d=0
- * paint:1438: Paint! d=0 pred_d=0, s_d=0
- * paint:1438: Paint! d=0 pred_d=0, s_d=0
- *
- */
-
-static UINT32 paint(void) {
-	D("Paint! d=%d pred_d=%d, s_d=%d\n", d, pred_d, s_d);
-	_time();
-	AHG_Flush();
-	return RESULT_OK;
-}
-
-static UINT32 add_call(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
-	ccall = 1;
-	return RESULT_OK;
-}
-
-static UINT32 del_call(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
-	ccall = 0;
-	return RESULT_OK;
-}
-
-/*
- * APP_EV_INACTIVITYTIMERMANAGER_UIS_TIMEOUT, / 7EC
- * APP_EV_INACTIVITYTIMERMANAGER_UIS_ACTIVITY, / 7ED
- * APP_EV_USER_ACTIVITY, / 7EE, 74F (V600)
- * APP_EV_ACTIVATE_BACKLIGHT, / 7EF
- *
- * APP_EV_SS_TIMEOUT, / 7F0, 751 (V600)
- * APP_EV_DISPLAY_TIMEOUT, / 7F1, 752 (V600)
- * APP_EV_BACKLIGHT_TIMEOUT, / 7F2, 753 (V600)
- * APP_EV_INACTIVITY_TIMEOUT, / 7F3
- *
- *
- * Motorola ROKR E1:
- * Motorola SLVR L6i:
- *
- * Backlight off.
- * HandleEventMain:571: EVT_N: 0x000007EC (2028)
- * HandleEventMain:571: EVT_N: 0x000007F2 (2034)                                     <== APP_EV_BACKLIGHT_TIMEOUT
- *
- * Screensaver enter.
- * HandleEventMain:571: EVT_N: 0x000007F0 (2032)                                     <== APP_EV_SS_TIMEOUT
- * HandleEventMain:571: EVT_N: 0x00000726 (1830)
- * HandleEventMain:581: EVT_D: 0x000007EB (2027) att_size=8
- * HandleEventMain:581: EVT_D: 0x000007EB (2027) att_size=8
- * HandleEventMain:571: EVT_N: 0x000007ED (2029)
- *
- * Backlight off again?
- * HandleEventMain:571: EVT_N: 0x000007F2 (2034)                                     <== APP_EV_BACKLIGHT_TIMEOUT
- *
- * Inactivity screen with time enter.
- * HandleEventMain:571: EVT_N: 0x000007F1 (2033)                                     <== APP_EV_DISPLAY_TIMEOUT
- * HandleEventMain:571: EVT_N: 0x000007ED (2029)
- *
- * User activity.
- * HandleEventMain:571: EVT_N: 0x000007ED (2029)
- * HandleEventMain:571: EVT_N: 0x000007EE (2030)                                     <== APP_EV_USER_ACTIVITY
- *
- * Call missed right after END pushed on other phone.
- * HandleEventMain:581: EVT_D: 0x0008201B (532507) att_size=4                        <== EV_ADD_MISSED_CALL
- *
- * Missed call disappear.
- * HandleEventMain:577: EVT_N: 0x00000398 (920)                                      <== EV_REMOVE_MISSED_CALL
- *
- *
- * Motorola V600:
- *
- * Backlight off.
- * HandleEventMain:571: EVT_N: 0x0000074D (1869)
- * HandleEventMain:571: EVT_N: 0x00000753 (1875)                                     <== APP_EV_BACKLIGHT_TIMEOUT
- *
- * Screensaver enter.
- * HandleEventMain:571: EVT_N: 0x00000751 (1873)                                     <== APP_EV_SS_TIMEOUT
- * HandleEventMain:571: EVT_N: 0x0000074E (1870)
- *
- * Inactivity screen with time enter.
- * HandleEventMain:571: EVT_N: 0x00000752 (1874)                                     <== APP_EV_DISPLAY_TIMEOUT
- * HandleEventMain:571: EVT_N: 0x0000074E (1870)
- *
- * Inactivity screen with time exit.
- * HandleEventMain:571: EVT_N: 0x0000074E (1870)
- * HandleEventMain:571: EVT_N: 0x0000074F (1871)                                     <== APP_EV_USER_ACTIVITY
- *
- * Call missed right after END pushed on other phone.
- * HandleEventMain:581: EVT_D: 0x0008201B (532507) att_size=4                        <== EV_REMOVE_MISSED_CALL
- *
- * Missed call disappear.
- * HandleEventMain:584: EVT_N: 0x00000398 (920)                                      <== EV_REMOVE_MISSED_CALL
- */
+//	if (is_cSTN_128p_DISPLAY) {
+//		AHIUPDATEPARAMS_T update_params;
+//		update_params.size = sizeof(AHIUPDATEPARAMS_T);
+//		update_params.sync = FALSE;
+//		update_params.rect.x1 = 0;
+//		update_params.rect.y1 = 0;
+//		update_params.rect.x2 = 0 + RECTSURF_W;
+//		update_params.rect.y2 = 0 + RECTSURF_H;
+//		AhiDispUpdate(dCtx, &update_params);
+//	}
+//}
 
 /*
  * APP_EV_USER_ACTIVITY, / 7EE, 74F (V600)
