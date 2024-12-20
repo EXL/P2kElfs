@@ -27,10 +27,8 @@
 #include "icons/icon_snow_48x48.h"
 
 #define MAX_DELAY_LENGTH            (6)
-#define MIN_DELAY_VALUE             (200)
+#define MIN_DELAY_VALUE             (50)
 #define MAX_DELAY_VALUE             (10000)
-#define MAX_PATH_LENGTH             (FS_MAX_URI_NAME_LENGTH / 3) /* 88*2 bytes is enough. */
-#define MAX_NAME_LENGTH             (32)
 #define KEY_LONG_PRESS_START_MS     (1500)
 #define KEY_LONG_PRESS_STOP_MS      (2500)
 
@@ -82,6 +80,14 @@ typedef enum {
 } APP_VIEW_T;
 
 typedef struct {
+	AHIDRVINFO_T *drvInfo;
+	AHIDEVICE_T device;
+	AHIDEVCONTEXT_T deviceContext;
+	AHISURFACE_T surfaceDisplay;
+	AHISURFACE_T surfaceDraw;
+} APP_AHI_T;
+
+typedef struct {
 	APPLICATION_T app;
 
 	RESOURCE_ID resources[APP_RESOURCE_MAX];
@@ -95,6 +101,8 @@ typedef struct {
 
 	UINT64 ms_key_press_start;
 	UINT32 timer_handle;
+
+	APP_AHI_T ahi;
 } APP_INSTANCE_T;
 
 UINT32 Register(const char *elf_path_uri, const char *args, UINT32 ev_code);
@@ -139,6 +147,10 @@ static BOOL WorkingTable(void);
 static UINT32 StartWidget(EVENT_STACK_T *ev_st, APPLICATION_T *app);
 static UINT32 ProcessWidget(EVENT_STACK_T *ev_st, APPLICATION_T *app);
 static UINT32 StopWidget(EVENT_STACK_T *ev_st, APPLICATION_T *app);
+
+static UINT32 GPU_Start(APPLICATION_T *app);
+static UINT32 GPU_Flush(APPLICATION_T *app);
+static UINT32 GPU_Stop(APPLICATION_T *app);
 
 static UINT32 HandleEventTimeOutInactivities(EVENT_STACK_T *ev_st, APPLICATION_T *app);
 static UINT32 HandleEventTimeOutUserActivity(EVENT_STACK_T *ev_st, APPLICATION_T *app);
@@ -859,8 +871,7 @@ static UINT32 StartWidget(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
 
 	randomize();
 
-//	InitBitmap();
-//	GPU_Init();
+	status |= GPU_Start(app);
 
 	status |= SetLoopTimer(app, app_instance->delay);
 
@@ -875,7 +886,7 @@ static UINT32 ProcessWidget(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
 	app_instance = (APP_INSTANCE_T *) app;
 
 	if (WorkingTable() && !KeypadLock() && g_user_activity) {
-//		GPU_Flush();
+		GPU_Flush(app);
 	}
 
 	return status;
@@ -891,63 +902,85 @@ static UINT32 StopWidget(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
 	status |= SetLoopTimer(app, 0);
 	status |= APP_UtilStopTimer(app);
 
-//	DeinitBitmap();
+	status |= GPU_Stop(app);
 
 	return status;
 }
 
-//static void AHG_Init(void) {
-//	AHIDISPMODE_T mode;
-//	dCtx = DAL_GetDeviceContext(DISPLAY_MAIN);
-//	sDraw = DAL_GetDrawingSurface(DISPLAY_MAIN);
+static UINT32 GPU_Start(APPLICATION_T *app) {
+	INT32 result;
+	UINT32 status;
+	APP_INSTANCE_T *appi;
 
-//	AhiDispModeGet(dCtx, &mode);
-//	is_cSTN_128p_DISPLAY = (mode.size.x == 128);
-//	if (is_cSTN_128p_DISPLAY) {
-//		RECTSURF_W = 128;
-//		RECTSURF_H = 160;
-//		x_t = 60;
-//		y_t = 102;
-//	} else {
-//		RECTSURF_W = DISPLAY_WIDTH;
-//		RECTSURF_H = DISPLAY_HEIGHT;
-//		x_t = 100;
-//		y_t = 158;
-//	}
-//	rectSurf.x1 = 0;
-//	rectSurf.y1 = 0;
-//	rectSurf.x2 = RECTSURF_W;
-//	rectSurf.y2 = RECTSURF_H;
+	status = RESULT_OK;
+	appi = (APP_INSTANCE_T *) app;
 
-//	AhiDispSurfGet(dCtx, &sDisp);
-//	AhiDrawSurfDstSet(dCtx, sDisp, 0);
-//	AhiDrawSurfSrcSet(dCtx, sDraw, 0);
-//	AhiDrawClipSrcSet(dCtx, NULL);
-//	AhiDrawClipDstSet(dCtx, NULL);
-//}
+	appi->ahi.drvInfo = suAllocMem(sizeof(AHIDRVINFO_T), &result);
+	if (result != RESULT_OK) {
+		LOG("Cannot allocate %d bytes for 'appi->ahi.drvInfo' struct!\n", sizeof(AHIDRVINFO_T));
+		return RESULT_FAIL;
+	}
+	status |= AhiDevEnum(&appi->ahi.device, appi->ahi.drvInfo, 0);
+	if (status != RESULT_OK) {
+		LOG("%s\n", "Cannot enumerate AHI device!");
+		return RESULT_FAIL;
+	}
+	status |= AhiDevOpen(&appi->ahi.deviceContext, appi->ahi.device, g_app_name, 0);
+	if (status != RESULT_OK) {
+		LOG("%s\n", "Cannot open AHI device!");
+		return RESULT_FAIL;
+	}
 
-//static void AHG_Flush(void) {
-//	AhiDrawSurfSrcSet(dCtx, sDraw, 0);
-//	AhiDrawSurfDstSet(dCtx, sDisp, 0);
-//	AhiDrawClipSrcSet(dCtx, NULL);
-//	AhiDrawClipDstSet(dCtx, NULL);
-//	AhiDrawRopSet(dCtx, AHIROP3(AHIROP_SRCCOPY));
-//	AhiDrawBitBlt(dCtx, &rectSurf, &pSurf);
+	status |= AhiDispSurfGet(appi->ahi.deviceContext, &appi->ahi.surfaceDisplay);
+	if (status != RESULT_OK) {
+		LOG("%s\n", "Cannot get display surface!");
+		return RESULT_FAIL;
+	}
+	appi->ahi.surfaceDraw = DAL_GetDrawingSurface(DISPLAY_MAIN);
 
-//	/* TODO: Is this even necessary? */
-//	/* AhiDispWaitVBlank(dCtx, 0); */
+	return status;
+}
 
-//	if (is_cSTN_128p_DISPLAY) {
-//		AHIUPDATEPARAMS_T update_params;
-//		update_params.size = sizeof(AHIUPDATEPARAMS_T);
-//		update_params.sync = FALSE;
-//		update_params.rect.x1 = 0;
-//		update_params.rect.y1 = 0;
-//		update_params.rect.x2 = 0 + RECTSURF_W;
-//		update_params.rect.y2 = 0 + RECTSURF_H;
-//		AhiDispUpdate(dCtx, &update_params);
-//	}
-//}
+static UINT32 GPU_Flush(APPLICATION_T *app) {
+	UINT32 status;
+	APP_INSTANCE_T *appi;
+	AHIRECT_T rect;
+
+	status = RESULT_OK;
+	appi = (APP_INSTANCE_T *) app;
+
+	rect.x1 = 0;
+	rect.y1 = 0;
+	rect.x2 = 128;
+	rect.y2 = 128;
+
+	status |= AhiDrawSurfDstSet(appi->ahi.deviceContext, appi->ahi.surfaceDisplay, 0);
+
+	status |= AhiDrawBrushFgColorSet(appi->ahi.deviceContext, ATI_565RGB(rand() % 256, rand() % 256, rand() % 256));
+	status |= AhiDrawBrushSet(appi->ahi.deviceContext, NULL, NULL, 0, AHIFLAG_BRUSH_SOLID);
+	status |= AhiDrawRopSet(appi->ahi.deviceContext, AHIROP3(AHIROP_PATCOPY));
+	status |= AhiDrawSpans(appi->ahi.deviceContext, &rect, 1, 0);
+
+	return status;
+}
+
+static UINT32 GPU_Stop(APPLICATION_T *app) {
+	UINT32 status;
+	APP_INSTANCE_T *appi;
+
+	status = RESULT_OK;
+	appi = (APP_INSTANCE_T *) app;
+
+	if (appi->ahi.deviceContext) {
+		AhiDevClose(appi->ahi.deviceContext);
+	}
+
+	if (appi->ahi.drvInfo) {
+		suFreeMem(appi->ahi.drvInfo);
+	}
+
+	return status;
+}
 
 /*
  * APP_EV_USER_ACTIVITY, / 7EE, 74F (V600)
