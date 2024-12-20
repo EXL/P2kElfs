@@ -345,7 +345,7 @@ static UINT32 InitResourses(RESOURCE_ID *resources) {
 		(void *) g_str_e_delay, (u_strlen(g_str_e_delay) + 1) * sizeof(WCHAR));
 
 	status |= DRM_CreateResource(&resources[APP_RESOURCE_ICON_SNOW], RES_TYPE_GRAPHICS,
-		(void *) neko_48x48_gif, sizeof(neko_48x48_gif));
+		(void *) snow_48x48_gif, sizeof(snow_48x48_gif));
 
 	return status;
 }
@@ -943,25 +943,37 @@ static UINT32 GPU_Start(APPLICATION_T *app) {
 	return status;
 }
 
+static UINT8 alphaStep = 150;
+
 static UINT32 GPU_Flush(APPLICATION_T *app) {
 	UINT32 status;
 	APP_INSTANCE_T *appi;
 	AHIRECT_T rect;
+	AHIPOINT_T point;
 
 	status = RESULT_OK;
 	appi = (APP_INSTANCE_T *) app;
 
-	rect.x1 = 0;
-	rect.y1 = 0;
-	rect.x2 = 128;
-	rect.y2 = 128;
+	rect.x1 = point.x = rand() % 176;
+	rect.y1 = point.y = rand() % 220;
+	rect.x2 = rect.x1 + 16;
+	rect.y2 = rect.y1 + 16;
+
+	status |= AhiDrawRopSet(appi->ahi.deviceContext, AHIROP3(AHIROP_SRCCOPY));
+	status |= AhiDrawSurfSrcSet(appi->ahi.deviceContext, appi->ahi.surfaceDraw, 0);
+	status |= AhiDrawSurfDstSet(appi->ahi.deviceContext, appi->ahi.surfaceDisplay, 0);
+	status |= AhiDrawClipDstSet(appi->ahi.deviceContext, NULL);
+	status |= AhiDrawBitBlt(appi->ahi.deviceContext, &rect, &point);
 
 	status |= AhiDrawSurfDstSet(appi->ahi.deviceContext, appi->ahi.surfaceDisplay, 0);
-
-	status |= AhiDrawBrushFgColorSet(appi->ahi.deviceContext, ATI_565RGB(rand() % 256, rand() % 256, rand() % 256));
+	status |= AhiDrawBrushFgColorSet(appi->ahi.deviceContext, 0x0000);
 	status |= AhiDrawBrushSet(appi->ahi.deviceContext, NULL, NULL, 0, AHIFLAG_BRUSH_SOLID);
 	status |= AhiDrawRopSet(appi->ahi.deviceContext, AHIROP3(AHIROP_PATCOPY));
-	status |= AhiDrawSpans(appi->ahi.deviceContext, &rect, 1, 0);
+
+	status |= AhiDrawAlphaSet(appi->ahi.deviceContext, AHIALPHA(alphaStep));
+	status |= AhiDrawAlphaBlt(appi->ahi.deviceContext, &rect, NULL, NULL, NULL, AHIFLAG_ALPHA_SOLID);
+
+	alphaStep += 1;
 
 	return status;
 }
