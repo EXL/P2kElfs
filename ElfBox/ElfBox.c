@@ -743,7 +743,6 @@ static LIST_ENTRY_T *CreateList(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
 				custom_icon = TRUE;
 			}
 		}
-#endif
 
 		if (custom_icon) {
 			status |= UIS_MakeContentFromString("Mj0 Mq1",
@@ -752,6 +751,10 @@ static LIST_ENTRY_T *CreateList(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
 			status |= UIS_MakeContentFromString("Mp0 Mq1",
 				&list_elements[i].content.static_entry.text, list_icon, appi->fs.list[i].name);
 		}
+#else
+		status |= UIS_MakeContentFromString("Mp0 Mq1",
+			&list_elements[i].content.static_entry.text, list_icon, appi->fs.list[i].name);
+#endif
 	}
 
 	if (status != RESULT_OK) {
