@@ -112,6 +112,7 @@ static UINT32 DeleteDialog(APPLICATION_T *app);
 static void HandleEventMain(EVENT_STACK_T *ev_st, APPLICATION_T *app, APP_ID_T app_id, REG_ID_T reg_id);
 static UINT32 HandleEventHide(EVENT_STACK_T *ev_st, APPLICATION_T *app);
 static UINT32 HandleEventShow(EVENT_STACK_T *ev_st, APPLICATION_T *app);
+static UINT32 HandleEventSelect(EVENT_STACK_T *ev_st, APPLICATION_T *app);
 static UINT32 HandleEventMenuRequestListItems(EVENT_STACK_T *ev_st, APPLICATION_T *app);
 static UINT32 HandleEventKeyPress(EVENT_STACK_T *ev_st, APPLICATION_T *app);
 static UINT32 HandleEventKeyRelease(EVENT_STACK_T *ev_st, APPLICATION_T *app);
@@ -214,6 +215,7 @@ static const EVENT_HANDLER_ENTRY_T g_state_main_hdls[] = {
 	{ EV_REQUEST_LIST_ITEMS, HandleEventMenuRequestListItems },
 	{ EV_DONE, HandleEventHide },
 	{ EV_DIALOG_DONE, HandleEventHide },
+	{ EV_SELECT, HandleEventSelect },
 	{ STATE_HANDLERS_END, NULL }
 };
 
@@ -510,6 +512,44 @@ static UINT32 HandleEventShow(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
 	ApplicationDisplay(ev_st, app, APP_DISPLAY_SHOW);
 
 	return RESULT_OK;
+}
+
+static UINT32 HandleEventSelect(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
+	UINT32 status;
+	APP_INSTANCE_T *app_instance;
+	EVENT_T *event;
+
+	status = RESULT_OK;
+	app_instance = (APP_INSTANCE_T *) app;
+	event = AFW_GetEv(ev_st);
+
+	app_instance->menu_current_item_index = event->data.index - 1;
+
+	switch (app_instance->menu_current_item_index) {
+		case APP_MENU_ITEM_DELAY:
+			status |= APP_UtilChangeState(APP_STATE_EDIT, ev_st, app);
+			break;
+		case APP_MENU_ITEM_RESET:
+			status |= APP_UtilChangeState(APP_STATE_WARNING, ev_st, app);
+			break;
+		case APP_MENU_ITEM_HELP:
+			app_instance->view = APP_VIEW_HELP;
+			status |= APP_UtilChangeState(APP_STATE_VIEW, ev_st, app);
+			break;
+		case APP_MENU_ITEM_ABOUT:
+			app_instance->view = APP_VIEW_ABOUT;
+			status |= APP_UtilChangeState(APP_STATE_VIEW, ev_st, app);
+			break;
+		case APP_MENU_ITEM_EXIT:
+			status |= APP_UtilStartTimer(100, APP_TIMER_EXIT, app);
+			break;
+		default:
+			break;
+	}
+
+	status |= APP_ConsumeEv(ev_st, app);
+
+	return status;
 }
 
 static UINT32 HandleEventMenuRequestListItems(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
