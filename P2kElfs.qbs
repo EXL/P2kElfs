@@ -17,6 +17,7 @@ Project {
 		"Yeti3D-Old/Yeti3D-Old.qbs",
 		"Yeti3D/Yeti3D.qbs",
 		"FlipDetector/FlipDetector.qbs",
-		"vNesC/vNesC.qbs"
+		"vNesC/vNesC.qbs",
+		"Snow/Snow.qbs"
 	]
 }

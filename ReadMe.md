@@ -109,6 +109,11 @@ Ready-to-run ELFs builds are available in the [Release](https://github.com/EXL/P
     An experimental vNes emulator of Nintendo NES rewritten from J2ME Java (vNes) to C language using decompilation technique by cbn. Port from Siemens x65, x75 (SGold, NewSGold) platforms.\
     Application type: GUI + GPU + Java Heap.
 
+21. **[Snow](Snow)**
+
+    Happy New Year's application, just a snowflakes flows on the desktop screen.
+    Application type: Deamon + GUI + GPU + Widgets.
+
 ## Infromation
 
 * [ELFs by EXL](https://forum.motofan.ru/index.php?showtopic=1742337): A thread on the MotoFan.Ru forum with my ELF projects and additional information.
