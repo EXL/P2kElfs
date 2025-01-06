@@ -1,0 +1,35 @@
+# Script: Motorola P2K Makefile
+# Flavor: EG1, EA1 (ElfPack v1.x, ARM GCC, Linux)
+# Author: EXL, 06-Jan-2025
+
+P2K_ELF_SDK       = /home/exl/Storage/Projects/Git/MotoFanRu/P2K-ELF-SDK
+ARM_GCC_LIN_BIN   = $(P2K_ELF_SDK)/tool/compiler/ARM-GCC-LIN/bin
+
+CC                = $(shell command -v arm-none-eabi-gcc || echo $(ARM_GCC_LIN_BIN)/arm-none-eabi-gcc)
+
+INCLUDES          = -nostdinc -I$(P2K_ELF_SDK)/sdk_mcore  -I$(P2K_ELF_SDK)/ep1/inc
+DEFINES           = -D__P2K__ -DEP1 -DFTR_L7E -DDEBUG
+WARNINGS          = -Wall
+OPTIMIZATIONS     = -O2
+FEATURES          = -ffreestanding -fshort-wchar -fshort-enums -fpack-struct=4 -fno-builtin
+ifeq ($(ARGON), 1)
+	FLAVOR        = -DEA1
+	CPU_FLAGS     = -mbig-endian -mthumb -mthumb-interwork -mbe32 -march=armv6j -mtune=arm1136jf-s
+else
+	FLAVOR        = -DEG1
+	CPU_FLAGS     = -mbig-endian -mthumb -mthumb-interwork -march=armv4t -mtune=arm7tdmi-s
+endif
+CFLAGS            = $(INCLUDES) $(DEFINES) $(FLAVOR) $(WARNINGS) $(OPTIMIZATIONS) $(CPU_FLAGS) $(FEATURES)
+CXXFLAGS          = $(CFLAGS)
+LDFLAGS           = $(CFLAGS) -s -pie -Wl,--gc-sections -Wl,-zmax-page-size=4 -Wl,-eRegister
+LIBS              = -nostdlib -nodefaultlibs -L$(P2K_ELF_SDK)/ep1/lib/gcc -leg1_gcc_stub
+
+TARGET_ELF        = ElfBox.elf
+
+all:
+	$(CC) $(CFLAGS) -c ElfBox.c -o ElfBox.o
+	$(CC) $(LDFLAGS) ElfBox.o $(LIBS) -o $(TARGET_ELF)
+
+clean:
+	-rm -f *.o
+	-rm -f *.elf
