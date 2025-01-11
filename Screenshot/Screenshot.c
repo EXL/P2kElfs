@@ -622,7 +622,7 @@ static UINT32 SaveScreenshotFile(const BITMAP_T *bitmap) {
 	status |= GenerateScreenshotFilePath(screenshot_path);
 
 	screenshot_file = DL_FsOpenFile(screenshot_path, FILE_WRITE_MODE, 0);
-	if (screenshot_file == NULL) {
+	if (!screenshot_file) {
 		return RESULT_FAIL;
 	}
 

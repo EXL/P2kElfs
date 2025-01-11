@@ -718,16 +718,16 @@ static UINT32 ATI_Driver_Set_Display_Mode(APPLICATION_T *app, AHIROTATE_T mode) 
 		if (status != RESULT_OK) {
 			LOG("ATI_Driver_Set_Display_Mode: Cannot allocate drawing (landscape) surface, status = %d\n", status);
 			status |= AhiSurfFree(device_context, appi->ahi.screen);
-			appi->ahi.screen = NULL;
+			appi->ahi.screen = 0;
 			return RESULT_FAIL;
 		}
 
 		status |= ATI_Driver_Log_Memory(app, AHIFMT_8BPP);
 	} else {
-		if (appi->ahi.screen != NULL) {
+		if (appi->ahi.screen) {
 			status |= AhiSurfFree(appi->ahi.context, appi->ahi.screen);
 		}
-		if (appi->ahi.draw != NULL) {
+		if (appi->ahi.draw) {
 			status |= AhiSurfFree(appi->ahi.context, appi->ahi.draw);
 		}
 
@@ -744,7 +744,7 @@ static UINT32 ATI_Driver_Set_Display_Mode(APPLICATION_T *app, AHIROTATE_T mode) 
 		if (status != RESULT_OK) {
 			LOG("ATI_Driver_Set_Display_Mode: Cannot allocate drawing (portrait) surface, status = %d\n", status);
 			status |= AhiSurfFree(device_context, appi->ahi.screen);
-			appi->ahi.screen = NULL;
+			appi->ahi.screen = 0;
 			return RESULT_FAIL;
 		}
 

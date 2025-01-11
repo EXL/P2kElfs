@@ -516,7 +516,7 @@ extern UINT32 DiskBenchmark(WCHAR *disk_result, WCHAR *disk, UINT32 addr, UINT32
 
 	/* Write File */
 	time_start = suPalReadTime();
-	file = DL_FsOpenFile(file_path, FILE_WRITE_MODE, NULL);
+	file = DL_FsOpenFile(file_path, FILE_WRITE_MODE, 0);
 	for (i = addr; i < addr + f_size; i += c_size) {
 		status |= DL_FsWriteFile((void *) i, c_size, 1, file, &rw);
 		if (rw == 0) {
@@ -537,7 +537,7 @@ extern UINT32 DiskBenchmark(WCHAR *disk_result, WCHAR *disk, UINT32 addr, UINT32
 	read_buffer = suAllocMem(c_size, &res);
 	time_start = suPalReadTime();
 	if (res == RESULT_OK) { /* No Allocation Error. */
-		file = DL_FsOpenFile(file_path, FILE_READ_MODE, NULL);
+		file = DL_FsOpenFile(file_path, FILE_READ_MODE, 0);
 		for (i = addr; i < addr + f_size; i += c_size) {
 			status = DL_FsReadFile((void *) read_buffer, c_size, 1, file, &rw);
 			if (rw == 0) {

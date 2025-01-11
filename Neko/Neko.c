@@ -466,7 +466,7 @@ static UINT32 HandleStateEnter(EVENT_STACK_T *ev_st, APPLICATION_T *app, ENTER_S
 			/* Insert cursor to proper position. */
 			if (app_instance->menu_current_item_index != APP_MENU_ITEM_FIRST) {
 				APP_UtilAddEvUISListChange(ev_st, app, 0, app_instance->menu_current_item_index + 1, APP_MENU_ITEM_MAX,
-					FALSE, 2, NULL, NULL, NULL);
+					FALSE, 2, 0, 0, NULL);
 				UIS_HandleEvent(dialog, ev_st);
 			}
 			break;
@@ -1134,7 +1134,7 @@ static INT8 d = 3;
 static INT8 x = 4;
 static TColor *color = NULL;
 static char *arr = NULL, *bin = NULL;
-static FILE file = NULL;
+static FILE file = 0;
 static UINT32 r = 0;
 static BOOL new = 1;
 static TPoint s[1] = {0};
@@ -1357,7 +1357,7 @@ static void copy(UINT8 x, UINT8 y, UINT8 bk) {
 		rt.y1 = 0;
 		rt.x2 = 40;
 		rt.y2 = 40;
-		AhiSurfCopy(dCtx, sDraw, &bm, &rt, &pt, NULL, AHIFLAG_COPYFROM);
+		AhiSurfCopy(dCtx, sDraw, &bm, &rt, &pt, 0, AHIFLAG_COPYFROM);
 	} else {
 		pt.x = 0;
 		pt.y = 0;
@@ -1365,7 +1365,7 @@ static void copy(UINT8 x, UINT8 y, UINT8 bk) {
 		rt.y1 = y;
 		rt.x2 = x + 40;
 		rt.y2 = y + 40;
-		AhiSurfCopy(dCtx, sDraw, &bm, &rt, &pt, NULL, AHIFLAG_COPYTO);
+		AhiSurfCopy(dCtx, sDraw, &bm, &rt, &pt, 0, AHIFLAG_COPYTO);
 	}
 }
 

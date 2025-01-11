@@ -293,8 +293,8 @@ static UINT32 ApplicationStart(EVENT_STACK_T *ev_st, REG_ID_T reg_id, void *reg_
 		app_instance->view = APP_VIEW_HELP;
 		app_instance->menu_current_item_index = APP_MENU_ITEM_FIRST;
 		app_instance->ms_key_press_start = 0LLU;
-		app_instance->ahi.deviceContext = NULL;
-		app_instance->ahi.drvInfo = NULL;
+		app_instance->ahi.deviceContext = 0;
+		app_instance->ahi.drvInfo = 0;
 
 		ResetSettingsToDefaultValues((APPLICATION_T *) app_instance);
 
@@ -416,7 +416,7 @@ static UINT32 HandleStateEnter(EVENT_STACK_T *ev_st, APPLICATION_T *app, ENTER_S
 			/* Insert cursor to proper position. */
 			if (app_instance->menu_current_item_index != APP_MENU_ITEM_FIRST) {
 				APP_UtilAddEvUISListChange(ev_st, app, 0, app_instance->menu_current_item_index + 1, APP_MENU_ITEM_MAX,
-					FALSE, 2, NULL, NULL, NULL);
+					FALSE, 2, 0, 0, NULL);
 				UIS_HandleEvent(dialog, ev_st);
 			}
 			break;
@@ -987,12 +987,12 @@ static UINT32 GPU_Stop(APPLICATION_T *app) {
 
 	if (appi->ahi.deviceContext) {
 		AhiDevClose(appi->ahi.deviceContext);
-		appi->ahi.deviceContext = NULL;
+		appi->ahi.deviceContext = 0;
 	}
 
 	if (appi->ahi.drvInfo) {
 		suFreeMem(appi->ahi.drvInfo);
-		appi->ahi.drvInfo = NULL;
+		appi->ahi.drvInfo = 0;
 	}
 
 	return status;
