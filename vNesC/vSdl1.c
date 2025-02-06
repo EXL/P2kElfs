@@ -1,10 +1,10 @@
-// SDL2 port
+// SDL1 port
 
 #include "vNesC.h"
 
 #include <time.h>
 
-#include <SDL2/SDL.h>
+#include <SDL/SDL.h>
 
 #if defined(__EMSCRIPTEN__)
 #include <emscripten.h>
@@ -22,8 +22,6 @@ static Uint32 aa = 0, bb = 0, delta = 0;
 
 static SDL_Surface *surface;
 static SDL_Surface *video;
-static SDL_Renderer *render;
-static SDL_Texture *texture;
 
 static char romname[256];
 
@@ -79,9 +77,7 @@ static void sdl_handle_events(void) {
 	}
 
 	SDL_BlitSurface(surface, NULL, video, NULL);
-	SDL_UpdateTexture(texture, NULL, video->pixels, video->pitch);
-	SDL_RenderCopy(render, texture, NULL, NULL);
-	SDL_RenderPresent(render);
+	SDL_Flip(video);
 }
 
 void repaint() {
@@ -130,29 +126,13 @@ int main(int argc, char *argv[]) {
 		return i;
 	}
 
-	SDL_Window *window = SDL_CreateWindow(
-		"vNesC SDL2",
-		SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
-		getWidth, getHeight,
-		SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE
-		);
-	if (window == NULL) {
-		SDL_Log("SDL_CreateWindow failed: %s", SDL_GetError());
-		return EXIT_FAILURE;
-	}
-
-	render = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
-	if (render == NULL) {
-		SDL_Log("SDL_CreateRenderer failed: %s", SDL_GetError());
-		return EXIT_FAILURE;
-	}
-
-	video = SDL_CreateRGBSurface(0, getWidth, getHeight, 32,
-								 0x00FF0000, 0x0000FF00, 0x000000FF, 0xFF000000);
+	video = SDL_SetVideoMode(getWidth, getHeight, 16, SDL_HWSURFACE | SDL_DOUBLEBUF);
 	if (video == NULL) {
-		SDL_Log("SDL_CreateRGBSurface (video) failed: %s", SDL_GetError());
+		fprintf(stderr, "SDL_SetVideoMode (video) failed: %s", SDL_GetError());
 		return EXIT_FAILURE;
 	}
+
+	SDL_WM_SetCaption("vNesC SDL1", NULL);
 
 	//	RGB555
 	//	surface = SDL_CreateRGBSurface(0, getWidth, getHeight, 16, 0x7C00, 0x03E0, 0x001F, 0x0000);
@@ -161,14 +141,7 @@ int main(int argc, char *argv[]) {
 	//	BGR555
 	//	surface = SDL_CreateRGBSurface(0, getWidth, getHeight, 16, 0x001F, 0x03E0, 0x7C00, 0x0000);
 	if (surface == NULL) {
-		SDL_Log("SDL_CreateRGBSurface (surface) failed: %s", SDL_GetError());
-		return EXIT_FAILURE;
-	}
-
-	texture = SDL_CreateTexture(render, SDL_PIXELFORMAT_ARGB8888,
-								SDL_TEXTUREACCESS_STREAMING, getWidth, getHeight);
-	if (texture == NULL) {
-		SDL_Log("SDL_CreateTexture failed: %s", SDL_GetError());
+		fprintf(stderr, "SDL_CreateRGBSurface (surface) failed: %s", SDL_GetError());
 		return EXIT_FAILURE;
 	}
 
@@ -184,11 +157,8 @@ int main(int argc, char *argv[]) {
 
 	freeall();
 
-	SDL_DestroyTexture(texture);
 	SDL_FreeSurface(surface);
 	SDL_FreeSurface(video);
-	SDL_DestroyRenderer(render);
-	SDL_DestroyWindow(window);
 
 	SDL_Quit();
 

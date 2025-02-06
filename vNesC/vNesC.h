@@ -5,7 +5,7 @@
 #define VNES_VIEWPORT_WIDTH  256
 #define VNES_VIEWPORT_HEIGHT 240
 
-#if defined(USE_SDL2)
+#if defined(USE_SDL1) || defined(USE_SDL2)
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>

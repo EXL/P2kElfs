@@ -2,7 +2,8 @@
 ../vNesC.h
 ../vSdl2.c
 ../vP2k.c
-../Makefile.pc
+../Makefile.sdl1
+../Makefile.sdl2
 ../Makefile.mcore
 ../make_ep2.bat
 ../make_em2.bat

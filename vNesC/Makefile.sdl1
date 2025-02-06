@@ -1,13 +1,13 @@
-# This Makefile was created by EXL, 03-Sep-2024
+# This Makefile was created by EXL, 06-Feb-2025
 # Default platform is Linux, Ubuntu 22.04 LTS
 
 CC=gcc
 STRIP=strip
-CFLAGS=`sdl2-config --cflags` -O3 -DUSE_SDL2
+CFLAGS=`sdl-config --cflags` -O3 -DUSE_SDL1
 #CFLAGS+=-g
 CFLAGS+=-Wall -pedantic -Wno-builtin-declaration-mismatch
 CFLAGS+=-DREPAINT_HOOK -DSAVE_LOAD
-LFLAGS=`sdl2-config --libs`
+LFLAGS=`sdl-config --libs`
 NAME=vNesC
 ifeq ($(OS), Windows_NT)
 	EXECUTABLE=$(NAME).exe
@@ -17,8 +17,8 @@ endif
 
 all: $(EXECUTABLE)
 
-$(EXECUTABLE): vNesC.o vSdl2.o
-	$(CC) $(CFLAGS) vNesC.o vSdl2.o -o $(EXECUTABLE) $(LFLAGS)
+$(EXECUTABLE): vNesC.o vSdl1.o
+	$(CC) $(CFLAGS) vNesC.o vSdl1.o -o $(EXECUTABLE) $(LFLAGS)
 	$(STRIP) -s $(EXECUTABLE)
 
 clean:
@@ -26,8 +26,8 @@ clean:
 	-rm -f *.elf
 	-rm -f *.exe
 
-vNesC.o: Makefile.pc vNesC.c vNesC.h
+vNesC.o: Makefile.sdl1 vNesC.c vNesC.h
 	$(CC) $(CFLAGS) -c vNesC.c -o vNesC.o
 
-vSdl2.o: Makefile.pc vSdl2.c vNesC.h
-	$(CC) $(CFLAGS) -c vSdl2.c -o vSdl2.o
+vSdl2.o: Makefile.sdl1 vSdl2.c vNesC.h
+	$(CC) $(CFLAGS) -c vSdl1.c -o vSdl1.o
