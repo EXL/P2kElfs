@@ -29,5 +29,5 @@ clean:
 vNesC.o: Makefile.sdl1 vNesC.c vNesC.h
 	$(CC) $(CFLAGS) -c vNesC.c -o vNesC.o
 
-vSdl2.o: Makefile.sdl1 vSdl2.c vNesC.h
+vSdl2.o: Makefile.sdl1 vSdl1.c vNesC.h
 	$(CC) $(CFLAGS) -c vSdl1.c -o vSdl1.o
