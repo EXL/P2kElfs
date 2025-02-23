@@ -35,6 +35,7 @@ See [Ambilight (Bias lighting) ELF application for Motorola P2K phones (ROKR E1,
 
 * Ambilight.elf (ELF for ElfPack 1.0)
 * Ambilight_V600.elf (ELF for ElfPack 1.0, Motorola V600 version)
+* Ambilight_V635.elf (ELF for ElfPack 1.0, Motorola V635 version)
 
 ## Additional information
 
@@ -42,5 +43,6 @@ The ELF-application has been tested on the following phones and firmware:
 
 * Motorola ROKR E1: R373_G_0E.30.49R
 * Motorola V600: TRIPLETS_G_0B.09.72R
+* Motorola V635: R474_G_08.48.6FR
 
 Application type: Deamon + GUI + GPU + Funlights.

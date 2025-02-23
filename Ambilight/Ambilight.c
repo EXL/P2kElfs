@@ -21,6 +21,7 @@
 #include <filesystem.h>
 #include <dl.h>
 #include <ati.h>
+#include <dal.h>
 
 #include "icons/icon_ambilight_48x48.h"
 
