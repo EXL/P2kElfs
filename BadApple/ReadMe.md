@@ -33,6 +33,7 @@ The implementation of the popular "Bad Apple" demo for the Motorola P2K platform
 
 * BadApple.elf (ELF for ElfPack 1.0)
 * BadApple_V600.elf (ELF for ElfPack 1.0, Motorola V600 version)
+* BadApple_V635.elf (ELF for ElfPack 1.0, Motorola V635 version)
 * BadApple_L7e.elf (ELF for ElfPack 1.0, Motorola SLVR L7e version)
 * BadApple_60fps.elf (ELF for ElfPack 1.0, experimental 60 FPS version)
 
@@ -46,6 +47,7 @@ The ELF-application has been tested on the following phones and firmware:
 * Motorola V235: R3512_G_0A.30.6CR
 * Motorola SLVR L7: R4513_G_08.B7.ACR_RB
 * Motorola SLVR L7e: R452D_G_08.01.0AR
+* Motorola V635: R474_G_08.48.6FR
 
 Application type: GUI + GPU + zlib.
 
