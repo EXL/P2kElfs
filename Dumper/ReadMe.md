@@ -19,6 +19,7 @@ The "Dumper" ELF utility for dumping various memory regions of Motorola P2K phon
 
 * Dumper.elf (ELF for ElfPack 1.0)
 * Dumper_V600.elf (ELF for ElfPack 1.0, Motorola V600 version)
+* Dumper_V635.elf (ELF for ElfPack 1.0, Motorola V635 version)
 * Dumper_C650.elf (ELF for ElfPack 1.0, Motorola C650 version)
 
 ## Additional information
@@ -30,6 +31,7 @@ The ELF-application has been tested on the following phones and firmware:
 * Motorola SLVR L6i: R3443H1_G_0A.65.0BR
 * Motorola ROKR E1: R373_G_0E.30.49R
 * Motorola V600: TRIPLETS_G_0B.09.72R
+* Motorola V635: R474_G_08.48.6FR
 * Motorola V360: R4513_G_08.B7.ACR
 * Motorola V235: R3512_G_0A.30.6CR
 
