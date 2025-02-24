@@ -159,7 +159,7 @@ static UINT32 RunElfApplication(EVENT_STACK_T *ev_st, APPLICATION_T *app, const 
 
 static const char g_app_name[APP_NAME_LEN] = "ElfBox";
 
-#if defined(FTR_V600)
+#if defined(FTR_V600) || defined(FTR_V635)
 static const UINT32 g_ev_code_base = 0x000003D9; /* Mobile QQ application event. */
 #else
 static const UINT32 g_ev_code_base = 0x000003DC; /* MotoMixer application event. */
@@ -724,7 +724,7 @@ static LIST_ENTRY_T *CreateList(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
 #if defined(SHOW_ELF_ICONS)
 		custom_icon = FALSE;
 		if (appi->fs.list[i].type == APP_FS_ELF) {
-			DL_FS_MID_T mid;
+			FS_MID_T mid;
 			WCHAR gif_uri[FS_MAX_URI_NAME_LENGTH + 1]; /* 265 */
 
 			status |= AddUriFileHeader(gif_uri, appi->current_path);
@@ -868,7 +868,7 @@ static UINT32 UpdateFileList(EVENT_STACK_T *ev_st, APPLICATION_T *app, const WCH
 	search_params.attrib = FS_ATTR_DEFAULT;
 	search_params.mask = FS_ATTR_DEFAULT;
 
-#if defined(FTR_V600) && !defined(ASYNC)
+#if (defined(FTR_V600) || defined(FTR_V635)) && !defined(ASYNC)
 	status |= DL_FsSearch(search_params, search_string, &search_info, &complete_function, 0);
 	search_index.search_handle = search_info->shandle;
 	search_index.search_total = search_info->num;
