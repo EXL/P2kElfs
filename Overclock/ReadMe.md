@@ -111,6 +111,7 @@ See [Yeti3D](../Yeti3D) project documents for more stock results.
 * Overclock.elf (ELF for ElfPack 1.0)
 * Overclock_L7e.elf (ELF for ElfPack 1.0, Motorola SLVR L7e and Motorola V360 version)
 * Overclock_V600.elf (ELF for ElfPack 1.0, Motorola V600 version)
+* Overclock_V635.elf (ELF for ElfPack 1.0, Motorola V635 version)
 
 ## Additional information
 
@@ -123,9 +124,11 @@ The ELF-application has been tested on the following phones and firmware:
 * Motorola V360: R4513_G_08.B7.ACR
 * Motorola SLVR L7: R4513_G_08.B7.E0R_RB
 * Motorola SLVR L7e: R452D_G_08.01.0AR (not working)
-* Motorola KRZR K1:  R452F_G_08.03.08R (not working)
+* Motorola KRZR K1: R452F_G_08.03.08R (not working)
 * Motorola RAZR V3i: R4441D_G_08.01.03R
 * Motorola RAZR V3r: R4515_G_08.BD.D3R
+* Motorola V600: TRIPLETS_G_0B.09.72R
+* Motorola V635: R474_G_08.48.6FR
 
 Application type: GUI.
 
