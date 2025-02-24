@@ -20,6 +20,7 @@ The "Screenshot" ELF daemon utility with GUI to fast take screenshots.
 * Screenshot.elf (ELF for ElfPack 1.0)
 * Screenshot_NP.elf (ELF for ElfPack 1.0, Motorola SLVR L7e, KRZR K1 + NoPacked version)
 * Screenshot_V600.elf (ELF for ElfPack 1.0, Motorola V600 + NoPacked version)
+* Screenshot_V635.elf (ELF for ElfPack 1.0, Motorola V635 + NoPacked version)
 * Screenshot_C650.elf (ELF for ElfPack 1.0, Motorola C650 + NoPacked version)
 
 ## Additional information
@@ -35,5 +36,6 @@ The ELF-application has been tested on the following phones and firmware:
 * Motorola RAZR V3r: R4515_G_08.BD.D3R
 * Motorola SLVR L7e: R452D_G_08.01.0AR
 * Motorola KRZR K1:  R452F_G_08.03.08R
+* Motorola V635: R474_G_08.48.6FR
 
 Application type: GUI + GPU + Deamon.

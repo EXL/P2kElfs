@@ -115,7 +115,7 @@ static const UINT8 g_key_screenshot = KEY_POUND;
 static const WCHAR g_msg_state_main[] = L"Hold \"#\" to Screenshot!\nHold \"0\" to Help.\nHold \"*\" to Exit.";
 static const WCHAR g_msg_softkey_got_it[] = L"Got it!";
 
-#if defined(FTR_V600) || defined(FTR_C650)
+#if defined(FTR_V600) || defined(FTR_V635) || defined(FTR_C650)
 static const char g_scr_filename_template[] = "/a/mobile/picture/SCR_%02d%02d%04d_%02d%02d%02d.bmp";
 #else
 static const char g_scr_filename_template[] = "/c/mobile/picture/SCR_%02d%02d%04d_%02d%02d%02d.bmp";
@@ -444,7 +444,7 @@ static UINT32 HandleEventTimerExpired(EVENT_STACK_T *ev_st, APPLICATION_T *app) 
 
 	if (timer_id == APP_TIMER_SCREEN_OK) {
 		/* Play a normal camera shutter sound using loud speaker. */
-#if defined(FTR_V600) && !defined(FTR_C650)
+#if (defined(FTR_V600) || defined(FTR_V635)) && !defined(FTR_C650)
 		MME_GC_playback_open_audio_play_forget(L"/a/mobile/system/shutter5.wav");
 #else
 		MME_GC_playback_open_audio_play_forget(L"/a/mobile/system/shutter5.amr");
