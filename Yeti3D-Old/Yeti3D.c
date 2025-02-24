@@ -384,9 +384,7 @@ static UINT32 HandleStateEnter(EVENT_STACK_T *ev_st, APPLICATION_T *app, ENTER_S
 
 	switch (app_state) {
 		case APP_STATE_MAIN:
-#if !defined(FTR_V600)
-			dialog = UIS_CreateNullDialog(&port);
-#else
+#if defined(FTR_V600) || defined(FTR_V635)
 			{
 				DRAWING_BUFFER_T buffer;
 				GRAPHIC_POINT_T point;
@@ -396,6 +394,8 @@ static UINT32 HandleStateEnter(EVENT_STACK_T *ev_st, APPLICATION_T *app, ENTER_S
 				buffer.buf = NULL;
 				dialog = UIS_CreateColorCanvas(&port, &buffer, TRUE);
 			}
+#else
+			dialog = UIS_CreateNullDialog(&port);
 #endif
 			DL_KeyKjavaGetKeyState(); /* Reset Keys. */
 
@@ -698,7 +698,11 @@ static UINT32 ATI_Driver_Start(APPLICATION_T *app) {
 	appi->ahi.bitmap.height = appi->bmp_height;
 	appi->ahi.bitmap.stride = appi->bmp_width * 2; /* (width * bpp) */
 	appi->ahi.bitmap.format = AHIFMT_16BPP_565;
+#if defined(UIS_HEAP)
+	appi->ahi.bitmap.image = uisAllocateMemory(appi->bmp_width * appi->bmp_height * 2, &result);
+#else
 	appi->ahi.bitmap.image = suAllocMem(appi->bmp_width * appi->bmp_height * 2, &result);
+#endif
 	if (result != RESULT_OK) {
 		LOG("%s\n", "Error: Cannot allocate screen buffer memory.");
 		return RESULT_FAIL;
@@ -741,7 +745,11 @@ static UINT32 ATI_Driver_Stop(APPLICATION_T *app) {
 
 	if (app_instance->p_bitmap) {
 		LOG("%s\n", "Free: ATI Bitmap memory.");
+#if defined(UIS_HEAP)
+		uisFreeMemory(app_instance->p_bitmap);
+#else
 		suFreeMem(app_instance->p_bitmap);
+#endif
 		app_instance->p_bitmap = NULL;
 	}
 
@@ -1033,7 +1041,11 @@ static UINT32 InitResourses(void) {
 	status = RESULT_OK;
 
 	LOG("Trying to allocate texture %d bytes.\n", TEXTURE_WIDTH * TEXTURE_HEIGHT * TEXTURE_MAX);
+#if defined(UIS_HEAP)
+	textures = (texture_t *) uisAllocateMemory(TEXTURE_WIDTH * TEXTURE_HEIGHT * TEXTURE_MAX, &status);
+#else
 	textures = (texture_t *) suAllocMem(TEXTURE_WIDTH * TEXTURE_HEIGHT * TEXTURE_MAX, &status);
+#endif
 	*(u_strrchr(g_res_file_path, L'/') + 1) = '\0';
 	u_strcat(g_res_file_path, L"Yeti3D.tex");
 	file_handle = DL_FsOpenFile(g_res_file_path, FILE_READ_MODE, 0);
@@ -1047,7 +1059,11 @@ static UINT32 InitResourses(void) {
 	}
 
 	LOG("Trying to allocate LUA %d bytes.\n", sizeof(lua_t));
+#if defined(UIS_HEAP)
+	lua = uisAllocateMemory(sizeof(lua_t), &status);
+#else
 	lua = suAllocMem(sizeof(lua_t), &status);
+#endif
 	*(u_strrchr(g_res_file_path, L'/') + 1) = '\0';
 	u_strcat(g_res_file_path, L"Yeti3D.lua");
 	file_handle = DL_FsOpenFile(g_res_file_path, FILE_READ_MODE, 0);
@@ -1061,7 +1077,11 @@ static UINT32 InitResourses(void) {
 	}
 
 	LOG("Trying to allocate sintable %d bytes.\n", SINTABLE_SIZE * SINTABLE_MAX);
+#if defined(UIS_HEAP)
+	sintable = (int *) uisAllocateMemory(SINTABLE_SIZE * SINTABLE_MAX, &status);
+#else
 	sintable = (int *) suAllocMem(SINTABLE_SIZE * SINTABLE_MAX, &status);
+#endif
 	*(u_strrchr(g_res_file_path, L'/') + 1) = '\0';
 	u_strcat(g_res_file_path, L"Yeti3D.sin");
 	file_handle = DL_FsOpenFile(g_res_file_path, FILE_READ_MODE, 0);
@@ -1080,17 +1100,29 @@ static UINT32 InitResourses(void) {
 static void FreeResourses(void) {
 	if (textures) {
 		LOG("%s\n", "Free: Textures memory.");
+#if defined(UIS_HEAP)
+		uisFreeMemory(textures);
+#else
 		suFreeMem(textures);
+#endif
 		textures = NULL;
 	}
 	if (lua) {
 		LOG("%s\n", "Free: LUA memory.");
+#if defined(UIS_HEAP)
+		uisFreeMemory(lua);
+#else
 		suFreeMem(lua);
+#endif
 		lua = NULL;
 	}
 	if (sintable) {
 		LOG("%s\n", "Free: sintable memory.");
+#if defined(UIS_HEAP)
+		uisFreeMemory(sintable);
+#else
 		suFreeMem(sintable);
+#endif
 		sintable = NULL;
 	}
 }

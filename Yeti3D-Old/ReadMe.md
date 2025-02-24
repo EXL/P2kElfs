@@ -57,7 +57,7 @@ See [Yeti3D Engine (old version) port to ELF for Motorola P2K phones](https://ww
 
 ### Summary
 
-* 5 ELFs + 5 ElfPack 2.0 ELFs + 2 ElfPack 2.0/M-CORE ELFs = 12 ELFs.
+* 5 ELFs + 5 ElfPack 2.0 ELFs + 2 ElfPack 2.0/M-CORE ELFs + 2 Motorola V635 ELFs = 14 ELFs.
 
 ## Additional information
 
@@ -67,6 +67,7 @@ The ELF-application has been tested on the following phones and firmware:
 * Motorola ROKR E1: R373_G_0E.30.49R
 * Motorola E770v: R252211_U_85.9B.E1P
 * Motorola RAZR V3x: R252211LD_U_85.9B.E6P (hi-res viewport bugs)
+* Motorola V635: R474_G_08.48.6FR
 
 Application type: GUI + GPU.
 
