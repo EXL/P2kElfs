@@ -106,7 +106,7 @@ See [Overclock](../Overclock) project documents for overclocking Yeti3D comparis
 
 ### Summary
 
-* 8 ELFs + 8 ElfPack 2.0 ELFs + 4 Task and Semaphores ELFs + 1 Debug ELF + 6 V600 ELFs + 8 FPS meter ELFs + 2 V3r ELFs + 2 L6 ELFs + 4 C650 ELFs + 3 ElfPack 2.0/M-CORE ELFs = 46 ELFs.
+* 8 ELFs + 8 ElfPack 2.0 ELFs + 4 Task and Semaphores ELFs + 1 Debug ELF + 6 V600 ELFs + 8 FPS meter ELFs + 2 V3r ELFs + 2 L6 ELFs + 4 C650 ELFs + 3 ElfPack 2.0/M-CORE ELFs + 4 V635 ELFs = 50 ELFs.
 
 ## Additional information
 
@@ -126,6 +126,7 @@ The ELF-application has been tested on the following phones and firmware:
 * Motorola KRZR K1:  R452F_G_08.03.08R (some bugs)
 * Motorola E770v: R252211_U_85.9B.E1P
 * Motorola RAZR V3x: R252211LD_U_85.9B.E6P
+* Motorola V635: R474_G_08.48.6FR
 
 Application type: GUI + GPU + Java Heap + Videomode + Tasks (in the Task version).
 
