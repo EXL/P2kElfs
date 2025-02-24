@@ -48,6 +48,7 @@ See [Overclocking and Benchmakring old Motorola P2K phones (52 MHz to 65 MHz)](h
 | RAZR V3r | thumb | EP1 | 1304 ms <br /> 3.21 BMIPS <br /> 1914 ms <br /> 5.94 DMIPS | 4461 ms <br /> 51.5 FPS <br /> 6054 ms <br /> 42.5 FPS <br /> 13234 ms <br /> 19.0 FPS | 28 ms <br /> 385280 B <br /> 4 ms <br /> 77312 B     | ? ms <br /> ? B            | 5.21 sec <br /> 1280.0 KiB | R4515_D3R <br /> 176x220 TFT @ 81 Hz @ RGB565 <br /> ATI Imageon W2250 <br /> T: 196608, I: 196608, E: 0 <br /> I: 4608, E: 0, S: 0 <br /> Neptune LTE2 @ 52 MHz <br /> 8 MB RAM, 512 KB iRAM, 32 MB ROM                  |
 | V300     | thumb | EP1 | 1347 ms <br /> 3.11 BMIPS <br /> 1971 ms <br /> 5.77 DMIPS | 2668 ms <br /> 77.2 FPS <br /> 4950 ms <br /> 50.0 FPS <br /> 11888 ms <br /> 20.5 FPS | 43 ms <br /> 224000 B <br /> 2 ms <br /> 18176 B     | ? ms <br /> ? B            | 1.07 sec <br /> 544.0 KiB  | TRIPLETS_72R <br /> 176x220 TFT @ 60 Hz @ RGB565 <br /> ATI Imageon W2250 <br /> T: 196608, I: 196608, E: 0 <br /> I: 4600, E: 0, S: 0 <br /> Neptune LTE @ 52 MHz <br /> 4 MB RAM, 256 KB iRAM, 32 MB ROM                |
 | V600     | thumb | EP1 | 1334 ms <br /> 3.12 BMIPS <br /> 1965 ms <br /> 5.79 DMIPS | 2640 ms <br /> 82.3 FPS <br /> 4922 ms <br /> 49.9 FPS <br /> 12073 ms <br /> 20.1 FPS | 43 ms <br /> 224000 B <br /> 2 ms <br /> 18176 B     | ? ms <br /> ? B            | 1.28 sec <br /> 524.0 KiB  | TRIPLETS_72R <br /> 176x220 TFT @ 60 Hz @ RGB565 <br /> ATI Imageon W2250 <br /> T: 196608, I: 196608, E: 0 <br /> I: 4600, E: 0, S: 0 <br /> Neptune LTE @ 52 MHz <br /> 4 MB RAM, 256 KB iRAM, 32 MB ROM                |
+| V635     | thumb | EP1 | 1543 ms <br /> 2.70 BMIPS <br /> 1948 ms <br /> 5.84 DMIPS | 3900 ms <br /> 56.0 FPS <br /> 6197 ms <br /> 38.4 FPS <br /> 12111 ms <br /> 19.5 FPS | 20 ms <br /> 400384 B <br /> 2 ms <br /> 77312 B     | 147 ms <br /> 685056 B     | 1.21 sec <br /> 632.0 KiB  | R474_6FR <br /> 176x220 TFT @ ? Hz @ RGB565 <br /> ATI Imageon W2262 <br /> T: 2490368, I: 393216, E: 2097152 <br /> I: 141888, E: 1009576, S: 0 <br /> Neptune LTE @ 52 MHz <br /> 8 MB RAM, 256 KB iRAM, 32 MB ROM      |
 | V235     | thumb | EP1 | 1298 ms <br /> 3.22 BMIPS <br /> 1911 ms <br /> 5.95 DMIPS | 4109 ms <br /> 52.6 FPS <br /> 7245 ms <br /> 33.8 FPS <br /> 13856 ms <br /> 16.5 FPS | 43 ms <br /> 499712 B <br /> 2 ms <br /> 65280 B     | ? ms <br /> ? B            | 1.13 sec <br /> 460.0 KiB  | R3512_6CR <br /> 128x160 cSTN @ 51 Hz @ RGB565 <br /> ATI Imageon W2240 <br /> T: 196608, I: 196608, E: 0 <br /> I: 41280, E: 0, S: 0 <br /> Neptune LTE2 @ 52 MHz <br /> 8 MB RAM, 512 KB iRAM, 32 MB ROM                |
 
 See [Overclock](../Overclock) project documents for overclocking Benchmark comparision.
@@ -69,6 +70,7 @@ Thanks to @fkcoder, @baat, and @Unreal_man for the tests.
 | V300              | 4K, W:8066, R:170, ms. <br /> 8K, W:6093, R:129, ms. <br /> 16K, W:5739, R:114, ms.   | (None)                                                                           | (None)                                                                              |
 | V600              | 4K, W:8152, R:174, ms. <br /> 8K, W:6078, R:134, ms. <br /> 16K, W:5804, R:115, ms.   | (None)                                                                           | (None)                                                                              |
 | V600 (65 MHz)     | 4K, W:6010, R:131, ms. <br /> 8K, W:6188, R:102, ms. <br /> 16K, W:5289, R:86, ms.    | (None)                                                                           | (None)                                                                              |
+| V635              | 4K, W:4879, R:157, ms. <br /> 8K, W:4489, R:105, ms. <br /> 16K, W:4230, R:97, ms.    | (None)                                                                           | ?                                                                                   |
 | V235              | 4K, W:3888, R:156, ms. <br /> 8K, W:3675, R:108, ms. <br /> 16K, W:3350, R:96, ms.    | 4K, W:901, R:35, ms. <br /> 8K, W:887, R:25, ms. <br /> 16K, W:886, R:19, ms.    | (None)                                                                              |
 
 Benchmarking results on Motorola ROKR E1 with custom [Dream A Reality 2.x Test 16](https://forum.motofan.ru/index.php?showtopic=167677) firmware: 52 MHz vs. 65 MHz MCU overclock.
@@ -90,6 +92,7 @@ Benchmarking results on Motorola ROKR E1 with custom [Dream A Reality 2.x Test 1
 * Benchmark_EM2.elf (ELF for ElfPack 2.0, M·CORE)
 * Benchmark_L7e.elf (ELF for ElfPack 1.0, thumb, Motorola SLVR L7e version)
 * Benchmark_V600.elf (ELF for ElfPack 1.0, thumb, Motorola V600 version)
+* Benchmark_V635.elf (ELF for ElfPack 1.0, thumb, Motorola V635 version)
 * Benchmark_C650.elf (ELF for ElfPack 1.0, thumb, Motorola C650 version)
 * VibroSignal.elf (ELF for ElfPack 1.0)
 * OverclockCpu.elf (ELF for ElfPack 1.0)
@@ -110,5 +113,7 @@ The ELF-application has been tested on the following phones and firmware:
 * Motorola RIZR Z3: R452F1_G_08.04.09R (some bugs)
 * Motorola RAZR V3i: R4441D_G_08.01.03R
 * Motorola RAZR V3r: R4515_G_08.BD.D3R
+* Motorola V600: TRIPLETS_G_0B.09.72R
+* Motorola V635: R474_G_08.48.6FR
 
 Application type: GUI + GPU (if any) + Java Heap.
