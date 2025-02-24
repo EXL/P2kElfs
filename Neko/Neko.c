@@ -1282,9 +1282,13 @@ static void AHG_Flush(void) {
 }
 
 static BOOL KeypadLock(void) {
-	BOOL keypad_statate;
-	DL_DbFeatureGetCurrentState(*KEYPAD_STATE, &keypad_statate);
-	return keypad_statate;
+#if defined(FTR_V600) || defined(FTR_V635)
+	return FALSE;
+#else
+	BOOL keypad_state;
+	DL_DbFeatureGetCurrentState(*KEYPAD_STATE, &keypad_state);
+	return keypad_state;
+#endif
 }
 
 static BOOL WorkingTable(void) {

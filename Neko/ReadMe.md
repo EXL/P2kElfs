@@ -40,6 +40,7 @@ Additional information about creating and editing ANI-skins see [here](skins).
 
 * Neko.elf (ELF for ElfPack 1.0)
 * Neko_V600.elf (ELF for ElfPack 1.0, Motorola V600 version)
+* Neko_V635.elf (ELF for ElfPack 1.0, Motorola V635 version)
 
 ## Additional information
 
@@ -50,5 +51,6 @@ The ELF-application has been tested on the following phones and firmware:
 * Motorola ROKR E1: R373_G_0E.30.49R
 * Motorola V600: TRIPLETS_G_0B.09.72R
 * Motorola V235: R3512_G_0A.30.6CR
+* Motorola V635: R474_G_08.48.6FR
 
 Application type: Deamon + GUI + GPU + Widgets.
