@@ -71,3 +71,7 @@ python -m pip install --upgrade Pillow
 * **PepeD**: garych.
 
     [Additional Information](https://knowyourmeme.com/memes/peped).
+
+* **Vik89**: siepatch@c.j.r
+
+    [Additional Information](https://patches.kibab.com).
