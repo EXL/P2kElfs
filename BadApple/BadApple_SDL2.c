@@ -156,7 +156,8 @@ static void sdl_handle_events(void) {
 		}
 	}
 
-	convert_1bpp_to_rgba(fbm_buffer, (uint32_t *) surface->pixels, getWidth, getHeight, 24, pal);
+	convert_1bpp_to_rgba(fbm_buffer, (uint32_t *) surface->pixels,
+		getWidth, getHeight, fbm_head.frame_size / fbm_head.height, pal);
 
 	SDL_BlitSurface(surface, NULL, video, NULL);
 	SDL_UpdateTexture(texture, NULL, video->pixels, video->pitch);
