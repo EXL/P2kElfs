@@ -2,7 +2,10 @@
  * Draft SDL2 version for experiments.
  *
  * Build:
- * $ gcc BadApple_SDL2.c -o BadApple -lSDL2 -lz
+ *  $ gcc BadApple_SDL2.c -o BadApple -lSDL2 -lz
+ *
+ * Usage:
+ *  $ ./BadApple res/BadApple_220p.fbm
  */
 
 #include <stdint.h>
