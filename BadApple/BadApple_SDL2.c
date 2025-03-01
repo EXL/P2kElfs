@@ -12,12 +12,20 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+// For the BE => LE conversions.
+#include <arpa/inet.h>
+
 #include <SDL2/SDL.h>
 
 #include <zlib.h>
 
-#define ZLIB_IN_BUF_SIZE				  (4 * 1024)
-#define ZLIB_OUT_BUF_SIZE				 (ZLIB_IN_BUF_SIZE * 2)
+static const int big_endian = 1;
+static const int frame_compress = 1;
+static const int fps = 30;
+static const int bpp_vid_out = 16;
+
+#define ZLIB_IN_BUF_SIZE                (6 * 1024)
+#define ZLIB_OUT_BUF_SIZE               (ZLIB_IN_BUF_SIZE * 2)
 
 typedef struct {
 	uint16_t width;
@@ -44,66 +52,84 @@ static SDL_Surface *video;
 static SDL_Renderer *render;
 static SDL_Texture *texture;
 
-#define VIEWPORT_INTERVAL 120
-
 static uint32_t aa = 0, bb = 0, delta = 0;
 
-static uint32_t pal[2] = {
+static uint32_t pal32[2] = {
 	0xFF000000,
 	0xFFFFFFFF
+};
+
+static uint16_t pal16[2] = {
+	0x0000,
+	0xFFFF
 };
 
 static int getWidth;
 static int getHeight;
 
-void convert_1bpp_to_rgba(const uint8_t *fbm_data, uint32_t *fb, int width, int height, int stride, uint32_t *pal) {
-	int total_pixels = width * height;
+static inline void cv_1bpp_to_16bpp_rgb565(const uint8_t *fbm, uint16_t *fb, int w, int h, int stride, uint16_t *pl) {
+	int total_pixels = w * h;
 	for (int pixel_index = 0; pixel_index < total_pixels; pixel_index++) {
-		int x = pixel_index % width;
-		int y = pixel_index / width;
+		int x = pixel_index % w;
+		int y = pixel_index / w;
 		int byte_index = y * stride + x / 8;
 		int bit_index = x % 8;
 
-		uint8_t pixel_value = (fbm_data[byte_index] >> (7 - bit_index)) & 0x01;
-		uint32_t color = pal[pixel_value];
+		uint8_t pixel_value = (fbm[byte_index] >> (7 - bit_index)) & 0x01;
+		uint16_t color = pl[pixel_value];
 
 		fb[pixel_index] = color;
 	}
 }
 
-uint16_t swap_bytes_uint16(uint16_t value) {
-	return (value >> 8) | (value << 8);
-}
+static inline void cv_1bpp_to_32bpp_rgba8888(const uint8_t *fbm, uint32_t *fb, int w, int h, int stride, uint32_t *pl) {
+	int total_pixels = w * h;
+	for (int pixel_index = 0; pixel_index < total_pixels; pixel_index++) {
+		int x = pixel_index % w;
+		int y = pixel_index / w;
+		int byte_index = y * stride + x / 8;
+		int bit_index = x % 8;
 
-uint32_t swap_bytes_uint32(uint32_t value) {
-	return  ((value >> 24) & 0x000000FF) |
-			((value >> 8)  & 0x0000FF00) |
-			((value << 8)  & 0x00FF0000) |
-			((value << 24) & 0xFF000000);
+		uint8_t pixel_value = (fbm[byte_index] >> (7 - bit_index)) & 0x01;
+		uint32_t color = pl[pixel_value];
+
+		fb[pixel_index] = color;
+	}
 }
 
 static uint32_t GFX_Draw_Step(void) {
 	uint32_t zl_size;
 	uint32_t readen;
 
-	inflateReset(&d_stream);
+	if (frame_compress) {
+		inflateReset(&d_stream);
 
-	fbm_frame += 1;
-	if (fbm_frame > fbm_head.frames) {
-		quit_loop = 1;
+		fbm_frame += 1;
+		if (fbm_frame > fbm_head.frames) {
+			quit_loop = 1;
+		}
+
+		fread(&zl_size, sizeof(uint32_t), 1, file_handle);
+		if (big_endian)
+			zl_size = htonl(zl_size);
+		readen = fread(zlib_buffer, zl_size, 1, file_handle);
+
+		d_stream.next_in = (uint8_t *) zlib_buffer;
+		d_stream.avail_in = readen * zl_size;
+
+		d_stream.next_out = (uint8_t *) fbm_buffer;
+		d_stream.avail_out = ZLIB_OUT_BUF_SIZE;
+
+		inflate(&d_stream, Z_SYNC_FLUSH);
+	} else {
+		if (fbm_frame <= fbm_head.frames) {
+			fread(fbm_buffer, fbm_head.frame_size, 1, file_handle);
+			fbm_frame += 1;
+		} else {
+			fseek(file_handle, 0 + sizeof(FBM_HEADER_T), 0);
+			fbm_frame = 0;
+		}
 	}
-
-	fread(&zl_size, sizeof(uint32_t), 1, file_handle);
-	zl_size = swap_bytes_uint32(zl_size);
-	readen = fread(zlib_buffer, zl_size, 1, file_handle);
-
-	d_stream.next_in = (uint8_t *) zlib_buffer;
-	d_stream.avail_in = readen * zl_size;
-
-	d_stream.next_out = (uint8_t *) fbm_buffer;
-	d_stream.avail_out = ZLIB_OUT_BUF_SIZE;
-
-	inflate(&d_stream, Z_SYNC_FLUSH);
 
 	return 0;
 }
@@ -117,7 +143,8 @@ static uint32_t ZLIB_Start(void) {
 	memset(zlib_buffer, 0, ZLIB_IN_BUF_SIZE * 10);
 
 	fread(&zl_size, sizeof(uint32_t), 1, file_handle);
-	zl_size = swap_bytes_uint32(zl_size);
+	if (big_endian)
+		zl_size = htonl(zl_size);
 	readen = fread(zlib_buffer, zl_size, 1, file_handle);
 	d_stream.next_in = (uint8_t *) zlib_buffer;
 	d_stream.avail_in = readen * zl_size;
@@ -159,8 +186,12 @@ static void sdl_handle_events(void) {
 		}
 	}
 
-	convert_1bpp_to_rgba(fbm_buffer, (uint32_t *) surface->pixels,
-		getWidth, getHeight, fbm_head.frame_size / fbm_head.height, pal);
+	if (bpp_vid_out == 16)
+		cv_1bpp_to_16bpp_rgb565(fbm_buffer, (uint16_t *) surface->pixels,
+			getWidth, getHeight, fbm_head.frame_size / fbm_head.height, pal16);
+	else
+		cv_1bpp_to_32bpp_rgba8888(fbm_buffer, (uint32_t *) surface->pixels,
+			getWidth, getHeight, fbm_head.frame_size / fbm_head.height, pal32);
 
 	SDL_BlitSurface(surface, NULL, video, NULL);
 	SDL_UpdateTexture(texture, NULL, video->pixels, video->pitch);
@@ -172,7 +203,7 @@ static void main_loop_step(void) {
 	aa = SDL_GetTicks();
 	delta = aa - bb;
 
-	if (delta > 1000 / VIEWPORT_INTERVAL) {
+	if (delta > 1000 / fps) {
 		bb = aa;
 
 		GFX_Draw_Step();
@@ -181,15 +212,21 @@ static void main_loop_step(void) {
 }
 
 int main(int argc, char *argv[]) {
+	if (argc < 2) {
+		fprintf(stderr, "Usage\n\tBadApple BadApple.fbm");
+		return 1;
+	}
 	file_handle = fopen(argv[1], "rb");
 	fread(&fbm_head, sizeof(FBM_HEADER_T), 1, file_handle);
 
-	fbm_head.width = swap_bytes_uint16(fbm_head.width);
-	fbm_head.height = swap_bytes_uint16(fbm_head.height);
-	fbm_head.frames = swap_bytes_uint16(fbm_head.frames);
-	fbm_head.max_compressed_size = swap_bytes_uint16(fbm_head.max_compressed_size);
-	fbm_head.bpp = swap_bytes_uint16(fbm_head.bpp);
-	fbm_head.frame_size = swap_bytes_uint16(fbm_head.frame_size);
+	if (big_endian) {
+		fbm_head.width = htons(fbm_head.width);
+		fbm_head.height = htons(fbm_head.height);
+		fbm_head.frames = htons(fbm_head.frames);
+		fbm_head.max_compressed_size = htons(fbm_head.max_compressed_size);
+		fbm_head.bpp = htons(fbm_head.bpp);
+		fbm_head.frame_size = htons(fbm_head.frame_size);
+	}
 
 	getWidth = fbm_head.width;
 	getHeight = fbm_head.height;
@@ -204,7 +241,8 @@ int main(int argc, char *argv[]) {
 	fprintf(stderr, "fbm_head.bpp=%d\n", fbm_head.bpp);
 	fprintf(stderr, "fbm_head.frame_size=%d\n", fbm_head.frame_size);
 
-	ZLIB_Start();
+	if (frame_compress)
+		ZLIB_Start();
 
 	SDL_Window *window = SDL_CreateWindow(
 		"Bad Apple",
@@ -230,8 +268,12 @@ int main(int argc, char *argv[]) {
 		return EXIT_FAILURE;
 	}
 
-	surface = SDL_CreateRGBSurface(0, getWidth, getHeight, 32,
-								 0x00FF0000, 0x0000FF00, 0x000000FF, 0xFF000000);
+	if (bpp_vid_out == 16)
+		surface = SDL_CreateRGBSurface(0, getWidth, getHeight, 16,
+									 0xF800, 0x07E0, 0x001F, 0x0000);
+	else
+		surface = SDL_CreateRGBSurface(0, getWidth, getHeight, 32,
+									 0x00FF0000, 0x0000FF00, 0x000000FF, 0xFF000000);
 	if (surface == NULL) {
 		SDL_Log("SDL_CreateRGBSurface (surface) failed: %s", SDL_GetError());
 		return EXIT_FAILURE;
@@ -254,7 +296,8 @@ int main(int argc, char *argv[]) {
 	SDL_DestroyRenderer(render);
 	SDL_DestroyWindow(window);
 
-	ZLIB_Stop();
+	if (frame_compress)
+		ZLIB_Stop();
 
 	free(fbm_buffer);
 

@@ -16,6 +16,8 @@ import PIL
 from PIL import Image
 
 compress = True
+endinan = 'big'
+#endinan = 'little'
 bmp_offset = 0x3E
 bmp_width = 176
 bmp_height = 220
@@ -34,11 +36,11 @@ def convert_bmp_to_fbm(bitmaps_directory):
 			bmp = Image.open(bitmap).transpose(PIL.Image.FLIP_TOP_BOTTOM)
 
 			if first_time:
-				file_out.write(bmp_width.to_bytes(2, byteorder='big'))
-				file_out.write(bmp_height.to_bytes(2, byteorder='big'))
-				file_out.write(len(bitmap_names).to_bytes(2, byteorder='big'))
-				file_out.write((0).to_bytes(2, byteorder='big')) # max_compressed_size
-				file_out.write((1).to_bytes(2, byteorder='big')) # 1bpp
+				file_out.write(bmp_width.to_bytes(2, byteorder=endinan))
+				file_out.write(bmp_height.to_bytes(2, byteorder=endinan))
+				file_out.write(len(bitmap_names).to_bytes(2, byteorder=endinan))
+				file_out.write((0).to_bytes(2, byteorder=endinan)) # max_compressed_size
+				file_out.write((1).to_bytes(2, byteorder=endinan)) # 1bpp
 
 			flip_bmp = bmp.resize((bmp_width, bmp_height))
 			flip_bmp = flip_bmp.convert('1')
@@ -48,10 +50,14 @@ def convert_bmp_to_fbm(bitmaps_directory):
 				file_in.seek(bmp_offset)
 				buff = file_in.read()
 				if first_time:
-					file_out.write((len(buff)).to_bytes(2, byteorder='big'))
+					file_out.write((len(buff)).to_bytes(2, byteorder=endinan))
 					first_time = False
 				if compress:
-					compressed = zlib.compress(buff, level=-1, wbits=-zlib.MAX_WBITS)
+					# Available only in Python 3.11
+					# compressed = zlib.compress(buff, level=-1, wbits=-zlib.MAX_WBITS)
+					compressor = zlib.compressobj(level=-1, wbits=-zlib.MAX_WBITS)
+					compressed = compressor.compress(buff)
+					compressed += compressor.flush()
 				else:
 					compressed = buff
 				print('Converting [' + str(idx+1) + '/' + str(len(bitmap_names)) + '] '
@@ -60,12 +66,12 @@ def convert_bmp_to_fbm(bitmaps_directory):
 				if max_compressed_size < len(compressed):
 					max_compressed_size = len(compressed)
 				if compress:
-					file_out.write(len(compressed).to_bytes(4, byteorder='big'))
+					file_out.write(len(compressed).to_bytes(4, byteorder=endinan))
 				file_out.write(compressed)
 			idx += 1
 		print('max_compressed_size=' + str(max_compressed_size))
 		file_out.seek(2*3, 0)
-		file_out.write(max_compressed_size.to_bytes(2, byteorder='big'))
+		file_out.write(max_compressed_size.to_bytes(2, byteorder=endinan))
 
 if __name__ == '__main__':
 	if len(sys.argv) == 2:
