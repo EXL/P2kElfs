@@ -17,10 +17,18 @@
  */
 
 #include <loader.h>
+#if defined(EP1) || defined(EP2)
 #include <ati.h>
+#include <tasks.h>
 #include <mme_other.h>
+#elif defined(EM1) || defined(EM2)
+#include <nvidia.h>
+#include <mme.h>
+#endif
 #include <apps.h>
+#include <canvas.h>
 #include <dl.h>
+#include <dl_keypad.h>
 #include <dal.h>
 #include <uis.h>
 #include <mem.h>
@@ -28,7 +36,6 @@
 #include <utilities.h>
 #include <filesystem.h>
 #include <zlib.h>
-#include <tasks.h>
 
 #define TIMER_FAST_TRIGGER_MS             (1)
 #if defined(FPS_15)
@@ -39,7 +46,11 @@
 #define TIMER_FAST_UPDATE_MS              (1000 / 60) /* ~60 FPS. */
 #endif
 
+#if defined(EP1) || defined(EP2)
 #define ZLIB_IN_BUF_SIZE                  (4 * 1024)
+#elif defined(EM1) || defined(EM2) || defined(EA1)
+#define ZLIB_IN_BUF_SIZE                  (6 * 1024)
+#endif
 #define ZLIB_OUT_BUF_SIZE                 (ZLIB_IN_BUF_SIZE * 2)
 
 typedef enum {
@@ -54,6 +65,7 @@ typedef enum {
 	APP_TIMER_LOOP
 } APP_TIMER_T;
 
+#if defined(EP1) || defined(EP2)
 typedef struct {
 	AHIDRVINFO_T *info_driver;
 	AHIDEVCONTEXT_T context;
@@ -67,6 +79,13 @@ typedef struct {
 	AHIRECT_T rect_draw;
 	AHIUPDATEPARAMS_T update_params;
 } APP_AHI_T;
+#elif defined(EM1) || defined(EM2) || defined(EA1)
+typedef struct {
+	GF_HANDLE gxHandle;
+	GXRECT fb0_rect;
+	UINT8 *fb0;
+} APP_GFSDK_T;
+#endif
 
 typedef struct {
 	UINT16 width;
@@ -93,13 +112,25 @@ typedef struct {
 	UINT16 fbm_frame;
 	UINT8 *zlib_buffer;
 
+#if defined(EP1) || defined(EP2)
 	APP_AHI_T ahi;
+#elif defined(EM1) || defined(EM2)
+	APP_GFSDK_T gfsdk;
+#endif
 	APP_KEYBOARD_T keys;
 	UINT32 timer_handle;
 	UINT8 keyboard_volume_level;
 } APP_INSTANCE_T;
 
+#if defined(EP1)
 UINT32 Register(const char *elf_path_uri, const char *args, UINT32 ev_code); /* ElfPack 1.x entry point. */
+#elif defined(EP2)
+ldrElf *_start(WCHAR *uri, WCHAR *arguments);                                /* ElfPack 2.x entry point. */
+#elif defined(EM1)
+int _main(ElfLoaderApp ela);                                                 /* ElfPack 1.x M*CORE entry point. */
+#elif defined(EM2)
+UINT32 ELF_Entry(ldrElf *elf, WCHAR *arguments);                             /* ElfPack 2.x M*CORE entry point. */
+#endif
 
 static UINT32 ApplicationStart(EVENT_STACK_T *ev_st, REG_ID_T reg_id, void *reg_hdl);
 static UINT32 ApplicationStop(EVENT_STACK_T *ev_st, APPLICATION_T *app);
@@ -116,9 +147,16 @@ static UINT32 ProcessKeyboard(EVENT_STACK_T *ev_st, APPLICATION_T *app, UINT32 k
 static UINT32 HandleEventTimerExpired(EVENT_STACK_T *ev_st, APPLICATION_T *app);
 static void FPS_Meter(void);
 
+#if defined(EP1) || defined(EP2)
 static UINT32 ATI_Driver_Start(APPLICATION_T *app);
 static UINT32 ATI_Driver_Stop(APPLICATION_T *app);
 static UINT32 ATI_Driver_Flush(APPLICATION_T *app);
+#elif defined(EM1) || defined(EM2)
+static UINT32 Nvidia_Driver_Start(APPLICATION_T *app);
+static UINT32 Nvidia_Driver_Stop(APPLICATION_T *app);
+static UINT32 Nvidia_Driver_Flush(APPLICATION_T *app);
+static UINT32 Nvidia_Driver_Fill(APPLICATION_T *app);
+#endif
 
 static UINT32 GFX_Draw_Start(APPLICATION_T *app);
 static UINT32 GFX_Draw_Stop(APPLICATION_T *app);
@@ -134,6 +172,14 @@ static UINT32 ZLIB_Start(APPLICATION_T *app);
 static UINT32 ZLIB_Stop(APPLICATION_T *app);
 
 static const char g_app_name[APP_NAME_LEN] = "BadApple";
+
+#if defined(EP2)
+static ldrElf g_app_elf;
+#elif defined(EM1)
+static ElfLoaderApp g_app_elf = { 0 };
+#elif defined(EM2)
+static ldrElf *g_app_elf = NULL;
+#endif
 
 static WCHAR g_res_file_path[FS_MAX_URI_NAME_LENGTH];
 static FILE_HANDLE_T file_handle;
@@ -165,6 +211,7 @@ static const STATE_HANDLERS_ENTRY_T g_state_table_hdls[] = {
 	{ APP_STATE_MAIN, HandleStateEnter, HandleStateExit, g_state_main_hdls }
 };
 
+#if defined(EP1)
 UINT32 Register(const char *elf_path_uri, const char *args, UINT32 ev_code) {
 	UINT32 status;
 	UINT32 ev_code_base;
@@ -179,6 +226,86 @@ UINT32 Register(const char *elf_path_uri, const char *args, UINT32 ev_code) {
 
 	return status;
 }
+#elif defined(EP2)
+ldrElf *_start(WCHAR *uri, WCHAR *arguments) {
+	UINT32 status;
+	UINT32 ev_code_base;
+	UINT32 reserve;
+
+	if (ldrIsLoaded(g_app_name)) {
+		cprint("BadApple: Error! Application has already been loaded!\n");
+		return NULL;
+	}
+
+	status = RESULT_OK;
+	ev_code_base = ldrRequestEventBase();
+	reserve = ev_code_base + 1;
+	reserve = ldrInitEventHandlersTbl(g_state_any_hdls, reserve);
+	reserve = ldrInitEventHandlersTbl(g_state_init_hdls, reserve);
+	reserve = ldrInitEventHandlersTbl(g_state_main_hdls, reserve);
+
+	status |= APP_Register(&ev_code_base, 1, g_state_table_hdls, APP_STATE_MAX, (void *) ApplicationStart);
+
+	u_strcpy(g_res_file_path, uri);
+
+	status |= ldrSendEvent(ev_code_base);
+	g_app_elf.name = (char *) g_app_name;
+
+	return (status == RESULT_OK) ? &g_app_elf : NULL;
+}
+#elif defined(EM1)
+int _main(ElfLoaderApp ela) {
+	UINT32 status;
+
+	status = RESULT_OK;
+
+	memcpy((void *) &g_app_elf, (void *) &ela, sizeof(ElfLoaderApp));
+
+	status = APP_Register(&g_app_elf.evcode, 1, g_state_table_hdls, APP_STATE_MAX, (void *) ApplicationStart);
+
+	u_strcpy(g_res_file_path, uri);
+
+	LoaderShowApp(&g_app_elf);
+
+	return RESULT_FAIL;
+}
+#elif defined(EM2)
+UINT32 ELF_Entry(ldrElf *elf, WCHAR *arguments) {
+	UINT32 status;
+	UINT32 reserve;
+	WCHAR *ptr;
+
+	status = RESULT_OK;
+	g_app_elf = elf;
+	g_app_elf->name = (char *) g_app_name;
+
+	if (ldrIsLoaded(g_app_elf->name)) {
+		PFprintf("%s: Application already loaded.\n", g_app_elf->name);
+		return RESULT_FAIL;
+	}
+
+	reserve = g_app_elf->evbase + 1;
+	reserve = ldrInitEventHandlersTbl(g_state_any_hdls, reserve);
+	reserve = ldrInitEventHandlersTbl(g_state_init_hdls, reserve);
+	reserve = ldrInitEventHandlersTbl(g_state_main_hdls, reserve);
+
+	status |= APP_Register(&g_app_elf->evbase, 1, g_state_table_hdls, APP_STATE_MAX, (void *) ApplicationStart);
+	if (status == RESULT_OK) {
+		PFprintf("%s: Application has been registered successfully.\n", g_app_elf->name);
+
+		ptr = NULL;
+		u_strcpy(g_res_file_path, L"file:/");
+		ptr = g_res_file_path + u_strlen(g_res_file_path);
+		DL_FsGetURIFromID(&g_app_elf->id, ptr);
+
+		status |= ldrSendEvent(g_app_elf->evbase);
+	} else {
+		PFprintf("%s: Cannot register application.\n", g_app_elf->name);
+	}
+
+	return status;
+}
+#endif
 
 static UINT32 ApplicationStart(EVENT_STACK_T *ev_st, REG_ID_T reg_id, void *reg_hdl) {
 	UINT32 status;
@@ -197,6 +324,10 @@ static UINT32 ApplicationStart(EVENT_STACK_T *ev_st, REG_ID_T reg_id, void *reg_
 			*(u_strrchr(g_res_file_path, L'/') + 1) = '\0';
 			u_strcat(g_res_file_path, L"BadApple_220p.fbm");
 		}
+		if (!DL_FsFFileExist(g_res_file_path)) {
+			*(u_strrchr(g_res_file_path, L'/') + 1) = '\0';
+			u_strcat(g_res_file_path, L"BadApple_320p.fbm");
+		}
 		file_handle = DL_FsOpenFile(g_res_file_path, FILE_READ_MODE, 0);
 		DL_FsReadFile(&app_instance->fbm_head, sizeof(FBM_HEADER_T), 1, file_handle, &readen);
 		if (readen == 0) {
@@ -212,7 +343,12 @@ static UINT32 ApplicationStart(EVENT_STACK_T *ev_st, REG_ID_T reg_id, void *reg_
 		LOG("fbm_head.bpp=%d\n", app_instance->fbm_head.bpp);
 		LOG("fbm_head.frame_size=%d\n", app_instance->fbm_head.frame_size);
 
+#if defined(EP1) || defined(EP2)
 		app_instance->ahi.info_driver = NULL;
+#elif defined(EM1) || defined(EM2)
+		app_instance->gfsdk.gxHandle = (GF_HANDLE) &GxHandle;
+		app_instance->gfsdk.fb0 = NULL;
+#endif
 
 		app_instance->fbm_buffer = NULL;
 		app_instance->fbm_frame = 0;
@@ -223,10 +359,20 @@ static UINT32 ApplicationStart(EVENT_STACK_T *ev_st, REG_ID_T reg_id, void *reg_
 		DL_AudGetVolumeSetting(PHONE, &app_instance->keyboard_volume_level);
 		DL_AudSetVolumeSetting(PHONE, 0);
 
+#if defined(EP1) || defined(EP2)
 		status |= ATI_Driver_Start((APPLICATION_T *) app_instance);
+#elif defined(EM1) || defined(EM2)
+		status |= Nvidia_Driver_Start((APPLICATION_T *) app_instance);
+#endif
 
 		status |= APP_Start(ev_st, &app_instance->app, APP_STATE_MAIN,
 			g_state_table_hdls, ApplicationStop, g_app_name, 0);
+
+#if defined(EP2)
+		g_app_elf.app = (APPLICATION_T *) app_instance;
+#elif defined(EM2)
+		g_app_elf->app = &app_instance->app;
+#endif
 	}
 
 	return status;
@@ -247,10 +393,22 @@ static UINT32 ApplicationStop(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
 
 	status |= GFX_Draw_Stop(app);
 	status |= SetLoopTimer(app, 0);
+#if defined(EP1) || defined(EP2)
 	status |= ATI_Driver_Stop(app);
+#elif defined(EM1) || defined(EM2)
+	status |= Nvidia_Driver_Stop(app);
+#endif
 	status |= APP_Exit(ev_st, app, 0);
 
+#if defined(EP1)
 	LdrUnloadELF(&Lib);
+#elif defined(EP2)
+	ldrUnloadElf();
+#elif defined(EM1)
+	LoaderEndApp(&g_app_elf);
+#elif defined(EM2)
+	ldrUnloadElf(g_app_elf);
+#endif
 
 	return status;
 }
@@ -439,7 +597,11 @@ static UINT32 HandleEventTimerExpired(EVENT_STACK_T *ev_st, APPLICATION_T *app) 
 			FPS_Meter();
 			CheckKeyboard(ev_st, app);
 			GFX_Draw_Step(app);
+#if defined(EP1) || defined(EP2)
 			ATI_Driver_Flush(app);
+#elif defined(EM1) || defined(EM2)
+			Nvidia_Driver_Flush(app);
+#endif
 			break;
 		case APP_TIMER_EXIT:
 			/* Play an exit sound using quiet speaker. */
@@ -481,6 +643,8 @@ static void FPS_Meter(void) {
 #endif
 }
 
+#if defined(EP1) || defined(EP2)
+#if !defined(FTR_C650)
 static UINT32 ATI_Driver_Start(APPLICATION_T *app) {
 	UINT32 status;
 	INT32 result;
@@ -629,6 +793,112 @@ static UINT32 ATI_Driver_Flush(APPLICATION_T *app) {
 
 	return RESULT_OK;
 }
+#else
+/* Pure DAL driver for C650-like phones. */
+static UINT32 ATI_Driver_Start(APPLICATION_T *app) {
+	APP_INSTANCE_T *appi;
+	UINT8 *display_bitmap;
+	INT32 status;
+
+	appi = (APP_INSTANCE_T *) app;
+	display_bitmap = (UINT8 *) display_source_buffer;
+
+	appi->dal_draw_region.ulc.x = 0;
+	appi->dal_draw_region.ulc.y = 0;
+	appi->dal_draw_region.lrc.x = DISPLAY_WIDTH - 1;
+	appi->dal_draw_region.lrc.y = DISPLAY_HEIGHT - 1;
+
+	memset(display_bitmap, 0x00, DISPLAY_WIDTH * DISPLAY_HEIGHT * DISPLAY_BYTESPP);
+	DAL_UpdateDisplayRegion(&appi->dal_draw_region, (UINT16 *) display_bitmap);
+
+	appi->ahi.bitmap.image = uisAllocateMemory(appi->bmp_width * appi->bmp_height * 2, &status);
+
+	return status;
+}
+
+static UINT32 ATI_Driver_Stop(APPLICATION_T *app) {
+	APP_INSTANCE_T *appi;
+
+	appi = (APP_INSTANCE_T *) app;
+
+	uisFreeMemory(appi->ahi.bitmap.image);
+
+	return RESULT_OK;
+}
+
+static UINT32 ATI_Driver_Flush(APPLICATION_T *app) {
+	APP_INSTANCE_T *appi;
+
+	appi = (APP_INSTANCE_T *) app;
+
+//	DAL_UpdateDisplayRegion(&appi->dal_draw_region, display_bitmap);
+	DAL_UpdateRectangleDisplayRegion(&appi->dal_draw_region, (UINT16 *) appi->p_bitmap, DISPLAY_MAIN);
+//	DAL_WriteDisplayRegion(&appi->dal_draw_region, display_bitmap, DISPLAY_MAIN, FALSE);
+
+	return RESULT_OK;
+}
+#endif // !defined(FTR_C650)
+#elif defined(EM1) || defined(EM2)
+static UINT32 Nvidia_Driver_Start(APPLICATION_T *app) {
+	INT32 result;
+	UINT32 status;
+	APP_INSTANCE_T *app_instance;
+	GRAPHIC_POINT_T point;
+	UINT32 fb_wh;
+
+	result = RESULT_OK;
+	status = RESULT_OK;
+	app_instance = (APP_INSTANCE_T *) app;
+
+	app_instance->gfsdk.fb0_rect.x = 0;
+	app_instance->gfsdk.fb0_rect.y = 0;
+
+	UIS_CanvasGetDisplaySize(&point);
+	app_instance->gfsdk.fb0_rect.w = point.x + 1;
+	app_instance->gfsdk.fb0_rect.h = point.y + 1;
+	fb_wh = app_instance->gfsdk.fb0_rect.w * app_instance->gfsdk.fb0_rect.h * 2;
+	app_instance->fbm_buffer = uisAllocateMemory(fb_wh, &result);
+	if (result != RESULT_OK) {
+		LOG("Cannot allocate '%d' bytes of memory for fill screen!\n", fb_wh);
+		status = RESULT_FAIL;
+	}
+	memclr(app_instance->fbm_buffer, fb_wh);
+	Nvidia_Driver_Flush(app);
+	uisFreeMemory(app_instance->fbm_buffer);
+
+	return status;
+}
+
+static UINT32 Nvidia_Driver_Stop(APPLICATION_T *app) {
+	UINT32 status;
+	APP_INSTANCE_T *app_instance;
+
+	status = RESULT_OK;
+	app_instance = (APP_INSTANCE_T *) app;
+
+	return status;
+}
+
+static UINT32 Nvidia_Driver_Flush(APPLICATION_T *app) {
+	UINT32 status;
+	APP_INSTANCE_T *app_instance;
+
+	status = RESULT_OK;
+	app_instance = (APP_INSTANCE_T *) app;
+
+	GFGxCopyMonoBitmap(
+		app_instance->gfsdk.gxHandle,
+		app_instance->gfsdk.fb0_rect.x, app_instance->gfsdk.fb0_rect.y,
+		app_instance->gfsdk.fb0_rect.w, app_instance->gfsdk.fb0_rect.h,
+		app_instance->gfsdk.fb0_rect.x, app_instance->gfsdk.fb0_rect.y,
+		0xFFFF, 0x0000,
+		app_instance->fbm_head.frame_size / app_instance->fbm_head.height,
+		app_instance->fbm_buffer
+	);
+
+	return status;
+}
+#endif
 
 static UINT32 GFX_Draw_Start(APPLICATION_T *app) {
 	APP_INSTANCE_T *appi;
@@ -644,9 +914,14 @@ static UINT32 GFX_Draw_Start(APPLICATION_T *app) {
 		u_strcat(g_res_file_path, L"BadApple.mp3");
 	}
 
-	mme_media_file = MME_GC_playback_create(&if_data, g_res_file_path, NULL, 0, NULL, 0, 0, NULL, NULL);
+	mme_media_file =
+		(MME_GC_MEDIA_FILE) MME_GC_playback_create(&if_data, g_res_file_path, NULL, 0, NULL, 0, 0, NULL, NULL);
 
+#if defined(EP1) || defined(EP2)
 	appi->fbm_buffer = (UINT8 *) appi->ahi.bitmap.image;
+#elif defined(EM1) || defined(EM2)
+	appi->fbm_buffer = suAllocMem(ZLIB_OUT_BUF_SIZE, NULL);
+#endif
 
 	/* Fill screen to black. */
 	memset(appi->fbm_buffer, 0, appi->fbm_head.frame_size);
@@ -690,7 +965,6 @@ static UINT32 GFX_Draw_Step(APPLICATION_T *app) {
 
 	appi = (APP_INSTANCE_T *) app;
 #if !defined(FPS_60)
-
 	inflateReset(&d_stream);
 
 	appi->fbm_frame += 1;
@@ -724,7 +998,11 @@ static UINT32 GFX_Draw_Step(APPLICATION_T *app) {
 static UINT32 MME_PlayHandler(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
 	P();
 
+#if defined(EP1) || defined(EP2)
 	MME_GC_playback_start(mme_media_file, 0, 0);
+#elif defined(EM1) || defined(EM2) || defined(EM2)
+	MME_GC_playback_start(mme_media_file, 0);
+#endif
 
 	return RESULT_OK;
 }
@@ -733,7 +1011,11 @@ static UINT32 MME_StopHandler(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
 	P();
 
 	MME_GC_playback_stop(mme_media_file);
+#if defined(EP1) || defined(EP2)
 	MME_GC_playback_delete(mme_media_file);
+#elif defined(EM1) || defined(EM2) || defined(EA1)
+	MME_GC_playback_close(mme_media_file);
+#endif
 
 	return RESULT_OK;
 }
