@@ -926,7 +926,7 @@ static UINT32 GFX_Draw_Start(APPLICATION_T *app) {
 	/* Fill screen to black. */
 	memset(appi->fbm_buffer, 0, appi->fbm_head.frame_size);
 
-#if !defined(FPS_60)
+#if !defined(NO_COMPRESS)
 	ZLIB_Start(app);
 #endif
 
@@ -940,7 +940,7 @@ static UINT32 GFX_Draw_Stop(APPLICATION_T *app) {
 
 	appi = (APP_INSTANCE_T *) app;
 
-#if !defined(FPS_60)
+#if !defined(NO_COMPRESS)
 	ZLIB_Stop(app);
 #endif
 
@@ -964,7 +964,7 @@ static UINT32 GFX_Draw_Step(APPLICATION_T *app) {
 	UINT32 readen;
 
 	appi = (APP_INSTANCE_T *) app;
-#if !defined(FPS_60)
+#if !defined(NO_COMPRESS)
 	inflateReset(&d_stream);
 
 	appi->fbm_frame += 1;

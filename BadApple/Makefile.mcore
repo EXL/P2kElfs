@@ -11,8 +11,8 @@ SDK_PATH = $(MCORE_PATH)/sdk
 LIB_PATH = $(MCORE_PATH)/mcore-elf/lib
 
 # Defines.
-DEFINES = -D__P2K__ -DEM2 -DROT_0 -DFPS_30
-#DEFINES = -D__P2K__ -DEM2 -DROT_0 -DFPS_30
+DEFINES = -D__P2K__ -DEM2 -DROT_0 -DFPS_60
+#DEFINES = -D__P2K__ -DEM2 -DROT_0 -DFPS_60 -DNO_COMPRESS
 
 # Optimization.
 OPTIM = -O2
