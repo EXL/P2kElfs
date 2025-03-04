@@ -1,7 +1,7 @@
 Bad Apple
 =========
 
-The implementation of the popular "Bad Apple" demo for the Motorola P2K platform encoded as 1bpp compressed frames.
+The implementation of the popular "Bad Apple" demo for the Motorola P2K platform encoded as 1bpp compressed frames for ATI Imageon and Nvidia GoForce GPUs.
 
 ## Screenshots from Motorola SLVR L6
 
@@ -10,6 +10,10 @@ The implementation of the popular "Bad Apple" demo for the Motorola P2K platform
 ## Screenshots from Motorola ROKR E1
 
 ![Screenshot of Bad Apple from Motorola E1 1](../images/Screenshot_BadApple_E1_1.png) ![Screenshot of Bad Apple from Motorola E1 2](../images/Screenshot_BadApple_E1_2.png) ![Screenshot of Bad Apple from Motorola E1 3](../images/Screenshot_BadApple_E1_3.png)
+
+## Screenshots from Motorola RAZR V3x
+
+![Screenshot of Bad Apple from Motorola RAZR V3x 1](../images/Screenshot_BadApple_V3x_1.png) ![Screenshot of Bad Apple from Motorola RAZR V3x 2](../images/Screenshot_BadApple_V3x_2.png) ![Screenshot of Bad Apple from Motorola RAZR V3x 3](../images/Screenshot_BadApple_V3x_3.png)
 
 ## Photos of Motorola SLVR L6 and Motorola ROKR E1
 
@@ -36,6 +40,7 @@ The implementation of the popular "Bad Apple" demo for the Motorola P2K platform
 * BadApple_V635.elf (ELF for ElfPack 1.0, Motorola V635 version)
 * BadApple_L7e.elf (ELF for ElfPack 1.0, Motorola SLVR L7e version)
 * BadApple_60fps.elf (ELF for ElfPack 1.0, experimental 60 FPS version)
+* BadApple_V3x_E770v.elf (ELF for ElfPack 2.0, M·CORE, Motorola RAZR V3x, Motorola E770v, 60 FPS)
 
 ## Additional information
 
@@ -48,6 +53,8 @@ The ELF-application has been tested on the following phones and firmware:
 * Motorola SLVR L7: R4513_G_08.B7.ACR_RB
 * Motorola SLVR L7e: R452D_G_08.01.0AR
 * Motorola V635: R474_G_08.48.6FR
+* Motorola E770v: R252211_U_85.9B.E1P
+* Motorola RAZR V3x: R252211LD_U_85.9B.E6P
 
 Application type: GUI + GPU + zlib.
 
