@@ -821,8 +821,6 @@ static UINT32 ATI_Driver_Stop(APPLICATION_T *app) {
 
 	appi = (APP_INSTANCE_T *) app;
 
-	uisFreeMemory(appi->ahi.bitmap.image);
-
 	return RESULT_OK;
 }
 
