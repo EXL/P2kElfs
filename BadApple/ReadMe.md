@@ -23,6 +23,7 @@ The implementation of the popular "Bad Apple" demo for the Motorola P2K platform
 
 * See [Bad Apple!! but it's on Motorola E398/ROKR E1 and other P2K phones](https://www.youtube.com/watch?v=wfju_z-Gamk) video on YouTube.
 * See [Bad Apple!! but it's on Motorola RAZR V3i and Motorola ROKR E1, thanks to Bs0Dd!](https://www.youtube.com/watch?v=9GPEvAeGBB0) video on YouTube.
+* See [Bad Apple!! but it's on Motorola E770v, RAZR V3x, ROKR E1 in 60 FPS!](https://www.youtube.com/watch?v=u5Ml5ZBk3CE) video on YouTube.
 
 ## Key controls
 
