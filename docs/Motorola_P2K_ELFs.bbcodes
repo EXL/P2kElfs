@@ -1,5 +1,5 @@
 ELFs by EXL: Ностальгия разработки под Motorola P2K
-Обновлено 25-Feb-2025: Motorola V635 ELFs (NEW!)
+Обновлено 05-Mar-2025: BadApple E770v/RAZR V3x 60FPS (NEW!)
 =============================================================
 Решил немного оживить тёплую-ламповую ветку и выложить в отдельную тему все ELF'ы для платформы Motorola P2K, которые я напрограммировал в качестве хобби и изучения P2K API за последний год. Разработка в основном происходила в Telegram-чате [url=https://t.me/motofan_ru]MotoFan.Ru[/url], заходите и поностальгируйте по старым-добрым денькам, у нас там бывает весело!
 
@@ -92,14 +92,14 @@ ELFs by EXL: Ностальгия разработки под Motorola P2K
 [url=https://forum.motofan.ru/index.php?s=&showtopic=1742337&view=findpost&p=1797104][b]18. Bad Apple[/b][/url] - Реализация популярного демо "Bad Apple!!" энкодированного в 1bpp сжатые кадры и воспроизводимого с помощью GPU.
 [url=https://forum.motofan.ru/index.php?s=&showtopic=1742337&view=findpost&p=1798278][b]19. vNesC[/b][/url] - Экспериментальный порт эмулятора NES/Famicom/Dendy с Siemens SGold/NewSGold платформы на Motorola P2K.
 
-[size=3]Список обновлённых библиотек[/size]
+[size=3]Список библиотек, телефонов и прошивок с возможностью запуска ELF'ов[/size]
 
 [b]01. E1_R373_G_0E.30.49R[/b] - Motorola ROKR E1, EP 1.0 и EP 2.0 библиотеки.
 [b]02. E1_R373_G_0E.30.79R[/b] - Motorola ROKR E1, EP 1.0 и EP 2.0 библиотеки.
 [b]03. E1_R373_G_0E.30.DAR_test16[/b] - Motorola ROKR E1, EP 1.0 и EP 2.0 библиотеки.
 [b]04. E1_R373_G_0E.30.DAR_test17[/b] - Motorola ROKR E1, EP 1.0 и EP 2.0 библиотеки.
 [b]05. K1_R452F_G_08.03.08R[/b] - Motorola KRZR K1, EP 1.0 и EP 2.0 библиотеки.
-[b]06. K3_R261171LD_U_99.51.06R[/b] - Motorola KRZR K3, EA 1.0 библиотеки.
+[b]06. K3_R261171LD_U_99.51.06R[/b] - Motorola KRZR K3, EA 1.0 библиотеки. Только прототипы.
 [b]07. L6_R3511_G_0A.52.45R_A[/b] - Motorola SLVR L6, L6i, EP 1.0 библиотеки.
 [b]08. L6i_R3443H1_G_0A.65.0BR[/b] - Motorola SLVR L6, L6i, EP 1.0 библиотеки.
 [b]09. L7_R4513_G_08.B7.ACR_RB[/b] - Motorola SLVR L7, EP 1.0 и EP 2.0 библиотеки.
