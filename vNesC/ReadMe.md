@@ -1,7 +1,7 @@
 vNesC
 =====
 
-An experimental vNes emulator of Nintendo NES rewritten from J2ME Java (vNes) to C language using decompilation technique by cbn. Port from Siemens x65, x75 (SGold, NewSGold) platforms.
+An experimental vNes emulator of Nintendo NES game console by **cbn** rewritten from J2ME Java (vNes) to C language using decompilation technique. Port from Siemens x65, x75 (SGold, NewSGold) platforms.
 
 Place "ROM.nes" Nintendo NES/Famicom/Dendy ROM file next to the ELF application.
 
@@ -23,7 +23,7 @@ Thanks to @diokhann
 
 ![Photo of vNesC on Motorola ROKR E1 and Motorola RAZR V3x 1](../images/Photo_vNesC_E1_V3x_1.jpg)
 
-## Videos of Motorola ROKR E1, Motorola E770v, Motorola RAZR V3x, and Motorola SLVR L7e
+## Videos of Motorola ROKR E1, E770v, RAZR V3x, SLVR L7e
 
 See [TODO](TODO) video on YouTube.
 
@@ -58,7 +58,7 @@ See [TODO](TODO) video on YouTube.
 
 ### Summary
 
-* 3 ElfPack 2.0 ELFs + 6 3 ElfPack 2.0/M-CORE ELFs = 9 ELFs.
+* 3 ElfPack 2.0 ELFs + 6 ElfPack 2.0/M-CORE ELFs = 9 ELFs.
 
 ## Additional information
 
