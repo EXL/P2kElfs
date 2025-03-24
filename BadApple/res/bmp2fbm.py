@@ -23,7 +23,7 @@ bmp_width = 176
 bmp_height = 220
 nvidia_goforce = False
 out = 'BadApple.fbm'
-directory = 'fipped_bitmaps'
+directory = 'flipped_bitmaps'
 
 # Thanks to Chat-GPT4o and GitHub Copilot.
 def extract_number(filename):
