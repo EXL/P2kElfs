@@ -3,6 +3,8 @@ Bad Apple for Cybiko
 
 Just a Bad Apple demo for Cybiko!
 
+![Bad Apple for Cybiko Photo 1](../../images/Photo_BadApple_Cybiko_1.jpg)
+
 Press the \<ESC\> key to exit.
 
 See additional information in the [2048/2048-CyOS](https://github.com/EXL/2048/tree/master/2048-CyOS) repository.
@@ -33,3 +35,7 @@ find * -name '*.bmp' -exec bash -c 'echo "24bpp => 2bpp: {}..." && convert {} -d
 cd ..
 ./bmp2fbm.py bw
 ```
+
+## Download
+
+* https://firmware.center/projects/EXL/Cybiko/
