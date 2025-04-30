@@ -3403,6 +3403,7 @@ label0:;
     static void g() {
         S = 0;
         R = 0;
+	    int error;
         o_int_static_fld = 0;
         for(int i1 = 0; i1 < 8192; i1++)
             vram[ram+i1] = 0;
@@ -3425,7 +3426,7 @@ label0:;
             avoid4int(0, 1, 0, 1);
         else
             avoid4int(0, 1, 2, 3);
-        a_char_array1d_static_fld = (ushort*)malloc((ramsize / 2 - 4096)*2);
+        a_char_array1d_static_fld = (ushort*)uisAllocateMemory((ramsize / 2 - 4096)*2, &error);
         memset(a_char_array1d_static_fld,0,(ramsize / 2 - 4096)*2);//clr
         for(int k1 = 8192; k1 < ramsize; k1++)
             if((k1 & 8) == 0) {
@@ -4638,7 +4639,7 @@ void savefile(char *fname, void *buf, int size){
 }
 */
 void freeall(){
-  if(a_char_array1d_static_fld) mfree(a_char_array1d_static_fld);
+  if(a_char_array1d_static_fld) uisFreeMemory(a_char_array1d_static_fld);
   if(b_byte_array1d_static_fld) mfree(b_byte_array1d_static_fld);
   if(vram) MEM_Free_HUGE(vram);
   if(screens) MEM_Free_HUGE(screens);
