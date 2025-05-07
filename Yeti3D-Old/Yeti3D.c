@@ -904,6 +904,10 @@ static void behaviour(entity_t* const e)
   entity_to_world_collision(e, 0x8000);
 }
 
+#if defined(CELLS_ALLOCA)
+static cell_t **cells_array_p;
+#endif
+
 static void world_create(APPLICATION_T *app, world_t* world)
 {
   APP_INSTANCE_T *appi;
@@ -912,6 +916,16 @@ static void world_create(APPLICATION_T *app, world_t* world)
 
   world->screen = NULL;
   world->buffer = (viewport_t*) appi->p_bitmap;
+#if defined(CELLS_ALLOCA)
+  {
+    UINT32 i;
+    world->cells = suAllocMem(MAP_SIZE * sizeof(cell_t *), NULL);
+    for (i = 0; i < MAP_SIZE; i++) {
+      world->cells[i] = suAllocMem(MAP_SIZE * sizeof(cell_t), NULL);
+    }
+    cells_array_p = world->cells;
+  }
+#endif
 
   camera = entity_create(0, 0, 0);
 
@@ -1014,6 +1028,16 @@ static UINT32 GFX_Draw_Stop(APPLICATION_T *app) {
 	appi = (APP_INSTANCE_T *) app;
 
 	FreeResourses();
+
+#if defined(CELLS_ALLOCA)
+	{
+		UINT32 i;
+		for (i = 0; i < MAP_SIZE; i++) {
+			suFreeMem(cells_array_p[i]);
+		}
+		suFreeMem(cells_array_p);
+	}
+#endif
 
 	return RESULT_OK;
 }

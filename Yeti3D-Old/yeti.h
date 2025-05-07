@@ -359,7 +359,11 @@ typedef struct
 {
   viewport_t* screen;
   viewport_t* buffer;
+#if defined(CELLS_ALLOCA)
+  cell_t **cells;
+#else
   cell_t cells[MAP_SIZE][MAP_SIZE];
+#endif
   int time;
   matrix_t m;
 } world_t;
