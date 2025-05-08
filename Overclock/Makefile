@@ -22,16 +22,21 @@ DEFINES = -D__P2K__ -DEP1
 #DEFINES = -D__P2K__ -DEP1 -DDISABLE_ALL_INT
 
 # Project/ELF name.
-ELF_NAME = Overclock
+
+ifeq ($(ARGON), 1)
+	ELF_NAME = OverclockLV
+else
+	ELF_NAME = Overclock
+endif
 
 all:
 	$(ARM_PATH)/bin/tcc -I$(SDK_PATH) $(DEFINES) -bigend -apcs /interwork -O2 -c Clock.c \
 		-o Clock.o
-	$(ARM_PATH)/bin/tcc -I$(SDK_PATH) $(DEFINES) -bigend -apcs /interwork -O2 -c $(ELF_NAME).c \
-		-o $(ELF_NAME).o
+	$(ARM_PATH)/bin/tcc -I$(SDK_PATH) $(DEFINES) -bigend -apcs /interwork -O2 -c Overclock.c \
+		-o Overclock.o
 
 	$(ARM_PATH)/bin/armlink -nolocals -reloc -first $(LIB_MAIN)\(Lib\) \
-		Clock.o $(ELF_NAME).o \
+		Clock.o Overclock.o \
 		$(LIB_PATH)/$(LIB_MAIN) -o $(ELF_NAME).elf
 
 clean:

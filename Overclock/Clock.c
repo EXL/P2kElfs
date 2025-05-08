@@ -4,6 +4,118 @@
 
 #include "Overclock.h"
 
+#ifdef ARGON
+
+static tpsel_t mxc_pm_chk_tpsel(void) {
+    return (__raw_readl(MXC_CCM_MPDR0) & MXC_CCM_MPDR0_TPSEL) ? TPSEL_SET : TPSEL_CLEAR;
+}
+
+static dfs_switch_t mxc_pm_chk_dfsp(void) {
+    return (__raw_readl(MXC_CCM_PMCR0) & MXC_CCM_PMCR0_DFSP) ? DFS_SWITCH : DFS_NO_SWITCH;
+}
+
+static void mxc_ccm_modify_reg(unsigned int reg_offset, unsigned int mask, unsigned int data) {
+    unsigned int reg = __raw_readl(reg_offset);
+    reg = (reg & (~mask)) | data;
+    __raw_writel(reg, reg_offset);
+}
+
+static void mxc_pm_setbrmm(int value) {
+    mxc_ccm_modify_reg(MXC_CCM_MPDR0, MXC_CCM_MPDR0_BRMM_MASK, value);
+}
+
+static int mxc_pm_setturbo(dvfs_op_point_t dvfs_op_reqd) {
+    unsigned int mpdr = __raw_readl(MXC_CCM_MPDR0);
+
+    switch (dvfs_op_reqd) {
+        case CORE_NORMAL:
+            mpdr |= MXC_CCM_MPDR0_TPSEL;
+            mpdr = (mpdr & (~MXC_CCM_MPDR0_MAX_PDF_MASK)) |
+                   (AHB_FREQ > 100 * MEGA_HERTZ ? MAX_PDF_4 : MAX_PDF_5);
+            break;
+        case CORE_TURBO:
+            mpdr &= ~MXC_CCM_MPDR0_TPSEL;
+            mpdr = (mpdr & (~MXC_CCM_MPDR0_MAX_PDF_MASK)) |
+                   (AHB_FREQ > 100 * MEGA_HERTZ ? MAX_PDF_3 : MAX_PDF_4);
+            break;
+        default:
+            return 0;
+    }
+
+    mpdr = (mpdr & (~MXC_CCM_MPDR0_BRMM_MASK)) | MPDR0_BRMM_0;
+    if (mxc_pm_chk_dfsp() == DFS_NO_SWITCH) {
+        mxc_ccm_modify_reg(MXC_CCM_MPDR0, TURBO_MASK, mpdr);
+        return 0;
+    }
+    return ERR_DFSP_SWITCH;
+}
+
+extern const WCHAR *DetermineArgonLVClock(void) {
+    return mxc_pm_chk_tpsel() == TPSEL_CLEAR ? L"385 MHz" : L"514 MHz";
+}
+
+extern UINT32 SetArgonLVClocks(dvfs_op_point_t dvfs_op) {
+    int ms = 0;
+	int retval = 0;
+
+    switch (dvfs_op) {
+        case CORE_TURBO:
+            if (mxc_pm_chk_tpsel() == TPSEL_CLEAR) {
+                __raw_writel(__raw_readl(MXC_CCM_MCR) | MXC_CCM_MCR_TPE, MXC_CCM_MCR);
+
+                retval = mxc_pm_setturbo(CORE_NORMAL);
+                if (retval == ERR_DFSP_SWITCH) {
+                    return -ERR_DFSP_SWITCH;
+                }
+
+                while (!(__raw_readl(MXC_CCM_MCR) & MXC_CCM_MCR_TPL));
+
+                while (ms < 5000) {
+                    if (__raw_readl(MXC_CCM_PMCR0) & MXC_CCM_PMCR0_DFSI) {
+                        break;
+                    }
+                    suSleep(1, NULL);
+                    ms++;
+                }
+                if (ms >= 5000 && mxc_pm_chk_dfsp() == DFS_SWITCH) {
+                    return -1;
+                }
+
+                __raw_writel(__raw_readl(MXC_CCM_PMCR0) | MXC_CCM_PMCR0_DFSI, MXC_CCM_PMCR0);
+            } else {
+                mxc_pm_setbrmm(MPDR0_BRMM_0);
+            }
+            break;
+        case CORE_NORMAL:
+            if (mxc_pm_chk_tpsel() == TPSEL_SET) {
+                retval = mxc_pm_setturbo(CORE_TURBO);
+                if (retval == ERR_DFSP_SWITCH) {
+                    return -ERR_DFSP_SWITCH;
+                }
+
+                while ((__raw_readl(MXC_CCM_MCR) & MXC_CCM_MCR_MPL) != MXC_CCM_MCR_MPL);
+
+                while (ms < 5000) {
+                    if (((__raw_readl(MXC_CCM_PMCR0) >> 24) & 1) == 1) {
+                        break;
+                    }
+                    suSleep(1, NULL);
+                    ms++;
+                }
+                if (ms >= 5000 && mxc_pm_chk_dfsp() == DFS_SWITCH) {
+                    return -ERR_DFSP_SWITCH;
+                }
+
+                __raw_writel(__raw_readl(MXC_CCM_PMCR0) | MXC_CCM_PMCR0_DFSI, MXC_CCM_PMCR0);
+                __raw_writel(__raw_readl(MXC_CCM_MCR) & ~MXC_CCM_MCR_TPE, MXC_CCM_MCR);
+            } else {
+                mxc_pm_setbrmm(MPDR0_BRMM_0);
+            }
+            break;
+    }
+    return 0;
+}
+#else
 #define HAPI_CLOCK_REG_ADDRESS    0x24845000
 
 #if defined(FTR_L7E)
@@ -376,3 +488,5 @@ extern const WCHAR *DetermineNeptuneMcuClock(void) {
 	}
 	return L"? MHz";
 }
+
+#endif
