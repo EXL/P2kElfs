@@ -1,0 +1,40 @@
+# Script: Motorola P2K Makefile
+# Flavor: EG1, EA1 (ElfPack v1.x, ARM GCC, Linux)
+# Author: EXL, 06-Jan-2025
+
+P2K_ELF_SDK       = /home/exl/Storage/Projects/Git/MotoFanRu/P2K-ELF-SDK
+ARM_GCC_LIN_BIN   = $(P2K_ELF_SDK)/tool/compiler/ARM-GCC-LIN/bin
+
+CC                = $(shell command -v arm-none-eabi-gcc || echo $(ARM_GCC_LIN_BIN)/arm-none-eabi-gcc)
+
+INCLUDES          = -nostdinc -I/home/exl/Storage/Projects/Git/MotoFanRu/P2K-ELF-SDK-OLD/ELFKIT_EP1_Linux/SDK -I$(P2K_ELF_SDK)/ep1/inc -Iinc -I.
+DEFINES           = -std=c99 -D__P2K__ -DEP1 -DROT_0 -DFPS_30
+WARNINGS          = -Wall
+OPTIMIZATIONS     = -Ofast -funroll-all-loops
+FEATURES          = -ffreestanding -fshort-wchar -fshort-enums -fpack-struct=4 -fno-builtin -funsigned-char
+ifeq ($(ARGON), 1)
+	FLAVOR        = -DEA1
+	CPU_FLAGS     = -mbig-endian -mthumb -mthumb-interwork -mbe32 -march=armv6j -mtune=arm1136jf-s
+else
+	FLAVOR        = -DEG1
+	CPU_FLAGS     = -mbig-endian -mthumb -mthumb-interwork -march=armv4t -mtune=arm7tdmi-s
+endif
+AFLAGS            = -marm
+CFLAGS            = $(INCLUDES) $(DEFINES) $(FLAVOR) $(WARNINGS) $(OPTIMIZATIONS) $(CPU_FLAGS) $(FEATURES)
+CXXFLAGS          = $(CFLAGS)
+LDFLAGS           = $(CFLAGS) -s -pie -Wl,--gc-sections -Wl,-zmax-page-size=4 -Wl,-eRegister
+LIBS              = -nostdlib -nodefaultlibs -L$(P2K_ELF_SDK)/ep1/lib/gcc -leg1_gcc_stub -L. -lgcc_gba_m
+
+TARGET_ELF        = vNesC.elf
+
+all:
+	$(CC) $(CFLAGS) -c vNesC.c -o vNesC.o
+	$(CC) $(CFLAGS) -c vP2k.c -o vP2k.o
+	$(CC) $(LDFLAGS) vNesC.o vP2k.o $(LIBS) -o $(TARGET_ELF)
+	python -c "with open('vNesC.elf', 'r+b') as f: f.seek(0x0B); f.write(b'\x00\x03\xFC\xF7\xF4')"
+
+clean:
+	-rm -f *.o
+	-rm -f *.obj
+	-rm -f *.elfp
+	-rm -f *.elf
