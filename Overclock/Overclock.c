@@ -1,6 +1,8 @@
 /*
  * About:
- *   An application for overclocking ARM7TDMI core in Neptune SoC phones from stock 52 MHz to 65 MHz.
+ *   An application for overclocking CPU cores in mobile phones.
+ *   - Neptune SoC (ARM7TDMI): from stock 52 MHz to 65 MHz (and other frequencies).
+ *   - ArgonLV SoC (ARM1136JF-S): from stock 385 MHz to 514 MHz.
  *
  * Author:
  *   EXL
@@ -48,6 +50,17 @@ typedef enum {
 	APP_RESOURCE_MAX
 } APP_RESOURCES_T;
 
+#ifdef ARGON
+typedef enum {
+    APP_MENU_ITEM_FIRST,
+    APP_MENU_ITEM_385MHZ = APP_MENU_ITEM_FIRST,
+    APP_MENU_ITEM_514MHZ,
+    APP_MENU_ITEM_HELP,
+    APP_MENU_ITEM_ABOUT,
+    APP_MENU_ITEM_EXIT,
+    APP_MENU_ITEM_MAX
+} APP_MENU_ITEM_T;
+#else
 typedef enum {
 	APP_MENU_ITEM_FIRST,
 	APP_MENU_ITEM_13MHZ_13MHZ = APP_MENU_ITEM_FIRST,
@@ -69,6 +82,7 @@ typedef enum {
 	APP_MENU_ITEM_EXIT,
 	APP_MENU_ITEM_MAX
 } APP_MENU_ITEM_T;
+#endif
 
 typedef enum {
 	APP_POPUP_OK,
@@ -116,11 +130,20 @@ static UINT32 HandleEventBack(EVENT_STACK_T *ev_st, APPLICATION_T *app);
 
 static LIST_ENTRY_T *CreateList(EVENT_STACK_T *ev_st, APPLICATION_T *app, UINT32 start, UINT32 count);
 static const WCHAR *GetSelectedClocks(APP_MENU_ITEM_T menu_item);
+
+#ifdef ARGON
+static dvfs_op_point_t SaveConvertMenuItemToClocks(APP_MENU_ITEM_T menu_item);
+#else
 static NEPTUNE_CLOCKS_T SaveConvertMenuItemToClocks(APP_MENU_ITEM_T menu_item);
+#endif
 
 const char g_app_name[APP_NAME_LEN] = "Overclock";
 
 static const WCHAR g_str_app_name[] = L"Overclock";
+#ifdef ARGON
+static const WCHAR g_str_menu_385[] = L"385 MHz | stock";
+static const WCHAR g_str_menu_514[] = L"514 MHz | turbo";
+#else
 static const WCHAR g_str_menu_13_13[] = L"13 MHz | 13 MHz";
 static const WCHAR g_str_menu_13_26[] = L"13 MHz | 26 MHz";
 static const WCHAR g_str_menu_26_21[] = L"26 MHz | 21 MHz";
@@ -135,14 +158,28 @@ static const WCHAR g_str_menu_78_26[] = L"78 MHz | 26 MHz";
 static const WCHAR g_str_menu_86_26[] = L"86 MHz | 26 MHz";
 static const WCHAR g_str_menu_104_26[] = L"104 MHz | 26 MHz";
 static const WCHAR g_str_menu_130_26[] = L"130 MHz | 26 MHz";
+#endif
 static const WCHAR g_str_menu_help[] = L"Help...";
 static const WCHAR g_str_menu_about[] = L"About...";
 static const WCHAR g_str_menu_exit[] = L"Exit";
 static const WCHAR g_str_popup_ok_p1[] = L"Success!";
+#ifdef ARGON
+static const WCHAR g_str_popup_ok_p2[] = L"Argon core clock: ";
+static const WCHAR g_str_popup_error_p1[] = L"Error!";
+static const WCHAR g_str_popup_error_p2[] = L"Cannot set Argon core clock to: ";
+#else
 static const WCHAR g_str_popup_ok_p2[] = L"Neptune SoC clocks: ";
 static const WCHAR g_str_popup_error_p1[] = L"Error!";
 static const WCHAR g_str_popup_error_p2[] = L"Cannot set Neptune SoC clocks to: ";
+#endif
 static const WCHAR g_str_view_help[] = L"Help";
+#ifdef ARGON
+static const WCHAR g_str_help_content_p1[] =
+    L"An application for overclocking ARM1136JF-S core in ArgonLV SoC phones from stock 385 MHz to 514 MHz.\n\n"
+    L"Be careful with experimenting, overclocking can be dangerous and can brick your phone!\n\n"
+    L"Selected frequency sets the clock value for the CPU core.\n\n"
+    L"Available frequencies: 385 (stock), 514 (turbo) MHz.";
+#else
 static const WCHAR g_str_help_content_p1[] =
 	L"An application for overclocking ARM7TDMI core in Neptune SoC phones from stock 52 MHz to 65 MHz.\n\n"
 	L"Be careful with experimenting, overclocking can be dangerous and can brick your phone!\n\n"
@@ -150,6 +187,7 @@ static const WCHAR g_str_help_content_p1[] =
 	L"Second digit is the reference clock for DSP and various peripherals.\n\n"
 	L"Base frequency of Clock Control Module (CCM) is 260 MHz.\n\n"
 	L"Dividers are 1, 2, 3, 4, 5, 6, 8, 10 or 12.";
+#endif
 static const WCHAR g_str_about_content_p1[] = L"Version: 1.0";
 static const WCHAR g_str_about_content_p2[] = L"\x00A9 EXL, 08-Sep-2023.";
 static const WCHAR g_str_about_content_p3[] = L"https://github.com/EXL/P2kElfs/tree/master/Overclock";
@@ -399,7 +437,11 @@ static UINT32 HandleStateEnter(EVENT_STACK_T *ev_st, APPLICATION_T *app, ENTER_S
 			list = CreateList(ev_st, app, 1, APP_MENU_ITEM_MAX);
 			if (list != NULL) {
 				u_strcpy(g_str_current_clock, L"Overclock: ");
+#ifdef ARGON
+				u_strcpy(g_str_current_clock + u_strlen(g_str_current_clock), DetermineArgonLVClock());
+#else
 				u_strcpy(g_str_current_clock + u_strlen(g_str_current_clock), DetermineNeptuneMcuClock());
+#endif
 				DRM_SetResource(app_instance->resources[APP_RESOURCE_NAME],
 					(void *) g_str_current_clock, (u_strlen(g_str_current_clock) + 1) * sizeof(WCHAR));
 				dialog = UIS_CreateStaticList(&port, 0, APP_MENU_ITEM_MAX, 0, list, FALSE, 2, NULL,
@@ -498,7 +540,11 @@ static UINT32 HandleEventTimerExpired(EVENT_STACK_T *ev_st, APPLICATION_T *app) 
 			return ApplicationStop(ev_st, app);
 			break;
 		case APP_TIMER_DO_OVERCLOCK:
-			SetNeptuneClocks(SaveConvertMenuItemToClocks(app_instance->menu_current_item_index));
+#ifdef ARGON
+		SetArgonLVClocks(SaveConvertMenuItemToClocks(app_instance->menu_current_item_index));
+#else
+		SetNeptuneClocks(SaveConvertMenuItemToClocks(app_instance->menu_current_item_index));
+#endif
 			break;
 		default:
 			break;
@@ -520,6 +566,10 @@ static UINT32 HandleEventSelect(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
 	app_instance->menu_current_item_index = event->data.index - 1;
 
 	switch (app_instance->menu_current_item_index) {
+#ifdef ARGON
+		case APP_MENU_ITEM_385MHZ:
+		case APP_MENU_ITEM_514MHZ:
+#else
 		case APP_MENU_ITEM_13MHZ_13MHZ:
 		case APP_MENU_ITEM_13MHZ_26MHZ:
 		case APP_MENU_ITEM_26MHZ_21MHZ:
@@ -534,6 +584,7 @@ static UINT32 HandleEventSelect(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
 		case APP_MENU_ITEM_86MHZ_26MHZ:
 		case APP_MENU_ITEM_104MHZ_26MHZ:
 		case APP_MENU_ITEM_130MHZ_26MHZ:
+#endif
 			app_instance->popup = APP_POPUP_OK;
 			status |= APP_UtilChangeState(APP_STATE_POPUP, ev_st, app);
 			break;
@@ -587,7 +638,14 @@ static LIST_ENTRY_T *CreateList(EVENT_STACK_T *ev_st, APPLICATION_T *app, UINT32
 		list_elements[i].editable = FALSE;
 		list_elements[i].content.static_entry.formatting = TRUE;
 	}
-
+#ifdef ARGON
+	status |= UIS_MakeContentFromString("Mq0",
+		&list_elements[APP_MENU_ITEM_385MHZ].content.static_entry.text,
+		g_str_menu_385);
+	status |= UIS_MakeContentFromString("Mq0",
+		&list_elements[APP_MENU_ITEM_514MHZ].content.static_entry.text,
+		g_str_menu_514);
+#else
 	status |= UIS_MakeContentFromString("Mq0",
 		&list_elements[APP_MENU_ITEM_13MHZ_13MHZ].content.static_entry.text,
 		g_str_menu_13_13);
@@ -630,6 +688,7 @@ static LIST_ENTRY_T *CreateList(EVENT_STACK_T *ev_st, APPLICATION_T *app, UINT32
 	status |= UIS_MakeContentFromString("Mq0",
 		&list_elements[APP_MENU_ITEM_130MHZ_26MHZ].content.static_entry.text,
 		g_str_menu_130_26);
+#endif
 	status |= UIS_MakeContentFromString("Mq0",
 		&list_elements[APP_MENU_ITEM_HELP].content.static_entry.text,
 		g_str_menu_help);
@@ -649,6 +708,16 @@ static LIST_ENTRY_T *CreateList(EVENT_STACK_T *ev_st, APPLICATION_T *app, UINT32
 }
 
 static const WCHAR *GetSelectedClocks(APP_MENU_ITEM_T menu_item) {
+#ifdef ARGON
+	switch (menu_item) {
+		case APP_MENU_ITEM_385MHZ:
+			return g_str_menu_385;
+		case APP_MENU_ITEM_514MHZ:
+			return g_str_menu_514;
+		default:
+			break;
+	}
+#else
 	switch (menu_item) {
 		case APP_MENU_ITEM_13MHZ_13MHZ:
 			return g_str_menu_13_13;
@@ -681,9 +750,23 @@ static const WCHAR *GetSelectedClocks(APP_MENU_ITEM_T menu_item) {
 		default:
 			break;
 	}
+#endif
 	return NULL;
 }
 
+#ifdef ARGON
+static dvfs_op_point_t SaveConvertMenuItemToClocks(APP_MENU_ITEM_T menu_item) {
+    switch (menu_item) {
+        case APP_MENU_ITEM_385MHZ:
+            return CORE_NORMAL;
+        case APP_MENU_ITEM_514MHZ:
+            return CORE_TURBO;
+        default:
+            break;
+    }
+    return CORE_NORMAL;
+}
+#else
 static NEPTUNE_CLOCKS_T SaveConvertMenuItemToClocks(APP_MENU_ITEM_T menu_item) {
 	switch (menu_item) {
 		case APP_MENU_ITEM_13MHZ_13MHZ:
@@ -719,3 +802,4 @@ static NEPTUNE_CLOCKS_T SaveConvertMenuItemToClocks(APP_MENU_ITEM_T menu_item) {
 	}
 	return CLOCKS_52MHZ_26MHZ;
 }
+#endif
