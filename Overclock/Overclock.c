@@ -55,6 +55,8 @@ typedef enum {
     APP_MENU_ITEM_FIRST,
     APP_MENU_ITEM_385MHZ = APP_MENU_ITEM_FIRST,
     APP_MENU_ITEM_514MHZ,
+    APP_MENU_ITEM_532MHZ,
+    APP_MENU_ITEM_548MHZ,
     APP_MENU_ITEM_HELP,
     APP_MENU_ITEM_ABOUT,
     APP_MENU_ITEM_EXIT,
@@ -143,6 +145,8 @@ static const WCHAR g_str_app_name[] = L"Overclock";
 #ifdef ARGON
 static const WCHAR g_str_menu_385[] = L"385 MHz | stock";
 static const WCHAR g_str_menu_514[] = L"514 MHz | turbo";
+static const WCHAR g_str_menu_532[] = L"532 MHz | turbo";
+static const WCHAR g_str_menu_548[] = L"548 MHz | turbo";
 #else
 static const WCHAR g_str_menu_13_13[] = L"13 MHz | 13 MHz";
 static const WCHAR g_str_menu_13_26[] = L"13 MHz | 26 MHz";
@@ -569,6 +573,8 @@ static UINT32 HandleEventSelect(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
 #ifdef ARGON
 		case APP_MENU_ITEM_385MHZ:
 		case APP_MENU_ITEM_514MHZ:
+		case APP_MENU_ITEM_532MHZ:
+		case APP_MENU_ITEM_548MHZ:
 #else
 		case APP_MENU_ITEM_13MHZ_13MHZ:
 		case APP_MENU_ITEM_13MHZ_26MHZ:
@@ -645,6 +651,12 @@ static LIST_ENTRY_T *CreateList(EVENT_STACK_T *ev_st, APPLICATION_T *app, UINT32
 	status |= UIS_MakeContentFromString("Mq0",
 		&list_elements[APP_MENU_ITEM_514MHZ].content.static_entry.text,
 		g_str_menu_514);
+	status |= UIS_MakeContentFromString("Mq0",
+		&list_elements[APP_MENU_ITEM_532MHZ].content.static_entry.text,
+		g_str_menu_532);
+	status |= UIS_MakeContentFromString("Mq0",
+		&list_elements[APP_MENU_ITEM_548MHZ].content.static_entry.text,
+		g_str_menu_548);
 #else
 	status |= UIS_MakeContentFromString("Mq0",
 		&list_elements[APP_MENU_ITEM_13MHZ_13MHZ].content.static_entry.text,
@@ -761,6 +773,10 @@ static dvfs_op_point_t SaveConvertMenuItemToClocks(APP_MENU_ITEM_T menu_item) {
             return CORE_NORMAL;
         case APP_MENU_ITEM_514MHZ:
             return CORE_TURBO;
+        case APP_MENU_ITEM_532MHZ:
+            return CORE_TURBO_1;
+        case APP_MENU_ITEM_548MHZ:
+            return CORE_TURBO_2;
         default:
             break;
     }
