@@ -6,43 +6,137 @@
 
 #ifdef ARGON
 
-static tpsel_t mxc_pm_chk_tpsel(void) {
+tpsel_t mxc_pm_chk_tpsel(void) {
     return (__raw_readl(MXC_CCM_MPDR0) & MXC_CCM_MPDR0_TPSEL) ? TPSEL_SET : TPSEL_CLEAR;
 }
 
-static dfs_switch_t mxc_pm_chk_dfsp(void) {
+dfs_switch_t mxc_pm_chk_dfsp(void) {
     return (__raw_readl(MXC_CCM_PMCR0) & MXC_CCM_PMCR0_DFSP) ? DFS_SWITCH : DFS_NO_SWITCH;
 }
 
-static void mxc_ccm_modify_reg(unsigned int reg_offset, unsigned int mask, unsigned int data) {
+void mxc_ccm_modify_reg(unsigned int reg_offset, unsigned int mask, unsigned int data) {
     unsigned int reg = __raw_readl(reg_offset);
-    reg = (reg & (~mask)) | data;
+    reg = (reg & ~mask) | data;
     __raw_writel(reg, reg_offset);
 }
 
-static void mxc_pm_setbrmm(int value) {
+void mxc_pm_setbrmm(int value) {
     mxc_ccm_modify_reg(MXC_CCM_MPDR0, MXC_CCM_MPDR0_BRMM_MASK, value);
 }
 
-static int mxc_pm_setturbo(dvfs_op_point_t dvfs_op_reqd) {
+unsigned int core_pll_op_100[CORE_DVFS_PLL][DVFS_OP_NUM] = {
+    {399000000, 200000000, 160000000, 133000000, 100000000},
+    {500000000, 214000000, 166000000, 136000000, 100000000}
+};
+
+unsigned int core_pll_op_128[CORE_DVFS_PLL][DVFS_OP_NUM] = {
+    {385000000, 231000000, 193000000, 165000000, 128000000},
+    {514000000, 257000000, 206000000, 171000000, 128000000}
+};
+
+unsigned long mxc_pll_clock(enum plls pll) {
+    unsigned long mfi = 0, mfn = 0, mfd, pdf, ref_clk;
+    unsigned long long temp;
+    unsigned long reg;
+
+    if (pll == MCUPLL) {
+        reg = __raw_readl(MXC_CCM_MPCTL);
+        mfi = (reg & MXC_CCM_MCUPCTL_MFI_MASK) >> MXC_CCM_MCUPCTL_MFI_OFFSET;
+        mfi = mfi <= 5 ? 5 : mfi;
+        mfn = reg & MXC_CCM_MCUPCTL_MFN_MASK;
+        mfn = mfn <= 0x400 ? mfn : mfn - 0x800;
+    } else if (pll == USBPLL) {
+        reg = __raw_readl(MXC_CCM_UPCTL);
+        mfi = (reg & MXC_CCM_USBPCTL_MFI_MASK) >> MXC_CCM_USBPCTL_MFI_OFFSET;
+        mfi = mfi <= 5 ? 5 : mfi;
+        mfn = reg & MXC_CCM_USBPCTL_MFN_MASK;
+    } else if (pll == TURBOPLL) {
+        reg = __raw_readl(MXC_CCM_TPCTL);
+        mfi = (reg & MXC_CCM_TPCTL_MFI_MASK) >> MXC_CCM_TPCTL_MFI_OFFSET;
+        mfi = mfi <= 5 ? 5 : mfi;
+        mfn = reg & MXC_CCM_TPCTL_MFN_MASK;
+        mfn = mfn <= 0x400 ? mfn : mfn - 0x800;
+    }
+
+    pdf = (reg & MXC_CCM_PCTL_PDF_MASK) >> MXC_CCM_PCTL_PDF_OFFSET;
+    mfd = (reg & MXC_CCM_PCTL_MFD_MASK) >> MXC_CCM_PCTL_MFD_OFFSET;
+    ref_clk = MXC_PLL_REF_CLK;
+
+    if (mfn < 1024) {
+        temp = (unsigned long long)2 * ref_clk * mfn;
+        temp /= mfd + 1;
+        temp += (unsigned long long)2 * ref_clk * mfi;
+        temp /= pdf + 1;
+    } else {
+        temp = (unsigned long long)2 * ref_clk * (2048 - mfn);
+        temp /= mfd + 1;
+        temp = (unsigned long long)2 * ref_clk * mfi - temp;
+        temp /= pdf + 1;
+    }
+
+    return (unsigned long)temp;
+}
+
+unsigned long mxc_get_clocks_parent(enum mxc_clocks clk) {
+    unsigned long ret_val = 0, clksel;
+    unsigned long reg = __raw_readl(MXC_CCM_MCR);
+
+    switch (clk) {
+    case CSI_BAUD:
+        clksel = (reg & MXC_CCM_MCR_CSIS_MASK) >> MXC_CCM_MCR_CSIS_OFFSET;
+        ret_val = clksel == 0 ? mxc_pll_clock(USBPLL) :
+                  clksel == 1 ? mxc_pll_clock(MCUPLL) :
+                  clksel == 2 ? mxc_pll_clock(TURBOPLL) : MXC_CKIH_FREQ;
+        break;
+    case SDHC1_CLK:
+        clksel = (reg & MXC_CCM_MCR_SDHC1S_MASK) >> MXC_CCM_MCR_SDHC1S_OFFSET;
+        ret_val = clksel == 0 ? mxc_pll_clock(USBPLL) :
+                  clksel == 1 ? mxc_pll_clock(MCUPLL) :
+                  clksel == 2 ? mxc_pll_clock(TURBOPLL) : MXC_CKIH_FREQ;
+        break;
+    case SDHC2_CLK:
+        clksel = (reg & MXC_CCM_MCR_SDHC2S_MASK) >> MXC_CCM_MCR_SDHC2S_OFFSET;
+        ret_val = clksel == 0 ? mxc_pll_clock(USBPLL) :
+                  clksel == 1 ? mxc_pll_clock(MCUPLL) :
+                  clksel == 2 ? mxc_pll_clock(TURBOPLL) : MXC_CKIH_FREQ;
+        break;
+    case SSI1_BAUD:
+        clksel = reg & MXC_CCM_MCR_SSIS1;
+        ret_val = mxc_pll_clock(clksel);
+        break;
+    case SSI2_BAUD:
+        clksel = reg & MXC_CCM_MCR_SSIS2;
+        ret_val = mxc_pll_clock(clksel);
+        break;
+    case FIRI_BAUD:
+        clksel = reg & MXC_CCM_MCR_FIRS;
+        ret_val = mxc_pll_clock(clksel);
+        break;
+	default:
+		break;
+    }
+    return ret_val;
+}
+
+int mxc_pm_setturbo(dvfs_op_point_t dvfs_op_reqd) {
     unsigned int mpdr = __raw_readl(MXC_CCM_MPDR0);
 
     switch (dvfs_op_reqd) {
-        case CORE_NORMAL:
-            mpdr |= MXC_CCM_MPDR0_TPSEL;
-            mpdr = (mpdr & (~MXC_CCM_MPDR0_MAX_PDF_MASK)) |
-                   (AHB_FREQ > 100 * MEGA_HERTZ ? MAX_PDF_4 : MAX_PDF_5);
-            break;
-        case CORE_TURBO:
-            mpdr &= ~MXC_CCM_MPDR0_TPSEL;
-            mpdr = (mpdr & (~MXC_CCM_MPDR0_MAX_PDF_MASK)) |
-                   (AHB_FREQ > 100 * MEGA_HERTZ ? MAX_PDF_3 : MAX_PDF_4);
-            break;
-        default:
-            return 0;
+    case CORE_NORMAL:
+        mpdr |= MXC_CCM_MPDR0_TPSEL;
+        mpdr = (mpdr & ~MXC_CCM_MPDR0_MAX_PDF_MASK) |
+               (AHB_FREQ > 100 * MEGA_HERTZ ? MAX_PDF_4 : MAX_PDF_5);;
+        break;
+    case CORE_TURBO:
+        mpdr &= ~MXC_CCM_MPDR0_TPSEL;
+        mpdr = (mpdr & ~MXC_CCM_MPDR0_MAX_PDF_MASK) |
+               (AHB_FREQ > 100 * MEGA_HERTZ ? MAX_PDF_3 : MAX_PDF_4);
+        break;
+    default:
+        return 0;
     }
 
-    mpdr = (mpdr & (~MXC_CCM_MPDR0_BRMM_MASK)) | MPDR0_BRMM_0;
+    mpdr = (mpdr & ~MXC_CCM_MPDR0_BRMM_MASK) | MPDR0_BRMM_0;
     if (mxc_pm_chk_dfsp() == DFS_NO_SWITCH) {
         mxc_ccm_modify_reg(MXC_CCM_MPDR0, TURBO_MASK, mpdr);
         return 0;
@@ -50,70 +144,445 @@ static int mxc_pm_setturbo(dvfs_op_point_t dvfs_op_reqd) {
     return ERR_DFSP_SWITCH;
 }
 
-extern const WCHAR *DetermineArgonLVClock(void) {
-    return mxc_pm_chk_tpsel() == TPSEL_CLEAR ? L"385 MHz" : L"514 MHz";
+extern const WCHAR* DetermineArgonLVClock(void) {
+
+	unsigned long clock = mxc_pm_chk_tpsel() == TPSEL_CLEAR ? mxc_pll_clock(MCUPLL) : mxc_pll_clock(TURBOPLL);
+
+	switch (clock) {
+		case CORE_NORMAL:
+			return L"385 MHz";
+			break;
+		case CORE_TURBO:
+			return L"514 MHz";
+			break;
+		case CORE_TURBO_1:
+			return L"532 MHz";
+			break;
+		case CORE_TURBO_2:
+			return L"548 MHz";
+			break;
+		default:
+			return L"Unknown";
+			break;
+	}
 }
 
-extern UINT32 SetArgonLVClocks(dvfs_op_point_t dvfs_op) {
+void mxc_set_clocks_pll(enum mxc_clocks clk, enum plls pll_num) {
+    unsigned long mcr = __raw_readl(MXC_CCM_MCR);
+
+    switch (clk) {
+    case SSI1_BAUD:
+        if (pll_num == USBPLL) {
+			mcr |= MXC_CCM_MCR_SSIS1;
+		} else {
+			mcr &= ~MXC_CCM_MCR_SSIS1;
+		}
+        break;
+    case SSI2_BAUD:
+        if (pll_num == USBPLL) {
+			mcr |= MXC_CCM_MCR_SSIS2;
+		} else {
+			mcr &= ~MXC_CCM_MCR_SSIS2;
+		}
+        break;
+    case FIRI_BAUD:
+        if (pll_num == USBPLL) {
+			mcr |= MXC_CCM_MCR_FIRS;
+		} else {
+			mcr &= ~MXC_CCM_MCR_FIRS;
+		}
+        break;
+    case CSI_BAUD:
+        if (pll_num == USBPLL) {
+            mcr &= ~MXC_CCM_MCR_CSIS_MASK;
+        } else if (pll_num == MCUPLL) {
+            mcr = (mcr & ~MXC_CCM_MCR_CSIS_MASK) | (0x1 << MXC_CCM_MCR_CSIS_OFFSET);
+        } else if (pll_num == TURBOPLL) {
+            mcr = (mcr & ~MXC_CCM_MCR_CSIS_MASK) | (0x2 << MXC_CCM_MCR_CSIS_OFFSET);
+        } else {
+            mcr |= MXC_CCM_MCR_CSIS_MASK;
+        }
+        break;
+    case SDHC1_CLK:
+        if (pll_num == USBPLL) {
+            mcr &= ~MXC_CCM_MCR_SDHC1S_MASK;
+        } else if (pll_num == MCUPLL) {
+            mcr = (mcr & ~MXC_CCM_MCR_SDHC1S_MASK) | (0x1 << MXC_CCM_MCR_SDHC1S_OFFSET);
+        } else if (pll_num == TURBOPLL) {
+            mcr = (mcr & ~MXC_CCM_MCR_SDHC1S_MASK) | (0x2 << MXC_CCM_MCR_SDHC1S_OFFSET);
+        } else {
+            mcr |= MXC_CCM_MCR_SDHC1S_MASK;
+        }
+        break;
+    case SDHC2_CLK:
+        if (pll_num == USBPLL) {
+            mcr &= ~MXC_CCM_MCR_SDHC2S_MASK;
+        } else if (pll_num == MCUPLL) {
+            mcr = (mcr & ~MXC_CCM_MCR_SDHC2S_MASK) | (0x1 << MXC_CCM_MCR_SDHC2S_OFFSET);
+        } else if (pll_num == TURBOPLL) {
+            mcr = (mcr & ~MXC_CCM_MCR_SDHC2S_MASK) | (0x2 << MXC_CCM_MCR_SDHC2S_OFFSET);
+        } else {
+            mcr |= MXC_CCM_MCR_SDHC2S_MASK;
+        }
+        break;
+	default:
+		LOG("This clock does not have ability to choose the PLL\n");
+		break;
+    }
+
+    __raw_writel(mcr, MXC_CCM_MCR);
+}
+
+void mxc_clk_getdivs(unsigned int div, unsigned int *div1, unsigned int *div2) {
+    int i;
+
+    if (div <= 8) {
+        *div1 = div;
+        *div2 = 1;
+        return;
+    }
+    if (div <= 32) {
+        *div1 = 1;
+        *div2 = div;
+        return;
+    }
+    for (i = 2; i < 9; i++) {
+        if (div % i == 0) {
+            *div1 = i;
+            *div2 = div / i;
+            return;
+        }
+    }
+    *div1 = 2;
+    *div2 = 12;
+}
+
+void mxc_clks_enable(enum mxc_clocks clk) {
+    unsigned long reg;
+
+    switch (clk) {
+    case UART1_BAUD:
+        reg = __raw_readl(MXC_CCM_MCGR0);
+        reg = (reg & ~MXC_CCM_MCGR0_UART1_MASK) | MXC_CCM_MCGR0_UART1_EN;
+        __raw_writel(reg, MXC_CCM_MCGR0);
+        break;
+    case SDHC1_CLK:
+        reg = __raw_readl(MXC_CCM_MPDR2);
+        reg &= ~MXC_CCM_MPDR2_SDHC1DIS;
+        __raw_writel(reg, MXC_CCM_MPDR2);
+        reg = __raw_readl(MXC_CCM_MCGR1);
+        reg = (reg & ~MXC_CCM_MCGR1_SDHC1_MASK) | MXC_CCM_MCGR1_SDHC1_EN;
+        __raw_writel(reg, MXC_CCM_MCGR1);
+        break;
+	default:
+		LOG("The gateon for this clock(%d) is not implemented\n", clk);
+		break;
+    }
+}
+
+void mxc_set_clocks_div(enum mxc_clocks clk, unsigned int div) {
+    unsigned long reg;
+    unsigned int d, div1, div2;
+    unsigned long pll;
+    unsigned long csi_ref_freq = 288000000;
+    int set_fpdf = 0;
+
+    switch (clk) {
+    case AHB_CLK:
+        reg = __raw_readl(MXC_CCM_MPDR0);
+        reg = (reg & ~MXC_CCM_MPDR0_MAX_PDF_MASK) | ((div - 1) << MXC_CCM_MPDR0_MAX_PDF_OFFSET);
+        __raw_writel(reg, MXC_CCM_MPDR0);
+        break;
+    case IPG_CLK:
+        reg = __raw_readl(MXC_CCM_MPDR0);
+        reg = (reg & ~MXC_CCM_MPDR0_IPG_PDF_MASK) | ((div - 1) << MXC_CCM_MPDR0_IPG_PDF_OFFSET);
+        __raw_writel(reg, MXC_CCM_MPDR0);
+        break;
+    case NFC_CLK:
+        reg = __raw_readl(MXC_CCM_MPDR0);
+        reg = (reg & ~MXC_CCM_MPDR0_NFC_PDF_MASK) | ((div - 1) << MXC_CCM_MPDR0_NFC_PDF_OFFSET);
+        __raw_writel(reg, MXC_CCM_MPDR0);
+        break;
+    case CSI_BAUD:
+        reg = __raw_readl(MXC_CCM_MPDR0);
+        d = div / 2;
+        if (div % 2 != 0) {
+            set_fpdf = 1;
+        }
+        pll = mxc_get_clocks_parent(clk);
+        if (pll > csi_ref_freq) {
+            reg |= MXC_CCM_MPDR0_CSI_PRE;
+            if (d % 2 != 0) {
+                set_fpdf = 1;
+            }
+            d /= 2;
+        } else {
+            reg &= ~MXC_CCM_MPDR0_CSI_PRE;
+        }
+        if (set_fpdf == 1) {
+            reg |= MXC_CCM_MPDR0_CSI_FPDF;
+        } else {
+            reg &= ~MXC_CCM_MPDR0_CSI_FPDF;
+        }
+        reg = (reg & ~MXC_CCM_MPDR0_CSI_PDF_MASK) | ((d - 1) << MXC_CCM_MPDR0_CSI_PDF_OFFSET);
+        __raw_writel(reg, MXC_CCM_MPDR0);
+        break;
+    case USB_CLK:
+        reg = __raw_readl(MXC_CCM_MPDR1);
+        reg = (reg & ~MXC_CCM_MPDR1_USB_PDF_MASK) | ((div - 1) << MXC_CCM_MPDR1_USB_PDF_OFFSET);
+        __raw_writel(reg, MXC_CCM_MPDR1);
+        break;
+    case SSI1_BAUD:
+        reg = __raw_readl(MXC_CCM_MPDR1);
+        d = div / 2;
+        mxc_clk_getdivs(d, &div1, &div2);
+        reg = (reg & ~MXC_CCM_MPDR1_SSI1_PREPDF_MASK) | ((div1 - 1) << MXC_CCM_MPDR1_SSI1_PREPDF_OFFSET);
+        reg = (reg & ~MXC_CCM_MPDR1_SSI1_PDF_MASK) | ((div2 - 1) << MXC_CCM_MPDR1_SSI1_PDF_OFFSET);
+        __raw_writel(reg, MXC_CCM_MPDR1);
+        break;
+    case SSI2_BAUD:
+        reg = __raw_readl(MXC_CCM_MPDR1);
+        d = div / 2;
+        mxc_clk_getdivs(d, &div1, &div2);
+        reg = (reg & ~MXC_CCM_MPDR1_SSI2_PREPDF_MASK) | ((div1 - 1) << MXC_CCM_MPDR1_SSI2_PREPDF_OFFSET);
+        reg = (reg & ~MXC_CCM_MPDR1_SSI2_PDF_MASK) | ((div2 - 1) << MXC_CCM_MPDR1_SSI2_PDF_OFFSET);
+        __raw_writel(reg, MXC_CCM_MPDR1);
+        break;
+    case FIRI_BAUD:
+        reg = __raw_readl(MXC_CCM_MPDR1);
+        d = div / 2;
+        mxc_clk_getdivs(d, &div1, &div2);
+        reg = (reg & ~MXC_CCM_MPDR1_FIRI_PREPDF_MASK) | ((div1 - 1) << MXC_CCM_MPDR1_FIRI_PREPDF_OFFSET);
+        reg = (reg & ~MXC_CCM_MPDR1_FIRI_PDF_MASK) | ((div2 - 1) << MXC_CCM_MPDR1_FIRI_PDF_OFFSET);
+        __raw_writel(reg, MXC_CCM_MPDR1);
+        break;
+    case SDHC1_CLK:
+        reg = __raw_readl(MXC_CCM_MPDR2);
+        reg = (reg & ~MXC_CCM_MPDR2_SDHC1_PDF_MASK) | ((div - 1) << MXC_CCM_MPDR2_SDHC1_PDF_OFFSET);
+        __raw_writel(reg, MXC_CCM_MPDR2);
+        break;
+    case SDHC2_CLK:
+        reg = __raw_readl(MXC_CCM_MPDR2);
+        reg = (reg & ~MXC_CCM_MPDR2_SDHC2_PDF_MASK) | ((div - 1) << MXC_CCM_MPDR2_SDHC2_PDF_OFFSET);
+        __raw_writel(reg, MXC_CCM_MPDR2);
+        break;
+	default:
+		break;
+    }
+}
+
+int SetArgonLVTurboMode(void) {
+	int retval = mxc_pm_setturbo(CORE_NORMAL);
+	if (retval == ERR_DFSP_SWITCH) {
+		return -ERR_DFSP_SWITCH;
+	}
+	while (!(__raw_readl(MXC_CCM_MCR) & MXC_CCM_MCR_TPL));
+	int ms = 0;
+	while (ms < 5000) {
+		if (__raw_readl(MXC_CCM_PMCR0) & MXC_CCM_PMCR0_DFSI) {
+			break;
+		}
+			suSleep(1, NULL);
+			ms++;
+		}
+		if (ms >= 5000 && mxc_pm_chk_dfsp() == DFS_SWITCH) {
+		return -1;
+	}
+	__raw_writel(__raw_readl(MXC_CCM_PMCR0) | MXC_CCM_PMCR0_DFSI, MXC_CCM_PMCR0);
+
+	return 0;
+}
+
+UINT32 SetArgonLVClocks(dvfs_op_point_t dvfs_op) {
     int ms = 0;
-	int retval = 0;
+    int retval = 0;
 
     switch (dvfs_op) {
-        case CORE_TURBO:
-            if (mxc_pm_chk_tpsel() == TPSEL_CLEAR) {
-                __raw_writel(__raw_readl(MXC_CCM_MCR) | MXC_CCM_MCR_TPE, MXC_CCM_MCR);
-
-                retval = mxc_pm_setturbo(CORE_NORMAL);
-                if (retval == ERR_DFSP_SWITCH) {
-                    return -ERR_DFSP_SWITCH;
-                }
-
-                while (!(__raw_readl(MXC_CCM_MCR) & MXC_CCM_MCR_TPL));
-
-                while (ms < 5000) {
-                    if (__raw_readl(MXC_CCM_PMCR0) & MXC_CCM_PMCR0_DFSI) {
-                        break;
-                    }
-                    suSleep(1, NULL);
-                    ms++;
-                }
-                if (ms >= 5000 && mxc_pm_chk_dfsp() == DFS_SWITCH) {
-                    return -1;
-                }
-
-                __raw_writel(__raw_readl(MXC_CCM_PMCR0) | MXC_CCM_PMCR0_DFSI, MXC_CCM_PMCR0);
-            } else {
-                mxc_pm_setbrmm(MPDR0_BRMM_0);
+    case CORE_TURBO:
+		//514 MHz
+        __raw_writel(__raw_readl(MXC_CCM_MCR) | MXC_CCM_MCR_TPE, MXC_CCM_MCR);
+        __raw_writel(0x00194817, MXC_CCM_TPCTL);
+        SetArgonLVTurboMode();
+        break;
+    case CORE_TURBO_2:
+		//548 MHz
+        __raw_writel(__raw_readl(MXC_CCM_MCR) | MXC_CCM_MCR_TPE, MXC_CCM_MCR);
+        __raw_writel((10 << MXC_CCM_TPCTL_MFI_OFFSET) |
+                     (7 << MXC_CCM_TPCTL_MFN_OFFSET) |
+                     (12 << MXC_CCM_PCTL_MFD_OFFSET) |
+                     (0 << MXC_CCM_PCTL_PDF_OFFSET), MXC_CCM_TPCTL);
+        SetArgonLVTurboMode();
+        break;
+    case CORE_TURBO_1:
+		//532 MHz
+        __raw_writel((10 << MXC_CCM_TPCTL_MFI_OFFSET) |
+                     (3 << MXC_CCM_TPCTL_MFN_OFFSET) |
+                     (12 << MXC_CCM_PCTL_MFD_OFFSET) |
+                     (0 << MXC_CCM_PCTL_PDF_OFFSET), MXC_CCM_TPCTL);
+        SetArgonLVTurboMode();
+        break;
+    case CORE_NORMAL:
+		//385 MHz
+        if (mxc_pm_chk_tpsel() == TPSEL_SET) {
+            retval = mxc_pm_setturbo(CORE_TURBO);
+            if (retval == ERR_DFSP_SWITCH) {
+                return -ERR_DFSP_SWITCH;
             }
-            break;
-        case CORE_NORMAL:
-            if (mxc_pm_chk_tpsel() == TPSEL_SET) {
-                retval = mxc_pm_setturbo(CORE_TURBO);
-                if (retval == ERR_DFSP_SWITCH) {
-                    return -ERR_DFSP_SWITCH;
+            while ((__raw_readl(MXC_CCM_MCR) & MXC_CCM_MCR_MPL) != MXC_CCM_MCR_MPL);
+            while (ms < 5000) {
+                if (((__raw_readl(MXC_CCM_PMCR0) >> 24) & 1) == 1) {
+                    break;
                 }
-
-                while ((__raw_readl(MXC_CCM_MCR) & MXC_CCM_MCR_MPL) != MXC_CCM_MCR_MPL);
-
-                while (ms < 5000) {
-                    if (((__raw_readl(MXC_CCM_PMCR0) >> 24) & 1) == 1) {
-                        break;
-                    }
-                    suSleep(1, NULL);
-                    ms++;
-                }
-                if (ms >= 5000 && mxc_pm_chk_dfsp() == DFS_SWITCH) {
-                    return -ERR_DFSP_SWITCH;
-                }
-
-                __raw_writel(__raw_readl(MXC_CCM_PMCR0) | MXC_CCM_PMCR0_DFSI, MXC_CCM_PMCR0);
-                __raw_writel(__raw_readl(MXC_CCM_MCR) & ~MXC_CCM_MCR_TPE, MXC_CCM_MCR);
-            } else {
-                mxc_pm_setbrmm(MPDR0_BRMM_0);
+                suSleep(1, NULL);
+                ms++;
             }
-            break;
+            if (ms >= 5000 && mxc_pm_chk_dfsp() == DFS_SWITCH) {
+                return -ERR_DFSP_SWITCH;
+            }
+            __raw_writel(__raw_readl(MXC_CCM_PMCR0) | MXC_CCM_PMCR0_DFSI, MXC_CCM_PMCR0);
+            __raw_writel(__raw_readl(MXC_CCM_MCR) & ~MXC_CCM_MCR_TPE, MXC_CCM_MCR);
+        } else {
+            mxc_pm_setbrmm(MPDR0_BRMM_0);
+        }
+        break;
     }
+
+	LOG("MCUPLL:\t\t%lu\n", mxc_pll_clock(MCUPLL));
+	LOG("TURBOPLL:\t\t%lu\n", mxc_pll_clock(TURBOPLL));
+	LOG("USBPLL:\t\t%lu\n", mxc_pll_clock(USBPLL));
+	LOG("CPU_CLK:\t%lu\n", mxc_get_clocks(CPU_CLK));
+	LOG("AHB_CLK:\t%lu\n", mxc_get_clocks(AHB_CLK));
+	LOG("IPG_CLK:\t%lu\n", mxc_get_clocks(IPG_CLK));
+	LOG("NFC_CLK:\t%lu\n", mxc_get_clocks(NFC_CLK));
+	LOG("USB_CLK:\t%lu\n", mxc_get_clocks(USB_CLK));
+	LOG("UART1_BAUD:\t%lu\n", mxc_get_clocks(UART1_BAUD));
+	LOG("UART2_BAUD:\t%lu\n", mxc_get_clocks(UART2_BAUD));
+	LOG("UART3_BAUD:\t%lu\n", mxc_get_clocks(UART3_BAUD));
+	LOG("I2C_CLK:\t%lu\n", mxc_get_clocks(I2C_CLK));
+	LOG("IPU_CLK:\t%lu\n", mxc_get_clocks(IPU_CLK));
+	LOG("SDMA_CLK:\t%lu\n", mxc_get_clocks(SDMA_CLK));
+	LOG("SDHC1_CLK:\t%lu\n", mxc_get_clocks(SDHC1_CLK));
+	LOG("SDHC2_CLK:\t%lu\n", mxc_get_clocks(SDHC2_CLK));
+
     return 0;
+}
+
+unsigned long mxc_mcu_active_pll_clk(void) {
+    return (__raw_readl(MXC_CCM_MPDR0) & MXC_CCM_MPDR0_TPSEL) ? mxc_pll_clock(TURBOPLL) : mxc_pll_clock(MCUPLL);
+}
+
+unsigned long mxc_get_clocks(enum mxc_clocks clk) {
+    unsigned long pll, ret_val = 0;
+    unsigned long brmm, max_pdf, ipg_pdf, nfc_pdf, prepdf = 0, pdf = 0;
+    int tpsel = 0;
+    unsigned long reg1 = __raw_readl(MXC_CCM_MPDR0);
+    unsigned long reg2 = __raw_readl(MXC_CCM_MPDR1);
+    unsigned long reg3 = __raw_readl(MXC_CCM_MPDR2);
+
+    max_pdf = (reg1 & MXC_CCM_MPDR0_MAX_PDF_MASK) >> MXC_CCM_MPDR0_MAX_PDF_OFFSET;
+    ipg_pdf = (reg1 & MXC_CCM_MPDR0_IPG_PDF_MASK) >> MXC_CCM_MPDR0_IPG_PDF_OFFSET;
+    pll = mxc_mcu_active_pll_clk();
+
+    switch (clk) {
+    case CPU_CLK:
+        brmm = reg1 & MXC_CCM_MPDR0_BRMM_MASK;
+        tpsel = (reg1 & MXC_CCM_MPDR0_TPSEL) >> MXC_CCM_MPDR0_TPSEL_OFFSET;
+        if (brmm >= 5) {
+            return 0;
+        }
+        ret_val = mxc_get_clocks(AHB_CLK) == AHB_FREQ_MAX ? core_pll_op_128[tpsel][brmm] : core_pll_op_100[tpsel][brmm];
+        break;
+    case AHB_CLK:
+    case IPU_CLK:
+        ret_val = pll / (max_pdf + 1);
+        break;
+    case IPG_CLK:
+    case SIM1_CLK:
+    case SIM2_CLK:
+    case UART1_BAUD:
+    case UART2_BAUD:
+    case UART3_BAUD:
+    case UART4_BAUD:
+    case OWIRE_CLK:
+    case I2C_CLK:
+        ret_val = pll / ((max_pdf + 1) * (ipg_pdf + 1));
+        break;
+    case GPT_CLK:
+        ret_val = MXC_TIMER_CLK;
+        break;
+    case SDHC1_CLK:
+        if (reg3 & MXC_CCM_MPDR2_SDHC1DIS) {
+            return 0;
+        }
+        pll = mxc_get_clocks_parent(clk);
+        pdf = (reg3 & MXC_CCM_MPDR2_SDHC1_PDF_MASK) >> MXC_CCM_MPDR2_SDHC1_PDF_OFFSET;
+        ret_val = pll / (pdf + 1);
+        break;
+    case SDHC2_CLK:
+        if (reg3 & MXC_CCM_MPDR2_SDHC2DIS) {
+            return 0;
+        }
+        pll = mxc_get_clocks_parent(clk);
+        pdf = (reg3 & MXC_CCM_MPDR2_SDHC2_PDF_MASK) >> MXC_CCM_MPDR2_SDHC2_PDF_OFFSET;
+        ret_val = pll / (pdf + 1);
+        break;
+    case NFC_CLK:
+        nfc_pdf = (reg1 & MXC_CCM_MPDR0_NFC_PDF_MASK) >> MXC_CCM_MPDR0_NFC_PDF_OFFSET;
+        ret_val = pll / ((max_pdf + 1) * (nfc_pdf + 1));
+        break;
+    case USB_CLK:
+        if (reg2 & MXC_CCM_MPDR1_USB_DIS) {
+            return 0;
+        }
+        pdf = (reg2 & MXC_CCM_MPDR1_USB_PDF_MASK) >> MXC_CCM_MPDR1_USB_PDF_OFFSET;
+        pll = mxc_pll_clock(USBPLL);
+        ret_val = pll / (pdf + 1);
+        break;
+    case SSI1_BAUD:
+        if (reg2 & MXC_CCM_MPDR1_SSI1_DIS) {
+            return 0;
+        }
+        prepdf = (reg2 & MXC_CCM_MPDR1_SSI1_PREPDF_MASK) >> MXC_CCM_MPDR1_SSI1_PREPDF_OFFSET;
+        pdf = (reg2 & MXC_CCM_MPDR1_SSI1_PDF_MASK) >> MXC_CCM_MPDR1_SSI1_PDF_OFFSET;
+        pll = mxc_get_clocks_parent(clk);
+        ret_val = pll / ((prepdf + 1) * (pdf + 1));
+        break;
+    case SSI2_BAUD:
+        if (reg2 & MXC_CCM_MPDR1_SSI2_DIS) {
+            return 0;
+        }
+        prepdf = (reg2 & MXC_CCM_MPDR1_SSI2_PREPDF_MASK) >> MXC_CCM_MPDR1_SSI2_PREPDF_OFFSET;
+        pdf = (reg2 & MXC_CCM_MPDR1_SSI2_PDF_MASK) >> MXC_CCM_MPDR1_SSI2_PDF_OFFSET;
+        pll = mxc_get_clocks_parent(clk);
+        ret_val = pll / ((prepdf + 1) * (pdf + 1));
+        break;
+    case CSI_BAUD:
+        pdf = (reg1 & MXC_CCM_MPDR0_CSI_PDF_MASK) >> MXC_CCM_MPDR0_CSI_PDF_OFFSET;
+        if (reg1 & MXC_CCM_MPDR0_CSI_DIS) {
+            return 0;
+        }
+        pll = mxc_get_clocks_parent(clk);
+        prepdf = (reg1 & MXC_CCM_MPDR0_CSI_PRE) ? 2 : 1;
+        ret_val = (reg1 & MXC_CCM_MPDR0_CSI_FPDF) ?
+                  (2 * pll) / (prepdf * (2 * pdf + 3)) :
+                  pll / (prepdf * (pdf + 1));
+        break;
+    case FIRI_BAUD:
+        if (reg2 & MXC_CCM_MPDR1_FIRI_DIS) {
+            return 0;
+        }
+        prepdf = (reg2 & MXC_CCM_MPDR1_FIRI_PREPDF_MASK) >> MXC_CCM_MPDR1_FIRI_PREPDF_OFFSET;
+        pdf = (reg2 & MXC_CCM_MPDR1_FIRI_PDF_MASK) >> MXC_CCM_MPDR1_FIRI_PDF_OFFSET;
+        pll = mxc_get_clocks_parent(clk);
+        ret_val = pll / ((prepdf + 1) * (pdf + 1));
+        break;
+    case CKIH_CLK:
+        ret_val = MXC_CKIH_FREQ;
+        break;
+	default:
+		break;
+    }
+    return ret_val;
 }
 #else
 #define HAPI_CLOCK_REG_ADDRESS    0x24845000
