@@ -57,6 +57,8 @@ typedef enum {
     APP_MENU_ITEM_514MHZ,
     APP_MENU_ITEM_532MHZ,
     APP_MENU_ITEM_548MHZ,
+    APP_MENU_ITEM_642_5MHZ,
+    APP_MENU_ITEM_680MHZ,
     APP_MENU_ITEM_HELP,
     APP_MENU_ITEM_ABOUT,
     APP_MENU_ITEM_EXIT,
@@ -147,6 +149,8 @@ static const WCHAR g_str_menu_385[] = L"385 MHz | stock";
 static const WCHAR g_str_menu_514[] = L"514 MHz | turbo";
 static const WCHAR g_str_menu_532[] = L"532 MHz | turbo";
 static const WCHAR g_str_menu_548[] = L"548 MHz | turbo";
+static const WCHAR g_str_menu_642_5[] = L"642.5 MHz | turbo";
+static const WCHAR g_str_menu_680[] = L"680 MHz | turbo";
 #else
 static const WCHAR g_str_menu_13_13[] = L"13 MHz | 13 MHz";
 static const WCHAR g_str_menu_13_26[] = L"13 MHz | 26 MHz";
@@ -168,7 +172,7 @@ static const WCHAR g_str_menu_about[] = L"About...";
 static const WCHAR g_str_menu_exit[] = L"Exit";
 static const WCHAR g_str_popup_ok_p1[] = L"Success!";
 #ifdef ARGON
-static const WCHAR g_str_popup_ok_p2[] = L"Argon core clock: ";
+static const WCHAR g_str_popup_ok_p2[] = L"ArgonLV SoC clock: ";
 static const WCHAR g_str_popup_error_p1[] = L"Error!";
 static const WCHAR g_str_popup_error_p2[] = L"Cannot set Argon core clock to: ";
 #else
@@ -436,6 +440,10 @@ static UINT32 HandleStateEnter(EVENT_STACK_T *ev_st, APPLICATION_T *app, ENTER_S
 
 	memclr(&content, sizeof(CONTENT_T));
 
+#ifdef ARGON
+	PrintArgonLVCpuInfo();
+#endif
+
 	switch (app_state) {
 		case APP_STATE_MAIN:
 			list = CreateList(ev_st, app, 1, APP_MENU_ITEM_MAX);
@@ -575,6 +583,8 @@ static UINT32 HandleEventSelect(EVENT_STACK_T *ev_st, APPLICATION_T *app) {
 		case APP_MENU_ITEM_514MHZ:
 		case APP_MENU_ITEM_532MHZ:
 		case APP_MENU_ITEM_548MHZ:
+		case APP_MENU_ITEM_642_5MHZ:
+		case APP_MENU_ITEM_680MHZ:
 #else
 		case APP_MENU_ITEM_13MHZ_13MHZ:
 		case APP_MENU_ITEM_13MHZ_26MHZ:
@@ -657,6 +667,12 @@ static LIST_ENTRY_T *CreateList(EVENT_STACK_T *ev_st, APPLICATION_T *app, UINT32
 	status |= UIS_MakeContentFromString("Mq0",
 		&list_elements[APP_MENU_ITEM_548MHZ].content.static_entry.text,
 		g_str_menu_548);
+	status |= UIS_MakeContentFromString("Mq0",
+		&list_elements[APP_MENU_ITEM_642_5MHZ].content.static_entry.text,
+		g_str_menu_642_5);
+	status |= UIS_MakeContentFromString("Mq0",
+		&list_elements[APP_MENU_ITEM_680MHZ].content.static_entry.text,
+		g_str_menu_680);
 #else
 	status |= UIS_MakeContentFromString("Mq0",
 		&list_elements[APP_MENU_ITEM_13MHZ_13MHZ].content.static_entry.text,
@@ -726,6 +742,14 @@ static const WCHAR *GetSelectedClocks(APP_MENU_ITEM_T menu_item) {
 			return g_str_menu_385;
 		case APP_MENU_ITEM_514MHZ:
 			return g_str_menu_514;
+		case APP_MENU_ITEM_532MHZ:
+			return g_str_menu_532;
+		case APP_MENU_ITEM_548MHZ:
+			return g_str_menu_548;
+		case APP_MENU_ITEM_642_5MHZ:
+			return g_str_menu_642_5;
+		case APP_MENU_ITEM_680MHZ:
+			return g_str_menu_680;
 		default:
 			break;
 	}
@@ -777,6 +801,10 @@ static dvfs_op_point_t SaveConvertMenuItemToClocks(APP_MENU_ITEM_T menu_item) {
             return CORE_TURBO_1;
         case APP_MENU_ITEM_548MHZ:
             return CORE_TURBO_2;
+        case APP_MENU_ITEM_642_5MHZ:
+            return CORE_TURBO_3;
+        case APP_MENU_ITEM_680MHZ:
+            return CORE_TURBO_4;
         default:
             break;
     }

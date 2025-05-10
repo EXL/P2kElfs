@@ -34,6 +34,15 @@ unsigned int core_pll_op_128[CORE_DVFS_PLL][DVFS_OP_NUM] = {
     {514000000, 257000000, 206000000, 171000000, 128000000}
 };
 
+unsigned long system_rev_tbl[SYSTEM_REV_NUM][2] = {
+	{0x00, CHIP_REV_1_0},
+	{0x11, CHIP_REV_1_1},
+	{0x22, CHIP_REV_1_2},
+	{0x24, CHIP_REV_1_2_2},
+	{0x50, CHIP_REV_2_3},
+	{0x52, CHIP_REV_2_3_2},
+};
+
 unsigned long mxc_pll_clock(enum plls pll) {
     unsigned long mfi = 0, mfn = 0, mfd, pdf, ref_clk;
     unsigned long long temp;
@@ -118,19 +127,17 @@ unsigned long mxc_get_clocks_parent(enum mxc_clocks clk) {
     return ret_val;
 }
 
-int mxc_pm_setturbo(dvfs_op_point_t dvfs_op_reqd) {
+int mxc_pm_setturbo(dvfs_op_point_t dvfs_op_reqd, unsigned long max_pdf) {
     unsigned int mpdr = __raw_readl(MXC_CCM_MPDR0);
 
     switch (dvfs_op_reqd) {
     case CORE_NORMAL:
         mpdr |= MXC_CCM_MPDR0_TPSEL;
-        mpdr = (mpdr & ~MXC_CCM_MPDR0_MAX_PDF_MASK) |
-               (AHB_FREQ > 100 * MEGA_HERTZ ? MAX_PDF_4 : MAX_PDF_5);;
+        mpdr = (mpdr & ~MXC_CCM_MPDR0_MAX_PDF_MASK) | max_pdf;
         break;
     case CORE_TURBO:
         mpdr &= ~MXC_CCM_MPDR0_TPSEL;
-        mpdr = (mpdr & ~MXC_CCM_MPDR0_MAX_PDF_MASK) |
-               (AHB_FREQ > 100 * MEGA_HERTZ ? MAX_PDF_3 : MAX_PDF_4);
+        mpdr = (mpdr & ~MXC_CCM_MPDR0_MAX_PDF_MASK) | max_pdf;
         break;
     default:
         return 0;
@@ -160,6 +167,12 @@ extern const WCHAR* DetermineArgonLVClock(void) {
 			break;
 		case CORE_TURBO_2:
 			return L"548 MHz";
+			break;
+		case CORE_TURBO_3:
+			return L"642.5 MHz";
+			break;
+		case CORE_TURBO_4:
+			return L"680 MHz";
 			break;
 		default:
 			return L"Unknown";
@@ -371,8 +384,8 @@ void mxc_set_clocks_div(enum mxc_clocks clk, unsigned int div) {
     }
 }
 
-int SetArgonLVTurboMode(void) {
-	int retval = mxc_pm_setturbo(CORE_NORMAL);
+int SetArgonLVTurboMode(unsigned long max_pdf) {
+	int retval = mxc_pm_setturbo(CORE_NORMAL, max_pdf);
 	if (retval == ERR_DFSP_SWITCH) {
 		return -ERR_DFSP_SWITCH;
 	}
@@ -393,6 +406,50 @@ int SetArgonLVTurboMode(void) {
 	return 0;
 }
 
+void PrintArgonLVCpuInfo(void) {
+
+	unsigned long val, i, rev = 0xFF;
+
+	val = __raw_readl(SYSTEM_PREV_REG);
+	LOG("SYSTEM_PREV_REG=0x%x\n", val);
+
+	val = __raw_readl(SYSTEM_SREV_REG);
+	LOG("SYSTEM_SREV_REG=0x%x\n", val);
+
+	for (i = 0; i < SYSTEM_REV_NUM; i++) {
+		if ((val & 0xFF) == system_rev_tbl[i][0]) {
+			rev = system_rev_tbl[i][1];
+			break;
+		}
+	}
+
+	if(rev == 0xFF) {
+		for (i = 0; i < SYSTEM_REV_NUM; i++) {
+			if ((val & 0xF3) == system_rev_tbl[i][0]) {
+				rev = system_rev_tbl[i][1];
+				break;
+			}
+		}
+	}
+
+	if(rev == 0xFF) {
+		for (i = 0; i < SYSTEM_REV_NUM; i++) {
+			if ((val & 0xF0) == system_rev_tbl[i][0]) {
+				rev = system_rev_tbl[i][1];
+				break;
+			}
+		}
+	}
+
+	if (i == SYSTEM_REV_NUM) {
+	    rev = system_rev_tbl[SYSTEM_REV_NUM - 1][1];
+ 	    LOG("WARNING: Can't find valid system rev\n");
+	    LOG("Assuming last known system_rev=0x%x\n", rev);
+	} else {
+	    LOG("Processor system_rev=0x%x\n", rev);
+	}
+}
+
 UINT32 SetArgonLVClocks(dvfs_op_point_t dvfs_op) {
     int ms = 0;
     int retval = 0;
@@ -402,7 +459,25 @@ UINT32 SetArgonLVClocks(dvfs_op_point_t dvfs_op) {
 		//514 MHz
         __raw_writel(__raw_readl(MXC_CCM_MCR) | MXC_CCM_MCR_TPE, MXC_CCM_MCR);
         __raw_writel(0x00194817, MXC_CCM_TPCTL);
-        SetArgonLVTurboMode();
+        SetArgonLVTurboMode(MAX_PDF_4);
+        break;
+    case CORE_TURBO_4:
+		//680 MHz
+        __raw_writel(__raw_readl(MXC_CCM_MCR) | MXC_CCM_MCR_TPE, MXC_CCM_MCR);
+        __raw_writel((13 << MXC_CCM_TPCTL_MFI_OFFSET) |
+                     (1 << MXC_CCM_TPCTL_MFN_OFFSET) |
+                     (12 << MXC_CCM_PCTL_MFD_OFFSET) |
+                     (0 << MXC_CCM_PCTL_PDF_OFFSET), MXC_CCM_TPCTL);
+        SetArgonLVTurboMode(MAX_PDF_5);
+        break;
+    case CORE_TURBO_3:
+		//642.5 MHz
+        __raw_writel(__raw_readl(MXC_CCM_MCR) | MXC_CCM_MCR_TPE, MXC_CCM_MCR);
+        __raw_writel((12 << MXC_CCM_TPCTL_MFI_OFFSET) |
+                     (71 << MXC_CCM_TPCTL_MFN_OFFSET) |
+                     (199 << MXC_CCM_PCTL_MFD_OFFSET) |
+                     (0 << MXC_CCM_PCTL_PDF_OFFSET), MXC_CCM_TPCTL);
+        SetArgonLVTurboMode(MAX_PDF_5);
         break;
     case CORE_TURBO_2:
 		//548 MHz
@@ -411,7 +486,7 @@ UINT32 SetArgonLVClocks(dvfs_op_point_t dvfs_op) {
                      (7 << MXC_CCM_TPCTL_MFN_OFFSET) |
                      (12 << MXC_CCM_PCTL_MFD_OFFSET) |
                      (0 << MXC_CCM_PCTL_PDF_OFFSET), MXC_CCM_TPCTL);
-        SetArgonLVTurboMode();
+        SetArgonLVTurboMode(MAX_PDF_4);
         break;
     case CORE_TURBO_1:
 		//532 MHz
@@ -419,12 +494,12 @@ UINT32 SetArgonLVClocks(dvfs_op_point_t dvfs_op) {
                      (3 << MXC_CCM_TPCTL_MFN_OFFSET) |
                      (12 << MXC_CCM_PCTL_MFD_OFFSET) |
                      (0 << MXC_CCM_PCTL_PDF_OFFSET), MXC_CCM_TPCTL);
-        SetArgonLVTurboMode();
+        SetArgonLVTurboMode(MAX_PDF_4);
         break;
     case CORE_NORMAL:
 		//385 MHz
         if (mxc_pm_chk_tpsel() == TPSEL_SET) {
-            retval = mxc_pm_setturbo(CORE_TURBO);
+            retval = mxc_pm_setturbo(CORE_TURBO, MAX_PDF_3);
             if (retval == ERR_DFSP_SWITCH) {
                 return -ERR_DFSP_SWITCH;
             }

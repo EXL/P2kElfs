@@ -10,6 +10,8 @@ typedef enum {
 	CORE_TURBO = 514000000,
 	CORE_TURBO_1 = 532000000,
 	CORE_TURBO_2 = 548000000,
+	CORE_TURBO_3 = 642460000,
+	CORE_TURBO_4 = 680000000,
 } dvfs_op_point_t;
 
 enum plls {
@@ -31,6 +33,25 @@ enum plls {
 #define AHB_FREQ_MAX			    128500000
 #define MXC_CKIH_FREQ                       26000000
 #define MXC_PLL_REF_CLK                     MXC_CKIH_FREQ
+
+#define IIM_BASE_ADDR           0x5001C000
+#define SYSTEM_PREV_REG       IIM_BASE_ADDR + 0x20
+#define SYSTEM_SREV_REG       IIM_BASE_ADDR + 0x24
+#define IIM_PROD_REV_SH       3
+#define IIM_PROD_REV_LEN      5
+
+#define CHIP_REV_1_0            0x10
+#define CHIP_REV_1_1		0x11
+#define CHIP_REV_1_2		0x12
+#define CHIP_REV_1_2_2		0x13
+#define CHIP_REV_2_0            0x20
+#define CHIP_REV_2_1            0x21
+#define CHIP_REV_2_3            0x22
+#define CHIP_REV_2_3_2          0x23
+
+#define PROD_SIGNATURE          0x6
+#define SYSTEM_REV_MIN          CHIP_REV_1_0
+#define SYSTEM_REV_NUM          6
 
 #define MXC_CCM_BASE    0x53F80000
 #define MXC_CCM_MCR     (MXC_CCM_BASE + 0x0)
@@ -218,6 +239,8 @@ enum mxc_clocks {
 };
 
 extern UINT32 SetArgonLVClocks(dvfs_op_point_t dvfs_op);
+int SetArgonLVTurboMode(unsigned long max_pdf);
+void PrintArgonLVCpuInfo(void);
 
 extern const WCHAR* DetermineArgonLVClock(void);
 
@@ -228,12 +251,11 @@ void mxc_pm_setbrmm(int value);
 unsigned long mxc_pll_clock(enum plls pll);
 unsigned long mxc_get_clocks(enum mxc_clocks clk);
 unsigned long mxc_get_clocks_parent(enum mxc_clocks clk);
-int mxc_pm_setturbo(dvfs_op_point_t dvfs_op_reqd);
+int mxc_pm_setturbo(dvfs_op_point_t dvfs_op_reqd, unsigned long max_pdf);
 void mxc_set_clocks_pll(enum mxc_clocks clk, enum plls pll_num);
 void mxc_clk_getdivs(unsigned int div, unsigned int *div1, unsigned int *div2);
 void mxc_clks_enable(enum mxc_clocks clk);
 void mxc_set_clocks_div(enum mxc_clocks clk, unsigned int div);
-int SetArgonLVTurboMode(void);
 unsigned long mxc_mcu_active_pll_clk(void);
 
 #else
