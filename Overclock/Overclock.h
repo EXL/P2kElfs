@@ -5,6 +5,15 @@
 
 #ifdef ARGON
 
+#ifdef ARGONPLUS
+typedef enum {
+	CORE_NORMAL = 399100000,
+	CORE_TURBO_1 = 532000000,
+	CORE_TURBO_2 = 600000000,
+	CORE_TURBO_3 = 642460000,
+	CORE_TURBO_4 = 680000000,
+} dvfs_op_point_t;
+#else
 typedef enum {
 	CORE_NORMAL = 385500000,
 	CORE_TURBO = 514000000,
@@ -13,6 +22,7 @@ typedef enum {
 	CORE_TURBO_3 = 642460000,
 	CORE_TURBO_4 = 680000000,
 } dvfs_op_point_t;
+#endif
 
 enum plls {
 	MCUPLL = 0,
@@ -22,7 +32,9 @@ enum plls {
 	CKIH = 4,
 	CKIH_X2 = 5,
 	USBCLK = 8,
+#ifdef ARGONLV
 	TURBOPLL,
+#endif
 	SERIALPLL,
 };
 
@@ -118,6 +130,10 @@ enum plls {
 #define MXC_CCM_PCTL_MFD_MASK               (0x3FF << 16)
 #define MXC_CCM_PCTL_PDF_OFFSET             26
 #define MXC_CCM_PCTL_PDF_MASK               (0xF << 26)
+#define MXC_CCM_MCUPCTL_MFI_OFFSET          11
+#define MXC_CCM_MCUPCTL_MFI_MASK            (0xF << 11)
+#define MXC_CCM_MCUPCTL_MFN_OFFSET          0
+#define MXC_CCM_MCUPCTL_MFN_MASK            0x7FF
 #define MXC_CCM_TPCTL_MFI_OFFSET            11
 #define MXC_CCM_TPCTL_MFI_MASK              (0xF << 11)
 #define MXC_CCM_TPCTL_MFN_OFFSET            0
@@ -141,7 +157,11 @@ enum plls {
 #define MXC_TIMER_CLK           32768
 #define MXC_TIMER_DIVIDER	1
 #define MEGA_HERTZ      1000000
-#define ERR_DFSP_SWITCH 2
+
+#define ERR_DFSP_SWITCH 		2
+#define AHB_MAX_DIV_ERR         3
+#define IPG_MAX_DIV_ERR         4
+#define INVALID_ARM_FREQ        5
 
 #define MAX_PDF_3       0x00000010
 #define MAX_PDF_4       0x00000018
@@ -157,6 +177,7 @@ enum plls {
 #define MXC_CCM_MPDR0_MAX_PDF_MASK  (0x7 << 3)
 #define MXC_CCM_MPDR0_BRMM_MASK     0x7
 #define TURBO_MASK                  0x0000083F
+#define AHB_IPG_BRMM_DIV_MASK		0xFFFFFF07
 
 typedef enum { TPSEL_CLEAR = 0, TPSEL_SET = 1 } tpsel_t;
 typedef enum { DFS_SWITCH = 0, DFS_NO_SWITCH = 1 } dfs_switch_t;
@@ -238,11 +259,12 @@ enum mxc_clocks {
 	SAHARA_CLK,
 };
 
+void PrintArgonCpuInfo(void);
+extern double DetermineArgonClock(void);
+
+
 extern UINT32 SetArgonLVClocks(dvfs_op_point_t dvfs_op);
 int SetArgonLVTurboMode(unsigned long max_pdf);
-void PrintArgonLVCpuInfo(void);
-
-extern const WCHAR* DetermineArgonLVClock(void);
 
 tpsel_t mxc_pm_chk_tpsel(void);
 dfs_switch_t mxc_pm_chk_dfsp(void);
@@ -258,6 +280,8 @@ void mxc_clks_enable(enum mxc_clocks clk);
 void mxc_set_clocks_div(enum mxc_clocks clk, unsigned int div);
 unsigned long mxc_mcu_active_pll_clk(void);
 
+#elif defined(ARGONPLUS)
+UINT32 SetArgonPlusClocks(dvfs_op_point_t dvfs_op);
 #else
 typedef enum {
 	CLOCKS_13MHZ_13MHZ,
