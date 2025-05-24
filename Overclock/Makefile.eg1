@@ -12,8 +12,12 @@ DEFINES           = -D__P2K__ -DEP1 -DLINUX_BOGOMIPS -DDEBUG
 WARNINGS          = -Wall
 OPTIMIZATIONS     = -O2
 FEATURES          = -ffreestanding -fshort-wchar -fshort-enums -fpack-struct=4 -fno-builtin
-ifeq ($(ARGON), 1)
-    DEFINES       += -DARGON
+ifeq ($(ARGONLV), 1)
+    DEFINES       += -DARGON -DARGONLV
+	FLAVOR        = -DEA1
+	CPU_FLAGS     = -mbig-endian -mthumb -mthumb-interwork -mbe32 -march=armv6j -mtune=arm1136jf-s
+else ifeq ($(ARGONPLUS), 1)
+    DEFINES       += -DARGON -DARGONPLUS
 	FLAVOR        = -DEA1
 	CPU_FLAGS     = -mbig-endian -mthumb -mthumb-interwork -mbe32 -march=armv6j -mtune=arm1136jf-s
 else
@@ -26,8 +30,10 @@ CXXFLAGS          = $(CFLAGS)
 LDFLAGS           = $(CFLAGS) -s -pie -Wl,--gc-sections -Wl,-zmax-page-size=1 -Wl,-eRegister
 LIBS              = -nostdlib -nodefaultlibs -L$(P2K_ELF_SDK)/ep1/lib/gcc -leg1_gcc_stub -lgcc_gba_m
 
-ifeq ($(ARGON), 1)
-    TARGET_ELF        = OverclockLV.elf
+ifeq ($(ARGONLV), 1)
+    TARGET_ELF        = OverclockArgonLV.elf
+else ifeq ($(ARGONPLUS), 1)
+    TARGET_ELF        = OverclockArgonPlus.elf
 else
     TARGET_ELF        = Overclock.elf
 endif
