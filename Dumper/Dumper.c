@@ -1104,6 +1104,7 @@ static WCHAR *GetProductRevisionSoc(void) {
 	if (bit15) {
 		if (bit13) {
 			if (bit11 || bit12) {
+				/* Not sure. */
 				return (WCHAR *) g_str_soc_rev_pr_lte2_irom0400;
 			} else {
 				return (WCHAR *) g_str_soc_rev_pr_lte2;
